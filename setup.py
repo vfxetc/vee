@@ -1,4 +1,9 @@
+import os
 from setuptools import setup, find_packages
+
+
+here = os.path.abspath(os.path.join(__file__, '..'))
+
 
 setup(
 
@@ -21,5 +26,8 @@ setup(
         'Programming Language :: Python :: 2',
         'Topic :: Software Development :: Libraries :: Python Modules',
     ],
+
+    entry_points=open(os.path.join(here, 'vee', 'entry_points.txt')).read(),
+    
     
 )
