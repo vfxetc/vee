@@ -17,6 +17,29 @@ The initial goal is to include packages from:
 - ad-hoc general packages.
 
 
+Actors
+------
+
+Home:
+    Where VEE installs and links environments.
+
+Environment:
+    A single "prefix", linked from installed packages. Contains `bin`, `etc`, `lib`,
+    `include`, `share`, `var`, etc., assembled from packages.
+
+Requirement:
+    A specification of a package to install. Determines the manager, and any
+    information the Manager or Package will need to install it.
+
+Manager:
+    Wrapper around package managers, but the public API is only for fetching
+    packages, and not installing them.
+
+Package:
+    A single package to install. In the case of packages from real package
+    managers (e.g. we tend to use Homebrew_), they may defer to the Manager
+    to actually install them.
+
 ..
     Contents:
 

@@ -1,1 +1,14 @@
-- Make it go.
+
+2015-02-10
+√ bootstrap entrypoints
+√ bootstrap commands
+
+- commands
+
+    vee init
+    vee update
+    vee upgrade
+    vee install path/to/something.tar.gz
+    vee install -r requirements.txt
+    vee link requirements.txt
+

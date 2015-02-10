@@ -3,3 +3,8 @@
 
 [vee_commands]
 install = vee.commands.install:install
+
+[vee_default_managers]
+git = vee.managers.git:GitManager
+http = vee.managers.http:HttpManager
+file = vee.managers.file:FileManager
