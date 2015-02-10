@@ -3,8 +3,10 @@
 
 [vee_commands]
 install = vee.commands.install:install
+brew = vee.commands.brew:brew
 
 [vee_default_managers]
 git = vee.managers.git:GitManager
 http = vee.managers.http:HttpManager
 file = vee.managers.file:FileManager
+homebrew = vee.managers.homebrew:HomebrewManager

@@ -79,6 +79,7 @@ def main(argv=None):
 
     for func in funcs:
         args, kwargs = func.__command_spec__
+        func.__parse_known_args = kwargs.pop('parse_known_args', False)
         name = kwargs.pop('name', func.__name__)
         kwargs.setdefault('aliases', [])
         kwargs.setdefault('formatter_class', argparse.RawDescriptionHelpFormatter)
@@ -93,19 +94,22 @@ def main(argv=None):
             else:
                 subparser.add_argument(*arg_args, **arg_kwargs)
 
-    args = parser.parse_args(argv, namespace=Namespace())
+    args, unparsed = parser.parse_known_args(argv, namespace=Namespace())
+    if args.func and unparsed and not args.func.__parse_known_args:
+        args = parser.parse_args(argv, namespace=Namespace())
+
     args.repo = args.repo_path and Repo(args.repo_path)
     args.home = args.home_path and Home(args.home_path, args.repo)
 
     if args.func:
         try:
-            res = args.func(args) or 0
+            res = args.func(args, *unparsed) or 0
         except CommandError as e:
             if e.strerror:
                 print e.strerror
             res = e.errno
     else:
-        parser.print_usage()
+        parser.print_help()
         res = 1
     
 

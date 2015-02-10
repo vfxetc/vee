@@ -1,3 +1,4 @@
+import os
 import pkg_resources
 
 
@@ -11,7 +12,7 @@ class Home(object):
 
         ep = next(pkg_resources.iter_entry_points('vee_default_managers', req.manager_name), None)
         if ep:
-            return ep.load()(req)
+            return ep.load()(self, req)
 
         # TODO: look in repository.
 
@@ -24,3 +25,6 @@ class Home(object):
         if not req.package:
             req.package = req.manager.load_package(req)
         return req.manager, req.package
+
+    def abspath(self, *args):
+        return os.path.abspath(os.path.join(self.root, *args))
