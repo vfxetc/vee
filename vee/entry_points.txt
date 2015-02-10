@@ -1,5 +1,5 @@
 # We keep our entrypoints here so that we can bootstrap them in vee/__init__.py
 # without having the package actually installed.
 
-[vee.commands]
-add = vee.commands.add:do_add
+[vee_commands]
+install = vee.commands.install:install
