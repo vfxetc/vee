@@ -17,8 +17,8 @@ The initial goal is to include packages from:
 - ad-hoc general packages.
 
 
-Actors
-------
+Definitions
+-----------
 
 Home:
     Where VEE installs and links environments.
@@ -27,13 +27,17 @@ Environment:
     A single "prefix", linked from installed packages. Contains `bin`, `etc`, `lib`,
     `include`, `share`, `var`, etc., assemble
 
+Requirement:
+    A specification of a package that we would like to have installed in an environment.
+
+Package:
+    The bundle provided by a remote source which contains source code, or
+    prepared build artifacts.
+
 Manager:
     Wrapper around package managers, but the public API is only for fetching
     packages, and not installing them.
 
-Package:
-    A specification of a single package to install. Determines the manager, and any
-    information the Manager will need to install it.
 
 ..
     Contents:

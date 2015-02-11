@@ -10,7 +10,6 @@ import os
 import pkg_resources
 
 from vee.home import Home
-from vee.repo import Repo
 
 
 class AliasedSubParsersAction(argparse._SubParsersAction):
@@ -46,10 +45,6 @@ class Namespace(argparse.Namespace):
         if not self.home:
             raise CommandError(1, 'home is required; please set VEE_HOME or --home')
 
-    def assert_repo(self):
-        if not self.home:
-            raise CommandError(1, 'repo is required; please set VEE_REPO or --repo')
-
 
 
 def main(argv=None):
@@ -58,6 +53,7 @@ def main(argv=None):
         prog='vee',
         formatter_class=argparse.RawDescriptionHelpFormatter,
         description=__doc__,
+        usage='vee [-h] COMMAND [ARGS]',
     )
 
     parser.register('action', 'parsers', AliasedSubParsersAction)
@@ -67,11 +63,6 @@ def main(argv=None):
         dest='home_path',
         default=os.environ.get('VEE_HOME'),
         help='path of managed environments',
-    )
-    parser.add_argument('--repo',
-        dest='repo_path',
-        default=os.environ.get('VEE_REPO'),
-        help='repository of environment specifications'
     )
 
     funcs = [ep.load() for ep in pkg_resources.iter_entry_points('vee_commands')]
@@ -98,8 +89,7 @@ def main(argv=None):
     if args.func and unparsed and not args.func.__parse_known_args:
         args = parser.parse_args(argv, namespace=Namespace())
 
-    args.repo = args.repo_path and Repo(args.repo_path)
-    args.home = args.home_path and Home(args.home_path, args.repo)
+    args.home = args.home_path and Home(args.home_path)
 
     if args.func:
         try:

@@ -14,9 +14,9 @@ class HttpManager(BaseManager):
 
     @property
     def _local_path(self):
-        split = urlparse.urlsplit(self.package.spec)
+        split = urlparse.urlsplit(self.requirement.package)
         return self.home.abspath(
-            'managers',
+            'packages',
             self.name,
             split.netloc,
             split.path.strip('/'),
@@ -31,13 +31,13 @@ class HttpManager(BaseManager):
 
         temp = self._local_path + '.downloading'
 
-        print colour('VEE Downloading', 'blue', bright=True), colour(self.package.spec, 
+        print colour('VEE Downloading', 'blue', bright=True), colour(self.requirement.package, 
             'black') + colour('', reset=True)
 
         src_fh = None
         dst_fh = None
         try:
-            src_fh = urllib2.urlopen(self.package.spec)
+            src_fh = urllib2.urlopen(self.requirement.package)
             dst_fh = open(temp, 'wb')
             # TODO: Indicate progress.
             for chunk in iter(lambda: src_fh.read(16384), ''):

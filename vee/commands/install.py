@@ -1,5 +1,5 @@
 from vee.commands.main import command, argument
-from vee.package import Package
+from vee.requirement import Requirement
 
 
 @command(
@@ -9,7 +9,7 @@ from vee.package import Package
 )
 def install(args):
     args.assert_home()
-    package = Package.parse(args.package, home=args.home)
-    package.fetch()
-    package.install()
+    req = Requirement.parse(args.package, home=args.home)
+    req.fetch()
+    req.install()
 

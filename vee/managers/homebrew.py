@@ -15,7 +15,7 @@ class HomebrewManager(GitManager):
 
     @property
     def _git_work_tree(self):
-        return self.home.abspath('managers', self._name_for_platform)
+        return self.home.abspath('packages', self._name_for_platform)
 
     @property
     def _git_remote_url(self):
@@ -36,4 +36,4 @@ class HomebrewManager(GitManager):
         call((os.path.join(prefix, 'bin', 'brew'), ) + cmd, env=env)
 
     def install(self):
-        self._brew('install', self.package.spec)
+        self._brew('install', self.requirement.package)

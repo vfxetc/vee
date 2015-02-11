@@ -27,7 +27,10 @@
     - Environment.link(requirement)
 
 
-
+- homebrew taps: homebrew+mikeboers/testbrew/foo
+    - we would need a way to detect which tap it is
+    - we can grep `brew info $forumla` for From: https://github.com/#{user}/#{repo}/blob/master/#{path}
+    
 
 - commands
 

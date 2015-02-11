@@ -8,11 +8,11 @@ class Home(object):
         self.root = root
         self.repo = repo
 
-    def get_manager(self, name=None, package=None):
-        name = name or package.manager_name
+    def get_manager(self, name=None, requirement=None):
+        name = name or requirement.manager_name
         ep = next(pkg_resources.iter_entry_points('vee_default_managers', name), None)
         if ep:
-            return ep.load()(package, home=self)
+            return ep.load()(requirement, home=self)
         # TODO: look in repository.
         raise ValueError('unknown manager %r' % name)
 

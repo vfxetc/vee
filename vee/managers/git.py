@@ -11,7 +11,7 @@ class GitManager(BaseManager):
 
     @property
     def _git_work_tree(self):
-        return self.home.abspath('managers', self.name, self.package.spec.strip('/'))
+        return self.home.abspath('packages', self.name, self.requirement.package.strip('/'))
 
     @property
     def _git_dir(self):
@@ -19,7 +19,7 @@ class GitManager(BaseManager):
 
     @property
     def _git_remote_url(self):
-        return self.package.spec
+        return self.requirement.package
 
     def _assert_checked_out(self, revision=None):
 
@@ -72,7 +72,7 @@ class GitManager(BaseManager):
         return call_output(('git', '--git-dir', self._git_dir, '--work-tree', self._git_work_tree) + cmd, **kw).strip()
 
     def fetch(self):
-        self._assert_checked_out(self.package.revision)
+        self._assert_checked_out(self.requirement.revision)
         return self._git_work_tree
 
 

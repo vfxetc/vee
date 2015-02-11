@@ -1,5 +1,4 @@
 from vee.commands.main import command, argument, CommandError
-from vee.package import Package
 
 
 @command(
