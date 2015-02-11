@@ -8,23 +8,13 @@ class Home(object):
         self.root = root
         self.repo = repo
 
-    def load_manager(self, req):
-
-        ep = next(pkg_resources.iter_entry_points('vee_default_managers', req.manager_name), None)
+    def get_manager(self, name=None, package=None):
+        name = name or package.manager_name
+        ep = next(pkg_resources.iter_entry_points('vee_default_managers', name), None)
         if ep:
-            return ep.load()(self, req)
-
+            return ep.load()(package, home=self)
         # TODO: look in repository.
-
-        raise ValueError('unknown manager %r' % req.manager_name)
-
-
-    def load_requirement(self, req):
-        if not req.manager:
-            req.manager = self.load_manager(req)
-        if not req.package:
-            req.package = req.manager.load_package(req)
-        return req.manager, req.package
+        raise ValueError('unknown manager %r' % name)
 
     def abspath(self, *args):
         return os.path.abspath(os.path.join(self.root, *args))

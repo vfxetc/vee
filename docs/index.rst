@@ -25,20 +25,15 @@ Home:
 
 Environment:
     A single "prefix", linked from installed packages. Contains `bin`, `etc`, `lib`,
-    `include`, `share`, `var`, etc., assembled from packages.
-
-Requirement:
-    A specification of a package to install. Determines the manager, and any
-    information the Manager or Package will need to install it.
+    `include`, `share`, `var`, etc., assemble
 
 Manager:
     Wrapper around package managers, but the public API is only for fetching
     packages, and not installing them.
 
 Package:
-    A single package to install. In the case of packages from real package
-    managers (e.g. we tend to use Homebrew_), they may defer to the Manager
-    to actually install them.
+    A specification of a single package to install. Determines the manager, and any
+    information the Manager will need to install it.
 
 ..
     Contents:

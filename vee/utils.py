@@ -3,9 +3,20 @@ import os
 import subprocess
 
 
-def call(cmd, **kw):
+def _print_call(cmd):
     print colour('$', 'blue', bright=True), colour(cmd[0], 'black', bright=True), colour(' '.join(cmd[1:]), reset=True)
+
+
+def call(cmd, **kw):
+    if not kw.pop('silent', False):
+        _print_call(cmd)
     subprocess.check_call(cmd, **kw)
+
+
+def call_output(cmd, **kw):
+    if not kw.pop('silent', False):
+        _print_call(cmd)
+    return subprocess.check_output(cmd, **kw)
 
 
 def makedirs(*args):

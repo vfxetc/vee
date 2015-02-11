@@ -4,7 +4,6 @@ import urlparse
 import shutil
 
 from vee.managers.base import BaseManager
-from vee.package import Package as BasePackage
 from vee.utils import makedirs, colour
 
 
@@ -14,7 +13,7 @@ class HttpManager(BaseManager):
 
     @property
     def _local_path(self):
-        split = urlparse.urlsplit(self.requirement.spec)
+        split = urlparse.urlsplit(self.package.spec)
         return self.home.abspath(
             'managers',
             self.name,
@@ -22,7 +21,7 @@ class HttpManager(BaseManager):
             split.path.strip('/'),
         )
 
-    def fetch(self, package):
+    def fetch(self):
 
         if os.path.exists(self._local_path):
             return
@@ -32,13 +31,13 @@ class HttpManager(BaseManager):
         dst = self._local_path
         tmp = dst + '.downloading'
 
-        print colour('VEE Downloading', 'blue', bright=True), colour(self.requirement.spec, 
+        print colour('VEE Downloading', 'blue', bright=True), colour(self.package.spec, 
             'black') + colour('', reset=True)
 
         srcfh = None
         dstfh = None
         try:
-            srcfh = urllib2.urlopen(self.requirement.spec)
+            srcfh = urllib2.urlopen(self.package.spec)
             dstfh = open(tmp, 'wb')
             for chunk in iter(lambda: srcfh.read(16384), ''):
                 dstfh.write(chunk)

@@ -1,5 +1,5 @@
 from vee.commands.main import command, argument, CommandError
-from vee.requirements import Requirement
+from vee.package import Package
 
 
 @command(
@@ -11,11 +11,6 @@ def brew(args, *command):
     if not command:
         raise CommandError(1, 'please specify a homebrew command')
 
-    req = Requirement.parse('homebrew+NotARealPackage')
-
     args.assert_home()
-    manager, package = args.home.load_requirement(req)
-
+    manager = args.home.get_manager('homebrew')
     manager._brew(*command)
-
-

@@ -1,29 +1,24 @@
 import pkg_resources
 
-from vee.package import Package
 
 
 class BaseManager(object):
 
     name = 'base'
-    package_class = Package
 
-    def __init__(self, home, req):
-        self.home = home
-        self.requirement = req
+    def __init__(self, package=None, home=None):
+        self.package = package
+        self.home = home or package.home
 
     def __repr__(self):
         return '%s(%r)' % (
             self.__class__.__name__,
-            str(self.requirement),
+            str(self.package),
         )
 
-    def load_package(self, req):
-        return self.package_class(self.home, req)
+    def fetch(self):
+        pass
 
-    def fetch(self, package):
-        package.fetch()
-
-    def install(self, package):
-        package.install()
+    def install(self):
+        pass
 
