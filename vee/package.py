@@ -6,6 +6,7 @@ import shlex
 class Package(object):
 
     arg_parser = argparse.ArgumentParser(add_help=False)
+    arg_parser.add_argument('--name', default=None)
     arg_parser.add_argument('--revision', default=None)
     arg_parser.add_argument('package_spec')
 
@@ -18,10 +19,8 @@ class Package(object):
         return cls(args, **kwargs)
 
     def __init__(self, args, home=None):
-        
-        self._args = args
-        self.revision = args.revision
-        
+
+
         # Extract the manager type. Usually this is of the form:
         # type+specification. Otherwise we assume it is a simple URL or file.
         m = re.match(r'^(\w+)\+(.+)$', args.package_spec)
@@ -35,8 +34,11 @@ class Package(object):
             self.manager_name = 'file'
             self.spec = args.package_spec
 
+        self._args = args
         self.home = home or args.home
         self.manager = self.home.get_manager(package=self)
+        self.name = args.name
+        self.revision = args.revision
 
     def __str__(self):
         return (

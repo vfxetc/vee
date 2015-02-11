@@ -73,3 +73,6 @@ class GitManager(BaseManager):
 
     def fetch(self):
         self._assert_checked_out(self.package.revision)
+        return self._git_work_tree
+
+

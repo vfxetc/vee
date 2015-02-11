@@ -1,3 +1,4 @@
+import datetime
 import os
 import urllib2
 import urlparse
@@ -24,28 +25,30 @@ class HttpManager(BaseManager):
     def fetch(self):
 
         if os.path.exists(self._local_path):
-            return
+            self._local_path
 
         makedirs(os.path.dirname(self._local_path))
 
-        dst = self._local_path
-        tmp = dst + '.downloading'
+        temp = self._local_path + '.downloading'
 
         print colour('VEE Downloading', 'blue', bright=True), colour(self.package.spec, 
             'black') + colour('', reset=True)
 
-        srcfh = None
-        dstfh = None
+        src_fh = None
+        dst_fh = None
         try:
-            srcfh = urllib2.urlopen(self.package.spec)
-            dstfh = open(tmp, 'wb')
-            for chunk in iter(lambda: srcfh.read(16384), ''):
-                dstfh.write(chunk)
+            src_fh = urllib2.urlopen(self.package.spec)
+            dst_fh = open(temp, 'wb')
+            # TODO: Indicate progress.
+            for chunk in iter(lambda: src_fh.read(16384), ''):
+                dst_fh.write(chunk)
         finally:
-            if srcfh:
-                srcfh.close()
-            if dstfh:
-                dstfh.close()
+            if src_fh:
+                src_fh.close()
+            if dst_fh:
+                dst_fh.close()
 
-        shutil.move(tmp, dst)
+        shutil.move(temp, self._local_path)
+
+        return self._local_path
 

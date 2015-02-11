@@ -12,3 +12,8 @@
     vee install -r requirements.txt
     vee link requirements.txt
 
+- need to have a few Package attributes:
+
+    - name (detected by transport, package, or defaults to spec)
+    - revision (detected by transport, package, or defaults to 'unversioned')
+
