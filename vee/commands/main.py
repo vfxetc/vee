@@ -10,6 +10,7 @@ import os
 import pkg_resources
 
 from vee.home import Home
+from vee.exceptions import CliException
 
 
 class AliasedSubParsersAction(argparse._SubParsersAction):
@@ -35,15 +36,12 @@ def command(*args, **kwargs):
     return _decorator
 
 
-class CommandError(EnvironmentError):
-    pass
-
 
 class Namespace(argparse.Namespace):
 
     def assert_home(self):
         if not self.home:
-            raise CommandError(1, 'home is required; please set VEE_HOME or --home')
+            raise CliException('home is required; please set VEE_HOME or --home')
 
 
 
@@ -94,9 +92,8 @@ def main(argv=None):
     if args.func:
         try:
             res = args.func(args, *unparsed) or 0
-        except CommandError as e:
-            if e.strerror:
-                print e.strerror
+        except CliException as e:
+            print e.clistr
             res = e.errno
     else:
         parser.print_help()

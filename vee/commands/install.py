@@ -10,29 +10,7 @@ from vee.utils import colour
     usage='vee install [--force] PACKAGE [OPTIONS]',
 )
 def install(args):
-
     args.assert_home()
     req = Requirement(args.package, home=args.home)
-
-    def installed_check():
-        if req.manager.installed:
-            if args.force:
-                req.manager.uninstall()
-            else:
-                print colour('ERROR:', 'red', bright=True), colour(str(req) + ' is already installed', 'black', reset=True)
-                return True
-
-    if installed_check():
-        return
-
-    req.manager.fetch()
-    if installed_check():
-        return
+    req.install(force=args.force)
     
-    req.manager.extract()
-    if installed_check():
-        return
-
-    req.manager.build()
-    req.manager.install()
-

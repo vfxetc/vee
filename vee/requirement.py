@@ -2,6 +2,8 @@ import argparse
 import re
 import shlex
 
+from vee.exceptions import AlreadyInstalled
+
 
 class Requirement(object):
 
@@ -33,7 +35,7 @@ class Requirement(object):
             self.package = args.package
 
         self._args = args
-        
+
         self.install_name = args.install_name
         self.name = args.name
         self.revision = args.revision
@@ -55,9 +57,23 @@ class Requirement(object):
         return '%s(%r)' % (self.__class__.__name__, str(self))
 
 
-    def install(self):
+    def _reinstall_check(self, force):
+        if self.manager.installed:
+            if force:
+                self.manager.uninstall()
+            else:
+                raise AlreadyInstalled(str(self))
+
+    def install(self, force=False):
+
+        self._reinstall_check(force)
+
         self.manager.fetch()
+        self._reinstall_check(force)
+    
         self.manager.extract()
+        self._reinstall_check(force)
+
         self.manager.build()
         self.manager.install()
 
