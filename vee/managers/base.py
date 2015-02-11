@@ -56,7 +56,7 @@ class BaseManager(object):
     def _build_name(self):
         return '%s/%s-%s' % (
             self.install_name,
-            datetime.datetime.utcnow().isoformat('T'),
+            datetime.datetime.utcnow().strftime('%y%m%d%H%M%S'),
             os.urandom(4).encode('hex'),
         )
 
@@ -66,6 +66,12 @@ class BaseManager(object):
         if not self.package_path:
             raise RuntimeError('need package path for default Manager.build_path')
         return self.home.abspath('builds', self.name, self.build_name)
+
+    _build_path_to_install = None
+
+    @property
+    def build_path_to_install(self):
+        return self._build_path_to_install or self.build_path
 
     def _clean_build_path(self, makedirs=True):
         if self.build_path and os.path.exists(self.build_path):
@@ -82,7 +88,7 @@ class BaseManager(object):
         if not self.build_path:
             raise RuntimeError('need build path for default Manager.extract')
 
-        print colour('Extracting', 'blue', bright=True, reset=True)
+        print colour('Extracting to build directory...', 'blue', bright=True, reset=True)
 
         # Tarballs.
         if re.search(r'(\.tgz|\.tar\.gz)$', self.package_path):
@@ -117,16 +123,40 @@ class BaseManager(object):
 
         setup_py = find('setup.py')
         if setup_py:
-            print "TODO: python setup.py"
+
+            top_level = os.path.dirname(setup_py)
+            build = os.path.join('build', 'lib', 'python2.7', 'site-packages')
+            self._build_path_to_install = os.path.join(top_level, 'build')
+
+            print colour('Building Python package...', 'blue', bright=True, reset=True)
+            if call(['python', 'setup.py', 'build',
+                '--build-temp', 'tmp',
+                '--build-purelib', build,
+                '--build-platlib', build,
+            ], cwd=top_level, silent=True):
+                raise RuntimeError('Could not build Python package')
+
+            # Install egg-info (for entry_points, mostly).
+            # Need to inject setuptools for this
+            print colour('Building egg-info...', 'blue', bright=True, reset=True)
+            if call(['python', '-c', 'import setuptools; __file__="%s"; execfile(__file__)' % (setup_py, ),
+                'install_egg_info', '-d', build,
+            ], cwd=top_level, silent=True):
+                raise RuntimeError('Could not build Python egg_info')
+
             return
 
         configure = find('configure')
         if configure:
-            print 'TODO: ./configure'
+            self._build_path_to_install = os.path.dirname(configure)
+            print colour('Configuring...', 'blue', bright=True, reset=True)
+            call(['./configure'], cwd=os.path.dirname(configure))
 
         makefile = find('Makefile')
         if makefile:
-            print 'TODO: make'
+            self._build_path_to_install = os.path.dirname(makefile)
+            print colour('Making...', 'blue', bright=True, reset=True)
+            call(['make', '-j4'], cwd=os.path.dirname(makefile))
     
     @property
     def install_name(self):
@@ -152,7 +182,7 @@ class BaseManager(object):
     def install(self):
         """Install the build artifact into a final location."""
 
-        if not self.build_path:
+        if not self.build_path_to_install:
             raise RuntimeError('need build path for default Manager.install')
         if not self.install_path:
             raise RuntimeError('need install path for default Manager.install')
@@ -162,5 +192,8 @@ class BaseManager(object):
         if os.path.exists(self.install_path):
             raise RuntimeError('was already installed at %s' % self.install_path)
         
-        shutil.copytree(self.build_path, self.install_path, symlinks=True)
+        print colour('Installing', 'blue', bright=True), colour(self.build_path_to_install, 'black', reset=True)
+        print colour('        to', 'blue', bright=True), colour(self.install_path, 'black', reset=True)
+
+        shutil.copytree(self.build_path_to_install, self.install_path, symlinks=True)
 
