@@ -41,7 +41,7 @@ class HomebrewManager(GitManager):
     _cached_brew_info = None
 
     def _fresh_brew_info(self):
-        self._cached_brew_info = json.loads(self._brew('info', '--json=v1', self.requirement.package, stdout=True, silent=True))
+        self._cached_brew_info = json.loads(self._brew('info', '--json=v1', self.requirement.package, stdout=True, silent=True))[0]
         return self._cached_brew_info
 
     @property
@@ -56,22 +56,29 @@ class HomebrewManager(GitManager):
         pass
 
     def build(self):
-        if self._brew_info:
-            print self.requirement, 'is already built'
+        if self.installed:
+            print colour('Warning:', 'red', bright=True), colour(self.requirement + ' is already built', 'black', reset=True)
             return
         self._brew('install', self.requirement.package)
         self._fresh_brew_info()
 
     @property
-    def install_name(self):
+    def build_name(self):
         return '%s/%s' % (
             self._brew_info['name'],
-            self._brew_info['linked_keg'] or self._brew_info['installed'][-1]['version'],
+            self._brew_info['linked_keg'] or (
+                self._brew_info['installed'][-1]['version']
+                if self._brew_info['installed']
+                else self._brew_info['versions']['stable']
+            ),
         )
 
     @property
-    def install_path(self):
+    def build_path(self):
         return os.path.join(self.package_path, 'Cellar', self.install_name)
+
+    install_name = build_name
+    install_path = build_path
 
     def install(self):
         # Disable BaseManager.install().

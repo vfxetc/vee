@@ -31,6 +31,10 @@ class BaseManager(object):
 
     @property
     def package_name(self):
+        return self._package_name
+
+    @property
+    def _package_name(self):
         return self.requirement.package.strip('/')
 
     @property
@@ -44,8 +48,12 @@ class BaseManager(object):
     def discover_existing_installs(self):
         pass
 
-    @cached_property
+    @property
     def build_name(self):
+        return self._build_name
+
+    @cached_property
+    def _build_name(self):
         return '%s/%s-%s' % (
             self.install_name,
             datetime.datetime.utcnow().isoformat('T'),
@@ -122,12 +130,24 @@ class BaseManager(object):
     
     @property
     def install_name(self):
+        if self.requirement.install_name:
+            return self.requirement.install_name
+        if self.requirement.name and self.requirement.revision:
+            return '%s/%s' % (self.requirement.name, self.requirement.revision)
+        return self._install_name
+
+    @property
+    def _install_name(self):
         return re.sub(r'(\.(tar|gz|tgz|zip))+$', '', self.package_name)
 
     @property
     def install_path(self):
         """The final location of the built package."""
         return self.home.abspath('installs', self.name, self.install_name)
+
+    @property
+    def installed(self):
+        return os.path.exists(self.install_path)
 
     def install(self):
         """Install the build artifact into a final location."""

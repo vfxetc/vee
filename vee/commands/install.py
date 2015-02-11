@@ -10,5 +10,8 @@ from vee.requirement import Requirement
 def install(args):
     args.assert_home()
     req = Requirement(args.package, home=args.home)
-    req.install()
+    if req.manager.installed:
+        print req, 'is already installed'
+    else:
+        req.install()
 

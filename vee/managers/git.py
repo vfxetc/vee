@@ -73,11 +73,11 @@ class GitManager(BaseManager):
         self._assert_checked_out(self.requirement.revision)
 
     @property
-    def build_name(self):
+    def _build_name(self):
         return '%s-%s' % (self.package_name, self._commit[:8])
 
     @property
-    def install_name(self):
+    def _install_name(self):
         return self.build_name
 
 

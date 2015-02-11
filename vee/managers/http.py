@@ -13,7 +13,7 @@ class HttpManager(BaseManager):
     name = 'http'
 
     @property
-    def package_name(self):
+    def _package_name(self):
         split = urlparse.urlsplit(self.requirement.package)
         return os.path.join(
             split.netloc,

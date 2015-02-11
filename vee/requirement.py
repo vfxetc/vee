@@ -6,8 +6,9 @@ import shlex
 class Requirement(object):
 
     arg_parser = argparse.ArgumentParser(add_help=False)
-    arg_parser.add_argument('--name', default=None)
-    arg_parser.add_argument('--revision', default=None)
+    arg_parser.add_argument('--name')
+    arg_parser.add_argument('--revision')
+    arg_parser.add_argument('--install-name')
     arg_parser.add_argument('package')
 
 
@@ -32,10 +33,14 @@ class Requirement(object):
             self.package = args.package
 
         self._args = args
-        self.home = home or args.home
-        self.manager = self.home.get_manager(requirement=self)
+        
+        self.install_name = args.install_name
         self.name = args.name
         self.revision = args.revision
+
+        self.home = home or args.home
+        self.manager = self.home.get_manager(requirement=self)
+
 
     def __str__(self):
         package = self.manager_name + ('+' if self.manager_name else '') + self.package
