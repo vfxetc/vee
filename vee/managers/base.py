@@ -88,7 +88,7 @@ class BaseManager(object):
         if not self.build_path:
             raise RuntimeError('need build path for default Manager.extract')
 
-        print colour('Extracting to build directory...', 'blue', bright=True, reset=True)
+        print colour('Extracting to', 'blue', bright=True), colour(self.build_path, 'black', reset=True)
 
         # Tarballs.
         if re.search(r'(\.tgz|\.tar\.gz)$', self.package_path):
@@ -133,7 +133,7 @@ class BaseManager(object):
                 '--build-temp', 'tmp',
                 '--build-purelib', build,
                 '--build-platlib', build,
-            ], cwd=top_level, silent=True):
+            ], cwd=top_level):
                 raise RuntimeError('Could not build Python package')
 
             # Install egg-info (for entry_points, mostly).
@@ -141,7 +141,7 @@ class BaseManager(object):
             print colour('Building egg-info...', 'blue', bright=True, reset=True)
             if call(['python', '-c', 'import setuptools; __file__="%s"; execfile(__file__)' % (setup_py, ),
                 'install_egg_info', '-d', build,
-            ], cwd=top_level, silent=True):
+            ], cwd=top_level):
                 raise RuntimeError('Could not build Python egg_info')
 
             return
@@ -150,7 +150,7 @@ class BaseManager(object):
         if configure:
             self._build_path_to_install = os.path.dirname(configure)
             print colour('Configuring...', 'blue', bright=True, reset=True)
-            call(['./configure'], cwd=os.path.dirname(configure))
+            call(['./configure', '--prefix', self.install_path], cwd=os.path.dirname(configure))
 
         makefile = find('Makefile')
         if makefile:
@@ -192,8 +192,13 @@ class BaseManager(object):
         if os.path.exists(self.install_path):
             raise RuntimeError('was already installed at %s' % self.install_path)
         
-        print colour('Installing', 'blue', bright=True), colour(self.build_path_to_install, 'black', reset=True)
-        print colour('        to', 'blue', bright=True), colour(self.install_path, 'black', reset=True)
+        print colour('Installing to', 'blue', bright=True), colour(self.install_path, 'black', reset=True)
 
         shutil.copytree(self.build_path_to_install, self.install_path, symlinks=True)
+
+    def uninstall(self):
+        if not self.installed:
+            raise RuntimeError('cannot uninstall package which is not installed')
+        print colour('Uninstalling', 'blue', bright=True), colour(self.install_path, 'black', reset=True)
+        shutil.rmtree(self.install_path)
 

@@ -17,6 +17,15 @@ The initial goal is to include packages from:
 - ad-hoc general packages.
 
 
+Examples
+--------
+
+::
+    vee install homebrew+sqlite
+    vee install git+git@git.westernx:westernx/sgfs
+    vee install --force http://localhost:8000/sgmock-0.1-dev.tar.gz --install-name sgmock/0.1
+
+
 Definitions
 -----------
 

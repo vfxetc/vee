@@ -9,6 +9,8 @@ class GitManager(BaseManager):
 
     name = 'git'
 
+    _commit = 'unknown'
+
     @property
     def _git_dir(self):
         return os.path.join(self.package_path, '.git')
@@ -23,10 +25,10 @@ class GitManager(BaseManager):
             makedirs(self.package_path)
 
             if revision:
-                print colour('Cloning', 'blue', bright=True), colour(self._git_remote_url, 'black') + colour('', reset=True)
+                print colour('Cloning', 'blue', bright=True), colour(self._git_remote_url, 'black', reset=True)
                 call(['git', 'clone', self._git_remote_url, self.package_path])
             else:
-                print colour('Cloning (shallow)', 'blue', bright=True), colour(self._git_remote_url, 'black') + colour('', reset=True)
+                print colour('Cloning (shallow)', 'blue', bright=True), colour(self._git_remote_url, 'black', reset=True)
                 call(['git', 'clone', '--depth=1', self._git_remote_url, self.package_path])
 
         self._commit = head = self._git_rev_parse('HEAD')
@@ -37,13 +39,13 @@ class GitManager(BaseManager):
 
             if not commit:
 
-                print colour('Warning:', 'yellow', bright=True), colour('revision %r does not exist.' % revision, 'black', reset=True)
+                print colour('Warning:', bg='yellow'), colour('revision %r does not exist.' % revision, 'black', reset=True)
 
                 if os.path.exists(os.path.join(self._git_dir, 'shallow')):
-                    print colour('Fetching unshallow', 'blue', bright=True), colour(self._git_remote_url, 'black') + colour('', reset=True)
+                    print colour('Fetching unshallow', 'blue', bright=True), colour(self._git_remote_url, 'black', reset=True)
                     self._git('fetch', '--unshallow', self._git_remote_url)
                 else:
-                    print colour('Fetching', 'blue', bright=True), colour(self._git_remote_url, 'black') + colour('', reset=True)
+                    print colour('Fetching', 'blue', bright=True), colour(self._git_remote_url, 'black', reset=True)
                     self._git('fetch', self._git_remote_url)
 
                 commit = self._git_rev_parse(revision)
@@ -54,7 +56,7 @@ class GitManager(BaseManager):
                 raise ValueError(msg)
 
             if head != commit:
-                print colour('Checking out', 'blue', bright=True), colour('%s [%s]' % (revision, commit), 'black') + colour('', reset=True)
+                print colour('Checking out', 'blue', bright=True), colour('%s [%s]' % (revision, commit), 'black', reset=True)
                 self._git('reset', '--hard', commit, silent=True)
 
             self._commit = commit
@@ -67,7 +69,6 @@ class GitManager(BaseManager):
             return self._git('rev-parse', '--verify', '--quiet', revision, stdout=True, silent=True).strip()
         except subprocess.CalledProcessError:
             pass
-
 
     def fetch(self):
         self._assert_checked_out(self.requirement.revision)
