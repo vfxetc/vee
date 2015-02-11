@@ -13,23 +13,21 @@ class HttpManager(BaseManager):
     name = 'http'
 
     @property
-    def _local_path(self):
+    def package_name(self):
         split = urlparse.urlsplit(self.requirement.package)
-        return self.home.abspath(
-            'packages',
-            self.name,
+        return os.path.join(
             split.netloc,
             split.path.strip('/'),
         )
 
     def fetch(self):
 
-        if os.path.exists(self._local_path):
-            self._local_path
+        if os.path.exists(self.package_path):
+            self.package_path
 
-        makedirs(os.path.dirname(self._local_path))
+        makedirs(os.path.dirname(self.package_path))
 
-        temp = self._local_path + '.downloading'
+        temp = self.package_path + '.downloading'
 
         print colour('VEE Downloading', 'blue', bright=True), colour(self.requirement.package, 
             'black') + colour('', reset=True)
@@ -48,7 +46,7 @@ class HttpManager(BaseManager):
             if dst_fh:
                 dst_fh.close()
 
-        shutil.move(temp, self._local_path)
+        shutil.move(temp, self.package_path)
 
-        return self._local_path
+        return self.package_path
 

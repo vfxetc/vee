@@ -1,6 +1,35 @@
 import errno
+import functools
 import os
 import subprocess
+
+
+class cached_property(object):
+    
+    def __init__(self, func):
+        functools.update_wrapper(self, func)
+        self.func = func
+    
+    def __get__(self, instance, owner_type=None):
+        if instance is None:
+            return self
+        try:
+            return instance.__dict__[self.__name__]
+        except KeyError:
+            value = self.func(instance)
+            instance.__dict__[self.__name__] = value
+            return value
+
+
+
+def makedirs(*args):
+    path = os.path.join(*args)
+    try:
+        os.makedirs(path)
+    except OSError as e:
+        if e.errno != errno.EEXIST:
+            raise e
+    return path
 
 
 def _print_call(cmd):
@@ -17,16 +46,6 @@ def call_output(cmd, **kw):
     if not kw.pop('silent', False):
         _print_call(cmd)
     return subprocess.check_output(cmd, **kw)
-
-
-def makedirs(*args):
-    path = os.path.join(*args)
-    try:
-        os.makedirs(path)
-    except OSError as e:
-        if e.errno != errno.EEXIST:
-            raise e
-    return path
 
 
 CSI = '\x1b['

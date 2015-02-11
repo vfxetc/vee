@@ -9,7 +9,6 @@ from vee.requirement import Requirement
 )
 def install(args):
     args.assert_home()
-    req = Requirement.parse(args.package, home=args.home)
-    req.fetch()
+    req = Requirement(args.package, home=args.home)
     req.install()
 

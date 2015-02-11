@@ -19,10 +19,13 @@
     - Requirement.manager -> Manager that transports, and likely does the build
 
     - Requirement.fetch() -> uses the Manager to get the package
-    - Requirement.package -> Package, or string path
+    - Requirement.package -> or string path
 
     - Requirement.build() -> uses the Manager to build
-    - Requirement.artifact -> BuildArtifact, or string path
+      Requirement.build_path
+
+    - Requirement.install() -> uses the Manager to install.
+    - Requirement.artifact -> string path
 
     - Environment.link(requirement)
 
@@ -30,7 +33,7 @@
 - homebrew taps: homebrew+mikeboers/testbrew/foo
     - we would need a way to detect which tap it is
     - we can grep `brew info $forumla` for From: https://github.com/#{user}/#{repo}/blob/master/#{path}
-    
+
 
 - commands
 

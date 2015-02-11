@@ -14,7 +14,7 @@ class HomebrewManager(GitManager):
         return 'linuxbrew' if sys.platform.startswith('linux') else 'homebrew'
 
     @property
-    def _git_work_tree(self):
+    def package_path(self):
         return self.home.abspath('packages', self._name_for_platform)
 
     @property
@@ -22,8 +22,7 @@ class HomebrewManager(GitManager):
         return 'https://github.com/Homebrew/%s.git' % self._name_for_platform
 
     def _brew(self, *cmd):
-
-        prefix = self._git_work_tree
+        prefix = self.package_path
         env = os.environ.copy()
         env.update(
             # HOMEBREW=prefix,
@@ -35,5 +34,13 @@ class HomebrewManager(GitManager):
         )
         call((os.path.join(prefix, 'bin', 'brew'), ) + cmd, env=env)
 
-    def install(self):
+    def extract(self):
+        # Disable BaseManager.extract().
+        pass
+
+    def build(self):
         self._brew('install', self.requirement.package)
+
+    def install(self):
+        # Disable BaseManager.install().
+        pass

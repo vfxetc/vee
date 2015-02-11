@@ -10,16 +10,14 @@ class Requirement(object):
     arg_parser.add_argument('--revision', default=None)
     arg_parser.add_argument('package')
 
-    @classmethod
-    def parse(cls, args, **kwargs):
-        if isinstance(args, basestring):
-            args = shlex.split(args)
-        if isinstance(args, (list, tuple)):
-            args = cls.arg_parser.parse_args(args)
-        return cls(args, **kwargs)
 
     def __init__(self, args, home=None):
 
+        if isinstance(args, basestring):
+            args = shlex.split(args)
+        if isinstance(args, (list, tuple)):
+            args = self.arg_parser.parse_args(args)
+            
         # Extract the manager type. Usually this is of the form:
         # type+specification. Otherwise we assume it is a simple URL or file.
         m = re.match(r'^(\w+)\+(.+)$', args.package)
@@ -51,10 +49,11 @@ class Requirement(object):
     def __repr__(self):
         return '%s(%r)' % (self.__class__.__name__, str(self))
 
-    def fetch(self):
-        self.manager.fetch()
 
     def install(self):
+        self.manager.fetch()
+        self.manager.extract()
+        self.manager.build()
         self.manager.install()
 
 

@@ -10,12 +10,8 @@ class GitManager(BaseManager):
     name = 'git'
 
     @property
-    def _git_work_tree(self):
-        return self.home.abspath('packages', self.name, self.requirement.package.strip('/'))
-
-    @property
     def _git_dir(self):
-        return os.path.join(self._git_work_tree, '.git')
+        return os.path.join(self.package_path, '.git')
 
     @property
     def _git_remote_url(self):
@@ -24,18 +20,18 @@ class GitManager(BaseManager):
     def _assert_checked_out(self, revision=None):
 
         if not os.path.exists(self._git_dir):
-            makedirs(self._git_work_tree)
+            makedirs(self.package_path)
 
             if revision:
                 print colour('Cloning', 'blue', bright=True), colour(self._git_remote_url, 'black') + colour('', reset=True)
-                call(['git', 'clone', self._git_remote_url, self._git_work_tree])
+                call(['git', 'clone', self._git_remote_url, self.package_path])
             else:
                 print colour('Cloning (shallow)', 'blue', bright=True), colour(self._git_remote_url, 'black') + colour('', reset=True)
-                call(['git', 'clone', '--depth=1', self._git_remote_url, self._git_work_tree])
+                call(['git', 'clone', '--depth=1', self._git_remote_url, self.package_path])
+
+        self._commit = head = self._git_output('rev-parse', 'HEAD', silent=True)
 
         if revision:
-
-            head = self._git_output('rev-parse', 'HEAD', silent=True)
 
             try:
                 commit = self._git_output('rev-parse', '--verify', '--quiet', revision, silent=True)
@@ -64,15 +60,26 @@ class GitManager(BaseManager):
                 print colour('Checking out', 'blue', bright=True), colour('%s [%s]' % (revision, commit), 'black') + colour('', reset=True)
                 self._git('reset', '--hard', commit, silent=True)
 
+            self._commit = commit
+
 
     def _git(self, *cmd, **kw):
-        call(('git', '--git-dir', self._git_dir, '--work-tree', self._git_work_tree) + cmd, **kw)
+        call(('git', '--git-dir', self._git_dir, '--work-tree', self.package_path) + cmd, **kw)
 
     def _git_output(self, *cmd, **kw):
-        return call_output(('git', '--git-dir', self._git_dir, '--work-tree', self._git_work_tree) + cmd, **kw).strip()
+        return call_output(('git', '--git-dir', self._git_dir, '--work-tree', self.package_path) + cmd, **kw).strip()
 
     def fetch(self):
         self._assert_checked_out(self.requirement.revision)
-        return self._git_work_tree
+
+    @property
+    def build_name(self):
+        return '%s-%s' % (self.package_name, self._commit[:8])
+
+    @property
+    def install_name(self):
+        return self.build_name
+
+
 
 
