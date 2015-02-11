@@ -3,6 +3,32 @@
 √ bootstrap entrypoints
 √ bootstrap commands
 
+- should Package be both the requirement and installed version?
+
+    Definitions
+
+        Package: the container that has either source or prepared build
+        artifacts.
+
+        Requirement: a project that we want installed, optionaly with versioning
+        information.
+
+    - Requirement.specification -> normalized specification
+
+    - Requirement.manager_name
+    - Requirement.manager -> Manager that transports, and likely does the build
+
+    - Requirement.fetch() -> uses the Manager to get the package
+    - Requirement.package -> Package, or string path
+
+    - Requirement.build() -> uses the Manager to build
+    - Requirement.artifact -> BuildArtifact, or string path
+
+    - Environment.link(requirement)
+
+
+
+
 - commands
 
     vee init
@@ -12,8 +38,73 @@
     vee install -r requirements.txt
     vee link requirements.txt
 
-- need to have a few Package attributes:
+- Packages need to identify what they provide, so that others can depend on them.
+    
+    homebrew+ffmpeg provides "lib:ffmpeg" and "bin:ffmpeg". PyAV needs "lib:ffmpeg":
+
+    PKG_CONFIG_PATH = home.absbuild('lib:ffmpeg', 'lib', 'pkg-config')
+
+
+- We need some sort of builds/index.db in order to find existing builds.
+
+  SQLite schema:
+
+    migrations: lift this from my web projects
+
+    builds:
+        
+        - id
+        - cache_path
+        - build_path
+        - created_at
+        - user_specification (normalized via Package.__str__)
+        - manager (without options)
+        - package (without options)
+
+        Below can be provided by the user, but also discovered at build time.
+        package.setattr('version', version, specificity=4) # stores the highest specificity
+            _version_specificity stores the current specificity
+
+        - name (defaults to $package)
+        - version
+        - revision
+        - commit (do we need this, or can we overload revision?)
+
+
+
+
+
+- If we want a super clean build heirarchy, we need:
 
     - name (detected by transport, package, or defaults to spec)
     - revision (detected by transport, package, or defaults to 'unversioned')
+
+    Lets try to pull them from the examples!
+
+        http://packages.westernx/nukeplugins/nukeplugins-1.0.0-20150215.tar.gz --name nukeplugins -
+
+        caches/http/packages.westernx/nukeplugins/nukeplugins-1.0.0-20150215.tar.gz
+        tmp/nukeplugins-1.0.0-20150215-$DATETIME-$RANDOM
+        builds/http/packages.westernx/nukeplugins/nukeplugins-1.0.0-20150215
+        /usr/local/vee/lib/nukesomething.so -> /usr/local/vee/builds/http/packages.westernx/nukeplugins/nukeplugins-1.0.0-20150215/lib/nukesomething.so
+
+        homebrew/Cellar/ffmpeg/2.5.3
+
+
+        homebrew+ffmpeg --commit db3164b
+
+            - `brew info --json=v1 sqlite` identifies the version, and also lets
+              us know if it isn't installed
+
+            - copy to builds/homebrew/ffmpeg/db3164b OR builds/homebrew/ffmpeg/2.5.3-db3164b
+
+
+
+
+
+        pip+cython --version 0.20.0
+        PyAV --commit 01234567
+        westernx_git+sgsession --commit 0123456
+        git+git@git.westernx:westernx/sgfs --commit 0123456
+
 
