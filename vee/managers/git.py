@@ -29,14 +29,11 @@ class GitManager(BaseManager):
                 print colour('Cloning (shallow)', 'blue', bright=True), colour(self._git_remote_url, 'black') + colour('', reset=True)
                 call(['git', 'clone', '--depth=1', self._git_remote_url, self.package_path])
 
-        self._commit = head = self._git_output('rev-parse', 'HEAD', silent=True)
+        self._commit = head = self._git_rev_parse('HEAD')
 
         if revision:
 
-            try:
-                commit = self._git_output('rev-parse', '--verify', '--quiet', revision, silent=True)
-            except subprocess.CalledProcessError:
-                commit = None
+            commit = self._git_rev_parse(revision)
 
             if not commit:
 
@@ -49,10 +46,10 @@ class GitManager(BaseManager):
                     print colour('Fetching', 'blue', bright=True), colour(self._git_remote_url, 'black') + colour('', reset=True)
                     self._git('fetch', self._git_remote_url)
 
-            try:
-                commit = self._git_output('rev-parse', '--verify', '--quiet', revision, silent=True)
-            except subprocess.CalledProcessError:
-                msg = 'rev %r does not exist in %s' % (revision, self._git_remote_url)
+                commit = self._git_rev_parse(revision)
+
+            if not commit:
+                msg = 'revision %r does not exist in %s' % (revision, self._git_remote_url)
                 print colour('Error:', 'red'), colour(msg, reset=True)
                 raise ValueError(msg)
 
@@ -62,12 +59,15 @@ class GitManager(BaseManager):
 
             self._commit = commit
 
-
     def _git(self, *cmd, **kw):
-        call(('git', '--git-dir', self._git_dir, '--work-tree', self.package_path) + cmd, **kw)
+        return call(('git', '--git-dir', self._git_dir, '--work-tree', self.package_path) + cmd, **kw)
 
-    def _git_output(self, *cmd, **kw):
-        return call_output(('git', '--git-dir', self._git_dir, '--work-tree', self.package_path) + cmd, **kw).strip()
+    def _git_rev_parse(self, revision):
+        try:
+            return self._git('rev-parse', '--verify', '--quiet', revision, stdout=True, silent=True).strip()
+        except subprocess.CalledProcessError:
+            pass
+
 
     def fetch(self):
         self._assert_checked_out(self.requirement.revision)

@@ -1,13 +1,17 @@
+import json
 import os
 import sys
 
 from vee.managers.git import GitManager
-from vee.utils import call, makedirs
+from vee.utils import call, makedirs, colour
 
 
 class HomebrewManager(GitManager):
 
     name = 'homebrew'
+
+    def __init__(self, *args, **kwargs):
+        super(HomebrewManager, self).__init__(*args, **kwargs)
 
     @property
     def _name_for_platform(self):
@@ -21,25 +25,53 @@ class HomebrewManager(GitManager):
     def _git_remote_url(self):
         return 'https://github.com/Homebrew/%s.git' % self._name_for_platform
 
-    def _brew(self, *cmd):
-        prefix = self.package_path
+    def _brew(self, *cmd, **kwargs):
+        package = self.package_path
         env = os.environ.copy()
         env.update(
             # HOMEBREW=prefix,
-            HOMEBREW_REPOSITORY=prefix,
-            HOMEBREW_CACHE=os.path.join(prefix, 'Cache'),
-            HOMEBREW_CELLAR=os.path.join(prefix, 'Cellar'),
-            HOMEBREW_PREFIX=prefix,
-            HOMEBREW_TEMP=makedirs(prefix, 'tmp'),
+            HOMEBREW_REPOSITORY=package,
+            HOMEBREW_CACHE=os.path.join(package, 'Cache'),
+            HOMEBREW_CELLAR=os.path.join(package, 'Cellar'),
+            HOMEBREW_PREFIX=package,
+            HOMEBREW_TEMP=makedirs(package, 'tmp'),
         )
-        call((os.path.join(prefix, 'bin', 'brew'), ) + cmd, env=env)
+        return call((os.path.join(package, 'bin', 'brew'), ) + cmd, env=env, **kwargs)
+
+    _cached_brew_info = None
+
+    def _fresh_brew_info(self):
+        self._cached_brew_info = json.loads(self._brew('info', '--json=v1', self.requirement.package, stdout=True, silent=True))
+        return self._cached_brew_info
+
+    @property
+    def _brew_info(self):
+        if self._cached_brew_info is not None:
+            return self._cached_brew_info
+        else:
+            return self._fresh_brew_info()
 
     def extract(self):
         # Disable BaseManager.extract().
         pass
 
     def build(self):
+        if self._brew_info:
+            print self.requirement, 'is already built'
+            return
         self._brew('install', self.requirement.package)
+        self._fresh_brew_info()
+
+    @property
+    def install_name(self):
+        return '%s/%s' % (
+            self._brew_info['name'],
+            self._brew_info['linked_keg'] or self._brew_info['installed'][-1]['version'],
+        )
+
+    @property
+    def install_path(self):
+        return os.path.join(self.package_path, 'Cellar', self.install_name)
 
     def install(self):
         # Disable BaseManager.install().
