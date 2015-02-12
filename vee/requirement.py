@@ -47,15 +47,13 @@ class Requirement(object):
     def __str__(self):
         package = self.manager_name + ('+' if self.manager_name else '') + self.package
         args = []
-        if self.name:
-            args.append('--name %s' % self.name)
-        if self.revision:
-            args.append('--revision %s' % self.revision)
+        for name in ('name', 'revision', 'install_name'):
+            if getattr(self, name):
+                args.append('--%s %s' % (name, getattr(self, name)))
         return package + (' ' if args else '') + ' '.join(sorted(args))
 
     def __repr__(self):
         return '%s(%r)' % (self.__class__.__name__, str(self))
-
 
     def _reinstall_check(self, force):
         if self.manager.installed:

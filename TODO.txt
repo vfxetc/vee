@@ -5,59 +5,19 @@
 
 - $environment/vee-linked.txt reports on what is already linked in there
 
-- `vee clone` for dev
-- too much stuff is symlinked; look at how Homebrew does it to see which
-  directories we should be linking
+- abtract GitRepo class for wrapping a git repo and working directory
+    - GitRepo(working_dir, remote_url=None)
+        - clones if it doesn't exist
+    - GitRepo.checkout(revision, fetch=True, clean=False, hard=True, force=False)
 
-- --configuration 'sdflkjsdf' for flags to pass to things when they are
-  configured
+- custom managers
+    - PyAV has special build instructions
 
-- should Package be both the requirement and installed version?
+- file manager
 
-    Definitions
-
-        Package: the container that has either source or prepared build
-        artifacts.
-
-        Requirement: a project that we want installed, optionaly with versioning
-        information.
-
-    - Requirement.specification -> normalized specification
-
-    - Requirement.manager_name
-    - Requirement.manager -> Manager that transports, and likely does the build
-
-    - Requirement.fetch() -> uses the Manager to get the package
-    - Requirement.package -> or string path
-
-    - Requirement.build() -> uses the Manager to build
-      Requirement.build_path
-
-    - Requirement.install() -> uses the Manager to install.
-    - Requirement.artifact -> string path
-
-    - Environment.link(requirement)
-
-
-- homebrew taps: homebrew+mikeboers/testbrew/foo
-    - we would need a way to detect which tap it is
-    - we can grep `brew info $forumla` for From: https://github.com/#{user}/#{repo}/blob/master/#{path}
-
-
-- commands
-
-    vee init
-    vee update
-    vee upgrade
-    vee install path/to/something.tar.gz
-    vee install -r requirements.txt
-    vee link requirements.txt
-
-- Packages need to identify what they provide, so that others can depend on them.
-    
-    homebrew+ffmpeg provides "lib:ffmpeg" and "bin:ffmpeg". PyAV needs "lib:ffmpeg":
-
-    PKG_CONFIG_PATH = home.absbuild('lib:ffmpeg', 'lib', 'pkg-config')
+- pip manager
+    - can we vendor pip?
+        see: https://bootstrap.pypa.io/get-pip.py
 
 
 - We need some sort of builds/index.db in order to find existing builds.
@@ -85,41 +45,59 @@
         - revision
         - commit (do we need this, or can we overload revision?)
 
+- `vee clone` for dev?
+
+- symlink directories if they aren't going to contain anything but one
+  requirement's files; match how Homebrew does it
+
+- Requirement --configuration flag for flags to pass to things when they are
+  configured. Homebrew could use this for `brew install $name $configuration`
+
+- Homebrew is only installing the tree of the one package, not any of the
+  dependencies. It should also link the dependencies. Perhaps there should be
+  a Requirements.iter_dependencies() which returns them all, and then makes
+  sure they are all linked.
+
+- Packages need to identify what they provide, so that others can depend on them.
+    
+    homebrew+ffmpeg provides "lib:ffmpeg" and "bin:ffmpeg". PyAV needs "lib:ffmpeg":
+
+    PKG_CONFIG_PATH = home.absbuild('lib:ffmpeg', 'lib', 'pkg-config')
+
+- Document the various *_name, *_path, and *() methods of the install pipeline.
+
+    - Requirement.specification -> normalized specification
+
+    - Requirement.manager_name
+    - Requirement.manager -> Manager that transports, and likely does the build
+
+    - Requirement.fetch() -> uses the Manager to get the package
+    - Requirement.package -> or string path
+
+    - Requirement.build() -> uses the Manager to build
+      Requirement.build_path
+
+    - Requirement.install() -> uses the Manager to install.
+    - Requirement.artifact -> string path
+
+    - Environment.link(requirement)
 
 
+- homebrew taps: homebrew+mikeboers/testbrew/foo
+    - we would need a way to detect which tap it is
+    - we can grep `brew info $forumla` for From: https://github.com/#{user}/#{repo}/blob/master/#{path}
 
 
-- If we want a super clean build heirarchy, we need:
+- commands
 
-    - name (detected by transport, package, or defaults to spec)
-    - revision (detected by transport, package, or defaults to 'unversioned')
+    vee init REPO
+    vee update
+    vee upgrade
 
-    Lets try to pull them from the examples!
-
-        http://packages.westernx/nukeplugins/nukeplugins-1.0.0-20150215.tar.gz --name nukeplugins -
-
-        caches/http/packages.westernx/nukeplugins/nukeplugins-1.0.0-20150215.tar.gz
-        tmp/nukeplugins-1.0.0-20150215-$DATETIME-$RANDOM
-        builds/http/packages.westernx/nukeplugins/nukeplugins-1.0.0-20150215
-        /usr/local/vee/lib/nukesomething.so -> /usr/local/vee/builds/http/packages.westernx/nukeplugins/nukeplugins-1.0.0-20150215/lib/nukesomething.so
-
-        homebrew/Cellar/ffmpeg/2.5.3
+    √ vee install REQUIREMENT
+    - vee install -r requirements.txt
+    √ vee link NAME REQUIREMENTS_FILE
 
 
-        homebrew+ffmpeg --commit db3164b
-
-            - `brew info --json=v1 sqlite` identifies the version, and also lets
-              us know if it isn't installed
-
-            - copy to builds/homebrew/ffmpeg/db3164b OR builds/homebrew/ffmpeg/2.5.3-db3164b
-
-
-
-
-
-        pip+cython --version 0.20.0
-        PyAV --commit 01234567
-        westernx_git+sgsession --commit 0123456
-        git+git@git.westernx:westernx/sgfs --commit 0123456
 
 
