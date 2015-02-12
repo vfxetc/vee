@@ -3,6 +3,15 @@
 √ bootstrap entrypoints
 √ bootstrap commands
 
+- $environment/vee-linked.txt reports on what is already linked in there
+
+- `vee clone` for dev
+- too much stuff is symlinked; look at how Homebrew does it to see which
+  directories we should be linking
+
+- --configuration 'sdflkjsdf' for flags to pass to things when they are
+  configured
+
 - should Package be both the requirement and installed version?
 
     Definitions

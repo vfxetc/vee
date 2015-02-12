@@ -2,11 +2,15 @@
 # without having the package actually installed.
 
 [vee_commands]
-install = vee.commands.install:install
 brew = vee.commands.brew:brew
+install = vee.commands.install:install
+link = vee.commands.link:link
+prefix = vee.commands.prefix:prefix
+env = vee.commands.env:env
+exec = vee.commands.exec_:exec_
 
 [vee_default_managers]
+# file = vee.managers.file:FileManager
 git = vee.managers.git:GitManager
-http = vee.managers.http:HttpManager
-file = vee.managers.file:FileManager
 homebrew = vee.managers.homebrew:HomebrewManager
+http = vee.managers.http:HttpManager

@@ -22,8 +22,13 @@ Examples
 
 ::
     vee install homebrew+sqlite
-    vee install git+git@git.westernx:westernx/sgfs
-    vee install --force http://localhost:8000/sgmock-0.1-dev.tar.gz --install-name sgmock/0.1
+    vee install git+https://github.com/shotgunsoftware/python-api.git
+    vee install --force https://github.com/westernx/sgmock/archive/master.zip --install-name sgmock/0.1
+    vee install git+git@git.westernx:westernx/sgsession
+
+
+    vee link example tests/example-env.txt
+    vee exec example python -c 'import sgsession; print sgsession.__file__'
 
 
 Definitions

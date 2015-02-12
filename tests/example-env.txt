@@ -1,0 +1,11 @@
+
+# Core dependencies.
+homebrew+sqlite
+
+# Shotgun's API.
+git+https://github.com/shotgunsoftware/python-api.git
+
+# Our Shotgun libraries.
+https://github.com/westernx/sgmock/archive/master.zip --install-name sgmock/0.1
+git+git@git.westernx:westernx/sgsession
+

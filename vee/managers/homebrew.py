@@ -25,6 +25,10 @@ class HomebrewManager(GitManager):
     def _git_remote_url(self):
         return 'https://github.com/Homebrew/%s.git' % self._name_for_platform
 
+    @property
+    def _brew_bin(self):
+        return os.path.join(self.package_path, 'bin', 'brew')
+
     def _brew(self, *cmd, **kwargs):
         package = self.package_path
         env = os.environ.copy()
@@ -36,11 +40,13 @@ class HomebrewManager(GitManager):
             HOMEBREW_PREFIX=package,
             HOMEBREW_TEMP=makedirs(package, 'tmp'),
         )
-        return call((os.path.join(package, 'bin', 'brew'), ) + cmd, env=env, **kwargs)
+        return call((self._brew_bin, ) + cmd, env=env, **kwargs)
 
     _cached_brew_info = None
 
     def _fresh_brew_info(self):
+        if not os.path.exists(self._brew_bin):
+            return {}
         self._cached_brew_info = json.loads(self._brew('info', '--json=v1', self.requirement.package, stdout=True, silent=True))[0]
         return self._cached_brew_info
 
@@ -71,7 +77,7 @@ class HomebrewManager(GitManager):
                 if self._brew_info['installed']
                 else self._brew_info['versions']['stable']
             ),
-        )
+        ) if self._brew_info else self._build_name
 
     @property
     def build_path(self):
