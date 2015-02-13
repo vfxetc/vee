@@ -1,4 +1,5 @@
 import argparse
+import os
 import re
 import shlex
 
@@ -33,7 +34,7 @@ class Requirement(object):
             self.package = args.package
         else:
             self.manager_name = 'file'
-            self.package = args.package
+            self.package = os.path.abspath(os.path.expanduser(args.package))
 
         self._args = args
 

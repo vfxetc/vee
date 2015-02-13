@@ -49,5 +49,3 @@ class HttpManager(BaseManager):
 
         shutil.move(temp, self.package_path)
 
-        return self.package_path
-

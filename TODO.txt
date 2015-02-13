@@ -1,13 +1,28 @@
 
 
-- $environment/vee-linked.txt reports on what is already linked in there
+- something to report on what is already linked into and environment:
+
+    - $environment/etc/vee.txt
+    - $environment/etc/vee.db
+    - $environment/etc/vee/linked/$package_name.txt
+
 
 - custom managers
+
     - PyAV has special build instructions
+
+    `vee install PyAV.py`, where PyAV.py contains:
+
+        - REQUIREMENT = 'https://pypi.python.org/packages/source/a/av/av-0.2.2.tar.gz#md5=ec0198f28d9294d20b54b0ac3a9ff77d'
+        - DEPENDS_ON = ['lib:ffmpeg']
+        - MANAGER or PyAVManager or PyavManager, which inherits from BaseManager
+
 
 - file manager
 
+
 - pip manager
+    - for now, we can just link to the archives
     - can we vendor pip?
         see: https://bootstrap.pypa.io/get-pip.py
 
@@ -42,8 +57,6 @@
 - symlink directories if they aren't going to contain anything but one
   requirement's files; match how Homebrew does it
 
-- Requirement --configuration flag for flags to pass to things when they are
-  configured. Homebrew could use this for `brew install $name $configuration`
 
 - Homebrew is only installing the tree of the one package, not any of the
   dependencies. It should also link the dependencies. Perhaps there should be
@@ -71,24 +84,6 @@
     homebrew+ffmpeg provides "lib:ffmpeg" and "bin:ffmpeg". PyAV needs "lib:ffmpeg":
 
     PKG_CONFIG_PATH = home.absbuild('lib:ffmpeg', 'lib', 'pkg-config')
-
-- Document the various *_name, *_path, and *() methods of the install pipeline.
-
-    - Requirement.specification -> normalized specification
-
-    - Requirement.manager_name
-    - Requirement.manager -> Manager that transports, and likely does the build
-
-    - Requirement.fetch() -> uses the Manager to get the package
-    - Requirement.package -> or string path
-
-    - Requirement.build() -> uses the Manager to build
-      Requirement.build_path
-
-    - Requirement.install() -> uses the Manager to install.
-    - Requirement.artifact -> string path
-
-    - Environment.link(requirement)
 
 
 - homebrew taps: homebrew+mikeboers/testbrew/foo

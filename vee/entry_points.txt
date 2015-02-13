@@ -10,7 +10,7 @@ env = vee.commands.env:env
 exec = vee.commands.exec_:exec_
 
 [vee_default_managers]
-# file = vee.managers.file:FileManager
+file = vee.managers.file:FileManager
 git = vee.managers.git:GitManager
 homebrew = vee.managers.homebrew:HomebrewManager
 http = vee.managers.http:HttpManager

@@ -1,4 +1,5 @@
 import datetime
+import fnmatch
 import glob
 import os
 import pkg_resources
@@ -112,18 +113,31 @@ class BaseManager(object):
     def build(self):
         """Build the package in the build directory."""
 
-        def find(name):
-            base = os.path.join(self.build_path, name)
-            if os.path.exists(base):
-                return base
-            pattern = os.path.join(self.build_path, '*', name)
-            files = glob.glob(pattern)
-            return files[0] if files else None
+        def find(name, type='file'):
+            pattern = fnmatch.translate(name)
+            for dir_path, dir_names, file_names in os.walk(self.build_path):
+                # Look for the file/directory.
+                candidates = dict(file=file_names, dir=dir_names)[type]
+                found = next((x for x in candidates if re.match(pattern, x)), None)
+                if found:
+                    return os.path.join(dir_path, found)
+                # Bail when we hit a fork in the directory tree.
+                if len(dir_names) > 1 or file_names:
+                    return
+
+        egg_info = find('*.egg-info', 'dir')
+        if egg_info:
+            print colour('Found Python egg:', 'blue', bright=True), colour(os.path.basename(egg_info), 'black', reset=True)
+            self._build_path_to_install = os.path.dirname(egg_info)
+            # TODO: Get the right Python version.
+            self._install_subdir = 'lib/python2.7/site-packages'
+            return
 
         setup_py = find('setup.py')
         if setup_py:
 
             top_level = os.path.dirname(setup_py)
+            # TODO: Get the right Python version.
             build = os.path.join('build', 'lib', 'python2.7', 'site-packages')
             self._build_path_to_install = os.path.join(top_level, 'build')
 
@@ -142,7 +156,6 @@ class BaseManager(object):
                 'install_egg_info', '-d', build,
             ], cwd=top_level):
                 raise RuntimeError('Could not build Python egg_info')
-
             return
 
         configure = find('configure')
@@ -172,10 +185,12 @@ class BaseManager(object):
     def _derived_install_name(self):
         return re.sub(r'(\.(tar|gz|tgz|zip))+$', '', self._package_name)
 
+    _install_subdir = None
+
     @property
     def install_path(self):
         """The final location of the built package."""
-        return self._install_name and self.home.abspath('installs', self.name, self._install_name)
+        return self._install_name and self.home.abspath('installs', self.name, self._install_name, self._install_subdir or '').rstrip('/')
 
     @property
     def installed(self):
