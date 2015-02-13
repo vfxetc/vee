@@ -11,6 +11,7 @@ class Requirement(object):
     arg_parser.add_argument('--name')
     arg_parser.add_argument('--revision')
     arg_parser.add_argument('--install-name')
+    arg_parser.add_argument('--configuration')
     arg_parser.add_argument('package')
 
 
@@ -36,6 +37,7 @@ class Requirement(object):
 
         self._args = args
 
+        self.configuration = args.configuration
         self.install_name = args.install_name
         self.name = args.name
         self.revision = args.revision
@@ -47,7 +49,12 @@ class Requirement(object):
     def __str__(self):
         package = self.manager_name + ('+' if self.manager_name else '') + self.package
         args = []
-        for name in ('name', 'revision', 'install_name'):
+        for name in (
+            'configuration',
+            'install_name',
+            'name',
+            'revision',
+        ):
             if getattr(self, name):
                 args.append('--%s %s' % (name, getattr(self, name)))
         return package + (' ' if args else '') + ' '.join(sorted(args))

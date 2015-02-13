@@ -12,21 +12,22 @@ class GitManager(BaseManager):
 
     def __init__(self, *args, **kwargs):
         super(GitManager, self).__init__(*args, **kwargs)
-        self.repo = GitRepo(work_tree=self.package_path, remote_url=self.requirement.package)
+        self.repo = GitRepo(work_tree=self.package_path, remote_url=self.requirement and self.requirement.package)
 
     def fetch(self):
         self.repo.checkout(self.requirement.revision or 'HEAD')
 
     @property
     def _derived_build_name(self):
-        # _build_name is pulled by _install_name below, which is used to detect
-        # if the requirement is installed. This can happen before the repo is
-        # cloned, so we need to come up with a dummy name.
-        commit = self.repo.rev_parse(self.requirement.revision or 'HEAD') or 'notexist'
+        commit = self.repo.rev_parse(self.requirement.revision or 'HEAD')
+        if not commit:
+            return None
         return '%s-%s' % (self._package_name, commit[:8])
 
     @property
     def _derived_install_name(self):
+        # Git packages should include the repo in their install_name, instead
+        # of just the base package_name like the rest do.
         return self._build_name
 
 

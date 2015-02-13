@@ -3,8 +3,10 @@ import glob
 import os
 import pkg_resources
 import re
+import shlex
 import shutil
 
+from vee.exceptions import AlreadyInstalled
 from vee.utils import cached_property, colour, call
 
 
@@ -44,9 +46,6 @@ class BaseManager(object):
 
     def fetch(self):
         """Cache package from remote source; return something representing the package."""
-
-    def discover_existing_installs(self):
-        pass
 
     @property
     def _build_name(self):
@@ -150,7 +149,10 @@ class BaseManager(object):
         if configure:
             self._build_path_to_install = os.path.dirname(configure)
             print colour('Configuring...', 'blue', bright=True, reset=True)
-            call(['./configure', '--prefix', self.install_path], cwd=os.path.dirname(configure))
+            cmd = ['./configure', '--prefix', self.install_path]
+            if self.requirement.configuration:
+                cmd.extend(shlex.split(self.requirement.configuration))
+            call(cmd, cwd=os.path.dirname(configure))
 
         makefile = find('Makefile')
         if makefile:
@@ -173,11 +175,11 @@ class BaseManager(object):
     @property
     def install_path(self):
         """The final location of the built package."""
-        return self.home.abspath('installs', self.name, self._install_name)
+        return self._install_name and self.home.abspath('installs', self.name, self._install_name)
 
     @property
     def installed(self):
-        return os.path.exists(self.install_path)
+        return self.install_path and os.path.exists(self.install_path)
 
     def install(self):
         """Install the build artifact into a final location."""
@@ -189,8 +191,8 @@ class BaseManager(object):
 
         # We are not using our wrapper, as we want this to fail if it is
         # already installed.
-        if os.path.exists(self.install_path):
-            raise RuntimeError('was already installed at %s' % self.install_path)
+        if self.installed:
+            raise AlreadyInstalled('was already installed at %s' % self.install_path)
         
         print colour('Installing to', 'blue', bright=True), colour(self.install_path, 'black', reset=True)
 

@@ -1,5 +1,6 @@
 import json
 import os
+import shlex
 import sys
 
 from vee.managers.git import GitManager
@@ -65,7 +66,9 @@ class HomebrewManager(GitManager):
         if self.installed:
             print colour('Warning:', 'red', bright=True), colour(self.requirement + ' is already built', 'black', reset=True)
             return
-        self._brew('install', self.requirement.package)
+        self._brew('install', self.requirement.package, *(
+            shlex.split(self.requirement.configuration) if self.requirement.configuration else ()
+        ))
         self._fresh_brew_info()
 
     @property

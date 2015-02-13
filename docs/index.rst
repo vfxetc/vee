@@ -21,6 +21,7 @@ Examples
 --------
 
 ::
+
     vee install homebrew+sqlite
     vee install git+https://github.com/shotgunsoftware/python-api.git
     vee install --force https://github.com/westernx/sgmock/archive/master.zip --install-name sgmock/0.1
@@ -39,15 +40,16 @@ Home:
 
 Environment:
     A single "prefix", linked from installed packages. Contains `bin`, `etc`, `lib`,
-    `include`, `share`, `var`, etc., assemble
+    `include`, `share`, `var`, etc..
 
 Requirement:
     A specification of a package that we would like to have installed in an environment.
 
 .. _package:
+
 Package:
     The bundle provided by a remote source which contains source code, or
-    prepared build artifacts.
+    prepared build artifacts. E.g. a tarball, zipfile, or git repository.
 
 Manager:
     Wrapper around package managers, but the public API is only for fetching
@@ -57,25 +59,35 @@ Manager:
 Build Pipeline
 --------------
 
-The build pipeline consists of a series of steps, between each the derived
-metadata is re-evaluated allowing for the determination of install paths
+The build pipeline consists of a series of methods, between each the derived
+metadata may be re-evaluated allowing for the determination of install paths
 later in the pipeline (and so a determination that a package is already
 installed may be deferred).
 
-Those steps are:
+Those methods are, in order:
 
-1. ``Manager.fetch()``: The :ref:`package` is retrieved and placed at :ref:`package_path`.
-   This step is idempotent (and so is assumed to be called multiple times and
-   cache its result).
+.. method:: Manager.fetch()
 
-2. ``Manager.extract()``: The package's contents ("source") are placed into :ref:`build_path`
-   (which is usually a temporary directory).
+    The :ref:`package <package>` is retrieved and placed at :attr:`Manager.package_path`.
+    This step is idempotent (and so is assumed to be called multiple times and
+    cache its result).
 
-3. ``Manager.build()``: The source is built into a build "artifact".
+.. method:: Manager.extract()
 
-4. ``Manager.install()``: The build artifact is installed into :ref:`install_path`.
+    The package's contents ("source") are placed into :attr:`Manager.build_path`
+    (which is usually a temporary directory).
 
-5. ``Environment.link(req)``: The build artifact is linked into a final environment.
+.. method:: Manager.build()
+
+    The source is built into a build "artifact".
+
+.. method:: Manager.install()
+
+    The build artifact is installed into :attr:`Manager.install_path`.
+
+.. method:: Environment.link(requirement)
+
+    The build artifact is linked into a final environment.
 
 
 Names and Paths
@@ -83,27 +95,34 @@ Names and Paths
 
 There are a series of ``*_path`` properties on a :class:`Manager`.
 They defer to reasonable overrides from a :class:`Requirement`, otherwise
-they are discovered by the Manager.
+they are discovered by the Manager during the build pipeline.
 
 Internally, Managers provide a ``_derived_*_name`` property which is always
 a name derived from currently available information, and a ``_*_name`` property
 which defers to reasonable overrides from the Requirement.
 
-Users of the Manager API should only ever use the ``*_path`` properties.
+Users of the Manager API should only ever use the ``*_path`` properties:
 
-.. _package_path:
-``package_path``:
+.. attribute:: Manager.package_path
+
     The location of the package (e.g. archive or git work tree) on disk. This
-    must always be correct and static.
+    must always be correct and never change. Therefore it can only derive from
+    the requirement's specification.
 
-.. _build_path:
-``build_path``:
+.. attribute:: Manager.build_path
+
     A (usually temporary) directory for building. This must not change once the package
     has been extracted.
 
-.. _install_path:
-``install_path``:
-    The final location of a built artifact. This must not change once installed.
+.. attribute:: Manager.build_path_to_install
+
+    What part of the build to install. Normally this is the same as ``build_path``,
+    but sometimes is a subdirectory.
+
+.. attribute:: Manager.install_path
+
+    The final location of a built artifact. May be ``None`` if it cannot be
+    determined. This must not change once installed.
 
 
 

@@ -1,14 +1,6 @@
 
-2015-02-10
-√ bootstrap entrypoints
-√ bootstrap commands
 
 - $environment/vee-linked.txt reports on what is already linked in there
-
-- abtract GitRepo class for wrapping a git repo and working directory
-    - GitRepo(working_dir, remote_url=None)
-        - clones if it doesn't exist
-    - GitRepo.checkout(revision, fetch=True, clean=False, hard=True, force=False)
 
 - custom managers
     - PyAV has special build instructions
@@ -55,8 +47,24 @@
 
 - Homebrew is only installing the tree of the one package, not any of the
   dependencies. It should also link the dependencies. Perhaps there should be
-  a Requirements.iter_dependencies() which returns them all, and then makes
+  a Requirements.dependencies() which returns them all, and then makes
   sure they are all linked.
+
+  Another solution to this problem is to have paths_to_install() return a list.
+
+  Another solution is for HomebrewManager.install() to do this itself
+
+  An AbstractRequirement is one like "lib:ffmpeg", "py:yaml", etc., that just
+  know what result they want, but not where it is from. A DependencyInterface
+  could be the intersection of AbstractRequirement and Requirement, such that
+
+  Requirement.dependencies() can return real ones (e.g. from `brew deps`)
+  and abstract ones. It is permitted to return different dependencies on each
+  call (as they are discovered, e.g.)
+
+  DependencyResolver can take a pool of requirements and figure out what order
+  they should be installed in (via C3)
+
 
 - Packages need to identify what they provide, so that others can depend on them.
     
