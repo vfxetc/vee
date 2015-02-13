@@ -1,6 +1,6 @@
 
 # Core dependencies.
-homebrew+sqlite
+homebrew+sqlite --configuration "'--with-functions'"
 
 # Shotgun's API.
 git+https://github.com/shotgunsoftware/python-api.git

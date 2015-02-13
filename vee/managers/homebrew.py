@@ -45,18 +45,19 @@ class HomebrewManager(GitManager):
 
     _cached_brew_info = None
 
-    def _fresh_brew_info(self):
+    def _brew_info(self, name=None, force=False):
+
         if not os.path.exists(self._brew_bin):
             return {}
-        self._cached_brew_info = json.loads(self._brew('info', '--json=v1', self.requirement.package, stdout=True, silent=True))[0]
-        return self._cached_brew_info
 
-    @property
-    def _brew_info(self):
-        if self._cached_brew_info is not None:
-            return self._cached_brew_info
-        else:
-            return self._fresh_brew_info()
+        if self._cached_brew_info is None:
+            self._cached_brew_info = {}
+
+        name = name or self.requirement.package
+        if force or name not in self._cached_brew_info:
+            self._cached_brew_info[name] = json.loads(self._brew('info', '--json=v1', name, stdout=True, silent=True))[0]
+
+        return self._cached_brew_info[name]
 
     def extract(self):
         # Disable BaseManager.extract().
@@ -69,18 +70,21 @@ class HomebrewManager(GitManager):
         self._brew('install', self.requirement.package, *(
             shlex.split(self.requirement.configuration) if self.requirement.configuration else ()
         ))
-        self._fresh_brew_info()
+
+        # Need to force a new installed version number.
+        self._brew_info(force=True)
+
+    def _install_name_from_info(self, name=None, info=None):
+        info = info or self._brew_info(name)
+        return '%s/%s' % (info['name'], info['linked_keg'] or (
+            info['installed'][-1]['version']
+            if info['installed']
+            else info['versions']['stable']
+        ))
 
     @property
     def _build_name(self):
-        return '%s/%s' % (
-            self._brew_info['name'],
-            self._brew_info['linked_keg'] or (
-                self._brew_info['installed'][-1]['version']
-                if self._brew_info['installed']
-                else self._brew_info['versions']['stable']
-            ),
-        ) if self._brew_info else self._derived_build_name
+        return self._install_name_from_info()
 
     @property
     def build_path(self):
@@ -92,3 +96,12 @@ class HomebrewManager(GitManager):
     def install(self):
         # Disable BaseManager.install().
         pass
+
+    def link(self, env):
+        # We want to link in all dependencies as well.
+        for name in self._brew('deps', '-n', self.requirement.package, silent=True, stdout=True).strip().split():
+            path = os.path.join(self.package_path, 'Cellar', self._install_name_from_info(name))
+            if os.path.exists(path):
+                print colour('Linking', 'blue', bright=True), colour('homebrew+%s (homebrew+%s dependency)' % (name, self.requirement.package), 'black', reset=True)
+                env.link_directory(path)
+        env.link_directory(self.install_path)

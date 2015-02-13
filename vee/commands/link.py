@@ -37,6 +37,8 @@ def link(args):
             pass
         
         print colour('Linking', 'blue', bright=True), colour(str(req), 'black', reset=True)
-        env.link_directory(req.manager.install_path)
+
+        req.manager.link(env)
+        
 
 

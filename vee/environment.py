@@ -12,6 +12,10 @@ def envjoin(*values):
     return ':'.join(x for x in values if x)
 
 
+IGNORE_DIRS = frozenset(('.git', '.svn'))
+IGNORE_FILES = frozenset(('.DS_Store', ))
+
+
 class Environment(object):
 
     def __init__(self, name, home):
@@ -21,6 +25,9 @@ class Environment(object):
 
     def link_directory(self, dir_to_link):
         
+        # TODO: Be like Homebrew, and be smarter about what we link, and what
+        # we copy.
+
         root = self.root
         makedirs(root)
 
@@ -29,12 +36,14 @@ class Environment(object):
             rel_dir_path = os.path.relpath(old_dir_path, dir_to_link)
             new_dir_path = os.path.abspath(os.path.join(root, rel_dir_path))
 
+            # Ignore AND skip these directories.
+            dir_names[:] = [x for x in dir_names if x not in IGNORE_DIRS]
             for dir_name in dir_names:
-                # print os.path.join(rel_dir_path, dir_name) + '/'
                 makedirs(os.path.join(new_dir_path, dir_name))
 
             for file_name in file_names:
-                # print os.path.join(rel_dir_path, file_name)
+                if file_name in IGNORE_FILES:
+                    continue
                 try:
                     os.symlink(
                         os.path.join(old_dir_path, file_name),

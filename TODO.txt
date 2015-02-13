@@ -1,30 +1,5 @@
 
 
-- something to report on what is already linked into and environment:
-
-    - $environment/etc/vee.txt
-    - $environment/etc/vee.db
-    - $environment/etc/vee/linked/$package_name.txt
-
-
-- custom managers
-
-    - PyAV has special build instructions
-
-    `vee install PyAV.py`, where PyAV.py contains:
-
-        - REQUIREMENT = 'https://pypi.python.org/packages/source/a/av/av-0.2.2.tar.gz#md5=ec0198f28d9294d20b54b0ac3a9ff77d'
-        - DEPENDS_ON = ['lib:ffmpeg']
-        - MANAGER or PyAVManager or PyavManager, which inherits from BaseManager
-
-
-- file manager
-
-
-- pip manager
-    - for now, we can just link to the archives
-    - can we vendor pip?
-        see: https://bootstrap.pypa.io/get-pip.py
 
 
 - We need some sort of builds/index.db in order to find existing builds.
@@ -52,11 +27,32 @@
         - revision
         - commit (do we need this, or can we overload revision?)
 
+- something to report on what is already linked into and environment:
+    - $environment/etc/vee.txt
+    - $environment/etc/vee.db
+    - $environment/etc/vee/linked/$package_name.txt
+
+
+- custom managers
+
+    - PyAV has special build instructions
+
+    `vee install PyAV.py`, where PyAV.py contains:
+
+        - REQUIREMENT = 'https://pypi.python.org/packages/source/a/av/av-0.2.2.tar.gz#md5=ec0198f28d9294d20b54b0ac3a9ff77d'
+        - DEPENDS_ON = ['lib:ffmpeg']
+        - MANAGER or PyAVManager or PyavManager, which inherits from BaseManager
+
+
+- pip manager
+    - for now, we can just link to the archives
+    - can we vendor pip?
+        see: https://bootstrap.pypa.io/get-pip.py
+
+
 - `vee clone` for dev?
 
-- symlink directories if they aren't going to contain anything but one
-  requirement's files; match how Homebrew does it
-
+- match how Homebrew links directories
 
 - Homebrew is only installing the tree of the one package, not any of the
   dependencies. It should also link the dependencies. Perhaps there should be
@@ -77,6 +73,10 @@
 
   DependencyResolver can take a pool of requirements and figure out what order
   they should be installed in (via C3)
+
+        .add(requirement)
+        .rescan_dependencies()
+        .linearize()
 
 
 - Packages need to identify what they provide, so that others can depend on them.

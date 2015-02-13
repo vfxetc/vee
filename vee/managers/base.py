@@ -219,3 +219,6 @@ class BaseManager(object):
         print colour('Uninstalling', 'blue', bright=True), colour(self.install_path, 'black', reset=True)
         shutil.rmtree(self.install_path)
 
+    def link(self, env):
+        env.link_directory(self.install_path)
+

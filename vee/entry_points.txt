@@ -3,6 +3,7 @@
 
 [vee_commands]
 brew = vee.commands.brew:brew
+deps = vee.commands.deps:deps
 install = vee.commands.install:install
 link = vee.commands.link:link
 prefix = vee.commands.prefix:prefix

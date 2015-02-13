@@ -23,6 +23,8 @@ Examples
 ::
 
     vee install homebrew+sqlite
+    vee install homebrew+ffmpeg --configuration '--with-faac'
+    
     vee install git+https://github.com/shotgunsoftware/python-api.git
     vee install --force https://github.com/westernx/sgmock/archive/master.zip --install-name sgmock/0.1
     vee install git+git@git.westernx:westernx/sgsession
