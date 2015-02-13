@@ -30,17 +30,17 @@ class BaseManager(object):
         )
 
     @property
-    def package_name(self):
-        return self._package_name
+    def _package_name(self):
+        return self._derived_package_name
 
     @property
-    def _package_name(self):
+    def _derived_package_name(self):
         return self.requirement.package.strip('/')
 
     @property
     def package_path(self):
         """Where the package is cached."""
-        return self.home.abspath('packages', self.name, self.package_name)
+        return self.home.abspath('packages', self.name, self._package_name)
 
     def fetch(self):
         """Cache package from remote source; return something representing the package."""
@@ -49,13 +49,13 @@ class BaseManager(object):
         pass
 
     @property
-    def build_name(self):
-        return self._build_name
+    def _build_name(self):
+        return self._derived_build_name
 
     @cached_property
-    def _build_name(self):
+    def _derived_build_name(self):
         return '%s/%s-%s' % (
-            self.install_name,
+            self._install_name,
             datetime.datetime.utcnow().strftime('%y%m%d%H%M%S'),
             os.urandom(4).encode('hex'),
         )
@@ -65,7 +65,7 @@ class BaseManager(object):
         """Where the package will be built."""
         if not self.package_path:
             raise RuntimeError('need package path for default Manager.build_path')
-        return self.home.abspath('builds', self.name, self.build_name)
+        return self.home.abspath('builds', self.name, self._build_name)
 
     _build_path_to_install = None
 
@@ -159,21 +159,21 @@ class BaseManager(object):
             call(['make', '-j4'], cwd=os.path.dirname(makefile))
     
     @property
-    def install_name(self):
+    def _install_name(self):
         if self.requirement.install_name:
             return self.requirement.install_name
         if self.requirement.name and self.requirement.revision:
             return '%s/%s' % (self.requirement.name, self.requirement.revision)
-        return self._install_name
+        return self._derived_install_name
 
     @property
-    def _install_name(self):
-        return re.sub(r'(\.(tar|gz|tgz|zip))+$', '', self.package_name)
+    def _derived_install_name(self):
+        return re.sub(r'(\.(tar|gz|tgz|zip))+$', '', self._package_name)
 
     @property
     def install_path(self):
         """The final location of the built package."""
-        return self.home.abspath('installs', self.name, self.install_name)
+        return self.home.abspath('installs', self.name, self._install_name)
 
     @property
     def installed(self):

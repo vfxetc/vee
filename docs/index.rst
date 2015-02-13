@@ -44,6 +44,7 @@ Environment:
 Requirement:
     A specification of a package that we would like to have installed in an environment.
 
+.. _package:
 Package:
     The bundle provided by a remote source which contains source code, or
     prepared build artifacts.
@@ -51,6 +52,59 @@ Package:
 Manager:
     Wrapper around package managers, but the public API is only for fetching
     packages, and not installing them.
+
+
+Build Pipeline
+--------------
+
+The build pipeline consists of a series of steps, between each the derived
+metadata is re-evaluated allowing for the determination of install paths
+later in the pipeline (and so a determination that a package is already
+installed may be deferred).
+
+Those steps are:
+
+1. ``Manager.fetch()``: The :ref:`package` is retrieved and placed at :ref:`package_path`.
+   This step is idempotent (and so is assumed to be called multiple times and
+   cache its result).
+
+2. ``Manager.extract()``: The package's contents ("source") are placed into :ref:`build_path`
+   (which is usually a temporary directory).
+
+3. ``Manager.build()``: The source is built into a build "artifact".
+
+4. ``Manager.install()``: The build artifact is installed into :ref:`install_path`.
+
+5. ``Environment.link(req)``: The build artifact is linked into a final environment.
+
+
+Names and Paths
+~~~~~~~~~~~~~~~
+
+There are a series of ``*_path`` properties on a :class:`Manager`.
+They defer to reasonable overrides from a :class:`Requirement`, otherwise
+they are discovered by the Manager.
+
+Internally, Managers provide a ``_derived_*_name`` property which is always
+a name derived from currently available information, and a ``_*_name`` property
+which defers to reasonable overrides from the Requirement.
+
+Users of the Manager API should only ever use the ``*_path`` properties.
+
+.. _package_path:
+``package_path``:
+    The location of the package (e.g. archive or git work tree) on disk. This
+    must always be correct and static.
+
+.. _build_path:
+``build_path``:
+    A (usually temporary) directory for building. This must not change once the package
+    has been extracted.
+
+.. _install_path:
+``install_path``:
+    The final location of a built artifact. This must not change once installed.
+
 
 
 ..

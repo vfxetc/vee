@@ -41,7 +41,7 @@ class Namespace(argparse.Namespace):
 
     def assert_home(self):
         if not self.home:
-            raise CliException('home is required; please set VEE_HOME or --home')
+            raise CliException('please set $VEE or use --home')
 
 
 
@@ -59,7 +59,7 @@ def main(argv=None):
 
     parser.add_argument('--home',
         dest='home_path',
-        default=os.environ.get('VEE_HOME'),
+        default=os.environ.get('VEE'),
         help='path of managed environments',
     )
 

@@ -69,7 +69,7 @@ class HomebrewManager(GitManager):
         self._fresh_brew_info()
 
     @property
-    def build_name(self):
+    def _build_name(self):
         return '%s/%s' % (
             self._brew_info['name'],
             self._brew_info['linked_keg'] or (
@@ -77,13 +77,13 @@ class HomebrewManager(GitManager):
                 if self._brew_info['installed']
                 else self._brew_info['versions']['stable']
             ),
-        ) if self._brew_info else self._build_name
+        ) if self._brew_info else self._derived_build_name
 
     @property
     def build_path(self):
-        return os.path.join(self.package_path, 'Cellar', self.install_name)
+        return os.path.join(self.package_path, 'Cellar', self._install_name)
 
-    install_name = build_name
+    _install_name = _build_name
     install_path = build_path
 
     def install(self):
