@@ -51,12 +51,12 @@ class BaseManager(object):
 
     @property
     def _derived_package_name(self):
-        return self.requirement.package.strip('/')
+        return os.path.join(self.name, self.requirement.package.strip('/'))
 
     @property
     def package_path(self):
         """Where the package is cached."""
-        return self.home.abspath('packages', self.name, self._package_name)
+        return self.home.abspath('packages', self._package_name)
 
     def fetch(self):
         """Cache package from remote source; return something representing the package."""
@@ -209,7 +209,7 @@ class BaseManager(object):
     @property
     def install_path(self):
         """The final location of the built package."""
-        return self._install_name and self.home.abspath('installs', self.name, self._install_name, self._install_subdir or '').rstrip('/')
+        return self._install_name and self.home.abspath('installs', self._install_name, self._install_subdir or '').rstrip('/')
 
     @property
     def installed(self):
