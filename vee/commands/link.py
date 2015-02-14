@@ -24,11 +24,13 @@ def link(args):
             env.link_directory(dir_)
         return
 
-    for line in open(args.specification[0]):
-
-        line = line.strip()
-        if not line or line.startswith('#'):
-            continue
+    lines = list(open(args.specification[0]))
+    lines = [x.strip() for x in lines]
+    lines = [x for x in lines if x and not x[0] == '#']
+    while lines:
+        line = lines.pop(0).strip()
+        while lines and line.endswith('\\'):
+            line = line[:-1] + ' ' + lines.pop(0)
 
         req = Requirement(line, home=args.home)
         try:

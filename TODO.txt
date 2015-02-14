@@ -1,4 +1,12 @@
 
+- vee-build.sh or vee-install.sh could be run instead of the normal process
+  just send a pile of envvars down to them so they could replicate the existing
+  process:
+
+    VEE_BUILD_PATH
+    VEE_INSTALL_NAME
+    VEE_INSTALL_PATH
+
 - We could use some sort of builds/index.db in order to find existing builds.
 
   SQLite schema:
@@ -27,7 +35,8 @@
 - something to report on what is already linked into and environment:
     - $environment/etc/vee.txt
     - $environment/etc/vee.db
-    - $environment/etc/vee/linked/$package_name.txt
+    - $environment/etc/vee/links/$install_name.txt
+      this could contain all of the symlinks created
 
 
 - custom managers

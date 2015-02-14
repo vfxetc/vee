@@ -1,0 +1,14 @@
+
+# Shotgun's API.
+git+https://github.com/shotgunsoftware/python-api.git
+
+# Our Shotgun libraries.
+https://github.com/westernx/sgmock/archive/master.zip \
+    --install-name sgmock/0.1
+git+git@git.westernx:westernx/sgsession --revision origin/master
+
+homebrew+ffmpeg
+git+git@git.westernx:westernx/PyAV -e PKG_CONFIG_PATH=$VEE/packages/homebrew/opt/ffmpeg/lib/pkg-config:@
+
+# http:/path/to/AAF-1.1.6.0.tgz --install-name aaf/1.1.6
+# git@git.westernx:westernx/PyAAF -e AAF_ROOT=$VEE/installs/aaf/1.1.6.0 --revision 0123456

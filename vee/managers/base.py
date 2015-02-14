@@ -140,14 +140,6 @@ class BaseManager(object):
                 if len(dir_names) > 1 or file_names:
                     return
 
-        egg_info = find('*.egg-info', 'dir')
-        if egg_info:
-            print colour('Found Python egg:', 'blue', bright=True), colour(os.path.basename(egg_info), 'black', reset=True)
-            self._build_path_to_install = os.path.dirname(egg_info)
-            # TODO: Get the right Python version.
-            self._install_subdir = 'lib/python2.7/site-packages'
-            return
-
         setup_py = find('setup.py')
         if setup_py:
 
@@ -175,6 +167,14 @@ class BaseManager(object):
                 raise RuntimeError('Could not build Python egg_info')
             return
 
+        egg_info = find('*.egg-info', 'dir')
+        if egg_info:
+            print colour('Found Python egg:', 'blue', bright=True), colour(os.path.basename(egg_info), 'black', reset=True)
+            self._build_path_to_install = os.path.dirname(egg_info)
+            # TODO: Get the right Python version.
+            self._install_subdir = 'lib/python2.7/site-packages'
+            return
+        
         configure = find('configure')
         if configure:
             self._build_path_to_install = os.path.dirname(configure)
