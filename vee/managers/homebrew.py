@@ -41,6 +41,7 @@ class HomebrewManager(GitManager):
             HOMEBREW_PREFIX=package,
             HOMEBREW_TEMP=makedirs(package, 'tmp'),
         )
+        env.update(self.environ_diff)
         return call((self._brew_bin, ) + cmd, env=env, **kwargs)
 
     _cached_brew_info = None

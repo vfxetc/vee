@@ -9,8 +9,9 @@ from vee.exceptions import AlreadyInstalled
 class Requirement(object):
 
     arg_parser = argparse.ArgumentParser(add_help=False)
-    arg_parser.add_argument('--name')
-    arg_parser.add_argument('--revision')
+    arg_parser.add_argument('-n', '--name')
+    arg_parser.add_argument('-r', '--revision')
+    arg_parser.add_argument('-e', '--environ', action='append', default=[])
     arg_parser.add_argument('--install-name')
     arg_parser.add_argument('--configuration')
     arg_parser.add_argument('package')
@@ -43,6 +44,12 @@ class Requirement(object):
         self.name = args.name
         self.revision = args.revision
 
+        self.environ = {}
+        for x in args.environ:
+            parts = re.split(r'(?:^|,)(\w+)=', x)
+            for i in xrange(1, len(parts), 2):
+                self.environ[parts[i]] = parts[i + 1]
+
         self.home = home or args.home
         self.manager = self.home.get_manager(requirement=self)
 
@@ -52,12 +59,18 @@ class Requirement(object):
         args = []
         for name in (
             'configuration',
+            'environ',
             'install_name',
             'name',
             'revision',
         ):
-            if getattr(self, name):
-                args.append('--%s %s' % (name, getattr(self, name)))
+            value = getattr(self, name)
+            if value:
+                if isinstance(value, dict):
+                    value = ','.join('%s=%s' % (k, v) for k, v in sorted(value.iteritems()))
+                if isinstance(value, (list, tuple)):
+                    value = ','.join(value)
+                args.append('--%s %s' % (name, value))
         return package + (' ' if args else '') + ' '.join(sorted(args))
 
     def __repr__(self):
@@ -69,6 +82,25 @@ class Requirement(object):
                 self.manager.uninstall()
             else:
                 raise AlreadyInstalled(str(self))
+
+    def resolve_environ(self, source=None):
+
+        source = source or os.environ
+        diff = {}
+
+        def rep(m):
+            a, b, c, orig = m.groups()
+            abc = a or b or c
+            if abc:
+                return source.get(abc, '')
+            if orig:
+                return source.get(k)
+
+        for k, v in self.environ.iteritems():
+            v = re.sub(r'\$\{(\w+)\}|\$(\w+)|%(\w+)%|(@)', rep, v)
+            diff[k] = v
+
+        return diff
 
     def install(self, force=False):
 

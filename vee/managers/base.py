@@ -32,6 +32,19 @@ class BaseManager(object):
             self.requirement,
         )
 
+    _environ_diff = None
+
+    @property
+    def environ_diff(self):
+        if self._environ_diff is None:
+            self._environ_diff = self.requirement.resolve_environ()
+        return self._environ_diff
+
+    def fresh_environ(self):
+        environ = os.environ.copy()
+        environ.update(self.environ_diff)
+        return environ
+
     @property
     def _package_name(self):
         return self._derived_package_name
@@ -113,6 +126,8 @@ class BaseManager(object):
     def build(self):
         """Build the package in the build directory."""
 
+        env = None
+
         def find(name, type='file'):
             pattern = fnmatch.translate(name)
             for dir_path, dir_names, file_names in os.walk(self.build_path):
@@ -141,12 +156,14 @@ class BaseManager(object):
             build = os.path.join('build', 'lib', 'python2.7', 'site-packages')
             self._build_path_to_install = os.path.join(top_level, 'build')
 
+            env = env or self.fresh_environ()
+
             print colour('Building Python package...', 'blue', bright=True, reset=True)
             if call(['python', 'setup.py', 'build',
                 '--build-temp', 'tmp',
                 '--build-purelib', build,
                 '--build-platlib', build,
-            ], cwd=top_level):
+            ], cwd=top_level, env=env):
                 raise RuntimeError('Could not build Python package')
 
             # Install egg-info (for entry_points, mostly).
@@ -154,7 +171,7 @@ class BaseManager(object):
             print colour('Building egg-info...', 'blue', bright=True, reset=True)
             if call(['python', '-c', 'import setuptools; __file__="%s"; execfile(__file__)' % (setup_py, ),
                 'install_egg_info', '-d', build,
-            ], cwd=top_level):
+            ], cwd=top_level, env=env):
                 raise RuntimeError('Could not build Python egg_info')
             return
 
@@ -163,15 +180,17 @@ class BaseManager(object):
             self._build_path_to_install = os.path.dirname(configure)
             print colour('Configuring...', 'blue', bright=True, reset=True)
             cmd = ['./configure', '--prefix', self.install_path]
+            env = env or self.fresh_environ()
             if self.requirement.configuration:
                 cmd.extend(shlex.split(self.requirement.configuration))
-            call(cmd, cwd=os.path.dirname(configure))
+            call(cmd, cwd=os.path.dirname(configure), env=env)
 
         makefile = find('Makefile')
         if makefile:
             self._build_path_to_install = os.path.dirname(makefile)
             print colour('Making...', 'blue', bright=True, reset=True)
-            call(['make', '-j4'], cwd=os.path.dirname(makefile))
+            env = env or self.fresh_environ()
+            call(['make', '-j4'], cwd=os.path.dirname(makefile), env=env)
     
     @property
     def _install_name(self):

@@ -1,8 +1,17 @@
 
 
+- move manager.name out of *_path and into _derived_*_name
+
+- add os.path.expandvars (like) to the Requirement parsing
+
+- add -e/--envvar KEY=VALUE to Requirement
+  
+  -e PKG_CONFIG_PATH=$VEE/packages/homebrew/opt/ffmpeg:@
+  replace $NAME, ${NAME}, and %NAME% with the current value of os.environ[NAME]
+  replace @ with the previous value
 
 
-- We need some sort of builds/index.db in order to find existing builds.
+- We could use some sort of builds/index.db in order to find existing builds.
 
   SQLite schema:
 
