@@ -21,6 +21,10 @@ Examples
 --------
 
 ::
+    
+    export VEE=/usr/local/vee
+    export PYTHONPATH=/home/mboers/key_tools/vee
+    alias vee='python -m vee'
 
     vee install homebrew+sqlite
     vee install homebrew+ffmpeg --configuration '--with-faac'
@@ -31,7 +35,8 @@ Examples
 
 
     vee link example tests/example-env.txt
-    vee exec example python -c 'import sgsession; print sgsession.__file__'
+    vee exec example python -c 'import sgmock; print sgmock'
+
 
 
 Definitions

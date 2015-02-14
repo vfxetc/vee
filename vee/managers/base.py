@@ -38,6 +38,8 @@ class BaseManager(object):
     def environ_diff(self):
         if self._environ_diff is None:
             self._environ_diff = self.requirement.resolve_environ()
+            for k, v in sorted(self._environ_diff.iteritems()):
+                print colour('setenv', 'blue', bright=True), colour('%s=' % k, 'black', reset=True) + v
         return self._environ_diff
 
     def fresh_environ(self):
@@ -174,7 +176,7 @@ class BaseManager(object):
             # TODO: Get the right Python version.
             self._install_subdir = 'lib/python2.7/site-packages'
             return
-        
+
         configure = find('configure')
         if configure:
             self._build_path_to_install = os.path.dirname(configure)

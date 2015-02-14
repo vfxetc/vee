@@ -1,14 +1,46 @@
 
 # Shotgun's API.
+http://pyyaml.org/download/pyyaml/PyYAML-3.11.tar.gz
 git+https://github.com/shotgunsoftware/python-api.git
-
-# Our Shotgun libraries.
-https://github.com/westernx/sgmock/archive/master.zip \
-    --install-name sgmock/0.1
+git+git@git.westernx:westernx/sgactions --revision origin/master
+git+git@git.westernx:westernx/sgfs --revision origin/master
+git+git@git.westernx:westernx/sgmock --revision origin/master
+git+git@git.westernx:westernx/sgpublish --revision origin/master
 git+git@git.westernx:westernx/sgsession --revision origin/master
 
+# TODO: get these to link
 homebrew+ffmpeg
-git+git@git.westernx:westernx/PyAV -e PKG_CONFIG_PATH=$VEE/packages/homebrew/opt/ffmpeg/lib/pkg-config:@
+git+git@git.westernx:westernx/PyAV \
+    -e PKG_CONFIG_PATH=$VEE/packages/homebrew/lib/pkgconfig:@
 
+# TODO: get these to link
 # http:/path/to/AAF-1.1.6.0.tgz --install-name aaf/1.1.6
 # git@git.westernx:westernx/PyAAF -e AAF_ROOT=$VEE/installs/aaf/1.1.6.0 --revision 0123456
+
+# TODO: get these to link
+homebrew+imagemagick
+git+git@git.westernx:westernx/cythonmagick \
+    --revision origin/master \
+    -e PATH=$VEE/packages/homebrew/bin:@ \
+    -e PKG_CONFIG_PATH=$VEE/packages/homebrew/lib/pkgconfig:@
+
+# Generic libs.
+git+git@git.westernx:westernx/aaftools --revision origin/master
+git+git@git.westernx:westernx/animation_library --revision origin/master
+git+git@git.westernx:westernx/cerberus --revision origin/master
+git+git@git.westernx:westernx/docs --revision origin/master
+git+git@git.westernx:westernx/dailymaker --revision origin/master
+git+git@git.westernx:westernx/hoplite --revision origin/master
+git+git@git.westernx:westernx/iotools --revision origin/master
+git+git@git.westernx:westernx/ksmrshaders --revision origin/master
+git+git@git.westernx:westernx/manticore --revision origin/master
+git+git@git.westernx:westernx/mayatools --revision origin/master
+git+git@git.westernx:westernx/metatools --revision origin/master
+git+git@git.westernx:westernx/nukeplugins --revision origin/master
+git+git@git.westernx:westernx/nuketemplate --revision origin/master
+git+git@git.westernx:westernx/qbfutures --revision origin/master
+git+git@git.westernx:westernx/remotecontrol --revision origin/master
+git+git@git.westernx:westernx/sitecustomize --revision origin/master
+git+git@git.westernx:westernx/sitetools --revision origin/master
+git+git@git.westernx:westernx/uifutures --revision origin/master
+git+git@git.westernx:westernx/uitools --revision origin/master

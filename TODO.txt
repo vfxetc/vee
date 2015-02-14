@@ -1,4 +1,14 @@
 
+- --git-fetch OR --revision fetch:master to fetch the master from the given remote_url
+
+- cythonmagick is pulling in the "wrong" sqlite?
+
+- environment variable lines in environment files:
+
+  PKG_CONFIG_PATH=$VEE/packages/homebrew/lib/pkgconfig
+
+- --install-path for non-setuptools python
+
 - vee-build.sh or vee-install.sh could be run instead of the normal process
   just send a pile of envvars down to them so they could replicate the existing
   process:
