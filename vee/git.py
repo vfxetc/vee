@@ -71,20 +71,20 @@ class GitRepo(object):
 
                 # Fetch the new history on top of the shallow history.
                 print colour('Fetching shallow', 'blue', bright=True), colour(self.remote_url, 'black', reset=True)
-                self._call('fetch', '--update-shallow', self.remote_url)
+                self._call('fetch', '--update-shallow', self.remote_url, silent=True)
                 commit = self.rev_parse(revision)
 
                 # Lets get the whole history.
                 if not commit:
                     print colour('Fetching unshallow', 'blue', bright=True), colour(self.remote_url, 'black', reset=True)
-                    self._call('fetch', '--unshallow', self.remote_url)
+                    self._call('fetch', '--unshallow', self.remote_url, silent=True)
                     commit = self.rev_parse(revision)
 
             else:
 
                 # Normal fetch here.
                 print colour('Fetching', 'blue', bright=True), colour(self.remote_url, 'black', reset=True)
-                self._call('fetch', self.remote_url)
+                self._call('fetch', self.remote_url, silent=True)
                 commit = self.rev_parse(revision)
 
 

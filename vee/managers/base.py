@@ -158,11 +158,15 @@ class BaseManager(object):
             env = env or self.fresh_environ()
 
             print colour('Building Python package...', 'blue', bright=True, reset=True)
-            if call(['python', 'setup.py', 'build',
+            cmd = [
+                'python', 'setup.py', 'build',
                 '--build-temp', 'tmp',
                 '--build-purelib', build,
                 '--build-platlib', build,
-            ], cwd=top_level, env=env):
+            ]
+            if self.requirement.configuration:
+                cmd.extend(shlex.split(self.requirement.configuration))
+            if call(cmd, cwd=top_level, env=env):
                 raise RuntimeError('Could not build Python package')
 
             # Install egg-info (for entry_points, mostly).
