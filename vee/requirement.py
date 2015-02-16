@@ -11,10 +11,11 @@ class Requirement(object):
     arg_parser = argparse.ArgumentParser(add_help=False)
     arg_parser.add_argument('-n', '--name')
     arg_parser.add_argument('-r', '--revision')
+    arg_parser.add_argument('--force-fetch', action='store_true')
     arg_parser.add_argument('-e', '--environ', action='append', default=[])
+    arg_parser.add_argument('--configuration')
     arg_parser.add_argument('--install-name')
     arg_parser.add_argument('--install-subdir')
-    arg_parser.add_argument('--configuration')
     arg_parser.add_argument('package')
 
 
@@ -45,6 +46,7 @@ class Requirement(object):
         self.name = args.name
         self.revision = args.revision
         self.install_subdir = args.install_subdir
+        self.force_fetch = args.force_fetch
 
         self.environ = {}
         for x in args.environ:
@@ -60,6 +62,12 @@ class Requirement(object):
         package = self.manager_name + ('+' if self.manager_name else '') + self.package
         args = []
         for name in (
+            'force_fetch',
+        ):
+            value = getattr(self, name)
+            if value:
+                args.append('--%s' % name.replace('_', '-'))
+        for name in (
             'configuration',
             'environ',
             'install_name',
@@ -73,7 +81,7 @@ class Requirement(object):
                     value = ','.join('%s=%s' % (k, v) for k, v in sorted(value.iteritems()))
                 if isinstance(value, (list, tuple)):
                     value = ','.join(value)
-                args.append('--%s %s' % (name, value))
+                args.append('--%s %s' % (name.replace('_', '-'), value))
         return package + (' ' if args else '') + ' '.join(sorted(args))
 
     def __repr__(self):
@@ -107,7 +115,8 @@ class Requirement(object):
 
     def install(self, force=False):
 
-        self._reinstall_check(force)
+        if not self.force_fetch:
+            self._reinstall_check(force)
 
         self.manager.fetch()
         self._reinstall_check(force)

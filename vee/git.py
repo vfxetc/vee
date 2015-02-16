@@ -52,20 +52,20 @@ class GitRepo(object):
 
     @property
     def is_shallow(self):
-        return os.path.exists(self.git_dir, 'shallow')
+        return os.path.exists(os.path.join(self.git_dir, 'shallow'))
 
-    def checkout(self, revision, fetch=True):
+    def checkout(self, revision, fetch=True, force=False):
 
-        self.clone_if_not_exists()
+        self.clone_if_not_exists(shallow=not force)
         
         commit = self.rev_parse(revision)
 
-        if not commit:
+        if force or not commit:
 
             if not fetch:
                 raise ValueError('revision %r does not exist in local repo' % revision)
 
-            print colour('Warning:', bg='yellow'), colour('revision %r does not exist in local repo.' % revision, 'black', reset=True)
+            # print colour('Warning:', bg='yellow'), colour('revision %r does not exist in local repo.' % revision, 'black', reset=True)
 
             if self.is_shallow:
 

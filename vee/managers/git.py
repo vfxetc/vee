@@ -15,7 +15,7 @@ class GitManager(BaseManager):
         self.repo = GitRepo(work_tree=self.package_path, remote_url=self.requirement and self.requirement.package)
 
     def fetch(self):
-        self.repo.checkout(self.requirement.revision or 'HEAD')
+        self.repo.checkout(self.requirement.revision or 'HEAD', force=self.requirement.force_fetch)
 
     @property
     def _derived_build_name(self):

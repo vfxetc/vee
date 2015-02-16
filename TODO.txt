@@ -4,11 +4,6 @@
   - http://localhost:10000/qux-1.0.0.tgz
   - git+git@github.com:mikeboers/norf
 
-
-- be able to always re-fetch the master from the given remote_url:
-    --force-fetch OR --revision fetch:master to always re-fetch the master from the given remote_url
-
-
 - cythonmagick is pulling in the "wrong" sqlite?
 
 
