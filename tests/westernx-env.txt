@@ -27,13 +27,10 @@ git+git@git.westernx:westernx/cythonmagick \
 # Generic libs.
 git+git@git.westernx:westernx/aaftools --revision origin/master
 git+git@git.westernx:westernx/animation_library --revision origin/master
-git+git@git.westernx:westernx/cerberus --revision origin/master
 git+git@git.westernx:westernx/docs --revision origin/master
 git+git@git.westernx:westernx/dailymaker --revision origin/master
-git+git@git.westernx:westernx/hoplite --revision origin/master
 git+git@git.westernx:westernx/iotools --revision origin/master
 git+git@git.westernx:westernx/ksmrshaders --revision origin/master
-git+git@git.westernx:westernx/manticore --revision origin/master
 git+git@git.westernx:westernx/mayatools --revision origin/master
 git+git@git.westernx:westernx/metatools --revision origin/master
 git+git@git.westernx:westernx/nukeplugins --revision origin/master
@@ -44,3 +41,11 @@ git+git@git.westernx:westernx/sitecustomize --revision origin/master
 git+git@git.westernx:westernx/sitetools --revision origin/master
 git+git@git.westernx:westernx/uifutures --revision origin/master
 git+git@git.westernx:westernx/uitools --revision origin/master
+
+# Keybase
+# git+git@git.westernx:westernx/key_base --revision origin/master --install-subdir lib/key_base
+
+# Non-setuptools Python packages.
+git+git@git.westernx:westernx/manticore --revision origin/master --install-subdir lib/python2.7/site-packages/manticore
+git+git@git.westernx:westernx/cerberus  --revision origin/master --install-subdir lib/python2.7/site-packages/cerberus
+git+git@git.westernx:westernx/hoplite   --revision origin/master --install-subdir lib/python2.7/site-packages/hoplite

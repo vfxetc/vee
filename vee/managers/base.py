@@ -82,11 +82,15 @@ class BaseManager(object):
             raise RuntimeError('need package path for default Manager.build_path')
         return self.home.abspath('builds', self.name, self._build_name)
 
-    _build_path_to_install = None
-
+    _build_subdir_to_install = None
     @property
     def build_path_to_install(self):
-        return self._build_path_to_install or self.build_path
+        return os.path.join(self.build_path, self._build_subdir_to_install or '').rstrip('/')
+
+    _install_subdir_from_build = None
+    @property
+    def install_path_from_build(self):
+        return os.path.join(self.install_path, self.requirement.install_subdir or self._install_subdir_from_build or '').rstrip('/')
 
     def _clean_build_path(self, makedirs=True):
         if self.build_path and os.path.exists(self.build_path):
@@ -147,8 +151,9 @@ class BaseManager(object):
 
             top_level = os.path.dirname(setup_py)
             # TODO: Get the right Python version.
-            build = os.path.join('build', 'lib', 'python2.7', 'site-packages')
-            self._build_path_to_install = os.path.join(top_level, 'build')
+            build = os.path.join('build', 'lib')
+            self._build_subdir_to_install = os.path.join(top_level, build)
+            self._install_subdir_from_build = 'lib/python2.7/site-packages'
 
             env = env or self.fresh_environ()
 
@@ -172,14 +177,14 @@ class BaseManager(object):
         egg_info = find('*.egg-info', 'dir')
         if egg_info:
             print colour('Found Python egg:', 'blue', bright=True), colour(os.path.basename(egg_info), 'black', reset=True)
-            self._build_path_to_install = os.path.dirname(egg_info)
+            self._build_subdir_to_install = os.path.dirname(egg_info)
             # TODO: Get the right Python version.
-            self._install_subdir = 'lib/python2.7/site-packages'
+            self._install_subdir_from_build = 'lib/python2.7/site-packages'
             return
 
         configure = find('configure')
         if configure:
-            self._build_path_to_install = os.path.dirname(configure)
+            self._build_subdir_to_install = os.path.dirname(configure)
             print colour('Configuring...', 'blue', bright=True, reset=True)
             cmd = ['./configure', '--prefix', self.install_path]
             env = env or self.fresh_environ()
@@ -189,7 +194,7 @@ class BaseManager(object):
 
         makefile = find('Makefile')
         if makefile:
-            self._build_path_to_install = os.path.dirname(makefile)
+            self._build_subdir_to_install = os.path.dirname(makefile)
             print colour('Making...', 'blue', bright=True, reset=True)
             env = env or self.fresh_environ()
             call(['make', '-j4'], cwd=os.path.dirname(makefile), env=env)
@@ -220,9 +225,9 @@ class BaseManager(object):
     def install(self):
         """Install the build artifact into a final location."""
 
-        if not self.build_path_to_install:
+        if not self.build_path or not self.build_path_to_install:
             raise RuntimeError('need build path for default Manager.install')
-        if not self.install_path:
+        if not self.install_path or not self.install_path_from_build:
             raise RuntimeError('need install path for default Manager.install')
 
         # We are not using our wrapper, as we want this to fail if it is
@@ -232,7 +237,7 @@ class BaseManager(object):
         
         print colour('Installing to', 'blue', bright=True), colour(self.install_path, 'black', reset=True)
 
-        shutil.copytree(self.build_path_to_install, self.install_path, symlinks=True)
+        shutil.copytree(self.build_path_to_install, self.install_path_from_build, symlinks=True)
 
     def uninstall(self):
         if not self.installed:

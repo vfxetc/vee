@@ -1,21 +1,84 @@
 
-- --git-fetch OR --revision fetch:master to fetch the master from the given remote_url
+- test all the things!
+  - libfoo, bar in Testbrew
+  - http://localhost:10000/qux-1.0.0.tgz
+  - git+git@github.com:mikeboers/norf
+
+
+- be able to always re-fetch the master from the given remote_url:
+    --force-fetch OR --revision fetch:master to always re-fetch the master from the given remote_url
+
 
 - cythonmagick is pulling in the "wrong" sqlite?
 
-- environment variable lines in environment files:
 
-  PKG_CONFIG_PATH=$VEE/packages/homebrew/lib/pkgconfig
+- RequirementSet class which encapsulates a requirements file, including comments,
+  and file-wide environment variables.
 
-- --install-path for non-setuptools python
+  e.g.: PKG_CONFIG_PATH=$VEE/packages/homebrew/lib/pkgconfig
 
-- vee-build.sh or vee-install.sh could be run instead of the normal process
-  just send a pile of envvars down to them so they could replicate the existing
-  process:
+  - Requirement.set -> the set that it is a part of; can be none; allows for
+    resolving the environment in a set without having to put that envvar in
+    each requirement
+
+
+- wxfab fabric package for deploying and debugging these things
+
+
+
+- self-describing packages via vee-build.sh or vee-install.ss which are run
+  instead of the normal process just send a pile of envvars down to them so
+  they could replicate the existing process:
 
     VEE_BUILD_PATH
     VEE_INSTALL_NAME
     VEE_INSTALL_PATH
+
+    The bash call could be: `. vee-build.sh; echo ---; env | grep VEE` to dump
+    out any changes it may make
+
+- `vee config` / vee.config.Config
+
+- $VEE/repo structure
+    
+    managers/{name}.py
+    environments/{name}.txt
+
+
+- dev
+
+    - Builder class encapsulates the base building logic; can be overridden for
+      DevBuilder (so that python can `python setup.py develop` instead)
+
+    - DevManager proxies to the "normal" manager to fetch a package into the
+      dev location, and in the case of Python packages build the egg-info so it
+      knows how to link the environment.
+
+    - `dev` then just discovers your dev environment, and merges its envvars
+      on top of the master one.
+
+    - sitetools is installed in the master one, and the tools which set envvars
+      also setup KS_SITES (or a renamed versions). However, we won't really
+      need KS_SITES since we are installing everything without .pth files.
+
+    - !! How can we have a tool auto-update an environment.txt with the current
+      git commits?
+
+        - Scan your dev directory, looking for git repos with remotes that match
+          the repos in the env.txt
+        - See if the current commit differs from that which would be installed
+          by the env.txt
+
+    - `vee clone --dev /path/to/master ~/dev`
+        - the git repo it clones is the same that the indicated uses
+        - the runtime will link against the master
+        - a .vee/config file (YAML) contains this sort of info
+    - `vee add .` add changes to the current package (likely a git repo) to the
+      env.txt.
+    - `vee commit [-a] [--major|--minor|--patch] [-m MESSAGE]`
+    - `vee push`
+
+
 
 - We could use some sort of builds/index.db in order to find existing builds.
 
@@ -26,8 +89,9 @@
     builds:
         
         - id
-        - cache_path
+        - package_path
         - build_path
+        - install_path
         - created_at
         - user_specification (normalized via Package.__str__)
         - manager (without options)
@@ -40,7 +104,7 @@
         - name (defaults to $package)
         - version
         - revision
-        - commit (do we need this, or can we overload revision?)
+
 
 - something to report on what is already linked into and environment:
     - $environment/etc/vee.txt
@@ -49,26 +113,43 @@
       this could contain all of the symlinks created
 
 
-- custom managers
-
-    - PyAV has special build instructions
-
-    `vee install PyAV.py`, where PyAV.py contains:
-
-        - REQUIREMENT = 'https://pypi.python.org/packages/source/a/av/av-0.2.2.tar.gz#md5=ec0198f28d9294d20b54b0ac3a9ff77d'
-        - DEPENDS_ON = ['lib:ffmpeg']
-        - MANAGER or PyAVManager or PyavManager, which inherits from BaseManager
 
 
-- pip manager
-    - for now, we can just link to the archives
-    - can we vendor pip?
-        see: https://bootstrap.pypa.io/get-pip.py
+
 
 
 - `vee clone` for dev?
 
+
+- commands
+
+    vee init REPO
+    vee update
+    vee upgrade
+
+    √ vee install REQUIREMENT
+    - vee install -r requirements.txt
+    √ vee link NAME REQUIREMENTS_FILE
+
+
+LATER
+-----
+
+- custom managers
+  - e.g. `vee install PyAV.py`, where PyAV.py contains:
+        - REQUIREMENT = 'https://pypi.python.org/packages/source/a/av/av-0.2.2.tar.gz#md5=ec0198f28d9294d20b54b0ac3a9ff77d'
+        - DEPENDS_ON = ['lib:ffmpeg']
+        - MANAGER or PyAVManager or PyavManager, which inherits from BaseManager
+
+- pypi manager
+    - PyPI JSON API -> https://pypi.python.org/pypi/%s/json
+    - Need to either hit the PyPI on every `.installed` check, or cache versions.
+
 - match how Homebrew links directories
+
+- homebrew taps: homebrew+mikeboers/testbrew/foo
+    - we would need a way to detect which tap it is
+    - we can grep `brew info $forumla` for From: https://github.com/#{user}/#{repo}/blob/master/#{path}
 
 - Homebrew is only installing the tree of the one package, not any of the
   dependencies. It should also link the dependencies. Perhaps there should be
@@ -93,30 +174,5 @@
         .add(requirement)
         .rescan_dependencies()
         .linearize()
-
-
-- Packages need to identify what they provide, so that others can depend on them.
-    
-    homebrew+ffmpeg provides "lib:ffmpeg" and "bin:ffmpeg". PyAV needs "lib:ffmpeg":
-
-    PKG_CONFIG_PATH = home.absbuild('lib:ffmpeg', 'lib', 'pkg-config')
-
-
-- homebrew taps: homebrew+mikeboers/testbrew/foo
-    - we would need a way to detect which tap it is
-    - we can grep `brew info $forumla` for From: https://github.com/#{user}/#{repo}/blob/master/#{path}
-
-
-- commands
-
-    vee init REPO
-    vee update
-    vee upgrade
-
-    √ vee install REQUIREMENT
-    - vee install -r requirements.txt
-    √ vee link NAME REQUIREMENTS_FILE
-
-
 
 

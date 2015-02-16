@@ -13,6 +13,7 @@ class Requirement(object):
     arg_parser.add_argument('-r', '--revision')
     arg_parser.add_argument('-e', '--environ', action='append', default=[])
     arg_parser.add_argument('--install-name')
+    arg_parser.add_argument('--install-subdir')
     arg_parser.add_argument('--configuration')
     arg_parser.add_argument('package')
 
@@ -43,6 +44,7 @@ class Requirement(object):
         self.install_name = args.install_name
         self.name = args.name
         self.revision = args.revision
+        self.install_subdir = args.install_subdir
 
         self.environ = {}
         for x in args.environ:
@@ -61,6 +63,7 @@ class Requirement(object):
             'configuration',
             'environ',
             'install_name',
+            'install_subdir',
             'name',
             'revision',
         ):
