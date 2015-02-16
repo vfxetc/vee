@@ -4,3 +4,4 @@
 /docs/_build
 *.egg-info
 /venv
+/tests/sandbox

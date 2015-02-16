@@ -1,0 +1,13 @@
+#!/usr/bin/env python
+
+import argparse
+
+parser = argparse.ArgumentParser()
+parser.add_argument('--prefix', default='/usr/local')
+
+args = parser.parse_args()
+
+makefile_tpl = open('Makefile.tpl').read()
+makefile = makefile_tpl.format(prefix=args.prefix)
+
+open('Makefile', 'w').write(makefile)

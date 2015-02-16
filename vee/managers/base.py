@@ -11,6 +11,19 @@ from vee.exceptions import AlreadyInstalled
 from vee.utils import cached_property, colour, call
 
 
+def _find_in_tree(root, name, type='file'):
+    pattern = fnmatch.translate(name)
+    for dir_path, dir_names, file_names in os.walk(root):
+        # Look for the file/directory.
+        candidates = dict(file=file_names, dir=dir_names)[type]
+        found = next((x for x in candidates if re.match(pattern, x)), None)
+        if found:
+            return os.path.join(dir_path, found)
+        # Bail when we hit a fork in the directory tree.
+        if len(dir_names) > 1 or file_names:
+            return
+
+
 class BaseManager(object):
 
     """Abstraction of a package manager.
@@ -134,19 +147,31 @@ class BaseManager(object):
 
         env = None
 
-        def find(name, type='file'):
-            pattern = fnmatch.translate(name)
-            for dir_path, dir_names, file_names in os.walk(self.build_path):
-                # Look for the file/directory.
-                candidates = dict(file=file_names, dir=dir_names)[type]
-                found = next((x for x in candidates if re.match(pattern, x)), None)
-                if found:
-                    return os.path.join(dir_path, found)
-                # Bail when we hit a fork in the directory tree.
-                if len(dir_names) > 1 or file_names:
-                    return
+        build_sh = _find_in_tree(self.build_path, 'vee-build.sh')
+        if build_sh:
 
-        setup_py = find('setup.py')
+            print colour('Running vee-build.sh...', 'blue', bright=True, reset=True)
+            env = env or self.fresh_environ()
+            env.update(
+                VEE=self.home.root,
+                VEE_BUILD_PATH=self.build_path,
+                VEE_INSTALL_NAME=self._install_name,
+                VEE_INSTALL_PATH=self.install_path,
+            )
+
+            cwd = os.path.dirname(build_sh)
+            envfile = os.path.join(cwd, 'vee-env-' + os.urandom(8).encode('hex'))
+            call(['bash', '-c', '. vee-build.sh; env | grep VEE > %s' % (envfile)], env=env, cwd=cwd)
+
+            env = list(open(envfile))
+            env = dict(line.strip().split('=', 1) for line in env)
+            os.unlink(envfile)
+
+            self._build_subdir_to_install = env.get('VEE_BUILD_SUBDIR_TO_INSTALL') or ''
+            self._install_subdir_from_build = env.get('VEE_INSTALL_SUBDIR_FROM_BUILD') or ''
+            return
+
+        setup_py = _find_in_tree(self.build_path, 'setup.py')
         if setup_py:
 
             top_level = os.path.dirname(setup_py)
@@ -178,7 +203,7 @@ class BaseManager(object):
                 raise RuntimeError('Could not build Python egg_info')
             return
 
-        egg_info = find('*.egg-info', 'dir')
+        egg_info = _find_in_tree(self.build_path, '*.egg-info', 'dir')
         if egg_info:
             print colour('Found Python egg:', 'blue', bright=True), colour(os.path.basename(egg_info), 'black', reset=True)
             self._build_subdir_to_install = os.path.dirname(egg_info)
@@ -186,7 +211,7 @@ class BaseManager(object):
             self._install_subdir_from_build = 'lib/python2.7/site-packages'
             return
 
-        configure = find('configure')
+        configure = _find_in_tree(self.build_path, 'configure')
         if configure:
             self._build_subdir_to_install = os.path.dirname(configure)
             print colour('Configuring...', 'blue', bright=True, reset=True)
@@ -196,7 +221,7 @@ class BaseManager(object):
                 cmd.extend(shlex.split(self.requirement.configuration))
             call(cmd, cwd=os.path.dirname(configure), env=env)
 
-        makefile = find('Makefile')
+        makefile = _find_in_tree(self.build_path, 'Makefile')
         if makefile:
             self._build_subdir_to_install = os.path.dirname(makefile)
             print colour('Making...', 'blue', bright=True, reset=True)
