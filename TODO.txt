@@ -20,17 +20,13 @@
 - wxfab fabric package for deploying and debugging these things
 
 
+- `vee list` lists environments
+- `vee list ENVIRONMENT` lists the various buildtimes of environments
 
-- self-describing packages via vee-build.sh or vee-install.ss which are run
-  instead of the normal process just send a pile of envvars down to them so
-  they could replicate the existing process:
 
-    VEE_BUILD_PATH
-    VEE_INSTALL_NAME
-    VEE_INSTALL_PATH
+- environment structure:
+  $VEE/environments/$NAME/latest -> $BUILDTIME
 
-    The bash call could be: `. vee-build.sh; echo ---; env | grep VEE` to dump
-    out any changes it may make
 
 - `vee config` / vee.config.Config
 
@@ -38,6 +34,11 @@
     
     managers/{name}.py
     environments/{name}.txt
+
+    - default environment name is "master"
+    - can we have updates to non-git environments?
+        - `vee update` could pull in a new repo, and hash it to see if it
+          changed
 
 
 - dev
@@ -64,24 +65,35 @@
         - See if the current commit differs from that which would be installed
           by the env.txt
 
-    - `vee clone --dev /path/to/master ~/dev`
+    - use the standard managers for fetching/installing repos
+
+    - `vee init git@git.westernx:westernx/veerepo /usr/local/vee`
+    - `vee init --inherit-from /usr/local/vee ~/dev/vee-env`
+
         - the git repo it clones is the same that the indicated uses
         - the runtime will link against the master
-        - a .vee/config file (YAML) contains this sort of info
-    - `vee add .` add changes to the current package (likely a git repo) to the
-      env.txt.
-    - `vee commit [-a] [--major|--minor|--patch] [-m MESSAGE]`
+        - a $VEE/config file (YAML) contains this sort of info:
+
+          repo_requirement: git+git@git.westernx:westernx/veerepo --force-fetch --revision origin/master
+          repo_install_path: /home/mboers/dev/vee-env/installs/veerepo/1.0.0
+          parent_path: /usr/local/vee
+
+    - `vee add [--major,--minor,--patch] .` add changes to the current package (likely a git repo) to the
+      repo's environment file. The change-level flags increment the "version" flag, if set
+
+    - `vee commit [-a] [--major|--minor|--patch] [-m MESSAGE]`] 
     - `vee push`
 
 
 
-- We could use some sort of builds/index.db in order to find existing builds.
+- We could use some sort of builds/index.db in order to find existing builds
+  and environments
 
   SQLite schema:
 
     migrations: lift this from my web projects
 
-    builds:
+    installs:
         
         - id
         - package_path
@@ -100,6 +112,21 @@
         - version
         - revision
 
+    environments:
+
+        - id
+        - name
+        - version
+        - revision
+        - user_specification
+
+    links:
+
+        - id
+        - env_id
+        - install_id
+
+
 
 - something to report on what is already linked into and environment:
     - $environment/etc/vee.txt
@@ -111,9 +138,6 @@
 
 
 
-
-
-- `vee clone` for dev?
 
 
 - commands

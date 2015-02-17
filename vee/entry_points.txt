@@ -2,10 +2,14 @@
 # without having the package actually installed.
 
 [vee_commands]
+
+# Requirements.
 brew = vee.commands.brew:brew
-deps = vee.commands.deps:deps
 install = vee.commands.install:install
+install-path = vee.commands.install_path:install_path
 link = vee.commands.link:link
+
+# Environments.
 prefix = vee.commands.prefix:prefix
 env = vee.commands.env:env
 exec = vee.commands.exec_:exec_

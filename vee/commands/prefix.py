@@ -3,9 +3,7 @@ from vee.environment import Environment
 
 
 @command(
-    argument('--raw', action='store_true', help='package is directory, not a requirement'),
     argument('environment'),
-    argument('specification', nargs='...'),
     help='get the prefix of an environment',
     usage='vee prefix ENVIRONMENT',
 )
