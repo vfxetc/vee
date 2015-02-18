@@ -45,7 +45,7 @@ class Namespace(argparse.Namespace):
 
 
 
-def main(argv=None):
+def main(argv=None, environ=None):
 
     parser = argparse.ArgumentParser(
         prog='vee',
@@ -57,9 +57,12 @@ def main(argv=None):
     parser.register('action', 'parsers', AliasedSubParsersAction)
     subparsers = parser.add_subparsers(metavar='COMMAND')
 
+    # Mainly for mocking.
+    environ = os.environ if environ is None else environ
+
     parser.add_argument('--home',
         dest='home_path',
-        default=os.environ.get('VEE'),
+        default=environ.get('VEE'),
         help='path of managed environments',
     )
 

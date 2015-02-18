@@ -6,7 +6,7 @@ default: build
 build: libfoo.so
 
 libfoo.so: libfoo.c
-	$(CC) -o $@ -shared $<
+	gcc -o $@ -shared $<
 
 install:
 	mkdir -p "{prefix}/lib"

@@ -96,7 +96,9 @@ class Requirement(object):
 
     def resolve_environ(self, source=None):
 
-        source = source or os.environ
+        source = (source or os.environ).copy()
+        source['VEE'] = self.home.root
+
         diff = {}
 
         def rep(m):
