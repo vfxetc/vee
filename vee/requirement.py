@@ -1,4 +1,5 @@
 import argparse
+import datetime
 import os
 import re
 import shlex
@@ -57,6 +58,8 @@ class Requirement(object):
         self.home = home or args.home
         self.manager = self.home.get_manager(requirement=self)
 
+        self._user_specification = str(self)
+
 
     def __str__(self):
         package = self.manager_name + ('+' if self.manager_name else '') + self.package
@@ -86,6 +89,48 @@ class Requirement(object):
 
     def __repr__(self):
         return '%s(%r)' % (self.__class__.__name__, str(self))
+
+    def resolve_existing(self):
+        """Check against the index to see if this was already installed."""
+
+        cur = self.home.index.cursor()
+
+        clauses = ['manager = ?', 'package = ?']
+        values = [self.manager_name, self.package]
+        for attr in ('name', 'revision'):
+            if getattr(self, attr):
+                clauses.append('%s = ?' % attr)
+                values.append(getattr(self, attr))
+        for attr in ('_package_name', '_build_name', '_install_name'):
+            if getattr(self.manager, attr):
+                clauses.append('%s = ?' % attr.strip('_'))
+                values.append(getattr(self.manager, attr))
+
+        row = cur.execute('''
+            SELECT * FROM installs
+            WHERE %s
+            ORDER BY created_at DESC
+            LIMIT 1
+        ''' % ' AND '.join(clauses), values).fetchone()
+
+        if not row:
+            return
+
+        # Everything below either already matches or was unset.
+        self.name = row['name']
+        self.revision = row['revision']
+        self.manager._package_name = row['package_name']
+        self.manager._build_name = row['build_name']
+        self.manager._install_name = row['install_name']
+        if (self.manager.package_path != row['package_path'] or
+            self.manager.build_path != row['build_path'] or
+            self.manager.install_path != row['install_path']
+        ):
+            raise RuntimeError('indexed paths dont match')
+
+        return True
+
+
 
     def _reinstall_check(self, force):
         if self.manager.installed:
@@ -121,12 +166,30 @@ class Requirement(object):
             self._reinstall_check(force)
 
         self.manager.fetch()
-        self._reinstall_check(force)
+        self._reinstall_check(force) # We may only know once we have fetched.
     
         self.manager.extract()
-        self._reinstall_check(force)
+        self._reinstall_check(force) # Packages may self-describe.
 
         self.manager.build()
         self.manager.install()
+
+        # Record it!
+        self._index_install()
+
+    def _index_install(self):
+        cur = self.home.index.cursor()
+        cur.execute('''
+            INSERT INTO installs (created_at, user_specification, manager, package,
+                                  name, revision, package_name, build_name,
+                                  install_name, package_path, build_path, install_path)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        ''', [datetime.datetime.utcnow(), self._user_specification, self.manager.name, self.package,
+              self.name, self.revision, self.manager._package_name,
+              self.manager._build_name, self.manager._install_name, self.manager.package_path,
+              self.manager.build_path, self.manager.install_path]
+        )
+        return cur.lastrowid
+
 
 

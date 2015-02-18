@@ -27,3 +27,5 @@ class GitManager(BaseManager):
 
     def fetch(self):
         self.repo.checkout(self.requirement.revision or 'HEAD', force=self.requirement.force_fetch)
+        self.requirement.revision = self.repo.head
+        

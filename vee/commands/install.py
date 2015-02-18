@@ -12,5 +12,10 @@ from vee.utils import colour
 def install(args):
     args.assert_home()
     req = Requirement(args.package, home=args.home)
+
+    if not args.force:
+        if req.resolve_existing():
+            print 'FOUND EXISTING INSTALL at', req.manager.install_path
+
     req.install(force=args.force)
     
