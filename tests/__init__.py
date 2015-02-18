@@ -35,7 +35,7 @@ class MockHTTPHandler(urllib2.HTTPHandler):
 
     def http_open(self, req):
 
-        if req.get_host() != 'assets.vee.mock':
+        if req.get_host() != 'localhost.mock':
             return urllib2.HTTPHandler.http_open(self, req)
 
         # Files which exist.
@@ -84,7 +84,7 @@ def asset_url(path):
     rel_path = os.path.relpath(os.path.abspath(os.path.join(assets_dir, path)), assets_dir)
     if rel_path.startswith('.'):
         raise ValueError('not an asset path: %r' % path)
-    return 'http://assets.vee.mock/' + rel_path.strip('/')
+    return 'http://localhost.mock/' + rel_path.strip('/')
 
 
 if os.path.exists(sandbox_dir):

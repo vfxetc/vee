@@ -22,6 +22,8 @@ class HttpManager(BaseManager):
 
     def fetch(self):
 
+        self._assert_paths(package=True)
+
         if os.path.exists(self.package_path):
             print colour('Already downloaded.', 'blue', bright=True, reset=True)
             return

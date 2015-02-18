@@ -12,24 +12,18 @@ class GitManager(BaseManager):
 
     def __init__(self, *args, **kwargs):
         super(GitManager, self).__init__(*args, **kwargs)
+        self._assert_paths(package=True)
         self.repo = GitRepo(work_tree=self.package_path, remote_url=self.requirement and self.requirement.package)
+
+    def _set_names(self, build=False, install=False, **kwargs):
+        if (build or install) and not self._build_name:
+            commit = self.repo.rev_parse(self.requirement.revision or 'HEAD')
+            if commit:
+                super(GitManager, self)._set_names(package=True)
+                self._build_name = '%s-%s' % (self._package_name, commit[:8])
+        if install and not self._install_name:
+                self._install_name = self._build_name
+        super(GitManager, self)._set_names(**kwargs)
 
     def fetch(self):
         self.repo.checkout(self.requirement.revision or 'HEAD', force=self.requirement.force_fetch)
-
-    @property
-    def _derived_build_name(self):
-        commit = self.repo.rev_parse(self.requirement.revision or 'HEAD')
-        if not commit:
-            return None
-        return '%s-%s' % (self._package_name, commit[:8])
-
-    @property
-    def _derived_install_name(self):
-        # Git packages should include the repo in their install_name, instead
-        # of just the base package_name like the rest do.
-        return self._build_name
-
-
-
-

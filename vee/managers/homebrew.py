@@ -11,16 +11,9 @@ class HomebrewManager(GitManager):
 
     name = 'homebrew'
 
-    def __init__(self, *args, **kwargs):
-        super(HomebrewManager, self).__init__(*args, **kwargs)
-
     @property
     def _name_for_platform(self):
         return 'linuxbrew' if sys.platform.startswith('linux') else 'homebrew'
-
-    @property
-    def package_path(self):
-        return self.home.abspath('packages', self._name_for_platform)
 
     @property
     def _git_remote_url(self):
@@ -60,6 +53,30 @@ class HomebrewManager(GitManager):
 
         return self._cached_brew_info[name]
 
+    def _set_names(self, package=False, build=False, install=False):
+        if package:
+            self._package_name = self.requirement and self.requirement.package
+        if build or install:
+            self._build_name = self._install_name = self._install_name_from_info()
+
+    def _install_name_from_info(self, name=None, info=None):
+        info = info or self._brew_info(name or self.requirement.package)
+        return '%s/%s' % (info['name'], info['linked_keg'] or (
+            info['installed'][-1]['version']
+            if info['installed']
+            else info['versions']['stable']
+        ))
+
+    @property
+    def package_path(self):
+        return self.home.abspath('packages', self._name_for_platform)
+
+    @property
+    def build_path(self):
+        return self._install_name and os.path.join(self.package_path, 'Cellar', self._install_name)
+
+    install_path = build_path
+
     def extract(self):
         # Disable BaseManager.extract().
         pass
@@ -75,30 +92,12 @@ class HomebrewManager(GitManager):
         # Need to force a new installed version number.
         self._brew_info(force=True)
 
-    def _install_name_from_info(self, name=None, info=None):
-        info = info or self._brew_info(name)
-        return '%s/%s' % (info['name'], info['linked_keg'] or (
-            info['installed'][-1]['version']
-            if info['installed']
-            else info['versions']['stable']
-        ))
-
-    @property
-    def _build_name(self):
-        return self._install_name_from_info()
-
-    @property
-    def build_path(self):
-        return os.path.join(self.package_path, 'Cellar', self._install_name)
-
-    _install_name = _build_name
-    install_path = build_path
-
     def install(self):
         # Disable BaseManager.install().
         pass
 
     def link(self, env):
+        self._assert_paths(install=True)
         # We want to link in all dependencies as well.
         for name in self._brew('deps', '-n', self.requirement.package, silent=True, stdout=True).strip().split():
             path = os.path.join(self.package_path, 'Cellar', self._install_name_from_info(name))

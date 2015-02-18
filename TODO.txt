@@ -1,4 +1,15 @@
 
+- Home.{package,build,install,environment}_root attributes
+
+- Home.to_environ()
+
+- add functions to resolve_environ(): $VEE_LATEST(LIBFOO)
+  - this requires either scanning for, or knowing about installed things
+
+
+- Http/File/Base could do checksums of files to see if they have changed
+  - memoize the caches based on inode,size,mtime
+
 - test all the things!
   - libfoo, bar in Testbrew
   - http://localhost:10000/qux-1.0.0.tgz

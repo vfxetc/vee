@@ -14,6 +14,8 @@ class FileManager(BaseManager):
 
     def fetch(self):
 
+        self._assert_paths(package=True)
+
         # Don't shortcut on files.
         if False and os.path.exists(self.package_path):
             print colour('Already copied.', 'blue', bright=True, reset=True)
