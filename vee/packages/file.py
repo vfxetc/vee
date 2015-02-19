@@ -29,10 +29,10 @@ class FilePackage(BasePackage):
         
         makedirs(os.path.dirname(self.package_path))
 
-        print style('Copying', 'blue', bold=True), style(self.requirement.url, bold=True)
+        print style('Copying', 'blue', bold=True), style(self.url, bold=True)
         print        '         to', style(self.package_path, bold=True)
 
-        source = os.path.expanduser(self.requirement.url)
+        source = os.path.expanduser(self.url)
         if os.path.isdir(source):
             shutil.copytree(source, self.package_path)
         else:

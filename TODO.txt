@@ -1,4 +1,6 @@
 
+- GitPackage.fetch should not mutate the requirement
+
 - '--latest' or '--head' to always request the latest
 
 - re-arrange the class heirarchy?

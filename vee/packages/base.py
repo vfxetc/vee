@@ -36,16 +36,22 @@ class BasePackage(object):
     name = 'base'
 
     def __init__(self, requirement=None, home=None):
+
         self.requirement = requirement
         self.home = home or requirement.home
+        self.url = requirement and requirement.url
 
         self._package_name = self._build_name = self._install_name = None
 
-        # Set names requested by the user.
-        if requirement and requirement.install_name:
-            self._install_name = requirement.install_name
-        elif requirement and requirement.name and requirement.revision:
-            self._install_name = '%s/%s' % (requirement.name, requirement.revision)
+        # Set attributes requested by the user.
+        if requirement:
+            if requirement.install_name:
+                self._install_name = requirement.install_name
+            if requirement.name and requirement.revision:
+                self._install_name = '%s/%s' % (requirement.name, requirement.revision)
+            if requirement.install_subdir:
+                self._install_subdir_from_build = requirement.install_subdir
+        self.configuration = shlex.split(requirement.configuration) if requirement and requirement.configuration else []
 
     def __repr__(self):
         return '<%s for %s>' % (
@@ -70,7 +76,7 @@ class BasePackage(object):
 
     def _set_default_names(self, package=False, build=False, install=False):
         if (package or build or install) and self._package_name is None:
-            self._package_name = self.requirement and os.path.join(self.name, self.requirement.url.strip('/'))
+            self._package_name = self.url and os.path.join(self.name, self.url.strip('/'))
         if (install or build) and self._install_name is None:
             self._install_name = self._package_name and re.sub(r'(\.(tar|gz|tgz|zip))+$', '', self._package_name)
         if build and self._build_name is None:
@@ -121,7 +127,7 @@ class BasePackage(object):
     _install_subdir_from_build = None
     @property
     def install_path_from_build(self):
-        return os.path.join(self.install_path, self.requirement.install_subdir or self._install_subdir_from_build or '').rstrip('/')
+        return os.path.join(self.install_path, self._install_subdir_from_build or '').rstrip('/')
 
     def _clean_build_path(self, makedirs=True):
         if self.build_path and os.path.exists(self.build_path):
@@ -209,8 +215,7 @@ class BasePackage(object):
                 '--build-purelib', build,
                 '--build-platlib', build,
             ]
-            if self.requirement.configuration:
-                cmd.extend(shlex.split(self.requirement.configuration))
+            cmd.extend(self.configuration)
             if call(cmd, cwd=top_level, env=env):
                 raise RuntimeError('Could not build Python package')
 
@@ -237,8 +242,7 @@ class BasePackage(object):
             print style('Configuring...', 'blue', bold=True)
             cmd = ['./configure', '--prefix', self.install_path]
             env = env or self.fresh_environ()
-            if self.requirement.configuration:
-                cmd.extend(shlex.split(self.requirement.configuration))
+            cmd.extend(self.configuration)
             call(cmd, cwd=os.path.dirname(configure), env=env)
 
         makefile = _find_in_tree(self.build_path, 'Makefile')

@@ -13,7 +13,7 @@ class GitPackage(BasePackage):
     def __init__(self, *args, **kwargs):
         super(GitPackage, self).__init__(*args, **kwargs)
         self._assert_paths(package=True)
-        self.repo = GitRepo(work_tree=self.package_path, remote_url=self.requirement and self.requirement.url)
+        self.repo = GitRepo(work_tree=self.package_path, remote_url=self.url)
 
     def _set_names(self, build=False, install=False, **kwargs):
         if (build or install) and not self._build_name:
@@ -27,5 +27,6 @@ class GitPackage(BasePackage):
 
     def fetch(self):
         self.repo.checkout(self.requirement.revision or 'HEAD', force=self.requirement.force_fetch)
+        # TODO: should not mutate the requirement
         self.requirement.revision = self.repo.head
         

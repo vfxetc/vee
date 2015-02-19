@@ -12,5 +12,5 @@ def brew(args, *command):
         raise CliException('please specify a homebrew command')
 
     args.assert_home()
-    manager = args.home.get_manager('homebrew')
+    manager = args.home.get_package('homebrew', None)
     manager._brew(*command)

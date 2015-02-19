@@ -14,7 +14,7 @@ class HttpPackage(BasePackage):
 
     @property
     def _derived_package_name(self):
-        split = urlparse.urlsplit(self.requirement.url)
+        split = urlparse.urlsplit(self.url)
         return os.path.join(
             split.netloc,
             split.path.strip('/'),
@@ -32,13 +32,13 @@ class HttpPackage(BasePackage):
 
         temp = self.package_path + '.downloading'
 
-        print style('Downloading', 'blue', bold=True), style(self.requirement.url, bold=True)
+        print style('Downloading', 'blue', bold=True), style(self.url, bold=True)
         print        '         to', style(self.package_path, bold=True)
 
         src_fh = None
         dst_fh = None
         try:
-            src_fh = urllib2.urlopen(self.requirement.url)
+            src_fh = urllib2.urlopen(self.url)
             dst_fh = open(temp, 'wb')
             # TODO: Indicate progress.
             for chunk in iter(lambda: src_fh.read(16384), ''):

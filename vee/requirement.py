@@ -56,7 +56,7 @@ class Requirement(object):
                 self.environ[parts[i]] = parts[i + 1]
 
         self.home = home or args.home
-        self.package = self.home.get_manager(requirement=self)
+        self.package = self.home.get_package(requirement=self)
 
         self._user_specification = str(self)
 

@@ -47,7 +47,7 @@ class HomebrewPackage(GitPackage):
         if self._cached_brew_info is None:
             self._cached_brew_info = {}
 
-        name = name or self.requirement.url
+        name = name or self.url
         if force or name not in self._cached_brew_info:
             self._cached_brew_info[name] = json.loads(self._brew('info', '--json=v1', name, stdout=True, silent=True))[0]
 
@@ -55,12 +55,12 @@ class HomebrewPackage(GitPackage):
 
     def _set_names(self, package=False, build=False, install=False):
         if package:
-            self._package_name = self.requirement and self.requirement.url
+            self._package_name = self.url
         if build or install:
             self._build_name = self._install_name = self._install_name_from_info()
 
     def _install_name_from_info(self, name=None, info=None):
-        info = info or self._brew_info(name or self.requirement.url)
+        info = info or self._brew_info(name or self.url)
         return '%s/%s' % (info['name'], info['linked_keg'] or (
             info['installed'][-1]['version']
             if info['installed']
@@ -83,11 +83,9 @@ class HomebrewPackage(GitPackage):
 
     def build(self):
         if self.installed:
-            print style('Warning:', 'red', bold=True), style(self.requirement + ' is already built', 'black', bold=True)
+            print style('Warning:', 'red', bold=True), style(self.url + ' is already built', 'black', bold=True)
             return
-        self._brew('install', self.requirement.url, *(
-            shlex.split(self.requirement.configuration) if self.requirement.configuration else ()
-        ))
+        self._brew('install', self.url, *self.configuration)
 
         # Need to force a new installed version number.
         self._brew_info(force=True)
@@ -99,9 +97,9 @@ class HomebrewPackage(GitPackage):
     def link(self, env):
         self._assert_paths(install=True)
         # We want to link in all dependencies as well.
-        for name in self._brew('deps', '-n', self.requirement.url, silent=True, stdout=True).strip().split():
+        for name in self._brew('deps', '-n', self.url, silent=True, stdout=True).strip().split():
             path = os.path.join(self.package_path, 'Cellar', self._install_name_from_info(name))
             if os.path.exists(path):
-                print style('Linking', 'blue', bold=True), style('homebrew+%s (homebrew+%s dependency)' % (name, self.requirement.url), bold=True)
+                print style('Linking', 'blue', bold=True), style('homebrew+%s (homebrew+%s dependency)' % (name, self.url), bold=True)
                 env.link_directory(path)
         env.link_directory(self.install_path)
