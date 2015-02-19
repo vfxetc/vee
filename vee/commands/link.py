@@ -1,7 +1,7 @@
 from vee.commands.main import command, argument
 from vee.environment import Environment
 from vee.requirement import Requirement
-from vee.utils import colour
+from vee.utils import style
 from vee.exceptions import CliException, AlreadyInstalled
 
 
@@ -20,7 +20,7 @@ def link(args):
 
     if args.raw:
         for dir_ in args.package:
-            print colour('Linking', 'blue', bold=True), colour(dir_, 'black', reset=True)
+            print style('Linking', 'blue', bold=True), style(dir_, bold=True)
             env.link_directory(dir_)
         return
 
@@ -38,7 +38,7 @@ def link(args):
         except AlreadyInstalled:
             pass
         
-        print colour('Linking', 'blue', bold=True), colour(str(req), 'black', reset=True)
+        print style('Linking', 'blue', bold=True), style(str(req), bold=True)
 
         req.manager.link(env)
         

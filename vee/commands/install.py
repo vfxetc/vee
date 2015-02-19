@@ -1,6 +1,6 @@
 from vee.commands.main import command, argument
 from vee.requirement import Requirement
-from vee.utils import colour
+from vee.utils import style
 
 
 @command(
@@ -14,8 +14,7 @@ def install(args):
     req = Requirement(args.package, home=args.home)
 
     if not args.force:
-        if req.resolve_existing():
-            print 'FOUND EXISTING INSTALL at', req.manager.install_path
+        req.resolve_existing()
 
     req.install(force=args.force)
     

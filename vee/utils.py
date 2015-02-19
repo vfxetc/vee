@@ -1,3 +1,5 @@
+# encoding: utf8
+
 import datetime
 import errno
 import functools
@@ -50,7 +52,7 @@ def _call_reader(fh, size=2**10, buffer=None, callback=None):
 def call(cmd, **kwargs):
 
     if not kwargs.pop('silent', False):
-        print colour('$', 'blue', bold=True), colour(cmd[0], 'black', bold=True), colour(' '.join(cmd[1:]), reset=True)
+        print colour('$', 'blue', bold=True), colour(cmd[0], bold=True), ' '.join(cmd[1:])
 
     stdout = kwargs.pop('stdout', None)
     on_stdout = kwargs.pop('on_stdout', None)
@@ -122,8 +124,8 @@ def call_log(cmd, **kwargs):
             echo_fh.write(echo_format % line + '\n')
 
     kwargs.update(
-        on_stdout=functools.partial(callback, 'out', sys.stdout, (indent * ' ') + colour('%s', (1, 1, 1), reset=True)),
-        on_stderr=functools.partial(callback, 'err', sys.stdout, (indent * ' ') + colour('%s', 'red', reset=True)),
+        on_stdout=functools.partial(callback, 'out', sys.stdout, (indent * ' ') + style('%s', faint=True)),
+        on_stderr=functools.partial(callback, 'err', sys.stdout, (indent * ' ') + style('%s', 'red')),
     )
 
     call(cmd, **kwargs)
@@ -164,43 +166,76 @@ def _colour_to_code(c):
 
 
 
-def colour(message='', fg=None, bg=None, bright=False, bold=False, prereset=False, reset=False):
+def style(message='', fg=None, bg=None, bright=None, bold=None, faint=None,
+          underline=None, blink=None, invert=None, conceal=None,
+          prereset=False, reset=True):
+
     parts = []
+
     if prereset:
         parts.extend((CSI, '0m'))
+
     if fg is not None:
         parts.extend((CSI, '9' if bright else '3', _colour_to_code(fg), 'm'))
     if bg is not None:
         parts.extend((CSI, '10' if bright else '4', _colour_to_code(bg), 'm'))
-    if bold:
-        parts.extend((CSI, '1m'))
+
+    if bold is not None:
+        parts.extend((CSI, '2' if not bold else '', '1m'))
+    if faint is not None:
+        parts.extend((CSI, '2' if not faint else '', '2m'))
+    if underline is not None:
+        parts.extend((CSI, '2' if not underline else '', '4m'))
+    if blink is not None:
+        parts.extend((CSI, '2' if not blink else '', '5m'))
+    if invert is not None:
+        parts.extend((CSI, '2' if not invert else '', '7m'))
+    if conceal is not None:
+        parts.extend((CSI, '2' if not conceal else '', '8m'))
+
     parts.append(message)
+
     if reset:
         parts.extend((CSI, '0m'))
+
     return ''.join(parts)
 
+
+colour = color = style
 
 
 if __name__ == '__main__':
 
+    print 'ANSI Styles'
+    for i in xrange(1, 108):
+        print CSI + '0m' + CSI + str(i) + 'm' + ('%03d' % i) + CSI + '0m',
+        if i % 10 == 0:
+            print
+    print
+    print
+
     print 'ANSI Colours'
-    print '%-33s%-33s%-33s%-33s' % ('Normal', 'Bright', 'Bold', 'Bright and Bold')
+    swatches = (('Normal', dict()),
+                ('Faint',  dict(faint=True)),
+                ('Bright', dict(bright=True)),
+                ('Bold',   dict(bold=True)),
+               )
+    for title, _ in swatches:
+        print '%-32s' % title,
+    print
     for bg in sorted(_colour_codes.values()):
-        for bold in False, True:
-            for bright in False, True:
-                for fg in sorted(_colour_codes.values()):
-                    print colour(' %d%d' % (fg, bg), fg, bg, bold=bold, bright=bright),
-                print colour(reset=True),
+        for _, kwargs in swatches:
+            for fg in sorted(_colour_codes.values()):
+                print colour(' %d%d' % (fg, bg), fg, bg, **kwargs),
+            print colour(reset=True),
         print colour(reset=True)
     print
 
     print '216 Colours'
-    print '%-42s%-42s' % ("Normal", "Bold")
     for r in xrange(0, 6):
         for g in xrange(0, 6):
-            for bold in False, True:
-                for b in xrange(0, 6):
-                    print colour('R%dG%dB%d' % (r, g, b), fg=(r, g, b), bold=bold, reset=True),
+            for b in xrange(0, 6):
+                print colour(u'◉ R%dG%dB%d' % (r, g, b), fg=(r, g, b), reset=True),
             print ' '
     print
 

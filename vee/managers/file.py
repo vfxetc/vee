@@ -5,7 +5,7 @@ import urlparse
 import shutil
 
 from vee.managers.base import BaseManager
-from vee.utils import makedirs, colour
+from vee.utils import makedirs, style
 
 
 class FileManager(BaseManager):
@@ -18,7 +18,7 @@ class FileManager(BaseManager):
 
         # Don't shortcut on files.
         if False and os.path.exists(self.package_path):
-            print colour('Already copied.', 'blue', bold=True, reset=True)
+            print style('Already copied.', 'blue', bold=True)
             return
 
         if os.path.exists(self.package_path):
@@ -29,8 +29,8 @@ class FileManager(BaseManager):
         
         makedirs(os.path.dirname(self.package_path))
 
-        print colour('Copying', 'blue', bold=True), colour(self.requirement.package, 'black', reset=True)
-        print        '         to', colour(self.package_path, bold=True, reset=True)
+        print style('Copying', 'blue', bold=True), style(self.requirement.package, bold=True)
+        print        '         to', style(self.package_path, bold=True)
 
         source = os.path.expanduser(self.requirement.package)
         if os.path.isdir(source):

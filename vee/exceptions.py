@@ -1,4 +1,4 @@
-from vee.utils import colour
+from vee.utils import style
 
 
 class CliException(Exception):
@@ -9,12 +9,12 @@ class CliException(Exception):
 
     @property
     def clistr(self):
-        return colour('ERROR: ', 'red', bold=True) + colour(str(self), 'black', reset=True)
+        return style('ERROR: ', 'red', bold=True) + style(str(self), bold=True)
 
 
 class AlreadyInstalled(CliException, RuntimeError):
 
     @property
     def clistr(self):
-        return colour('ERROR: ', 'red', bold=True) + colour(self.args[0] + ' is already installed', 'black', reset=True)
+        return style('ERROR: ', 'red', bold=True) + style(self.args[0] + ' is already installed', bold=True)
 

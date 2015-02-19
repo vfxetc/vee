@@ -1,6 +1,6 @@
 from vee.commands.main import command, argument
 from vee.requirement import Requirement
-from vee.utils import colour
+from vee.utils import style
 
 
 @command(

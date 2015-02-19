@@ -1,7 +1,7 @@
 import os
 import subprocess
 
-from vee.utils import call, call_output, colour
+from vee.utils import call, call_output, style
 
 
 class GitRepo(object):
@@ -27,10 +27,10 @@ class GitRepo(object):
             # TODO: we can deal with this
             raise ValueError('work tree %r exists without repo' % self.work_tree)
         elif shallow:
-            print colour('Cloning shallow', 'blue', bold=True), colour(self.remote_url, 'black', reset=True)
+            print style('Cloning shallow', 'blue', bold=True), style(self.remote_url, bold=True)
             call(['git', 'clone', '--depth=1', self.remote_url, self.work_tree])
         else:
-            print colour('Cloning', 'blue', bold=True), colour(self._git_remote_url, 'black', reset=True)
+            print style('Cloning', 'blue', bold=True), style(self._git_remote_url, bold=True)
             call(['git', 'clone', self.remote_url, self.work_tree])
 
     def _call(self, *cmd, **kw):
@@ -65,36 +65,36 @@ class GitRepo(object):
             if not fetch:
                 raise ValueError('revision %r does not exist in local repo' % revision)
 
-            # print colour('Warning:', bg='yellow'), colour('revision %r does not exist in local repo.' % revision, 'black', reset=True)
+            # print style('Warning:', bg='yellow'), style('revision %r does not exist in local repo.' % revision, bold=True)
 
             if self.is_shallow:
 
                 # Fetch the new history on top of the shallow history.
-                print colour('Fetching shallow', 'blue', bold=True), colour(self.remote_url, 'black', reset=True)
+                print style('Fetching shallow', 'blue', bold=True), style(self.remote_url, bold=True)
                 self._call('fetch', '--update-shallow', self.remote_url, silent=True)
                 commit = self.rev_parse(revision)
 
                 # Lets get the whole history.
                 if not commit:
-                    print colour('Fetching unshallow', 'blue', bold=True), colour(self.remote_url, 'black', reset=True)
+                    print style('Fetching unshallow', 'blue', bold=True), style(self.remote_url, bold=True)
                     self._call('fetch', '--unshallow', self.remote_url, silent=True)
                     commit = self.rev_parse(revision)
 
             else:
 
                 # Normal fetch here.
-                print colour('Fetching', 'blue', bold=True), colour(self.remote_url, 'black', reset=True)
+                print style('Fetching', 'blue', bold=True), style(self.remote_url, bold=True)
                 self._call('fetch', self.remote_url, silent=True)
                 commit = self.rev_parse(revision)
 
 
         if not commit:
             msg = 'revision %r does not exist in %s' % (revision, self.remote_url)
-            print colour('Error:', 'red'), colour(msg, reset=True)
+            print style('Error:', 'red'), style(msg, reset=True)
             raise ValueError(msg)
 
         if self.head != commit:
-            print colour('Checking out', 'blue', bold=True), colour('%s [%s]' % (revision, commit), 'black', reset=True)
+            print style('Checking out', 'blue', bold=True), style('%s [%s]' % (revision, commit), bold=True)
             self._call('reset', '--hard', commit, silent=True)
             self._head = commit
 

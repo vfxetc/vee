@@ -45,8 +45,6 @@ class Environment(object):
         # TODO: Be like Homebrew, and be smarter about what we link, and what
         # we copy.
 
-        makedirs(path)
-
         for old_dir_path, dir_names, file_names in os.walk(dir_to_link):
             
             rel_dir_path = os.path.relpath(old_dir_path, dir_to_link)

@@ -2,7 +2,7 @@ import os
 import subprocess
 
 from vee.managers.base import BaseManager
-from vee.utils import call, call_output, makedirs, colour
+from vee.utils import call, call_output, makedirs, style
 from vee.git import GitRepo
 
 
