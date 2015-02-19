@@ -4,94 +4,145 @@ import os
 import re
 import shlex
 
-from vee.exceptions import AlreadyInstalled
+from vee.exceptions import AlreadyInstalled, CliException
+
+
+class RequirementParseError(CliException):
+    pass
+
+
+class _Parser(argparse.ArgumentParser):
+
+    def error(self, message):
+        raise RequirementParseError(message)
+
+
+class _ConfigurationAction(argparse.Action):
+
+    @property
+    def default(self):
+        return []
+    @default.setter
+    def default(self, v):
+        pass
+
+    def __call__(self, parser, namespace, values, option_string=None):
+        res = getattr(namespace, self.dest)
+        for value in values:
+            res.extend(value.split(','))
+
+
+class _EnvironmentAction(argparse.Action):
+
+    @property
+    def default(self):
+        return {}
+    @default.setter
+    def default(self, v):
+        pass
+
+    def __call__(self, parser, namespace, values, option_string=None):
+        res = getattr(namespace, self.dest)
+        for value in values:
+            parts = re.split(r'(?:^|,)(\w+)=', value)
+            for i in xrange(1, len(parts), 2):
+                res[parts[i]] = parts[i + 1]
 
 
 class Requirement(object):
 
-    arg_parser = argparse.ArgumentParser(add_help=False)
-    arg_parser.add_argument('-n', '--name')
-    arg_parser.add_argument('-r', '--revision')
-    arg_parser.add_argument('-f', '--force-fetch', action='store_true', help='always fetch git repos')
-    arg_parser.add_argument('-e', '--environ', action='append', default=[])
-    arg_parser.add_argument('-c', '--configuration', help='args to pass to `./configure`, `python setup.py`, `brew install`, etc..')
-    arg_parser.add_argument('--install-name')
-    arg_parser.add_argument('--install-subdir')
-    arg_parser.add_argument('url')
+    _arg_parser = _Parser(add_help=False)
+    _arg_parser.add_argument('-t', '--type')
+    _arg_parser.add_argument('-n', '--name')
+    _arg_parser.add_argument('-r', '--revision')
+    _arg_parser.add_argument('-f', '--force-fetch', action='store_true', help='always fetch git repos')
+    _arg_parser.add_argument('-e', '--environ', nargs='*', action=_EnvironmentAction)
+    _arg_parser.add_argument('-c', '--configuration', nargs='*', action=_ConfigurationAction,
+        help='args to pass to `./configure`, `python setup.py`, `brew install`, etc..')
+    _arg_parser.add_argument('--install-name')
+    _arg_parser.add_argument('--install-subdir')
+    _arg_parser.add_argument('url')
 
+    def __init__(self, args=None, home=None, **kwargs):
 
-    def __init__(self, args, home=None):
+        if args and kwargs:
+            raise ValueError('specify either args OR kwargs')
 
-        if isinstance(args, basestring):
-            args = shlex.split(args)
-        if isinstance(args, (list, tuple)):
-            args = self.arg_parser.parse_args(args)
-            
+        if args:
+
+            # If there are args, parse them.
+            if isinstance(args, basestring):
+                args = shlex.split(args)
+            if isinstance(args, (list, tuple)):
+                self._arg_parser.parse_args(args, namespace=self)
+            else:
+                raise TypeError('args must be in (str, list, tuple); got %s' % args.__class__)
+
+        else:
+
+            for action in self._arg_parser._actions:
+                name = action.dest
+                if name in kwargs:
+                    setattr(self, name, kwargs[name])
+
+        # Manual args.
+        self.home = home
+
         # Extract the manager type. Usually this is of the form:
         # type+specification. Otherwise we assume it is a simple URL or file.
-        m = re.match(r'^(\w+)\+(.+)$', args.url)
-        if m:
-            self.type = m.group(1)
-            self.url = m.group(2)
-        elif re.match(r'^https?://', args.url):
-            self.type = 'http'
-            self.url = args.url
-        else:
-            self.type = 'file'
-            self.url = os.path.abspath(os.path.expanduser(args.url))
+        if not self.type:
+            m = re.match(r'^(\w+)\+(.+)$', self.url)
+            if m:
+                self.type = m.group(1)
+                self.url = m.group(2)
+            elif re.match(r'^https?://', self.url):
+                self.type = 'http'
+            else:
+                self.type = 'file'
 
-        self._args = args
-
-        self.configuration = args.configuration
-        self.install_name = args.install_name
-        self.name = args.name
-        self.revision = args.revision
-        self.install_subdir = args.install_subdir
-        self.force_fetch = args.force_fetch
-
-        self.environ = {}
-        for x in args.environ:
-            parts = re.split(r'(?:^|,)(\w+)=', x)
-            for i in xrange(1, len(parts), 2):
-                self.environ[parts[i]] = parts[i + 1]
-
-        self.home = home or args.home
         self.package = self.home.get_package(requirement=self)
 
-        self._user_specification = str(self)
 
+    def to_args(self):
 
+        argsets = []
+        for action in self._arg_parser._actions:
+
+            name = action.dest
+            if name in ('type', 'url'):
+                continue
+
+            value = getattr(self, name)
+            if not value:
+                continue
+
+            if action.__class__.__name__ == '_StoreTrueAction': # Gross.
+                if value:
+                    argsets.append(['--%s' % name])
+                continue
+
+            if isinstance(value, dict):
+                value = ','.join('%s=%s' % (k, v) for k, v in sorted(value.iteritems()))
+            if isinstance(value, (list, tuple)):
+                value = ','.join(value)
+
+            # Shell escape!
+            if re.search(r'\s', value):
+                value = "'%s'" % value.replace("'", "''")
+
+            argsets.append(['--%s=%s' % (name.replace('_', '-'), str(value))])
+
+        args = [
+            (self.type or '') +
+            ('+' if self.type else '') +
+            self.url
+        ]
+        for argset in sorted(argsets):
+            args.extend(argset)
+        return args
 
     def __str__(self):
-        args = []
-        for name in (
-            'force_fetch',
-        ):
-            value = getattr(self, name)
-            if value:
-                args.append('--%s' % name.replace('_', '-'))
-        for name in (
-            'configuration',
-            'environ',
-            'install_name',
-            'install_subdir',
-            'name',
-            'revision',
-        ):
-            value = getattr(self, name)
-            if value:
-                if isinstance(value, dict):
-                    value = ','.join('%s=%s' % (k, v) for k, v in sorted(value.iteritems()))
-                if isinstance(value, (list, tuple)):
-                    value = ','.join(value)
-                args.append('--%s %s' % (name.replace('_', '-'), value))
-        return (
-            self.type +
-            ('+' if self.type else '') +
-            self.url +
-            (' ' if args else '') +
-            ' '.join(sorted(args))
-        )
+        return ' '.join(self.to_args())
 
     def __repr__(self):
         return '%s(%r)' % (self.__class__.__name__, str(self))

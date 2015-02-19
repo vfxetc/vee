@@ -12,6 +12,10 @@ class FilePackage(BasePackage):
 
     type = 'file'
 
+    def __init__(self, *args, **kwargs):
+        super(FilePackage, self).__init__(*args, **kwargs):
+        self.url = os.path.abspath(os.path.expanduser(self.url))
+    
     def fetch(self):
 
         self._assert_paths(package=True)

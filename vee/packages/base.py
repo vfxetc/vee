@@ -9,6 +9,7 @@ import shutil
 
 from vee.exceptions import AlreadyInstalled
 from vee.utils import cached_property, style, call, call_log
+from vee.requirement import Requirement
 
 
 def _find_in_tree(root, name, type='file'):
@@ -35,34 +36,36 @@ class BasePackage(object):
 
     type = 'base'
 
+    # Pairs of Package vs Requirement attributes.
+    _pkg_to_req_attrs = {
+        '_force_fetch': 'force_fetch',
+        '_install_name': 'install_name',
+        '_install_subdir_from_build': 'install_subdir',
+    }
+
+    _req_to_pkg_attrs = dict((v, k) for k, v in _pkg_to_req_attrs.iteritems())
+
+
     def __init__(self, requirement=None, home=None):
 
-        self.abstract_requirement = str(requirement)
+        self.abstract_requirement = requirement and str(requirement)
         self.home = home or requirement.home
 
-        self.url = self.name = self.revision = None
-        self._force_fetch = None
-        self._package_name = self._build_name = self._install_name = None
+        for action in Requirement._arg_parser._actions:
+            req_attr = action.dest
+            pkg_attr = self._req_to_pkg_attrs.get(req_attr, req_attr)
+            setattr(self, pkg_attr, requirement and getattr(requirement, req_attr))
 
-        # Set attributes requested by the user.
-        if requirement:
+        # A few need special handling
+        self.environ = self.environ.copy() if self.environ else {}
+        self.configuration = self.configuration[:] if self.configuration else []
 
-            self.url = requirement.url
-            self.name = requirement.name
-            self.revision = requirement.revision
+        # Special building an install name.
+        if not self._install_name and self.name and self.revision:
+            self._install_name = '%s/%s' % (self.name, self.revision)
 
-            if requirement.install_name:
-                self._install_name = requirement.install_name or None
-            elif requirement.name and requirement.revision:
-                self._install_name = '%s/%s' % (requirement.name, requirement.revision)
-
-            self._install_subdir_from_build = requirement.install_subdir or ''
-            self._force_fetch = requirement.force_fetch
-
-        self.configuration = shlex.split(requirement.configuration) if requirement and requirement.configuration else []
-        self.environ = requirement.environ.copy() if requirement else {}
-        
         self._index_id = None
+        self._package_name = self._build_name = None
 
 
     def __repr__(self):
