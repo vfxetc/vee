@@ -5,6 +5,7 @@ import re
 import shlex
 
 from vee.exceptions import AlreadyInstalled, CliException
+from vee.utils import style
 
 
 class RequirementParseError(CliException):
@@ -102,6 +103,14 @@ class Requirement(object):
 
         self.package = self.home.get_package(requirement=self)
 
+    def to_kwargs(self):
+        kwargs = {}
+        for action in self._arg_parser._actions:
+            name = action.dest
+            value = getattr(self, name)
+            if value:
+                kwargs[name] = value
+        return kwargs
 
     def to_args(self):
 
@@ -146,52 +155,6 @@ class Requirement(object):
 
     def __repr__(self):
         return '%s(%r)' % (self.__class__.__name__, str(self))
-
-    def resolve_existing(self):
-        """Check against the index to see if this was already installed."""
-
-        if self.package._index_id is not None:
-            raise ValueError('requirement already in index')
-
-        cur = self.home.index.cursor()
-
-        clauses = ['type = ?', 'url = ?']
-        values = [self.type, self.url]
-        for attr in ('name', 'revision'):
-            if getattr(self, attr):
-                clauses.append('%s = ?' % attr)
-                values.append(getattr(self, attr))
-        for attr in ('_package_name', '_build_name', '_install_name'):
-            if getattr(self.package, attr):
-                clauses.append('%s = ?' % attr.strip('_'))
-                values.append(getattr(self.package, attr))
-
-        row = cur.execute('''
-            SELECT * FROM packages
-            WHERE %s
-            ORDER BY created_at DESC
-            LIMIT 1
-        ''' % ' AND '.join(clauses), values).fetchone()
-
-        if not row:
-            return
-
-        # Everything below either already matches or was unset.
-        self.package._index_id = row['id']
-        self.name = row['name']
-        self.revision = row['revision']
-        self.package._package_name = row['package_name']
-        self.package._build_name = row['build_name']
-        self.package._install_name = row['install_name']
-        if (self.package.package_path != row['package_path'] or
-            self.package.build_path != row['build_path'] or
-            self.package.install_path != row['install_path']
-        ):
-            raise RuntimeError('indexed paths dont match')
-
-        return True
-
-
 
     def _reinstall_check(self, force):
         if self.package.installed:

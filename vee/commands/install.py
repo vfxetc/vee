@@ -14,7 +14,7 @@ def install(args):
     req = Requirement(args.package, home=args.home)
 
     if not args.force:
-        req.resolve_existing()
+        req.package.resolve_existing()
 
     req.install(force=args.force)
     

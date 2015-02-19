@@ -353,6 +353,53 @@ class BasePackage(object):
             self._index_id = cur.lastrowid
         return self._index_id
 
+
+    def resolve_existing(self):
+        """Check against the index to see if this was already installed."""
+
+        if self._index_id is not None:
+            raise ValueError('requirement already in index')
+
+        cur = self.home.index.cursor()
+
+        clauses = ['type = ?', 'url = ?']
+        values = [self.type, self.url]
+        for attr in ('name', 'revision'):
+            if getattr(self, attr):
+                clauses.append('%s = ?' % attr)
+                values.append(getattr(self, attr))
+        for attr in ('_package_name', '_build_name', '_install_name'):
+            if getattr(self, attr):
+                clauses.append('%s = ?' % attr.strip('_'))
+                values.append(getattr(self, attr))
+
+        row = cur.execute('''
+            SELECT * FROM packages
+            WHERE %s
+            ORDER BY created_at DESC
+            LIMIT 1
+        ''' % ' AND '.join(clauses), values).fetchone()
+
+        if not row:
+            return
+
+        print style('DEBUG: found existing install %d' % row['id'], faint=True)
+
+        # Everything below either already matches or was unset.
+        self._index_id = row['id']
+        self.name = row['name']
+        self.revision = row['revision']
+        self._package_name = row['package_name']
+        self._build_name = row['build_name']
+        self._install_name = row['install_name']
+        if (self.package_path != row['package_path'] or
+            self.build_path != row['build_path'] or
+            self.install_path != row['install_path']
+        ):
+            raise RuntimeError('indexed paths dont match')
+
+        return True
+
     def _index_link(self, env):
         cur = self.home.index.cursor()
         cur.execute('''INSERT INTO links (package_id, environment_id, created_at, abstract_requirement) VALUES (?, ?, ?, ?)''', [
