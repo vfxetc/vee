@@ -33,38 +33,72 @@ class BasePackage(object):
 
     """
 
-    name = 'base'
+    type = 'base'
 
     def __init__(self, requirement=None, home=None):
 
-        self.requirement = requirement
+        self.abstract_requirement = str(requirement)
         self.home = home or requirement.home
-        self.url = requirement and requirement.url
 
+        self.url = self.name = self.revision = None
+        self._force_fetch = None
         self._package_name = self._build_name = self._install_name = None
 
         # Set attributes requested by the user.
         if requirement:
+
+            self.url = requirement.url
+            self.name = requirement.name
+            self.revision = requirement.revision
+
             if requirement.install_name:
-                self._install_name = requirement.install_name
-            if requirement.name and requirement.revision:
+                self._install_name = requirement.install_name or None
+            elif requirement.name and requirement.revision:
                 self._install_name = '%s/%s' % (requirement.name, requirement.revision)
-            if requirement.install_subdir:
-                self._install_subdir_from_build = requirement.install_subdir
+
+            self._install_subdir_from_build = requirement.install_subdir or ''
+            self._force_fetch = requirement.force_fetch
+
         self.configuration = shlex.split(requirement.configuration) if requirement and requirement.configuration else []
+        self.environ = requirement.environ.copy() if requirement else {}
+        
+        self._index_id = None
+
 
     def __repr__(self):
         return '<%s for %s>' % (
             self.__class__.__name__,
-            self.requirement,
+            self.abstract_requirement,
         )
+
+
+    def _resolve_environ(self, source=None):
+
+        source = (source or os.environ).copy()
+        source['VEE'] = self.home.root
+
+        diff = {}
+
+        def rep(m):
+            a, b, c, orig = m.groups()
+            abc = a or b or c
+            if abc:
+                return source.get(abc, '')
+            if orig:
+                return source.get(k)
+
+        for k, v in self.environ.iteritems():
+            v = re.sub(r'\$\{(\w+)\}|\$(\w+)|%(\w+)%|(@)', rep, v)
+            diff[k] = v
+
+        return diff
 
     _environ_diff = None
 
     @property
     def environ_diff(self):
-        if self._environ_diff is None and self.requirement:
-            self._environ_diff = self.requirement.resolve_environ()
+        if self._environ_diff is None:
+            self._environ_diff = self._resolve_environ()
             for k, v in sorted(self._environ_diff.iteritems()):
                 print style('setenv', 'blue', bold=True), style('%s=' % k, bold=True) + v
         return self._environ_diff or {}
@@ -76,7 +110,7 @@ class BasePackage(object):
 
     def _set_default_names(self, package=False, build=False, install=False):
         if (package or build or install) and self._package_name is None:
-            self._package_name = self.url and os.path.join(self.name, self.url.strip('/'))
+            self._package_name = self.url and os.path.join(self.type, self.url.strip('/'))
         if (install or build) and self._install_name is None:
             self._install_name = self._package_name and re.sub(r'(\.(tar|gz|tgz|zip))+$', '', self._package_name)
         if build and self._build_name is None:
@@ -287,12 +321,41 @@ class BasePackage(object):
         env.link_directory(self.install_path)
         self._index_link(env)
 
+    def index_id(self):
+        if self._index_id is None:
+            self._set_names(package=True, build=True, install=True)
+            if not self.installed:
+                raise ValueError('cannot index requirement that is not installed')
+            cur = self.home.index.cursor()
+            cur.execute('''
+                INSERT INTO packages (created_at, abstract_requirement, concrete_requirement,
+                                      type, url, name, revision, package_name, build_name,
+                                      install_name, package_path, build_path, install_path)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            ''', [datetime.datetime.utcnow(),
+                  self.abstract_requirement,
+                  str(self), # TODO: make this a new Requirement object
+                  self.type,
+                  self.url,
+                  self.name,
+                  self.revision,
+                  self._package_name,
+                  self._build_name,
+                  self._install_name,
+                  self.package_path,
+                  self.build_path,
+                  self.install_path,
+                 ]
+            )
+            self._index_id = cur.lastrowid
+        return self._index_id
+
     def _index_link(self, env):
         cur = self.home.index.cursor()
         cur.execute('''INSERT INTO links (package_id, environment_id, created_at, abstract_requirement) VALUES (?, ?, ?, ?)''', [
-            self.requirement.index_id(),
+            self.index_id(),
             env.index_id(),
             datetime.datetime.utcnow(),
-            self.requirement._user_specification,
+            self.abstract_requirement,
         ])
 

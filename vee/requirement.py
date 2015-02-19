@@ -60,7 +60,6 @@ class Requirement(object):
 
         self._user_specification = str(self)
 
-        self._index_id = None
 
 
     def __str__(self):
@@ -100,7 +99,7 @@ class Requirement(object):
     def resolve_existing(self):
         """Check against the index to see if this was already installed."""
 
-        if self._index_id is not None:
+        if self.package._index_id is not None:
             raise ValueError('requirement already in index')
 
         cur = self.home.index.cursor()
@@ -127,7 +126,7 @@ class Requirement(object):
             return
 
         # Everything below either already matches or was unset.
-        self._index_id = row['id']
+        self.package._index_id = row['id']
         self.name = row['name']
         self.revision = row['revision']
         self.package._package_name = row['package_name']
@@ -150,27 +149,6 @@ class Requirement(object):
             else:
                 raise AlreadyInstalled(str(self))
 
-    def resolve_environ(self, source=None):
-
-        source = (source or os.environ).copy()
-        source['VEE'] = self.home.root
-
-        diff = {}
-
-        def rep(m):
-            a, b, c, orig = m.groups()
-            abc = a or b or c
-            if abc:
-                return source.get(abc, '')
-            if orig:
-                return source.get(k)
-
-        for k, v in self.environ.iteritems():
-            v = re.sub(r'\$\{(\w+)\}|\$(\w+)|%(\w+)%|(@)', rep, v)
-            diff[k] = v
-
-        return diff
-
     def install(self, force=False):
 
         if not self.force_fetch:
@@ -186,26 +164,8 @@ class Requirement(object):
         self.package.install()
 
         # Record it!
-        self.index_id()
+        self.package.index_id()
 
-    def index_id(self):
-        if self._index_id is None:
-            self.package._set_names(package=True, build=True, install=True)
-            if not self.package.installed:
-                raise ValueError('cannot index requirement that is not installed')
-            cur = self.home.index.cursor()
-            cur.execute('''
-                INSERT INTO packages (created_at, abstract_requirement, concrete_requirement,
-                                      type, url, name, revision, package_name, build_name,
-                                      install_name, package_path, build_path, install_path)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-            ''', [datetime.datetime.utcnow(), self._user_specification, str(self),
-                  self.type, self.url, self.name, self.revision, self.package._package_name,
-                  self.package._build_name, self.package._install_name, self.package.package_path,
-                  self.package.build_path, self.package.install_path]
-            )
-            self._index_id = cur.lastrowid
-        return self._index_id
 
 
 

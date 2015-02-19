@@ -10,7 +10,7 @@ from vee.utils import makedirs, style
 
 class HttpPackage(BasePackage):
 
-    name = 'http'
+    type = 'http'
 
     @property
     def _derived_package_name(self):

@@ -8,16 +8,20 @@ from vee.git import GitRepo
 
 class GitPackage(BasePackage):
 
-    name = 'git'
+    type = 'git'
 
     def __init__(self, *args, **kwargs):
         super(GitPackage, self).__init__(*args, **kwargs)
         self._assert_paths(package=True)
-        self.repo = GitRepo(work_tree=self.package_path, remote_url=self.url)
+        self.repo = GitRepo(work_tree=self.package_path, remote_url=self._git_remote_url)
 
+    @property
+    def _git_remote_url(self):
+        return self.url
+    
     def _set_names(self, build=False, install=False, **kwargs):
         if (build or install) and not self._build_name:
-            commit = self.repo.rev_parse(self.requirement.revision or 'HEAD')
+            commit = self.repo.rev_parse(self.revision or 'HEAD')
             if commit:
                 super(GitPackage, self)._set_names(package=True)
                 self._build_name = '%s-%s' % (self._package_name, commit[:8])
@@ -26,7 +30,6 @@ class GitPackage(BasePackage):
         super(GitPackage, self)._set_names(**kwargs)
 
     def fetch(self):
-        self.repo.checkout(self.requirement.revision or 'HEAD', force=self.requirement.force_fetch)
-        # TODO: should not mutate the requirement
-        self.requirement.revision = self.repo.head
+        self.repo.checkout(self.revision or 'HEAD', force=self._force_fetch)
+        self.revision = self.repo.head
         

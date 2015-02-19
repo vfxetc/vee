@@ -30,7 +30,7 @@ class GitRepo(object):
             print style('Cloning shallow', 'blue', bold=True), style(self.remote_url, bold=True)
             call(['git', 'clone', '--depth=1', self.remote_url, self.work_tree])
         else:
-            print style('Cloning', 'blue', bold=True), style(self._git_remote_url, bold=True)
+            print style('Cloning', 'blue', bold=True), style(self.remote_url, bold=True)
             call(['git', 'clone', self.remote_url, self.work_tree])
 
     def _call(self, *cmd, **kw):

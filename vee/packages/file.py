@@ -10,7 +10,7 @@ from vee.utils import makedirs, style
 
 class FilePackage(BasePackage):
 
-    name = 'file'
+    type = 'file'
 
     def fetch(self):
 

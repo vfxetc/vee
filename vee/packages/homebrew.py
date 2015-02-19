@@ -9,7 +9,7 @@ from vee.utils import call, makedirs, style
 
 class HomebrewPackage(GitPackage):
 
-    name = 'homebrew'
+    type = 'homebrew'
 
     @property
     def _name_for_platform(self):
@@ -42,7 +42,7 @@ class HomebrewPackage(GitPackage):
     def _brew_info(self, name=None, force=False):
 
         if not os.path.exists(self._brew_bin):
-            return {}
+            return None
 
         if self._cached_brew_info is None:
             self._cached_brew_info = {}
@@ -60,7 +60,10 @@ class HomebrewPackage(GitPackage):
             self._build_name = self._install_name = self._install_name_from_info()
 
     def _install_name_from_info(self, name=None, info=None):
-        info = info or self._brew_info(name or self.url)
+        name = name or self.url
+        info = info or self._brew_info(name)
+        if not info:
+            raise ValueError('no homebrew package %s' % name)
         return '%s/%s' % (info['name'], info['linked_keg'] or (
             info['installed'][-1]['version']
             if info['installed']
