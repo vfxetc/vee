@@ -3,11 +3,11 @@ import os
 import shlex
 import sys
 
-from vee.managers.git import GitManager
+from vee.packages.git import GitPackage
 from vee.utils import call, makedirs, style
 
 
-class HomebrewManager(GitManager):
+class HomebrewPackage(GitPackage):
 
     name = 'homebrew'
 
@@ -47,7 +47,7 @@ class HomebrewManager(GitManager):
         if self._cached_brew_info is None:
             self._cached_brew_info = {}
 
-        name = name or self.requirement.package
+        name = name or self.requirement.url
         if force or name not in self._cached_brew_info:
             self._cached_brew_info[name] = json.loads(self._brew('info', '--json=v1', name, stdout=True, silent=True))[0]
 
@@ -55,12 +55,12 @@ class HomebrewManager(GitManager):
 
     def _set_names(self, package=False, build=False, install=False):
         if package:
-            self._package_name = self.requirement and self.requirement.package
+            self._package_name = self.requirement and self.requirement.url
         if build or install:
             self._build_name = self._install_name = self._install_name_from_info()
 
     def _install_name_from_info(self, name=None, info=None):
-        info = info or self._brew_info(name or self.requirement.package)
+        info = info or self._brew_info(name or self.requirement.url)
         return '%s/%s' % (info['name'], info['linked_keg'] or (
             info['installed'][-1]['version']
             if info['installed']
@@ -78,14 +78,14 @@ class HomebrewManager(GitManager):
     install_path = build_path
 
     def extract(self):
-        # Disable BaseManager.extract().
+        # Disable BasePackage.extract().
         pass
 
     def build(self):
         if self.installed:
             print style('Warning:', 'red', bold=True), style(self.requirement + ' is already built', 'black', bold=True)
             return
-        self._brew('install', self.requirement.package, *(
+        self._brew('install', self.requirement.url, *(
             shlex.split(self.requirement.configuration) if self.requirement.configuration else ()
         ))
 
@@ -93,15 +93,15 @@ class HomebrewManager(GitManager):
         self._brew_info(force=True)
 
     def install(self):
-        # Disable BaseManager.install().
+        # Disable BasePackage.install().
         pass
 
     def link(self, env):
         self._assert_paths(install=True)
         # We want to link in all dependencies as well.
-        for name in self._brew('deps', '-n', self.requirement.package, silent=True, stdout=True).strip().split():
+        for name in self._brew('deps', '-n', self.requirement.url, silent=True, stdout=True).strip().split():
             path = os.path.join(self.package_path, 'Cellar', self._install_name_from_info(name))
             if os.path.exists(path):
-                print style('Linking', 'blue', bold=True), style('homebrew+%s (homebrew+%s dependency)' % (name, self.requirement.package), bold=True)
+                print style('Linking', 'blue', bold=True), style('homebrew+%s (homebrew+%s dependency)' % (name, self.requirement.url), bold=True)
                 env.link_directory(path)
         env.link_directory(self.install_path)

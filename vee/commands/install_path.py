@@ -12,8 +12,8 @@ from vee.utils import style
 def install_path(args):
     args.assert_home()
     req = Requirement(args.package, home=args.home)
-    if not req.manager.installed:
+    if not req.package.installed:
         print >> sys.stderr, 'not installed'
         return 2
-    print req.manager.install_path
+    print req.package.install_path
     

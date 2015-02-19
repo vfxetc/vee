@@ -10,21 +10,20 @@ def _migration(f):
 
 @_migration
 def _create_initial_tables(con):
-    con.execute('''CREATE TABLE installs (
+
+    con.execute('''CREATE TABLE packages (
 
         id INTEGER PRIMARY KEY,
         created_at TIMESTAMP NOT NULL,
 
         -- Requirement.__str__
-        user_specification TEXT NOT NULL,
+        abstract_requirement TEXT NOT NULL,
+        concrete_requirement TEXT NOT NULL,
 
-        manager TEXT NOT NULL,
-        package TEXT NOT NULL,
-        
-        -- Attributes given by the user.
+        type TEXT NOT NULL,
+        url TEXT NOT NULL,
+
         name TEXT,
-
-        -- Installed revision; either from the user or discovered.
         revision TEXT,
 
         -- Names, either from the user or discovered.
@@ -54,13 +53,12 @@ def _create_initial_tables(con):
     con.execute('''CREATE TABLE links (
 
         id INTEGER PRIMARY KEY,
-        install_id INTEGER REFERENCES installs(id) NOT NULL,
         environment_id INTEGER REFERENCES environments(id) NOT NULL,
-        created_at TIMESTAMP NOT NULL,
-        user_specification TEXT NOT NULL
+        package_id INTEGER REFERENCES packages(id) NOT NULL,
+        abstract_requirement TEXT NOT NULL,
+        created_at TIMESTAMP NOT NULL
 
     )''')
-
 
 
 def _migrate(con):

@@ -14,8 +14,8 @@ prefix = vee.commands.prefix:prefix
 env = vee.commands.env:env
 exec = vee.commands.exec_:exec_
 
-[vee_default_managers]
-file = vee.managers.file:FileManager
-git = vee.managers.git:GitManager
-homebrew = vee.managers.homebrew:HomebrewManager
-http = vee.managers.http:HttpManager
+[vee_package_types]
+file = vee.packages.file:FilePackage
+git = vee.packages.git:GitPackage
+homebrew = vee.packages.homebrew:HomebrewPackage
+http = vee.packages.http:HttpPackage

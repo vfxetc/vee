@@ -40,7 +40,7 @@ def link(args):
         
         print style('Linking', 'blue', bold=True), style(str(req), bold=True)
 
-        req.manager.link(env)
+        req.package.link(env)
         
 
 

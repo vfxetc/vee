@@ -24,11 +24,11 @@ def _find_in_tree(root, name, type='file'):
             return
 
 
-class BaseManager(object):
+class BasePackage(object):
 
     """Abstraction of a package manager.
 
-    Managers are instances for each :class:`Requirement`, such that they are
+    Packages are instances for each :class:`Requirement`, such that they are
     able to maintain state about that specific requirement.
 
     """
@@ -70,7 +70,7 @@ class BaseManager(object):
 
     def _set_default_names(self, package=False, build=False, install=False):
         if (package or build or install) and self._package_name is None:
-            self._package_name = self.requirement and os.path.join(self.name, self.requirement.package.strip('/'))
+            self._package_name = self.requirement and os.path.join(self.name, self.requirement.url.strip('/'))
         if (install or build) and self._install_name is None:
             self._install_name = self._package_name and re.sub(r'(\.(tar|gz|tgz|zip))+$', '', self._package_name)
         if build and self._build_name is None:
@@ -137,7 +137,7 @@ class BaseManager(object):
         if not self.package_path:
             return
         if not self.build_path:
-            raise RuntimeError('need build path for default Manager.extract')
+            raise RuntimeError('need build path for default Package.extract')
 
         print style('Extracting to', 'blue', bold=True), style(self.build_path, bold=True)
 
@@ -258,9 +258,9 @@ class BaseManager(object):
 
         self._set_names(build=True, install=True)
         if not self.build_path or not self.build_path_to_install:
-            raise RuntimeError('need build path for default Manager.install')
+            raise RuntimeError('need build path for default Package.install')
         if not self.install_path or not self.install_path_from_build:
-            raise RuntimeError('need install path for default Manager.install')
+            raise RuntimeError('need install path for default Package.install')
 
         # We are not using our wrapper, as we want this to fail if it is
         # already installed.
@@ -285,7 +285,7 @@ class BaseManager(object):
 
     def _index_link(self, env):
         cur = self.home.index.cursor()
-        cur.execute('''INSERT INTO links (install_id, environment_id, created_at, user_specification) VALUES (?, ?, ?, ?)''', [
+        cur.execute('''INSERT INTO links (package_id, environment_id, created_at, abstract_requirement) VALUES (?, ?, ?, ?)''', [
             self.requirement.index_id(),
             env.index_id(),
             datetime.datetime.utcnow(),

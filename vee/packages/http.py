@@ -4,17 +4,17 @@ import urllib2
 import urlparse
 import shutil
 
-from vee.managers.base import BaseManager
+from vee.packages.base import BasePackage
 from vee.utils import makedirs, style
 
 
-class HttpManager(BaseManager):
+class HttpPackage(BasePackage):
 
     name = 'http'
 
     @property
     def _derived_package_name(self):
-        split = urlparse.urlsplit(self.requirement.package)
+        split = urlparse.urlsplit(self.requirement.url)
         return os.path.join(
             split.netloc,
             split.path.strip('/'),
@@ -32,13 +32,13 @@ class HttpManager(BaseManager):
 
         temp = self.package_path + '.downloading'
 
-        print style('Downloading', 'blue', bold=True), style(self.requirement.package, bold=True)
+        print style('Downloading', 'blue', bold=True), style(self.requirement.url, bold=True)
         print        '         to', style(self.package_path, bold=True)
 
         src_fh = None
         dst_fh = None
         try:
-            src_fh = urllib2.urlopen(self.requirement.package)
+            src_fh = urllib2.urlopen(self.requirement.url)
             dst_fh = open(temp, 'wb')
             # TODO: Indicate progress.
             for chunk in iter(lambda: src_fh.read(16384), ''):

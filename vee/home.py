@@ -13,12 +13,12 @@ class Home(object):
         self.index = Index(os.path.join(root, 'vee-index.db'))
 
     def get_manager(self, name=None, requirement=None):
-        name = name or requirement.manager_name
-        ep = next(pkg_resources.iter_entry_points('vee_default_managers', name), None)
+        name = name or requirement.type
+        ep = next(pkg_resources.iter_entry_points('vee_package_types', name), None)
         if ep:
             return ep.load()(requirement, home=self)
         # TODO: look in repository.
-        raise ValueError('unknown manager %r' % name)
+        raise ValueError('unknown package type %r' % name)
 
     def abspath(self, *args):
         return os.path.abspath(os.path.join(self.root, *args))

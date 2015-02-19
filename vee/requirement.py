@@ -17,7 +17,7 @@ class Requirement(object):
     arg_parser.add_argument('-c', '--configuration', help='args to pass to `./configure`, `python setup.py`, `brew install`, etc..')
     arg_parser.add_argument('--install-name')
     arg_parser.add_argument('--install-subdir')
-    arg_parser.add_argument('package')
+    arg_parser.add_argument('url')
 
 
     def __init__(self, args, home=None):
@@ -29,16 +29,16 @@ class Requirement(object):
             
         # Extract the manager type. Usually this is of the form:
         # type+specification. Otherwise we assume it is a simple URL or file.
-        m = re.match(r'^(\w+)\+(.+)$', args.package)
+        m = re.match(r'^(\w+)\+(.+)$', args.url)
         if m:
-            self.manager_name = m.group(1)
-            self.package = m.group(2)
-        elif re.match(r'^https?://', args.package):
-            self.manager_name = 'http'
-            self.package = args.package
+            self.type = m.group(1)
+            self.url = m.group(2)
+        elif re.match(r'^https?://', args.url):
+            self.type = 'http'
+            self.url = args.url
         else:
-            self.manager_name = 'file'
-            self.package = os.path.abspath(os.path.expanduser(args.package))
+            self.type = 'file'
+            self.url = os.path.abspath(os.path.expanduser(args.url))
 
         self._args = args
 
@@ -56,7 +56,7 @@ class Requirement(object):
                 self.environ[parts[i]] = parts[i + 1]
 
         self.home = home or args.home
-        self.manager = self.home.get_manager(requirement=self)
+        self.package = self.home.get_manager(requirement=self)
 
         self._user_specification = str(self)
 
@@ -64,7 +64,6 @@ class Requirement(object):
 
 
     def __str__(self):
-        package = self.manager_name + ('+' if self.manager_name else '') + self.package
         args = []
         for name in (
             'force_fetch',
@@ -87,7 +86,13 @@ class Requirement(object):
                 if isinstance(value, (list, tuple)):
                     value = ','.join(value)
                 args.append('--%s %s' % (name.replace('_', '-'), value))
-        return package + (' ' if args else '') + ' '.join(sorted(args))
+        return (
+            self.type +
+            ('+' if self.type else '') +
+            self.url +
+            (' ' if args else '') +
+            ' '.join(sorted(args))
+        )
 
     def __repr__(self):
         return '%s(%r)' % (self.__class__.__name__, str(self))
@@ -100,19 +105,19 @@ class Requirement(object):
 
         cur = self.home.index.cursor()
 
-        clauses = ['manager = ?', 'package = ?']
-        values = [self.manager_name, self.package]
+        clauses = ['type = ?', 'url = ?']
+        values = [self.type, self.url]
         for attr in ('name', 'revision'):
             if getattr(self, attr):
                 clauses.append('%s = ?' % attr)
                 values.append(getattr(self, attr))
         for attr in ('_package_name', '_build_name', '_install_name'):
-            if getattr(self.manager, attr):
+            if getattr(self.package, attr):
                 clauses.append('%s = ?' % attr.strip('_'))
-                values.append(getattr(self.manager, attr))
+                values.append(getattr(self.package, attr))
 
         row = cur.execute('''
-            SELECT * FROM installs
+            SELECT * FROM packages
             WHERE %s
             ORDER BY created_at DESC
             LIMIT 1
@@ -125,12 +130,12 @@ class Requirement(object):
         self._index_id = row['id']
         self.name = row['name']
         self.revision = row['revision']
-        self.manager._package_name = row['package_name']
-        self.manager._build_name = row['build_name']
-        self.manager._install_name = row['install_name']
-        if (self.manager.package_path != row['package_path'] or
-            self.manager.build_path != row['build_path'] or
-            self.manager.install_path != row['install_path']
+        self.package._package_name = row['package_name']
+        self.package._build_name = row['build_name']
+        self.package._install_name = row['install_name']
+        if (self.package.package_path != row['package_path'] or
+            self.package.build_path != row['build_path'] or
+            self.package.install_path != row['install_path']
         ):
             raise RuntimeError('indexed paths dont match')
 
@@ -139,9 +144,9 @@ class Requirement(object):
 
 
     def _reinstall_check(self, force):
-        if self.manager.installed:
+        if self.package.installed:
             if force:
-                self.manager.uninstall()
+                self.package.uninstall()
             else:
                 raise AlreadyInstalled(str(self))
 
@@ -171,33 +176,33 @@ class Requirement(object):
         if not self.force_fetch:
             self._reinstall_check(force)
 
-        self.manager.fetch()
+        self.package.fetch()
         self._reinstall_check(force) # We may only know once we have fetched.
     
-        self.manager.extract()
+        self.package.extract()
         self._reinstall_check(force) # Packages may self-describe.
 
-        self.manager.build()
-        self.manager.install()
+        self.package.build()
+        self.package.install()
 
         # Record it!
         self.index_id()
 
     def index_id(self):
         if self._index_id is None:
-            self.manager._set_names(package=True, build=True, install=True)
-            if not self.manager.installed:
+            self.package._set_names(package=True, build=True, install=True)
+            if not self.package.installed:
                 raise ValueError('cannot index requirement that is not installed')
             cur = self.home.index.cursor()
             cur.execute('''
-                INSERT INTO installs (created_at, user_specification, manager, package,
-                                      name, revision, package_name, build_name,
+                INSERT INTO packages (created_at, abstract_requirement, concrete_requirement,
+                                      type, url, name, revision, package_name, build_name,
                                       install_name, package_path, build_path, install_path)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-            ''', [datetime.datetime.utcnow(), self._user_specification, self.manager.name, self.package,
-                  self.name, self.revision, self.manager._package_name,
-                  self.manager._build_name, self.manager._install_name, self.manager.package_path,
-                  self.manager.build_path, self.manager.install_path]
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            ''', [datetime.datetime.utcnow(), self._user_specification, str(self),
+                  self.type, self.url, self.name, self.revision, self.package._package_name,
+                  self.package._build_name, self.package._install_name, self.package.package_path,
+                  self.package.build_path, self.package.install_path]
             )
             self._index_id = cur.lastrowid
         return self._index_id
