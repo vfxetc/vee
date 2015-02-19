@@ -19,22 +19,38 @@ IGNORE_FILES = frozenset(('.DS_Store', ))
 class Environment(object):
 
     def __init__(self, name, home):
-        self.name = name
         self.home = home
-        self.root = home.abspath('environments', name)
+        if name.startswith('/'):
+            self.path = name
+            self.name = os.path.basename(name)
+        else:
+            self.name = name
+            self.path = home.abspath('environments', name)
+
+    def index_id(self):
+        if self._index_id is None:
+            cur = home.index.cursor()
+            row = cur.execute('SELECT * FROM environments WHERE path = ?', [self.path])
+            if row:
+                self._index_id = row['id']
+            else:
+                cur.execute('INSERT INTO environments (name, path) VALUES (?, ?)', [
+                    self.name, self.path,
+                ])
+                self._index_id = cur.lastrowid
+        return self._index_id
 
     def link_directory(self, dir_to_link):
         
         # TODO: Be like Homebrew, and be smarter about what we link, and what
         # we copy.
 
-        root = self.root
-        makedirs(root)
+        makedirs(path)
 
         for old_dir_path, dir_names, file_names in os.walk(dir_to_link):
             
             rel_dir_path = os.path.relpath(old_dir_path, dir_to_link)
-            new_dir_path = os.path.abspath(os.path.join(root, rel_dir_path))
+            new_dir_path = os.path.abspath(os.path.join(self.path, rel_dir_path))
 
             # Ignore AND skip these directories.
             dir_names[:] = [x for x in dir_names if x not in IGNORE_DIRS]
@@ -57,7 +73,7 @@ class Environment(object):
 
     def get_environ(self):
         return {
-            'PATH': envjoin(os.path.join(self.root, 'bin'), os.environ.get('PATH')),
-            'PYTHONPATH': envjoin(os.path.join(self.root, 'lib/python2.7/site-packages'), os.environ.get('PYTHONPATH')),
+            'PATH': envjoin(os.path.join(self.path, 'bin'), os.environ.get('PATH')),
+            'PYTHONPATH': envjoin(os.path.join(self.path, 'lib/python2.7/site-packages'), os.environ.get('PYTHONPATH')),
         }
 

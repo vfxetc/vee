@@ -18,7 +18,7 @@ class FileManager(BaseManager):
 
         # Don't shortcut on files.
         if False and os.path.exists(self.package_path):
-            print colour('Already copied.', 'blue', bright=True, reset=True)
+            print colour('Already copied.', 'blue', bold=True, reset=True)
             return
 
         if os.path.exists(self.package_path):
@@ -29,8 +29,8 @@ class FileManager(BaseManager):
         
         makedirs(os.path.dirname(self.package_path))
 
-        print colour('Copying', 'blue', bright=True), colour(self.requirement.package, 'black', reset=True)
-        print        '         to', colour(self.package_path, bright=True, reset=True)
+        print colour('Copying', 'blue', bold=True), colour(self.requirement.package, 'black', reset=True)
+        print        '         to', colour(self.package_path, bold=True, reset=True)
 
         source = os.path.expanduser(self.requirement.package)
         if os.path.isdir(source):

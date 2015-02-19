@@ -20,7 +20,7 @@ def link(args):
 
     if args.raw:
         for dir_ in args.package:
-            print colour('Linking', 'blue', bright=True), colour(dir_, 'black', reset=True)
+            print colour('Linking', 'blue', bold=True), colour(dir_, 'black', reset=True)
             env.link_directory(dir_)
         return
 
@@ -38,7 +38,7 @@ def link(args):
         except AlreadyInstalled:
             pass
         
-        print colour('Linking', 'blue', bright=True), colour(str(req), 'black', reset=True)
+        print colour('Linking', 'blue', bold=True), colour(str(req), 'black', reset=True)
 
         req.manager.link(env)
         

@@ -9,12 +9,12 @@ class CliException(Exception):
 
     @property
     def clistr(self):
-        return colour('ERROR: ', 'red', bright=True) + colour(str(self), 'black', reset=True)
+        return colour('ERROR: ', 'red', bold=True) + colour(str(self), 'black', reset=True)
 
 
 class AlreadyInstalled(CliException, RuntimeError):
 
     @property
     def clistr(self):
-        return colour('ERROR: ', 'red', bright=True) + colour(self.args[0] + ' is already installed', 'black', reset=True)
+        return colour('ERROR: ', 'red', bold=True) + colour(self.args[0] + ' is already installed', 'black', reset=True)
 

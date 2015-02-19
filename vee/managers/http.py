@@ -25,15 +25,15 @@ class HttpManager(BaseManager):
         self._assert_paths(package=True)
 
         if os.path.exists(self.package_path):
-            print colour('Already downloaded.', 'blue', bright=True, reset=True)
+            print colour('Already downloaded.', 'blue', bold=True, reset=True)
             return
 
         makedirs(os.path.dirname(self.package_path))
 
         temp = self.package_path + '.downloading'
 
-        print colour('Downloading', 'blue', bright=True), colour(self.requirement.package, 'black', reset=True)
-        print        '         to', colour(self.package_path, bright=True, reset=True)
+        print colour('Downloading', 'blue', bold=True), colour(self.requirement.package, 'black', reset=True)
+        print        '         to', colour(self.package_path, bold=True, reset=True)
 
         src_fh = None
         dst_fh = None

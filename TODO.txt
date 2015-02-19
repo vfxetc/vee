@@ -6,8 +6,22 @@
     - make sure they are all installed, then link them together via envvars
     - this would be the basis of the dev environment
 
+- `vee exec --latest name` looks for a "name/%" environment, and uses that
 
-- add functions to resolve_environ(): $VEE_LATEST(LIBFOO)
+- `vee gc`
+  - delete installs (and their DB records) which are not linked to
+  - delete installs in DB that don't exist on disk
+  - delete anything on disk that isn't referred to by the index
+      build a set of relative paths (and all their ancestors), then walk the
+      root looking for directories which aren't mentioned, then delete them
+
+- record stdout/stderr from build process in the database. Use a timestamped
+  format: each line starts with "out" or "err" and the timestamp
+
+    out 2015-02-18T15:02:01 sdflkjsdf
+    
+
+- add functions to resolve_environ(): $VEE_INSTALLS
   - this requires either scanning for, or knowing about installed things
 
 
@@ -98,23 +112,6 @@
 
     - `vee commit [-a] [--major|--minor|--patch] [-m MESSAGE]`] 
     - `vee push`
-
-
-
-- Use index.db to query for existing installations
-    - Requirement.resolve_existing()
-
-
-
-
-- something to report on what is already linked into and environment:
-    - $environment/etc/vee.txt
-    - $environment/etc/vee.db
-    - $environment/etc/vee/links/$install_name.txt
-      this could contain all of the symlinks created
-
-
-
 
 
 

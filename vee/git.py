@@ -27,10 +27,10 @@ class GitRepo(object):
             # TODO: we can deal with this
             raise ValueError('work tree %r exists without repo' % self.work_tree)
         elif shallow:
-            print colour('Cloning shallow', 'blue', bright=True), colour(self.remote_url, 'black', reset=True)
+            print colour('Cloning shallow', 'blue', bold=True), colour(self.remote_url, 'black', reset=True)
             call(['git', 'clone', '--depth=1', self.remote_url, self.work_tree])
         else:
-            print colour('Cloning', 'blue', bright=True), colour(self._git_remote_url, 'black', reset=True)
+            print colour('Cloning', 'blue', bold=True), colour(self._git_remote_url, 'black', reset=True)
             call(['git', 'clone', self.remote_url, self.work_tree])
 
     def _call(self, *cmd, **kw):
@@ -70,20 +70,20 @@ class GitRepo(object):
             if self.is_shallow:
 
                 # Fetch the new history on top of the shallow history.
-                print colour('Fetching shallow', 'blue', bright=True), colour(self.remote_url, 'black', reset=True)
+                print colour('Fetching shallow', 'blue', bold=True), colour(self.remote_url, 'black', reset=True)
                 self._call('fetch', '--update-shallow', self.remote_url, silent=True)
                 commit = self.rev_parse(revision)
 
                 # Lets get the whole history.
                 if not commit:
-                    print colour('Fetching unshallow', 'blue', bright=True), colour(self.remote_url, 'black', reset=True)
+                    print colour('Fetching unshallow', 'blue', bold=True), colour(self.remote_url, 'black', reset=True)
                     self._call('fetch', '--unshallow', self.remote_url, silent=True)
                     commit = self.rev_parse(revision)
 
             else:
 
                 # Normal fetch here.
-                print colour('Fetching', 'blue', bright=True), colour(self.remote_url, 'black', reset=True)
+                print colour('Fetching', 'blue', bold=True), colour(self.remote_url, 'black', reset=True)
                 self._call('fetch', self.remote_url, silent=True)
                 commit = self.rev_parse(revision)
 
@@ -94,7 +94,7 @@ class GitRepo(object):
             raise ValueError(msg)
 
         if self.head != commit:
-            print colour('Checking out', 'blue', bright=True), colour('%s [%s]' % (revision, commit), 'black', reset=True)
+            print colour('Checking out', 'blue', bold=True), colour('%s [%s]' % (revision, commit), 'black', reset=True)
             self._call('reset', '--hard', commit, silent=True)
             self._head = commit
 

@@ -8,7 +8,7 @@ import shlex
 import shutil
 
 from vee.exceptions import AlreadyInstalled
-from vee.utils import cached_property, colour, call
+from vee.utils import cached_property, colour, call, call_log
 
 
 def _find_in_tree(root, name, type='file'):
@@ -60,7 +60,7 @@ class BaseManager(object):
         if self._environ_diff is None and self.requirement:
             self._environ_diff = self.requirement.resolve_environ()
             for k, v in sorted(self._environ_diff.iteritems()):
-                print colour('setenv', 'blue', bright=True), colour('%s=' % k, 'black', reset=True) + v
+                print colour('setenv', 'blue', bold=True), colour('%s=' % k, 'black', reset=True) + v
         return self._environ_diff or {}
 
     def fresh_environ(self):
@@ -139,7 +139,7 @@ class BaseManager(object):
         if not self.build_path:
             raise RuntimeError('need build path for default Manager.extract')
 
-        print colour('Extracting to', 'blue', bright=True), colour(self.build_path, 'black', reset=True)
+        print colour('Extracting to', 'blue', bold=True), colour(self.build_path, 'black', reset=True)
 
         # Tarballs.
         if re.search(r'(\.tgz|\.tar\.gz)$', self.package_path):
@@ -170,7 +170,7 @@ class BaseManager(object):
         build_sh = _find_in_tree(self.build_path, 'vee-build.sh')
         if build_sh:
 
-            print colour('Running vee-build.sh...', 'blue', bright=True, reset=True)
+            print colour('Running vee-build.sh...', 'blue', bold=True, reset=True)
             env = env or self.fresh_environ()
             env.update(
                 VEE=self.home.root,
@@ -181,7 +181,7 @@ class BaseManager(object):
 
             cwd = os.path.dirname(build_sh)
             envfile = os.path.join(cwd, 'vee-env-' + os.urandom(8).encode('hex'))
-            call(['bash', '-c', '. vee-build.sh; env | grep VEE > %s' % (envfile)], env=env, cwd=cwd)
+            call_log(['bash', '-c', '. vee-build.sh; env | grep VEE > %s' % (envfile)], env=env, cwd=cwd)
 
             env = list(open(envfile))
             env = dict(line.strip().split('=', 1) for line in env)
@@ -202,7 +202,7 @@ class BaseManager(object):
 
             env = env or self.fresh_environ()
 
-            print colour('Building Python package...', 'blue', bright=True, reset=True)
+            print colour('Building Python package...', 'blue', bold=True, reset=True)
             cmd = [
                 'python', 'setup.py', 'build',
                 '--build-temp', 'tmp',
@@ -216,7 +216,7 @@ class BaseManager(object):
 
             # Install egg-info (for entry_points, mostly).
             # Need to inject setuptools for this
-            print colour('Building egg-info...', 'blue', bright=True, reset=True)
+            print colour('Building egg-info...', 'blue', bold=True, reset=True)
             if call(['python', '-c', 'import setuptools; __file__="%s"; execfile(__file__)' % (setup_py, ),
                 'install_egg_info', '-d', build,
             ], cwd=top_level, env=env):
@@ -225,7 +225,7 @@ class BaseManager(object):
 
         egg_info = _find_in_tree(self.build_path, '*.egg-info', 'dir')
         if egg_info:
-            print colour('Found Python egg:', 'blue', bright=True), colour(os.path.basename(egg_info), 'black', reset=True)
+            print colour('Found Python egg:', 'blue', bold=True), colour(os.path.basename(egg_info), 'black', reset=True)
             self._build_subdir_to_install = os.path.dirname(egg_info)
             # TODO: Get the right Python version.
             self._install_subdir_from_build = 'lib/python2.7/site-packages'
@@ -234,7 +234,7 @@ class BaseManager(object):
         configure = _find_in_tree(self.build_path, 'configure')
         if configure:
             self._build_subdir_to_install = os.path.dirname(configure)
-            print colour('Configuring...', 'blue', bright=True, reset=True)
+            print colour('Configuring...', 'blue', bold=True, reset=True)
             cmd = ['./configure', '--prefix', self.install_path]
             env = env or self.fresh_environ()
             if self.requirement.configuration:
@@ -244,7 +244,7 @@ class BaseManager(object):
         makefile = _find_in_tree(self.build_path, 'Makefile')
         if makefile:
             self._build_subdir_to_install = os.path.dirname(makefile)
-            print colour('Making...', 'blue', bright=True, reset=True)
+            print colour('Making...', 'blue', bold=True, reset=True)
             env = env or self.fresh_environ()
             call(['make', '-j4'], cwd=os.path.dirname(makefile), env=env)
 
@@ -267,7 +267,7 @@ class BaseManager(object):
         if self.installed:
             raise AlreadyInstalled('was already installed at %s' % self.install_path)
         
-        print colour('Installing to', 'blue', bright=True), colour(self.install_path, 'black', reset=True)
+        print colour('Installing to', 'blue', bold=True), colour(self.install_path, 'black', reset=True)
 
         shutil.copytree(self.build_path_to_install, self.install_path_from_build, symlinks=True)
 
@@ -275,10 +275,34 @@ class BaseManager(object):
         self._set_names(install=True)
         if not self.installed:
             raise RuntimeError('package is not installed')
-        print colour('Uninstalling', 'blue', bright=True), colour(self.install_path, 'black', reset=True)
+        print colour('Uninstalling', 'blue', bold=True), colour(self.install_path, 'black', reset=True)
         shutil.rmtree(self.install_path)
 
     def link(self, env):
         self._assert_paths(install=True)
         env.link_directory(self.install_path)
+        self._index_link()
+
+    def _index_link(self):
+
+        '''
+        id INTEGER PRIMARY KEY,
+        install_id INTEGER REFERENCES installs(id) NOT NULL,
+        environment_id INTEGER REFERENCES environments(id) NOT NULL,
+        created_at TIMESTAMP NOT NULL,
+        user_specification TEXT NOT NULL'''
+
+
+        cur = self.home.index.cursor()
+        cur.execute('''
+            INSERT INTO links (created_at, user_specification, manager, package,
+                                  name, revision, package_name, build_name,
+                                  install_name, package_path, build_path, install_path)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        ''', [datetime.datetime.utcnow(), str(self), self.manager.name, self.package,
+              self.name, self.revision, self.manager._package_name,
+              self.manager._build_name, self.manager._install_name, self.manager.package_path,
+              self.manager.build_path, self.manager.install_path]
+        )
+        return cur.lastrowid
 

@@ -83,7 +83,7 @@ class HomebrewManager(GitManager):
 
     def build(self):
         if self.installed:
-            print colour('Warning:', 'red', bright=True), colour(self.requirement + ' is already built', 'black', reset=True)
+            print colour('Warning:', 'red', bold=True), colour(self.requirement + ' is already built', 'black', reset=True)
             return
         self._brew('install', self.requirement.package, *(
             shlex.split(self.requirement.configuration) if self.requirement.configuration else ()
@@ -102,6 +102,6 @@ class HomebrewManager(GitManager):
         for name in self._brew('deps', '-n', self.requirement.package, silent=True, stdout=True).strip().split():
             path = os.path.join(self.package_path, 'Cellar', self._install_name_from_info(name))
             if os.path.exists(path):
-                print colour('Linking', 'blue', bright=True), colour('homebrew+%s (homebrew+%s dependency)' % (name, self.requirement.package), 'black', reset=True)
+                print colour('Linking', 'blue', bold=True), colour('homebrew+%s (homebrew+%s dependency)' % (name, self.requirement.package), 'black', reset=True)
                 env.link_directory(path)
         env.link_directory(self.install_path)
