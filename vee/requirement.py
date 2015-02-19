@@ -60,6 +60,8 @@ class Requirement(object):
 
         self._user_specification = str(self)
 
+        self._index_id = None
+
 
     def __str__(self):
         package = self.manager_name + ('+' if self.manager_name else '') + self.package
@@ -93,6 +95,9 @@ class Requirement(object):
     def resolve_existing(self):
         """Check against the index to see if this was already installed."""
 
+        if self._index_id is not None:
+            raise ValueError('requirement already in index')
+
         cur = self.home.index.cursor()
 
         clauses = ['manager = ?', 'package = ?']
@@ -117,6 +122,7 @@ class Requirement(object):
             return
 
         # Everything below either already matches or was unset.
+        self._index_id = row['id']
         self.name = row['name']
         self.revision = row['revision']
         self.manager._package_name = row['package_name']
@@ -175,21 +181,27 @@ class Requirement(object):
         self.manager.install()
 
         # Record it!
-        self._index_install()
+        self.index_id()
 
-    def _index_install(self):
-        cur = self.home.index.cursor()
-        cur.execute('''
-            INSERT INTO installs (created_at, user_specification, manager, package,
-                                  name, revision, package_name, build_name,
-                                  install_name, package_path, build_path, install_path)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-        ''', [datetime.datetime.utcnow(), self._user_specification, self.manager.name, self.package,
-              self.name, self.revision, self.manager._package_name,
-              self.manager._build_name, self.manager._install_name, self.manager.package_path,
-              self.manager.build_path, self.manager.install_path]
-        )
-        return cur.lastrowid
+    def index_id(self):
+        if self._index_id is None:
+            self.manager._set_names(package=True, build=True, install=True)
+            if not self.manager.installed:
+                raise ValueError('cannot index requirement that is not installed')
+            cur = self.home.index.cursor()
+            cur.execute('''
+                INSERT INTO installs (created_at, user_specification, manager, package,
+                                      name, revision, package_name, build_name,
+                                      install_name, package_path, build_path, install_path)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            ''', [datetime.datetime.utcnow(), self._user_specification, self.manager.name, self.package,
+                  self.name, self.revision, self.manager._package_name,
+                  self.manager._build_name, self.manager._install_name, self.manager.package_path,
+                  self.manager.build_path, self.manager.install_path]
+            )
+            self._index_id = cur.lastrowid
+        return self._index_id
+
 
 
 

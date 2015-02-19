@@ -1,4 +1,26 @@
 
+- log everything about the different steps, and stuff it into the database
+- CLI IO/API/logging package
+
+    - name:
+        x clio (on PyPI)
+        - clout
+
+    - styles (copied straight from what we have is cool)
+    - io indenting model
+        - replaces sys.stdout and sys.stderr, and those are pushed through
+        - can spawn reader threads which can (1) buffer the output, (2) echo it, (3) push it to a callback
+        - with clout.io.indent(), or clout.io.push_indent() and clout.io.pop_indent()
+    - event log
+        - format: "$datetime $stream $string-escaped-content"
+        - events:
+            - exec:$pid -> nth executable
+            - arg:$pid:I -> argument I of nth exe
+            - out:$pid -> stdout of nth exe
+            - err:$pid -> stderr of nth exe
+
+
+
 - Home.{package,build,install,environment}_root attributes
 - Home.to_environ()
 

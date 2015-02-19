@@ -46,8 +46,8 @@ def _create_initial_tables(con):
         path TEXT NOT NULL,
 
         -- Attributes parsed from original file.
-        version TEXT NOT NULL,
-        revision TEXT NOT NULL
+        version TEXT,
+        revision TEXT
 
     )''')
 

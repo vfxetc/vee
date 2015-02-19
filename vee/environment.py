@@ -26,11 +26,12 @@ class Environment(object):
         else:
             self.name = name
             self.path = home.abspath('environments', name)
+        self._index_id = None
 
     def index_id(self):
         if self._index_id is None:
-            cur = home.index.cursor()
-            row = cur.execute('SELECT * FROM environments WHERE path = ?', [self.path])
+            cur = self.home.index.cursor()
+            row = cur.execute('SELECT * FROM environments WHERE path = ?', [self.path]).fetchone()
             if row:
                 self._index_id = row['id']
             else:

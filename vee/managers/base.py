@@ -281,8 +281,14 @@ class BaseManager(object):
     def link(self, env):
         self._assert_paths(install=True)
         env.link_directory(self.install_path)
-        self._index_link()
+        self._index_link(env)
 
-    def _index_link(self):
-        pass
+    def _index_link(self, env):
+        cur = self.home.index.cursor()
+        cur.execute('''INSERT INTO links (install_id, environment_id, created_at, user_specification) VALUES (?, ?, ?, ?)''', [
+            self.requirement.index_id(),
+            env.index_id(),
+            datetime.datetime.utcnow(),
+            self.requirement._user_specification,
+        ])
 
