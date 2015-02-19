@@ -58,7 +58,7 @@ class BasePackage(object):
 
         # A few need special handling
         self.environ = self.environ.copy() if self.environ else {}
-        self.configuration = self.configuration[:] if self.configuration else []
+        self.config = self.config[:] if self.config else []
 
         # Special building an install name.
         if not self._install_name and self.name and self.revision:
@@ -74,6 +74,14 @@ class BasePackage(object):
             self.abstract_requirement,
         )
 
+    def freeze(self):
+        kwargs = {}
+        for action in Requirement._arg_parser._actions:
+            req_attr = action.dest
+            pkg_attr = self._req_to_pkg_attrs.get(req_attr, req_attr)
+            kwargs[req_attr] = getattr(self, pkg_attr)
+        kwargs['environ'] = self.environ_diff
+        return Requirement(home=self.home, **kwargs)
 
     def _resolve_environ(self, source=None):
 
@@ -252,7 +260,7 @@ class BasePackage(object):
                 '--build-purelib', build,
                 '--build-platlib', build,
             ]
-            cmd.extend(self.configuration)
+            cmd.extend(self.config)
             if call(cmd, cwd=top_level, env=env):
                 raise RuntimeError('Could not build Python package')
 
@@ -279,7 +287,7 @@ class BasePackage(object):
             print style('Configuring...', 'blue', bold=True)
             cmd = ['./configure', '--prefix', self.install_path]
             env = env or self.fresh_environ()
-            cmd.extend(self.configuration)
+            cmd.extend(self.config)
             call(cmd, cwd=os.path.dirname(configure), env=env)
 
         makefile = _find_in_tree(self.build_path, 'Makefile')
@@ -337,7 +345,7 @@ class BasePackage(object):
                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             ''', [datetime.datetime.utcnow(),
                   self.abstract_requirement,
-                  str(self), # TODO: make this a new Requirement object
+                  str(self.freeze()),
                   self.type,
                   self.url,
                   self.name,

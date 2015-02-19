@@ -1,23 +1,9 @@
 
-- GitPackage.fetch should not mutate the requirement
+- '--refresh' or --latest' or '--head' to always request the latest; this is a more general
+  case of --force-fetch
 
-- '--latest' or '--head' to always request the latest
-
-- re-arrange the class heirarchy?
-    - rename Manager to Package ?
-    - merge Requirement and Manager into Package?
-    - move much of Requirement into Manager, such that they don't depend on
-      each other?
-
-    - what should the lifetime of these objects be? That will define what we
-      should do.
-
-      Requirement(specification)
-      Requirement.resolve() -> find an existing Package, or make a new one
-      Requirement.install() -> makes a Package, and walks it through the pipeline
-      Package.freeze() -> makes a new Requirement representing the final state
-
-
+- render_in_environ(list_or_dict, environ)
+  - process the configuration this way too
 
 - log everything about the different steps, and stuff it into the database
 - CLI IO/API/logging package
@@ -38,8 +24,6 @@
             - arg:$pid:I -> argument I of nth exe
             - out:$pid -> stdout of nth exe
             - err:$pid -> stderr of nth exe
-
-
 
 - Home.{package,build,install,environment}_root attributes
 - Home.to_environ()

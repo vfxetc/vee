@@ -18,7 +18,7 @@ class _Parser(argparse.ArgumentParser):
         raise RequirementParseError(message)
 
 
-class _ConfigurationAction(argparse.Action):
+class _configAction(argparse.Action):
 
     @property
     def default(self):
@@ -58,7 +58,7 @@ class Requirement(object):
     _arg_parser.add_argument('-r', '--revision')
     _arg_parser.add_argument('-f', '--force-fetch', action='store_true', help='always fetch git repos')
     _arg_parser.add_argument('-e', '--environ', nargs='*', action=_EnvironmentAction)
-    _arg_parser.add_argument('-c', '--configuration', nargs='*', action=_ConfigurationAction,
+    _arg_parser.add_argument('-c', '--config', nargs='*', action=_configAction,
         help='args to pass to `./configure`, `python setup.py`, `brew install`, etc..')
     _arg_parser.add_argument('--install-name')
     _arg_parser.add_argument('--install-subdir')

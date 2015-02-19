@@ -88,7 +88,7 @@ class HomebrewPackage(GitPackage):
         if self.installed:
             print style('Warning:', 'red', bold=True), style(self.url + ' is already built', 'black', bold=True)
             return
-        self._brew('install', self.url, *self.configuration)
+        self._brew('install', self.url, *self.config)
 
         # Need to force a new installed version number.
         self._brew_info(force=True)
