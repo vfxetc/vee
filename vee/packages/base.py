@@ -246,31 +246,28 @@ class BasePackage(object):
         if setup_py:
 
             top_level = os.path.dirname(setup_py)
-            # TODO: Get the right Python version.
-            build = os.path.join('build', 'lib')
-            self._build_subdir_to_install = os.path.join(top_level, build)
-            self._install_subdir_from_build = 'lib/python2.7/site-packages'
+            self._build_subdir_to_install = 'dist/vee'
 
+            # Setup the PYTHONPATH to point to the "install" directory.
             env = env or self.fresh_environ()
+            env['PYTHONPATH'] = '%s:%s' % ('dist/vee/lib/python2.7/site-packages', env.get('PYTHONPATH', ''))
+            os.makedirs(os.path.join(top_level, 'dist/vee/lib/python2.7/site-packages'))
 
             print style('Building Python package...', 'blue', bold=True)
-            cmd = [
-                'python', 'setup.py', 'build',
-                '--build-temp', 'tmp',
-                '--build-purelib', build,
-                '--build-platlib', build,
-            ]
+
+            # Need to inject setuptools for this.
+            cmd = ['python', '-c', 'import setuptools; __file__="setup.py"; execfile(__file__)']
+            cmd.extend(['build'])
             cmd.extend(self.config)
+            cmd.extend(['install',
+                '--root', '.',
+                '--prefix', 'dist/vee',
+                '--no-compile',
+                '--single-version-externally-managed',
+            ])
+
             if call(cmd, cwd=top_level, env=env):
                 raise RuntimeError('Could not build Python package')
-
-            # Install egg-info (for entry_points, mostly).
-            # Need to inject setuptools for this
-            print style('Building egg-info...', 'blue', bold=True)
-            if call(['python', '-c', 'import setuptools; __file__="%s"; execfile(__file__)' % (setup_py, ),
-                'install_egg_info', '-d', build,
-            ], cwd=top_level, env=env):
-                raise RuntimeError('Could not build Python egg_info')
             return
 
         egg_info = _find_in_tree(self.build_path, '*.egg-info', 'dir')
