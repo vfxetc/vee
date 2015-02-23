@@ -4,6 +4,11 @@ This script may be run on its own, or straight from GitHub, e.g.:
 
     python <(curl -fsSL https://raw.githubusercontent.com/westernx/vee/master/install.py)
 
+To install to /usr/local/vee, and force an update to the latest version:
+
+    python <(curl -fsSL https://raw.githubusercontent.com/westernx/vee/master/install.py) --yes
+
+
 '''
 
 from subprocess import call, check_output
@@ -46,8 +51,11 @@ class SwitchAction(argparse.Action):
 parser = argparse.ArgumentParser()
 parser.add_argument('--prefix')
 
-parser.add_argument('--archive', default='https://github.com/westernx/vee/archive/master.zip')
 parser.add_argument('--git-repo', default='https://github.com/westernx/vee.git')
+parser.add_argument('--need-git', action='store_true', help='only install if git is availible')
+
+parser.add_argument('--archive', default='https://github.com/westernx/vee/archive/master.zip', 
+    help='archive to use if git is not availible')
 
 parser.add_argument('--force', action=SwitchAction, help='delete existing installation')
 parser.add_argument('--bashrc', action=SwitchAction, help='add vee to your ~/.bashrc file')
@@ -60,6 +68,8 @@ def get_arg(key, message, default):
     value = getattr(args, key)
     if value is not None:
         return value
+    if args.yes:
+        return default
     print '%s [%s]:' % (message, default),
     res = raw_input().strip()
     return res or default
@@ -69,6 +79,8 @@ def switch(key, message):
     value = getattr(args, key)
     if value is not None:
         return value
+    if args.yes:
+        return True
     while True:
         print '%s [Yn]:' % message,
         res = raw_input().strip().lower()
@@ -104,6 +116,9 @@ if check_output(['which', 'git']):
 else:
 
     print 'Git was not found.'
+    if args.need_git:
+        print 'Cannot continue without git.'
+        exit(4)
 
     # Blast out existing.
     if os.path.exists(vee_src):
@@ -145,11 +160,36 @@ else:
 
 
 
+shell_lines = [
+    'export VEE="%s"' % prefix,
+    'export PATH="$VEE/src/bin:$PATH" # Add VEE to your environment',
+]
+
 if switch('bashrc', 'Append to your ~/.bashrc?'):
-    print 'TODO: append to .bashrc'
+
+    print 'Adding VEE to your ~/.bashrc'
+    print 'NOTE: You may need to open a new terminal, or `source ~/.bashrc`, for VEE to work.'
+
+    bashrc = os.path.expanduser('~/.bashrc')
+    if os.path.exists(bashrc):
+        lines = list(open(bashrc))
+    else:
+        lines = []
+
+    # Strip out existing config.
+    lines = [
+        line for line in lines if
+        not (line.startswith('export VEE="') or line.startswith('export PATH="$VEE'))
+    ]
+    
+    content = ''.join(lines).rstrip() + '\n\n' + '\n'.join(shell_lines) + '\n'
+    with open(bashrc, 'w') as fh:
+        fh.write(content)
+
+
 else:
     print 'Add the following to your environment:'
-    print '    export VEE="%s"' % prefix
-    print '    export PATH="$VEE/src/bin:$PATH"'
+    for line in shell_lines:
+        print '    ' + line.split('#')[0]
 
 
