@@ -8,7 +8,7 @@ import shlex
 import shutil
 
 from vee.exceptions import AlreadyInstalled
-from vee.utils import cached_property, style, call, call_log
+from vee.utils import cached_property, style, call, call_log, makedirs
 from vee.requirement import Requirement
 
 
@@ -59,10 +59,6 @@ class BasePackage(object):
         # A few need special handling
         self.environ = self.environ.copy() if self.environ else {}
         self.config = self.config[:] if self.config else []
-
-        # Special building an install name.
-        if not self._install_name and self.name and self.revision:
-            self._install_name = '%s/%s' % (self.name, self.revision)
 
         self._index_id = None
         self._package_name = self._build_name = None
@@ -123,7 +119,10 @@ class BasePackage(object):
         if (package or build or install) and self._package_name is None:
             self._package_name = self.url and os.path.join(self.type, self.url.strip('/'))
         if (install or build) and self._install_name is None:
-            self._install_name = self._package_name and re.sub(r'(\.(tar|gz|tgz|zip))+$', '', self._package_name)
+            if self.name and self.revision:
+                self._install_name = '%s/%s' % (self.name, self.revision)
+            else:
+                self._install_name = self._package_name and re.sub(r'(\.(tar|gz|tgz|zip))+$', '', self._package_name)
         if build and self._build_name is None:
             self._build_name = self._install_name and ('%s/%s-%s' % (
                 self._install_name,
@@ -316,6 +315,15 @@ class BasePackage(object):
         print style('Installing to', 'blue', bold=True), style(self.install_path, bold=True)
 
         shutil.copytree(self.build_path_to_install, self.install_path_from_build, symlinks=True)
+
+        # Link into $VEE/opt.
+        if self.name:
+            opt_link = self.home.abspath('opt', self.name)
+            print style('Linking to', 'blue', bold=True), style(opt_link, bold=True)
+            if os.path.exists(opt_link):
+                os.unlink(opt_link)
+            makedirs(os.path.dirname(opt_link))
+            os.symlink(self.install_path, opt_link)
 
     def uninstall(self):
         self._set_names(install=True)

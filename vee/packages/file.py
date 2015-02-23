@@ -13,7 +13,7 @@ class FilePackage(BasePackage):
     type = 'file'
 
     def __init__(self, *args, **kwargs):
-        super(FilePackage, self).__init__(*args, **kwargs):
+        super(FilePackage, self).__init__(*args, **kwargs)
         self.url = os.path.abspath(os.path.expanduser(self.url))
     
     def fetch(self):
@@ -38,7 +38,7 @@ class FilePackage(BasePackage):
 
         source = os.path.expanduser(self.url)
         if os.path.isdir(source):
-            shutil.copytree(source, self.package_path)
+            shutil.copytree(source, self.package_path, symlinks=True)
         else:
             shutil.copyfile(source, self.package_path)
 

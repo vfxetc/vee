@@ -24,7 +24,7 @@ class GitPackage(BasePackage):
             commit = self.repo.rev_parse(self.revision or 'HEAD')
             if commit:
                 super(GitPackage, self)._set_names(package=True)
-                self._build_name = '%s-%s' % (self._package_name, commit[:8])
+                self._build_name = '%s-%s' % (self.name or self._package_name, commit[:8])
         if install and not self._install_name:
                 self._install_name = self._build_name
         super(GitPackage, self)._set_names(**kwargs)
