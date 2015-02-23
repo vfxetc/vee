@@ -1,11 +1,4 @@
 
-- when linking, also make a link to install in opt (and use the most basic name we can
-  identify)
-
-    - Where does this name come from?
-        --opt-name
-        --base-name
-        --name (which is already used with revision to make an install name)
 
 - bootstrapping / installing
   
@@ -14,7 +7,6 @@
 
   - $VEE defaults to /usr/local/vee if we are running within it
     vee./__init__.py: _vee_command_path = None
-
 
   - if this thing manages itself, then we would find it at
       
