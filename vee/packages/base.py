@@ -377,7 +377,10 @@ class BasePackage(object):
 
         clauses = ['type = ?', 'url = ?']
         values = [self.type, self.url]
-        for attr in ('name', 'revision'):
+        for attr, column in (
+            ('_base_name', 'name'),
+            ('revision', 'revision'),
+        ):
             if getattr(self, attr):
                 clauses.append('%s = ?' % attr)
                 values.append(getattr(self, attr))

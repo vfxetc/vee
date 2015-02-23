@@ -24,6 +24,9 @@ class HomebrewPackage(GitPackage):
         return os.path.join(self.package_path, 'bin', 'brew')
 
     def _brew(self, *cmd, **kwargs):
+        
+        self.repo.clone_if_not_exists()
+
         package = self.package_path
         env = os.environ.copy()
         env.update(
@@ -40,9 +43,6 @@ class HomebrewPackage(GitPackage):
     _cached_brew_info = None
 
     def _brew_info(self, name=None, force=False):
-
-        if not os.path.exists(self._brew_bin):
-            return None
 
         if self._cached_brew_info is None:
             self._cached_brew_info = {}
