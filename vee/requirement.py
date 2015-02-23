@@ -61,7 +61,8 @@ class Requirement(object):
     _arg_parser.add_argument('-c', '--config', nargs='*', action=_configAction,
         help='args to pass to `./configure`, `python setup.py`, `brew install`, etc..')
     _arg_parser.add_argument('--install-name')
-    _arg_parser.add_argument('--install-subdir')
+    _arg_parser.add_argument('--build-subdir')
+    _arg_parser.add_argument('--install-prefix')
     _arg_parser.add_argument('url')
 
     def __init__(self, args=None, home=None, **kwargs):

@@ -38,9 +38,11 @@ class BasePackage(object):
 
     # Pairs of Package vs Requirement attributes.
     _pkg_to_req_attrs = {
+        '_base_name': 'name',
         '_force_fetch': 'force_fetch',
         '_install_name': 'install_name',
-        '_install_subdir_from_build': 'install_subdir',
+        '_install_subdir_from_build': 'install_prefix',
+        '_build_subdir_to_install': 'build_subdir',
     }
 
     _req_to_pkg_attrs = dict((v, k) for k, v in _pkg_to_req_attrs.iteritems())
@@ -117,10 +119,10 @@ class BasePackage(object):
 
     def _set_default_names(self, package=False, build=False, install=False):
         if (package or build or install) and self._package_name is None:
-            self._package_name = self.url and os.path.join(self.type, self.url.strip('/'))
+            self._package_name = self.url and os.path.join(self.type, re.sub(r'^https?://', '', self.url).strip('/'))
         if (install or build) and self._install_name is None:
-            if self.name and self.revision:
-                self._install_name = '%s/%s' % (self.name, self.revision)
+            if self._base_name and self.revision:
+                self._install_name = '%s/%s' % (self._base_name, self.revision)
             else:
                 self._install_name = self._package_name and re.sub(r'(\.(tar|gz|tgz|zip))+$', '', self._package_name)
         if build and self._build_name is None:
@@ -163,12 +165,10 @@ class BasePackage(object):
     def fetch(self):
         """Cache package from remote source; return something representing the package."""
 
-    _build_subdir_to_install = None
     @property
     def build_path_to_install(self):
         return os.path.join(self.build_path, self._build_subdir_to_install or '').rstrip('/')
 
-    _install_subdir_from_build = None
     @property
     def install_path_from_build(self):
         return os.path.join(self.install_path, self._install_subdir_from_build or '').rstrip('/')
@@ -245,7 +245,7 @@ class BasePackage(object):
         if setup_py:
 
             top_level = os.path.dirname(setup_py)
-            self._build_subdir_to_install = 'dist/vee'
+            self._build_subdir_to_install = os.path.join(top_level, 'dist/vee')
 
             # Setup the PYTHONPATH to point to the "install" directory.
             env = env or self.fresh_environ()
@@ -317,8 +317,8 @@ class BasePackage(object):
         shutil.copytree(self.build_path_to_install, self.install_path_from_build, symlinks=True)
 
         # Link into $VEE/opt.
-        if self.name:
-            opt_link = self.home.abspath('opt', self.name)
+        if self._base_name:
+            opt_link = self.home.abspath('opt', self._base_name)
             print style('Linking to', 'blue', bold=True), style(opt_link, bold=True)
             if os.path.exists(opt_link):
                 os.unlink(opt_link)
@@ -353,7 +353,7 @@ class BasePackage(object):
                   str(self.freeze()),
                   self.type,
                   self.url,
-                  self.name,
+                  self._base_name,
                   self.revision,
                   self._package_name,
                   self._build_name,
@@ -400,7 +400,7 @@ class BasePackage(object):
 
         # Everything below either already matches or was unset.
         self._index_id = row['id']
-        self.name = row['name']
+        self._base_name = row['name']
         self.revision = row['revision']
         self._package_name = row['package_name']
         self._build_name = row['build_name']
