@@ -50,7 +50,7 @@ class BasePackage(object):
 
     def __init__(self, requirement=None, home=None):
 
-        self.abstract_requirement = requirement and str(requirement)
+        self.abstract_requirement = requirement and requirement.to_json()
         self.home = home or requirement.home
 
         for action in Requirement._arg_parser._actions:
@@ -350,7 +350,7 @@ class BasePackage(object):
                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             ''', [datetime.datetime.utcnow(),
                   self.abstract_requirement,
-                  str(self.freeze()),
+                  self.freeze().to_json(),
                   self.type,
                   self.url,
                   self._base_name,

@@ -3,6 +3,7 @@ import datetime
 import os
 import re
 import shlex
+import json
 
 from vee.exceptions import AlreadyInstalled, CliException
 from vee.utils import style
@@ -112,6 +113,9 @@ class Requirement(object):
             if value:
                 kwargs[name] = value
         return kwargs
+
+    def to_json(self):
+        return json.dumps(self.to_kwargs(), sort_keys=True)
 
     def to_args(self):
 
