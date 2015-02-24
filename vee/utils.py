@@ -4,6 +4,7 @@ import datetime
 import errno
 import functools
 import os
+import re
 import subprocess
 import sys
 import threading
@@ -36,6 +37,21 @@ def makedirs(*args):
         if e.errno != errno.EEXIST:
             raise e
     return path
+
+
+
+def guess_name(path):
+
+    path = re.sub(r'[#?].+$', '', path) # Query strings and fragments.
+    path = re.sub(r'(\.[\w-]+)+$', '', path) # Extensions.
+    path = re.sub(r'([._-])v?\d+.*$', '', path) # Version numbers.
+    path = re.sub(r'([._-])[._-]+', r'\1', path) # Collapse punctuation.
+
+    part_iter = reversed(re.split(r'[@:/]', path)) # Split!
+    part_iter = (re.sub(r'(^\W+|\W+$)', '', x) for x in part_iter) # Strip outer punctuation.
+    part_iter = (x for x in part_iter if x) # Skip empties.
+
+    return next(part_iter)
 
 
 def _call_reader(fh, size=2**10, buffer=None, callback=None):

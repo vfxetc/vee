@@ -4,16 +4,31 @@ MAJOR TODOS
 
 - permissions:
 
-    - install_vee.py may need to sudo to set permissions
+    - install_vee.py should add the setgid bit, and make chmod the whole thing
+      to be readible by all. May need to sudo. It should assert that itself
+      isn't sudo
+
+      python install_vee.py --setgid vfx
+
+
     - need permission setting as a step in Package.install()
-    - vee config set perms.owner '*'
-    - vee config set perms.group staff
-    - vee config set perms.chmod ugo=rwX
+
+        - vee config --set os.umask 0002
+        - vee config --set os.setgid vfx
 
 - dev environment:
+
     - how to dev install?
+        - `vee init --dev /path/to/other/vee [/path/to/dev]`
+        - `vee --dev xxx` is a shortcut for setting VEE to discovered dev
         - `vee develop` does like `python setup.py develop`
         - may need a `Package.develop()` method
+            - for git packages, it sets the package_path, and makes sure it
+              exists
+            - for non-git packages, it fails (for now)
+            - it adds a dev link to the DB, or some metadata file (or its own
+              .veedev.sqlite)
+
     - how to run in dev?
         - `vee runtime ENV` creates a shell for you to run it?
     - how to inherit environments?
@@ -36,11 +51,6 @@ MAJOR TODOS
 
 ---
 
-- make a basic `vee config` setup; should it be in flat files, or SQLite?
-
-- call the main database .vee.sqlite
-- rename Index to Database, and .index to .db
-
 - I can make something which guesses all of the names as long as a RequirementSet
   asserts that there are no collisions!
 
@@ -50,7 +60,7 @@ MAJOR TODOS
 - build-subdir and install-prefix should be used to invalidate matches in the
   resolver
 
-- git submodules
+- git submodules in git packages; git submodules update --init
 
 `vee config set chmod ugo=rwX` for vee to chmod everything writable by everyone
     - have this be a parameter of the install_vee.py script as well:
@@ -58,7 +68,9 @@ MAJOR TODOS
 
 - lib vs lib64 on linux (for Python builds)
 
-- different revisions on different platforms (for homebrew/linuxbrew)
+- git might need to use different revisions on different platforms (for homebrew/linuxbrew)
+    - if this is the only attribute that matters in this way, then we can have a
+        --linux-revision and --osx-revision which it picks from
 
 - '--refresh' or --latest' or '--head' to always request the latest; this is a more general
   case of --force-fetch
@@ -89,7 +101,7 @@ MAJOR TODOS
 - Home.{package,build,install,environment}_root attributes
 - Home.to_environ()
 
-- vee exec requirements.txt
+- vee exec -r requirements.txt
     - make sure they are all installed, then link them together via envvars
     - this would be the basis of the dev environment
 
@@ -142,9 +154,6 @@ MAJOR TODOS
 
 - environment structure:
   $VEE/environments/$NAME/latest -> $BUILDTIME
-
-
-- `vee config` / vee.config.Config
 
 - $VEE/repo structure
     
@@ -227,7 +236,7 @@ LATER
     - PyPI JSON API -> https://pypi.python.org/pypi/%s/json
     - Need to either hit the PyPI on every `.installed` check, or cache versions.
 
-- match how Homebrew links directories
+- match how Homebrew links directories, or at least be smarter about it
 
 - homebrew taps: homebrew+mikeboers/testbrew/foo
     - we would need a way to detect which tap it is
