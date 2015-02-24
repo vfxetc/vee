@@ -3,6 +3,9 @@
 
 [vee_commands]
 
+# General
+selfupdate = vee.commands.selfupdate:selfupdate
+
 # Requirements.
 brew = vee.commands.brew:brew
 install = vee.commands.install:install
