@@ -11,7 +11,7 @@ from vee.utils import style
 )
 def selfupdate(args):
 
-    args.assert_home
+    args.assert_home()
 
     try:
         import install_vee
