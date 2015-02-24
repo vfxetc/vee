@@ -14,10 +14,13 @@ def _bootstrap_pkg_resources():
     # and a dummy distribution (which lives wherever it does on dist).
     class Provider(pkg_resources.DefaultProvider):
         egg_info = os.path.abspath(os.path.join(__file__, '..'))
-    dummy = pkg_resources.Distribution(project_name='vee', version='bootstrapped', metadata=Provider('vee'))
-    pkg_resources.working_set.add(dummy, entry=os.path.abspath(os.path.join(
-        __file__, '..', '..'
-    )))
+    dummy = pkg_resources.Distribution(
+        project_name='vee',
+        version='bootstrapped',
+        metadata=Provider('vee'),
+        location=os.path.abspath(os.path.join(__file__, '..', '..')),
+    )
+    pkg_resources.working_set.add(dummy)
 
 
 _bootstrap_pkg_resources()

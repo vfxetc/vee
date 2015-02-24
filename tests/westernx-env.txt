@@ -9,45 +9,58 @@ git+git@git.westernx:westernx/sgpublish --force-fetch --revision origin/master
 git+git@git.westernx:westernx/sgsession --force-fetch --revision origin/master
 
 # TODO: get these to link
-homebrew+ffmpeg
-git+git@git.westernx:westernx/PyAV \
-    --force-fetch \
-    -e PKG_CONFIG_PATH=$VEE/packages/homebrew/lib/pkgconfig:@
+# homebrew+ffmpeg
+# git+git@git.westernx:westernx/PyAV \
+#     --force-fetch \
+#     -e PKG_CONFIG_PATH=$VEE/packages/homebrew/lib/pkgconfig:@
 
 # TODO: get these to link
 # http:/path/to/AAF-1.1.6.0.tgz --install-name aaf/1.1.6
 # git@git.westernx:westernx/PyAAF -e AAF_ROOT=$VEE/installs/aaf/1.1.6.0 --revision 0123456
 
 # TODO: get these to link
-homebrew+imagemagick
-git+git@git.westernx:westernx/cythonmagick \
-    --force-fetch \
-    --revision origin/master \
-    -e PATH=$VEE/packages/homebrew/bin:@ \
-    -e PKG_CONFIG_PATH=$VEE/packages/homebrew/lib/pkgconfig:@
+# homebrew+imagemagick
+# git+git@git.westernx:westernx/cythonmagick \
+#     --force-fetch \
+#     --revision origin/master \
+#     -e PATH=$VEE/packages/homebrew/bin:@ \
+#     -e PKG_CONFIG_PATH=$VEE/packages/homebrew/lib/pkgconfig:@
+
+git+git@git.westernx:westernx/docs              --force-fetch --revision origin/master \
+    --build-subdir _build/html --install-prefix share/docs/westernx
+
+git+git@git.westernx:westernx/ksmrshaders       --force-fetch --revision origin/master \
+    --install-prefix lib/ksmrshaders
+
+git+git@git.westernx:westernx/animation_library --force-fetch --revision origin/master \
+    --install-prefix lib/animation_library
+
+git+git@git.westernx:westernx/nukeplugins       --force-fetch --revision origin/master \
+    --install-prefix lib/nukeplugins
+
+git+git@git.westernx:westernx/sitecustomize     --force-fetch --revision origin/master \
+    --install-prefix lib/python2.7/site-packages
 
 # Generic libs.
 git+git@git.westernx:westernx/aaftools          --force-fetch --revision origin/master
-git+git@git.westernx:westernx/animation_library --force-fetch --revision origin/master
-git+git@git.westernx:westernx/docs              --force-fetch --revision origin/master
 git+git@git.westernx:westernx/dailymaker        --force-fetch --revision origin/master
-git+git@git.westernx:westernx/iotools           --force-fetch --revision origin/master
-git+git@git.westernx:westernx/ksmrshaders       --force-fetch --revision origin/master
+# git+git@git.westernx:westernx/iotools           --force-fetch --revision origin/master
 git+git@git.westernx:westernx/mayatools         --force-fetch --revision origin/master
 git+git@git.westernx:westernx/metatools         --force-fetch --revision origin/master
-git+git@git.westernx:westernx/nukeplugins       --force-fetch --revision origin/master
 git+git@git.westernx:westernx/nuketemplate      --force-fetch --revision origin/master
 git+git@git.westernx:westernx/qbfutures         --force-fetch --revision origin/master
 git+git@git.westernx:westernx/remotecontrol     --force-fetch --revision origin/master
-git+git@git.westernx:westernx/sitecustomize     --force-fetch --revision origin/master
 git+git@git.westernx:westernx/sitetools         --force-fetch --revision origin/master
 git+git@git.westernx:westernx/uifutures         --force-fetch --revision origin/master
 git+git@git.westernx:westernx/uitools           --force-fetch --revision origin/master
 
 # Keybase
-# git+git@git.westernx:westernx/key_base --revision origin/master --install-subdir lib/key_base
+# git+git@git.westernx:westernx/key_base --revision origin/master --install-prefix lib/key_base
 
 # Non-setuptools Python packages.
-git+git@git.westernx:westernx/manticore --force-fetch --revision origin/master --install-subdir lib/python2.7/site-packages/manticore
-git+git@git.westernx:westernx/cerberus  --force-fetch --revision origin/master --install-subdir lib/python2.7/site-packages/cerberus
-git+git@git.westernx:westernx/hoplite   --force-fetch --revision origin/master --install-subdir lib/python2.7/site-packages/hoplite
+git+git@git.westernx:westernx/manticore --force-fetch --revision origin/master \
+    --install-prefix lib/python2.7/site-packages/manticore
+git+git@git.westernx:westernx/cerberus  --force-fetch --revision origin/master \
+    --install-prefix lib/python2.7/site-packages/cerberus
+git+git@git.westernx:westernx/hoplite   --force-fetch --revision origin/master \
+    --install-prefix lib/python2.7/site-packages/hoplite

@@ -1,8 +1,11 @@
 
+`vee config set chmod ugo=rwX` for vee to chmod everything writable by everyone
+    - have this be a parameter of the install_vee.py script as well:
+        python install_vee.py -c chmod=ugo=rwX
 
-- `vee selfupdate` is really a wrapper around install.py
-  - mv install.py install_vee.py, so that it can be imported
+- lib vs lib64 on linux (for Python builds)
 
+- different revisions on different platforms (for homebrew/linuxbrew)
 
 - '--refresh' or --latest' or '--head' to always request the latest; this is a more general
   case of --force-fetch
