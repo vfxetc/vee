@@ -1,31 +1,7 @@
 
 
-- bootstrapping / installing
-  
-  - all we need for this to run is:
-      bin/vee on $PATH
-
-  - $VEE defaults to /usr/local/vee if we are running within it
-    vee./__init__.py: _vee_command_path = None
-
-  - if this thing manages itself, then we would find it at
-      
-      /usr/local/vee/installs/vee-1234567
-      /usr/local/vee/opt/vee -> ../../installs/vee-1234567
-
-      - either need to get it into a reproducable location OR have the installer
-        write out a VEE_INSTALL_PATH variable into the vee-activate.sh
-
-      - `vee install git+git@github.com:westernx/vee --install-name vee --force`
-
-  - how are we going to install this in Westernx?
-    - wxfab will do it, so I can do it however I want
-  - how am I going to install this on artist's machines in another environment?
-    - either send a *.command, or ask them to copy-paste something into their
-      terminal
-
-    python <(curl install.py)
-
+- `vee selfupdate` is really a wrapper around install.py
+  - mv install.py install_vee.py, so that it can be imported
 
 
 - '--refresh' or --latest' or '--head' to always request the latest; this is a more general

@@ -4,11 +4,11 @@ import os
 import sys
 
 
-def ansi(*args):
+def ANSI(*args):
     return ''.join('\x1b[' + str(x) for x in args)
-
-def sgr(*args):
-    return ''.join(ansi(str(x) + 'm') for x in args)
+def SGR(*args):
+    return ''.join(ANSI(str(x) + 'm') for x in args)
+red = lambda x: SGR(1, 31) + x + SGR(0)
 
 
 try:
@@ -23,7 +23,7 @@ except ImportError as e:
             sys.path.append(path)
             break
     else:
-        print >> sys.stderr, sgr(1, 31) + "Error:" + sgr(0) + " vee can't bootstrap."
+        print >> sys.stderr, red("Error:") + " vee can't bootstrap."
         print >> sys.stderr, e
         exit(2)
 
@@ -35,10 +35,10 @@ try:
     from vee.commands.main import main
 
 except ImportError as e:
-    print >> sys.stderr, sgr(1, 31) + "Error:" + sgr(0) + " vee's install is broken."
+    print >> sys.stderr, red("Error:") + " vee's install is broken."
     print >> sys.stderr, e
     if bootstrapped:
-        print >> sys.stderr, 'Automatic bootstrap detected:', bootstrapped
+        print >> sys.stderr, 'Bootstrap found:', bootstrapped
     exit(1)
 
 

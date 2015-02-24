@@ -11,14 +11,31 @@ To install to /usr/local/vee, and force an update to the latest version:
 
 '''
 
+def ANSI(*args):
+    return ''.join('\x1b[' + str(x) for x in args)
+def SGR(*args):
+    return ''.join(ANSI(str(x) + 'm') for x in args)
+
+red    = lambda x: SGR(1, 31) + x + SGR(0)
+green  = lambda x: SGR(1, 32) + x + SGR(0)
+yellow = lambda x: SGR(1, 33) + x + SGR(0)
+blue   = lambda x: SGR(1, 34) + x + SGR(0)
+bold   = lambda x: SGR(1) + x + SGR(0)
+faint  = lambda x: SGR(2) + x + SGR(0)
+
+
+import sys
+
+if sys.version_info < (2, 7):
+    print red("Error:"), "VEE requires Python 2.7"
+    exit(1)
+
 from subprocess import call, check_output
 import argparse
 import errno
-import glob
 import os
 import shutil
 import tarfile
-import tempfile
 import urllib2
 import zipfile
 
@@ -70,7 +87,7 @@ def get_arg(key, message, default):
         return value
     if args.yes:
         return default
-    print '%s [%s]:' % (message, default),
+    print '%s [%s]:' % (green(message), faint(default)),
     res = raw_input().strip()
     return res or default
 
@@ -82,7 +99,7 @@ def switch(key, message):
     if args.yes:
         return True
     while True:
-        print '%s [Yn]:' % message,
+        print '%s [%s]:' % (green(message), faint('Yn')),
         res = raw_input().strip().lower()
         if res in ('', 'y', 'yes'):
             return True
@@ -98,37 +115,37 @@ vee_src = os.path.join(prefix, 'src')
 
 if check_output(['which', 'git']):
     if not os.path.exists(vee_src):
-        print 'Cloning', args.git_repo
+        print blue('Cloning'), bold(args.git_repo)
         call(['git', 'clone', args.git_repo, vee_src])
     else:
         git_dir = os.path.join(vee_src, '.git')
         if not os.path.exists(git_dir):
-            print 'Initing repo on top of existing'
+            print blue('Initing repo on top of existing')
             call(['git', '--git-dir', git_dir, '--work-tree', vee_src, 'init'])
-        print 'Fetching updates'
+        print blue('Fetching updates')
         call(['git', '--git-dir', git_dir, '--work-tree', vee_src, 'config', 'remote.origin.url', args.git_repo])
         call(['git', '--git-dir', git_dir, '--work-tree', vee_src, 'config', 'remote.origin.fetch', '+refs/heads/*:refs/remotes/origin/*'])
         call(['git', '--git-dir', git_dir, '--work-tree', vee_src, 'fetch', 'origin'])
-        print 'Resetting...'
+        print blue('Resetting...')
         call(['git', '--git-dir', git_dir, '--work-tree', vee_src, 'reset', '--hard', 'origin/master'])
 
 
 else:
 
-    print 'Git was not found.'
+    print yellow('Warning:'), bold('Git was not found.')
     if args.need_git:
-        print 'Cannot continue without git.'
+        print red('Error:'), bold('Cannot continue without git.')
         exit(4)
 
     # Blast out existing.
     if os.path.exists(vee_src):
-        print 'VEE is already installed.'
+        print blue('VEE is already installed.')
         if not switch('force', 'Delete existing installation?'):
             exit()
         shutil.rmtree(vee_src)
 
     # Download the new one.
-    print 'Downloading', args.archive
+    print blue('Downloading'), bold(args.archive)
     res = urllib2.urlopen(args.archive)
     base, ext = os.path.splitext(os.path.basename(args.archive.split('?')[0]))
     tmp_src_root = os.path.join(prefix, 'tmp', 'vee-%s-%s' % (base, os.urandom(4).encode('hex')))
@@ -146,7 +163,7 @@ else:
         tar = tarfile.open(tmp_archive)
         tar.extractall(tmp_src_root)
     else:
-        print 'Cannot expand %r archive' % ext.strip('.')
+        print red('Error:'), bold('Cannot expand %r archive' % ext.strip('.'))
         exit(2)
 
     # Find setup.py, and copy its directory to the final location.
@@ -154,7 +171,7 @@ else:
         if 'vee' in dir_names and 'setup.py' in file_names:
             break
     else:
-        print 'Archive does not appear to be vee; exiting.'
+        print red('Error:'), bold('Archive does not appear to be vee; exiting.')
         exit(3)
     shutil.copytree(tmp_src, vee_src)
 
@@ -167,8 +184,8 @@ shell_lines = [
 
 if switch('bashrc', 'Append to your ~/.bashrc?'):
 
-    print 'Adding VEE to your ~/.bashrc'
-    print 'NOTE: You may need to open a new terminal, or `source ~/.bashrc`, for VEE to work.'
+    print blue('Adding VEE to your ~/.bashrc')
+    print yellow('Note:'), bold('You may need to open a new terminal, or `source ~/.bashrc`, for VEE to work.')
 
     bashrc = os.path.expanduser('~/.bashrc')
     if os.path.exists(bashrc):
@@ -188,8 +205,10 @@ if switch('bashrc', 'Append to your ~/.bashrc?'):
 
 
 else:
-    print 'Add the following to your environment:'
+    print blue('Add the following to your environment:')
     for line in shell_lines:
         print '    ' + line.split('#')[0]
 
+
+print blue('Done.')
 
