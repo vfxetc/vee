@@ -30,7 +30,7 @@ if sys.version_info < (2, 7):
     print red("Error:"), "VEE requires Python 2.7"
     exit(1)
 
-from subprocess import call, check_output
+from subprocess import call, check_output, PIPE
 import argparse
 import errno
 import os
@@ -109,7 +109,10 @@ def main(argv=None):
                 return False
 
 
-    prefix = os.path.abspath(get_arg('prefix', 'Where should we install VEE?', '/usr/local/vee'))
+    prefix = args.prefix or os.environ.get('VEE')
+    if not prefix:
+        prefix = get_arg('prefix', 'Where should we install VEE?', '/usr/local/vee')
+    prefix = os.path.abspath(prefix)
     makedirs(prefix)
 
     vee_src = os.path.join(prefix, 'src')
@@ -124,17 +127,19 @@ def main(argv=None):
             if not os.path.exists(git_dir):
                 print blue('Initing repo on top of existing')
                 call(['git', '--git-dir', git_dir, '--work-tree', vee_src, 'init'])
-            print blue('Fetching updates')
+            print blue('Fetching updates from remote repo')
             call(['git', '--git-dir', git_dir, '--work-tree', vee_src, 'config', 'remote.origin.url', args.git_repo])
             call(['git', '--git-dir', git_dir, '--work-tree', vee_src, 'config', 'remote.origin.fetch', '+refs/heads/*:refs/remotes/origin/*'])
             call(['git', '--git-dir', git_dir, '--work-tree', vee_src, 'fetch', 'origin'])
-            print blue('Resetting...')
+            print blue('Updating to master')
             call(['git', '--git-dir', git_dir, '--work-tree', vee_src, 'reset', '--hard', 'origin/master'])
+            print blue('Cleaning ignored files')
+            call(['git', '--git-dir', git_dir, '--work-tree', vee_src, 'clean', '-dxf'], stdout=PIPE)
 
 
     else:
 
-        print yellow('Warning:'), bold('Git was not found.')
+        print yellow('Warning:'), bold('git was not found.')
         if args.need_git:
             print red('Error:'), bold('Cannot continue without git.')
             exit(4)
@@ -187,7 +192,7 @@ def main(argv=None):
     if switch('bashrc', 'Append to your ~/.bashrc?'):
 
         print blue('Adding VEE to your ~/.bashrc')
-        print yellow('Note:'), bold('You may need to open a new terminal, or `source ~/.bashrc`, for VEE to work.')
+        print yellow('Note:'), 'You may need to open a new terminal, or `source ~/.bashrc`, for VEE to work.'
 
         bashrc = os.path.expanduser('~/.bashrc')
         if os.path.exists(bashrc):
@@ -206,13 +211,13 @@ def main(argv=None):
             fh.write(content)
 
 
-    else:
+    elif os.environ.get('VEE', '') != prefix:
         print blue('Add the following to your environment:')
         for line in shell_lines:
             print '    ' + line.split('#')[0]
 
 
-    print blue('Done.')
+    print blue('Done')
 
 
 if __name__ == '__main__':
