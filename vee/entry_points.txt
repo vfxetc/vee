@@ -4,7 +4,8 @@
 [vee_commands]
 
 # General
-selfupdate = vee.commands.selfupdate:selfupdate
+self-update = vee.commands.self_update:self_update
+config = vee.commands.config:config
 
 # Requirements.
 brew = vee.commands.brew:brew

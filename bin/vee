@@ -52,4 +52,4 @@ if os.environ.get('VEE') is None:
         root = os.path.dirname(root)
 
 
-main()
+exit(main(as_main=True) or 0)

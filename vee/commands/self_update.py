@@ -7,9 +7,10 @@ from vee.utils import style
 
 
 @command(
+    name='self-update',
     help='update vee itself',
 )
-def selfupdate(args):
+def self_update(args):
 
     args.assert_home()
 

@@ -5,18 +5,16 @@ import sqlite3
 
 _migrations = []
 
-def _migration(f):
-    _migrations.append(f)
 
-@_migration
+@_migrations.append
 def _create_initial_tables(con):
 
     con.execute('''CREATE TABLE packages (
 
         id INTEGER PRIMARY KEY,
-        created_at TIMESTAMP NOT NULL,
+        created_at TIMESTAMP NOT NULL DEFAULT (datetime('now')),
 
-        -- Requirement.__str__
+        -- Requirement.to_json()
         abstract_requirement TEXT NOT NULL,
         concrete_requirement TEXT NOT NULL,
 
@@ -41,6 +39,9 @@ def _create_initial_tables(con):
     con.execute('''CREATE TABLE environments (
 
         id INTEGER PRIMARY KEY,
+        created_at TIMESTAMP NOT NULL DEFAULT (datetime('now')),
+        modified_at TIMESTAMP NOT NULL DEFAULT (datetime('now')),
+
         name TEXT NOT NULL,
         path TEXT NOT NULL,
 
@@ -53,19 +54,40 @@ def _create_initial_tables(con):
     con.execute('''CREATE TABLE links (
 
         id INTEGER PRIMARY KEY,
+        created_at TIMESTAMP NOT NULL DEFAULT (datetime('now')),
+
         environment_id INTEGER REFERENCES environments(id) NOT NULL,
         package_id INTEGER REFERENCES packages(id) NOT NULL,
-        abstract_requirement TEXT NOT NULL,
-        created_at TIMESTAMP NOT NULL
+
+        abstract_requirement TEXT NOT NULL
 
     )''')
+
+    con.execute('''CREATE TRIGGER on_insert_links
+
+        AFTER INSERT ON links BEGIN
+            UPDATE environments SET modified_at = datetime('now') WHERE id = NEW.environment_id;
+        END
+
+    ''')
+
+    con.execute('''CREATE TABLE config (
+
+        id INTEGER PRIMARY KEY,
+        created_at TIMESTAMP NOT NULL DEFAULT (datetime('now')),
+
+        name TEXT UNIQUE NOT NULL,
+        value TEXT NOT NULL
+
+    )''')
+
 
 
 def _migrate(con):
     with con:
         con.execute('''CREATE TABLE IF NOT EXISTS migrations (
             name TEXT NOT NULL,
-            applied_at TIMESTAMP NOT NULL
+            applied_at TIMESTAMP NOT NULL DEFAULT (datetime('now'))
         )''')
         cur = con.execute('SELECT name FROM migrations')
         existing = set(row[0] for row in cur)
@@ -74,7 +96,7 @@ def _migrate(con):
         if name not in existing:
             with con.begin():
                 f(con)
-                con.execute('INSERT INTO migrations VALUES (?, ?)', (name, datetime.datetime.utcnow()))
+                con.execute('INSERT INTO migrations (name) VALUES (?)', [name])
 
 
 
@@ -107,4 +129,8 @@ class Database(object):
 
     def cursor(self):
         return self.connect().cursor()
+
+    def execute(self, *args):
+        return self.connect().execute(*args)
+
 

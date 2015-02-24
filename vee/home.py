@@ -3,6 +3,7 @@ import pkg_resources
 
 
 from vee.database import Database
+from vee.config import Config
 
 
 class Home(object):
@@ -11,6 +12,7 @@ class Home(object):
         self.root = root
         self.repo = repo
         self.db = Database(os.path.join(root, '.vee.sqlite'))
+        self.config = Config(self)
 
     def get_package(self, type=None, requirement=None):
         type = type or requirement.type
@@ -22,4 +24,3 @@ class Home(object):
 
     def abspath(self, *args):
         return os.path.abspath(os.path.join(self.root, *args))
-

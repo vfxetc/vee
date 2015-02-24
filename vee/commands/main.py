@@ -8,9 +8,12 @@ import argparse
 import cProfile
 import os
 import pkg_resources
+import sys
+import traceback
 
-from vee.home import Home
 from vee.exceptions import CliException
+from vee.home import Home
+from vee.utils import style
 
 
 class AliasedSubParsersAction(argparse._SubParsersAction):
@@ -26,8 +29,10 @@ class AliasedSubParsersAction(argparse._SubParsersAction):
 def argument(*args, **kwargs):
     return args, kwargs
 
-def group(title, *args):
-    return title, args
+def group(*args, **kwargs):
+    kwargs['__type__'] = 'group'
+    return args, kwargs
+
 
 def command(*args, **kwargs):
     def _decorator(func):
@@ -45,9 +50,16 @@ class Namespace(argparse.Namespace):
 
 
 
-def main(argv=None, environ=None):
+_parser = None
 
-    parser = argparse.ArgumentParser(
+def get_parser():
+
+    global _parser
+
+    if _parser:
+        return _parser
+
+    _parser = parser = argparse.ArgumentParser(
         prog='vee',
         formatter_class=argparse.RawDescriptionHelpFormatter,
         description=__doc__,
@@ -57,12 +69,8 @@ def main(argv=None, environ=None):
     parser.register('action', 'parsers', AliasedSubParsersAction)
     subparsers = parser.add_subparsers(metavar='COMMAND')
 
-    # Mainly for mocking.
-    environ = os.environ if environ is None else environ
-
     parser.add_argument('--home',
         dest='home_path',
-        default=environ.get('VEE'),
         help='path of managed environments',
     )
 
@@ -79,32 +87,50 @@ def main(argv=None, environ=None):
         subparser.set_defaults(func=func)
 
         for arg_args, arg_kwargs in args:
-            if isinstance(arg_args, basestring):
-                group = subparser.add_argument_group(arg_args)
-                for arg_args, arg_kwargs in arg_kwargs:
+            if arg_kwargs.pop('__type__', None) == 'group':
+                if arg_kwargs.pop('exclusive', False):
+                    group = subparser.add_mutually_exclusive_group(**arg_kwargs)
+                else:
+                    group = subparser.add_argument_group(**arg_kwargs)
+                for arg_args, arg_kwargs in arg_args:
                     group.add_argument(*arg_args, **arg_kwargs)
             else:
                 subparser.add_argument(*arg_args, **arg_kwargs)
 
+    return parser
+
+
+def main(argv=None, environ=None, as_main=__name__=="__main__"):
+
+    parser = get_parser()
+
     args, unparsed = parser.parse_known_args(argv, namespace=Namespace())
     if args.func and unparsed and not args.func.__parse_known_args:
         args = parser.parse_args(argv, namespace=Namespace())
+
+    environ = os.environ if environ is None else environ
+    args.home_path = args.home_path or environ.get('VEE')
 
     args.home = args.home_path and Home(args.home_path)
 
     if args.func:
         try:
             res = args.func(args, *unparsed) or 0
-        except CliException as e:
-            print e.clistr
-            res = e.errno
+        except Exception as e:
+            if as_main:
+                if isinstance(e, CliException):
+                    print e.clistr
+                    res = e.errno
+                else:
+                    stack = traceback.format_list(traceback.extract_tb(sys.exc_traceback))
+                    print style(''.join(stack).rstrip(), faint=True)
+                    print style(e.__class__.__name__ + ':', 'red', bold=True), style(str(e), bold=True)
+                    res = 1
+            else:
+                raise
     else:
         parser.print_help()
         res = 1
     
-
-    if __name__ == '__main__':
-        exit(res)
-    else:
-        return res
+    return res
 

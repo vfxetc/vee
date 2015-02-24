@@ -44,8 +44,6 @@ MAJOR TODOS
 - I can make something which guesses all of the names as long as a RequirementSet
   asserts that there are no collisions!
 
-- store Package.to_dict() in database?
-
 - does it make sense to have packages/builds/installs in the database, instead
   of having them all together?
 

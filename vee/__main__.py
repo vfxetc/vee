@@ -1,3 +1,3 @@
 from vee.commands.main import main
 
-main()
+exit(main(as_main=True) or 0)

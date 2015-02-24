@@ -344,12 +344,11 @@ class BasePackage(object):
                 raise ValueError('cannot record requirement that is not installed')
             cur = self.home.db.cursor()
             cur.execute('''
-                INSERT INTO packages (created_at, abstract_requirement, concrete_requirement,
+                INSERT INTO packages (abstract_requirement, concrete_requirement,
                                       type, url, name, revision, package_name, build_name,
                                       install_name, package_path, build_path, install_path)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-            ''', [datetime.datetime.utcnow(),
-                  self.abstract_requirement,
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            ''', [self.abstract_requirement,
                   self.freeze().to_json(),
                   self.type,
                   self.url,
@@ -365,7 +364,6 @@ class BasePackage(object):
             )
             self._db_id = cur.lastrowid
         return self._db_id
-
 
     def resolve_existing(self):
         """Check against the database to see if this was already installed."""
@@ -418,10 +416,9 @@ class BasePackage(object):
 
     def _record_link(self, env):
         cur = self.home.db.cursor()
-        cur.execute('''INSERT INTO links (package_id, environment_id, created_at, abstract_requirement) VALUES (?, ?, ?, ?)''', [
+        cur.execute('''INSERT INTO links (package_id, environment_id, abstract_requirement) VALUES (?, ?, ?, ?)''', [
             self.db_id(),
             env.db_id(),
-            datetime.datetime.utcnow(),
             self.abstract_requirement,
         ])
 
