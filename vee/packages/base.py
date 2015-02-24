@@ -62,7 +62,7 @@ class BasePackage(object):
         self.environ = self.environ.copy() if self.environ else {}
         self.config = self.config[:] if self.config else []
 
-        self._index_id = None
+        self._db_id = None
         self._package_name = self._build_name = None
 
 
@@ -335,14 +335,14 @@ class BasePackage(object):
     def link(self, env):
         self._assert_paths(install=True)
         env.link_directory(self.install_path)
-        self._index_link(env)
+        self._record_link(env)
 
-    def index_id(self):
-        if self._index_id is None:
+    def db_id(self):
+        if self._db_id is None:
             self._set_names(package=True, build=True, install=True)
             if not self.installed:
-                raise ValueError('cannot index requirement that is not installed')
-            cur = self.home.index.cursor()
+                raise ValueError('cannot record requirement that is not installed')
+            cur = self.home.db.cursor()
             cur.execute('''
                 INSERT INTO packages (created_at, abstract_requirement, concrete_requirement,
                                       type, url, name, revision, package_name, build_name,
@@ -363,17 +363,17 @@ class BasePackage(object):
                   self.install_path,
                  ]
             )
-            self._index_id = cur.lastrowid
-        return self._index_id
+            self._db_id = cur.lastrowid
+        return self._db_id
 
 
     def resolve_existing(self):
-        """Check against the index to see if this was already installed."""
+        """Check against the database to see if this was already installed."""
 
-        if self._index_id is not None:
-            raise ValueError('requirement already in index')
+        if self._db_id is not None:
+            raise ValueError('requirement already in database')
 
-        cur = self.home.index.cursor()
+        cur = self.home.db.cursor()
 
         clauses = ['type = ?', 'url = ?']
         values = [self.type, self.url]
@@ -402,7 +402,7 @@ class BasePackage(object):
         print style('DEBUG: found existing install %d' % row['id'], faint=True)
 
         # Everything below either already matches or was unset.
-        self._index_id = row['id']
+        self._db_id = row['id']
         self._base_name = row['name']
         self.revision = row['revision']
         self._package_name = row['package_name']
@@ -412,15 +412,15 @@ class BasePackage(object):
             self.build_path != row['build_path'] or
             self.install_path != row['install_path']
         ):
-            raise RuntimeError('indexed paths dont match')
+            raise RuntimeError('recorded paths dont match')
 
         return True
 
-    def _index_link(self, env):
-        cur = self.home.index.cursor()
+    def _record_link(self, env):
+        cur = self.home.db.cursor()
         cur.execute('''INSERT INTO links (package_id, environment_id, created_at, abstract_requirement) VALUES (?, ?, ?, ?)''', [
-            self.index_id(),
-            env.index_id(),
+            self.db_id(),
+            env.db_id(),
             datetime.datetime.utcnow(),
             self.abstract_requirement,
         ])

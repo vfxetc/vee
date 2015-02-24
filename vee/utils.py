@@ -115,7 +115,7 @@ def call_output(cmd, **kwargs):
 
 def call_log(cmd, **kwargs):
 
-    indent = kwargs.pop('index', 4)
+    indent = kwargs.pop('indent', 4)
 
     buffer_ = []
     def callback(name, echo_fh, echo_format, chunk):

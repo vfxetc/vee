@@ -179,7 +179,7 @@ class Requirement(object):
         self.package.install()
 
         # Record it!
-        self.package.index_id()
+        self.package.db_id()
 
 
 

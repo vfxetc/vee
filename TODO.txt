@@ -1,4 +1,59 @@
 
+MAJOR TODOS
+-----------
+
+- permissions:
+
+    - install_vee.py may need to sudo to set permissions
+    - need permission setting as a step in Package.install()
+    - vee config set perms.owner '*'
+    - vee config set perms.group staff
+    - vee config set perms.chmod ugo=rwX
+
+- dev environment:
+    - how to dev install?
+        - `vee develop` does like `python setup.py develop`
+        - may need a `Package.develop()` method
+    - how to run in dev?
+        - `vee runtime ENV` creates a shell for you to run it?
+    - how to inherit environments?
+
+- repo
+    - how to structure?
+    - how to manage?
+    - how to manage resulting environments?
+        - does it make sense to merge two repositories? Perhaps the structure
+          must be that they be git submodules
+        - make the concession that there is only a single repo ever attached
+
+- key_base
+    - entrypoints
+    - apps: can we build them in a central location, outside of the isolated
+      build environments, or is the Finder going to be able to adapt to symlinks
+      in the Dock?
+    - scrap history
+
+
+---
+
+- make a basic `vee config` setup; should it be in flat files, or SQLite?
+
+- call the main database .vee.sqlite
+- rename Index to Database, and .index to .db
+
+- I can make something which guesses all of the names as long as a RequirementSet
+  asserts that there are no collisions!
+
+- store Package.to_dict() in database?
+
+- does it make sense to have packages/builds/installs in the database, instead
+  of having them all together?
+
+- build-subdir and install-prefix should be used to invalidate matches in the
+  resolver
+
+- git submodules
+
 `vee config set chmod ugo=rwX` for vee to chmod everything writable by everyone
     - have this be a parameter of the install_vee.py script as well:
         python install_vee.py -c chmod=ugo=rwX

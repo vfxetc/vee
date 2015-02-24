@@ -26,20 +26,20 @@ class Environment(object):
         else:
             self.name = name
             self.path = home.abspath('environments', name)
-        self._index_id = None
+        self._db_id = None
 
-    def index_id(self):
-        if self._index_id is None:
-            cur = self.home.index.cursor()
+    def db_id(self):
+        if self._db_id is None:
+            cur = self.home.db.cursor()
             row = cur.execute('SELECT * FROM environments WHERE path = ?', [self.path]).fetchone()
             if row:
-                self._index_id = row['id']
+                self._db_id = row['id']
             else:
                 cur.execute('INSERT INTO environments (name, path) VALUES (?, ?)', [
                     self.name, self.path,
                 ])
-                self._index_id = cur.lastrowid
-        return self._index_id
+                self._db_id = cur.lastrowid
+        return self._db_id
 
     def link_directory(self, dir_to_link):
         

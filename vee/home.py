@@ -2,7 +2,7 @@ import os
 import pkg_resources
 
 
-from vee.index import Index
+from vee.database import Database
 
 
 class Home(object):
@@ -10,7 +10,7 @@ class Home(object):
     def __init__(self, root, repo=None):
         self.root = root
         self.repo = repo
-        self.index = Index(os.path.join(root, 'vee-index.db'))
+        self.db = Database(os.path.join(root, '.vee.sqlite'))
 
     def get_package(self, type=None, requirement=None):
         type = type or requirement.type

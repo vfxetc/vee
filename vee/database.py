@@ -96,7 +96,7 @@ class _Cursor(sqlite3.Cursor):
     pass
 
 
-class Index(object):
+class Database(object):
 
     def __init__(self, path):
         self.path = path
