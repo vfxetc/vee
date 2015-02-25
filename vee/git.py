@@ -36,9 +36,50 @@ class GitRepo(object):
     def _call(self, *cmd, **kw):
         return call(('git', '--git-dir', self.git_dir, '--work-tree', self.work_tree) + cmd, **kw)
 
-    def rev_parse(self, revision):
+    def rev_parse(self, revision, fetch=None):
+
+        force_fetch = bool(fetch)
+        allow_fetch = fetch or fetch is None
+
+        if allow_fetch:
+            self.clone_if_not_exists(shallow=True)
+
+        if not force_fetch:
+            commit = self._rev_parse(revision)
+
+        if force_fetch or not commit:
+
+            if not allow_fetch:
+                raise ValueError('revision %r does not exist in local repo' % revision)
+
+            if self.is_shallow:
+
+                # Fetch the new history on top of the shallow history.
+                print style('Fetching shallow', 'blue', bold=True), style(self.remote_url, bold=True)
+                self._call('fetch', '--update-shallow', self.remote_url, silent=True)
+                commit = self._rev_parse(revision)
+
+                # Lets get the whole history.
+                if not commit:
+                    print style('Fetching unshallow', 'blue', bold=True), style(self.remote_url, bold=True)
+                    self._call('fetch', '--unshallow', self.remote_url, silent=True)
+                    commit = self._rev_parse(revision)
+
+            else:
+                # Normal fetch here.
+                print style('Fetching', 'blue', bold=True), style(self.remote_url, bold=True)
+                self._call('fetch', self.remote_url, silent=True)
+                commit = self._rev_parse(revision)
+
+        if not commit:
+            msg = 'revision %r does not exist in %s' % (revision, self.remote_url)
+            raise ValueError(msg)
+
+        return commit
+
+    def _rev_parse(self, revision):
         try:
-            return self._call('rev-parse', '--verify', '--quiet', revision, stdout=True, silent=True).strip()
+            return self._call('rev-parse', '--verify', '--quiet', revision, stdout=True, silent=True).strip() or None
         except subprocess.CalledProcessError:
             pass
 
@@ -54,45 +95,8 @@ class GitRepo(object):
     def is_shallow(self):
         return os.path.exists(os.path.join(self.git_dir, 'shallow'))
 
-    def checkout(self, revision, fetch=True, force=False):
-
-        self.clone_if_not_exists(shallow=not force)
-        
-        commit = self.rev_parse(revision)
-
-        if force or not commit:
-
-            if not fetch:
-                raise ValueError('revision %r does not exist in local repo' % revision)
-
-            # print style('Warning:', bg='yellow'), style('revision %r does not exist in local repo.' % revision, bold=True)
-
-            if self.is_shallow:
-
-                # Fetch the new history on top of the shallow history.
-                print style('Fetching shallow', 'blue', bold=True), style(self.remote_url, bold=True)
-                self._call('fetch', '--update-shallow', self.remote_url, silent=True)
-                commit = self.rev_parse(revision)
-
-                # Lets get the whole history.
-                if not commit:
-                    print style('Fetching unshallow', 'blue', bold=True), style(self.remote_url, bold=True)
-                    self._call('fetch', '--unshallow', self.remote_url, silent=True)
-                    commit = self.rev_parse(revision)
-
-            else:
-
-                # Normal fetch here.
-                print style('Fetching', 'blue', bold=True), style(self.remote_url, bold=True)
-                self._call('fetch', self.remote_url, silent=True)
-                commit = self.rev_parse(revision)
-
-
-        if not commit:
-            msg = 'revision %r does not exist in %s' % (revision, self.remote_url)
-            print style('Error:', 'red'), style(msg, reset=True)
-            raise ValueError(msg)
-
+    def checkout(self, revision, fetch=None):
+        commit = self.rev_parse(revision, fetch=fetch)
         if self.head != commit:
             print style('Checking out', 'blue', bold=True), style('%s [%s]' % (revision, commit), bold=True)
             self._call('reset', '--hard', commit, silent=True)

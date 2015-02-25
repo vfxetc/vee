@@ -92,12 +92,39 @@ class RequirementSet(object):
             if isinstance(element, Requirement):
                 yield element
 
-    def guess_names(self):
+    def guess_names(self, strict=True):
+        """Guess names for every requirement which does not already have one.
+
+        This mutates the requirements as it goes; if it fails then some
+        requirements will have already had their name set.
+
+        """
+
         names = set()
+        to_guess = []
+
+        # First pass: the explicitly named.
         for req in self.iter_requirements():
-            name = req.name or guess_name(req.url)
-            req.name = None if name in names else name
-            names.add(name)
+
+            if not req.name:
+                to_guess.append(req)
+                continue
+
+            if req.name.lower() in names:
+                raise ValueError('name collision; please rename one of the %rs' % name)
+            names.add(req.name.lower())
+
+        # Second pass; the rest.
+        for req in to_guess:
+            name = guess_name(req.url)
+            if name.lower() in names:
+                if strict:
+                    raise ValueError('name collision; please set name for one of the %rs' % name)
+            else:
+                names.add(name.lower())
+                req.name = name
+
+
 
     def iter_dump(self, freeze=False):
 

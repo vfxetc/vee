@@ -6,6 +6,7 @@
 # General
 self-update = vee.commands.self_update:self_update
 config = vee.commands.config:config
+git = vee.commands.git:git
 
 # Requirements.
 brew = vee.commands.brew:brew

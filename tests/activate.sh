@@ -1,13 +1,7 @@
 
-_tests="$(cd "$(dirname "${BASH_SOURCE[0]}")"; pwd)"
-_root="$(dirname "$_tests")"
-_sandbox="$_tests/sandbox"
+_vee_root="$(cd "$(dirname "${BASH_SOURCE[0]}")"; cd ..; pwd)"
 
-export VEE_HOME="$_sandbox/home"
-export VEE_REPO="$_sandbox/repo"
+export VEE="$_vee_root/tests/sandbox"
+export PATH="$_vee_root/bin:$PATH"
 
-
-type vee 2>/dev/null
-if [[ $? != 0 ]]; then
-    alias vee='python -m vee'
-fi
+unset _vee_root

@@ -21,6 +21,7 @@ class GitPackage(BasePackage):
     
     def _set_names(self, build=False, install=False, **kwargs):
         if (build or install) and not self._build_name:
+            self.repo.clone_if_not_exists()
             commit = self.repo.rev_parse(self.revision or 'HEAD')
             if commit:
                 if self._base_name:
@@ -33,6 +34,6 @@ class GitPackage(BasePackage):
         super(GitPackage, self)._set_names(**kwargs)
 
     def fetch(self):
-        self.repo.checkout(self.revision or 'HEAD', force=self._force_fetch)
+        self.repo.checkout(self.revision or 'HEAD', fetch=self._force_fetch or None)
         self.revision = self.repo.head
         

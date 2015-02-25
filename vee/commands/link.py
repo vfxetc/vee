@@ -8,7 +8,8 @@ from vee.exceptions import CliException, AlreadyInstalled
 
 @command(
     argument('--raw', action='store_true', help='package is directory, not a requirement'),
-    argument('--guess-names', action='store_true'),
+    argument('--long-names', action='store_true',
+        help='automatically picks package names'),
     argument('environment'),
     argument('specification', nargs='...'),
     help='link a package',
@@ -30,7 +31,7 @@ def link(args):
     req_set = RequirementSet()
     req_set.parse(args.specification[0], home=args.home)
 
-    if args.guess_names:
+    if not args.long_names:
         req_set.guess_names()
 
     for req in req_set.iter_requirements():

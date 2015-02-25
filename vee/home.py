@@ -1,17 +1,17 @@
 import os
 import pkg_resources
 
-
-from vee.database import Database
 from vee.config import Config
+from vee.database import Database
+from vee.git import GitRepo
 
 
 class Home(object):
 
-    def __init__(self, root, repo=None):
+    def __init__(self, root):
         self.root = root
-        self.repo = repo
-        self.db = Database(os.path.join(root, '.vee.sqlite'))
+        self.repo = GitRepo(self.abspath('.vee-repo'))
+        self.db = Database(self.abspath('.vee-db.sqlite'))
         self.config = Config(self)
 
     def get_package(self, type=None, requirement=None):
