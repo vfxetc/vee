@@ -47,6 +47,7 @@ class Namespace(argparse.Namespace):
     def assert_home(self):
         if not self.home:
             raise CliException('please set $VEE or use --home')
+        return self.home
 
 
 

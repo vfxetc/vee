@@ -51,7 +51,35 @@ MAJOR TODOS
 
 ---
 
--  --make-install to also `make install`
+- Does it ever make sense to have multiple repos?
+
+
+- repo workflow
+  
+  - `vee init [--name NAME] [--repo REPO]`
+      Assert that the various directory structures exist, and add a new repo
+      as a convenience
+
+  - `vee repo --add NAME REPO`
+  - `vee repo --remove NAME`
+
+  - `vee clone OTHER_HOME NEW_HOME`
+
+
+
+- should environments be only named, or named and dated?
+
+  - environments/$name vs environments/$name/$date with "latest" symlink
+
+  - if we tend to do the dated ones, then `vee link` should link into the latest
+
+  - `vee link [--new|--reset] $name` would create a new one
+  - `vee link [--raw|--no-date] $name` would use the explicitly named one
+
+- main environment could be called "master"
+
+- linking could check if a previous revision of the same thing was already
+  linked into an environment, and stop you
 
 - parse_multiple_requirements(args) walks through a set of args, pulling out
   RequirementSet(s) when they are files that end in '.txt' (or no extendion),
@@ -228,6 +256,8 @@ MAJOR TODOS
 
 LATER
 -----
+
+- `vee install xxx --make-install` to also `make install`
 
 - custom managers
   - e.g. `vee install PyAV.py`, where PyAV.py contains:

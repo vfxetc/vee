@@ -9,6 +9,10 @@ class Config(collections.MutableMapping):
         self._home = home
         self._db = home.db
 
+    @property
+    def exists(self):
+        return self._db.exists
+
     @cached_property
     def _con(self):
         return self._db.connect()
@@ -35,8 +39,12 @@ class Config(collections.MutableMapping):
         for row in self._con.execute('SELECT name FROM config'):
             yield row[0]
 
-    def iteritems(self):
-        for row in self._con.execute('SELECT name, value FROM config'):
+    def iteritems(self, glob=None):
+        if glob:
+            cur = self._con.execute('SELECT name, value FROM config WHERE name GLOB ?', [glob])
+        else:
+            cur = self._con.execute('SELECT name, value FROM config')
+        for row in cur:
             yield row[0], row[1]
 
     def __len__(self):

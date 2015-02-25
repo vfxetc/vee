@@ -8,6 +8,7 @@ from vee.environment import Environment
         argument('--list', action='store_true', help='list all variables set'),
         argument('--set', action='store_true', help='set key-value pairs'),
         argument('--delete', action='store_true', help='delete given keys'),
+        argument('--clear', action='store_true', help='clear all config'),
         exclusive=True,
     ),
     argument('args', nargs='...'),
@@ -34,6 +35,9 @@ def config(args):
     if args.delete:
         for k in args.args:
             del config[k]
+    
+    if args.clear:
+        config.clear()
     
     for k in args.args:
         print config[k]

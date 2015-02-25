@@ -1,6 +1,9 @@
 import contextlib
 import datetime
+import os
 import sqlite3
+
+from vee.utils import makedirs
 
 
 _migrations = []
@@ -124,7 +127,12 @@ class Database(object):
         self.path = path
         _migrate(self.connect())
 
+    @property
+    def exists(self):
+        return os.path.exists(self.path)
+
     def connect(self):
+        makedirs(os.path.dirname(self.path))
         return sqlite3.connect(self.path, factory=_Connection, isolation_level=None)
 
     def cursor(self):

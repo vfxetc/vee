@@ -5,10 +5,15 @@ from vee.utils import makedirs
 
 
 @command(
+    argument('-r', '--repo', help='which repo to use'),
     help='run a git command in the repo',
     parse_known_args=True,
 )
 def git(args, *command):
-    args.assert_home()
-    makedirs(args.home.repo.work_tree)
-    args.home.repo._call(*command, silent=True)
+
+    home = args.assert_home()
+    repo = home.get_repo(args.repo)
+
+    makedirs(repo.work_tree)
+    repo._call(*command, silent=True)
+
