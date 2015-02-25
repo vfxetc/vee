@@ -267,7 +267,9 @@ class BasePackage(object):
 
             # Need to inject setuptools for this.
             cmd = ['python', '-c', 'import setuptools; __file__=\'setup.py\'; execfile(__file__)']
-            cmd.extend(['build'])
+            cmd.extend(['build',
+                '--executable', '/usr/bin/env python',
+            ])
             cmd.extend(self.config)
 
             if call(cmd, cwd=os.path.dirname(setup_py), env=env):

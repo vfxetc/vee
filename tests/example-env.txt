@@ -2,6 +2,10 @@
 # Core dependencies.
 # homebrew+sqlite
 
+https://pypi.python.org/packages/source/s/setuptools/setuptools-12.2.tar.gz
+https://pypi.python.org/packages/source/v/virtualenv/virtualenv-12.0.7.tar.gz
+git+git@github.com:mikeboers/sitetools
+
 # Shotgun's API.
 git+https://github.com/shotgunsoftware/python-api.git --name shotgun_api3
 

@@ -51,7 +51,7 @@ def guess_name(path):
     part_iter = (re.sub(r'(^\W+|\W+$)', '', x) for x in part_iter) # Strip outer punctuation.
     part_iter = (x for x in part_iter if x) # Skip empties.
 
-    return next(part_iter)
+    return next(part_iter).lower()
 
 
 def envsplit(value):
@@ -78,7 +78,7 @@ def guess_environ(paths, sources=None, use_current=True):
 
     environ = {}   
     sources.insert(0, environ)
-    
+
     def existing(key):
         for source in sources:
             try:

@@ -51,6 +51,26 @@ MAJOR TODOS
 
 ---
 
+- entrypoints.yml at top_level is built by Makefile (in sgfs and others)
+  make a build_metatools distutils command?
+- sgactions.yml at top_level is built by Makefile (in sgfs and others)
+  make a install_sgactions distutils command?
+
+- how does this new Python install method deal with install_requires?
+    - it doesn't! document it?
+
+- Can we make each environment into a virtualenv too?
+    - vendor virtualenv.py, or install it as a Package
+    - call virtualenv.create_environment('test', no_setuptools=True, no_pip=True)
+
+- s/Home/Vee/g ??
+
+- we might need to rewrite all of the shebangs during linking to the virtual
+  python
+
+- etc/vee/environ/$name.txt is a file that contains environment variables
+  provided by each package
+
 - does it make sense to have packages/builds/installs in the database, instead
   of having them all together?
 
@@ -96,10 +116,6 @@ MAJOR TODOS
 - Home.{package,build,install,environment}_root attributes
 - Home.to_environ()
 
-- vee exec -r requirements.txt
-    - make sure they are all installed, then link them together via envvars
-    - this would be the basis of the dev environment
-
 - `vee exec --latest name` looks for a "name/%" environment, and uses that
 
 - `vee gc`
@@ -113,11 +129,9 @@ MAJOR TODOS
   format: each line starts with "out" or "err" and the timestamp
 
     out 2015-02-18T15:02:01 sdflkjsdf
-    
 
 - add functions to resolve_environ(): $VEE_INSTALLS
   - this requires either scanning for, or knowing about installed things
-
 
 - Http/File/Base could do checksums of files to see if they have changed
   - memoize the caches based on inode,size,mtime
@@ -129,23 +143,10 @@ MAJOR TODOS
 
 - cythonmagick is pulling in the "wrong" sqlite?
 
-
-- RequirementSet class which encapsulates a requirements file, including comments,
-  and file-wide environment variables.
-
-  e.g.: PKG_CONFIG_PATH=$VEE/packages/homebrew/lib/pkgconfig
-
-  - Requirement.set -> the set that it is a part of; can be none; allows for
-    resolving the environment in a set without having to put that envvar in
-    each requirement
-
-
 - wxfab fabric package for deploying and debugging these things
-
 
 - `vee list` lists environments
 - `vee list ENVIRONMENT` lists the various buildtimes of environments
-
 
 - environment structure:
   $VEE/environments/$NAME/latest -> $BUILDTIME
