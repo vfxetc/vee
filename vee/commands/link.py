@@ -7,6 +7,7 @@ from vee.exceptions import CliException, AlreadyInstalled
 
 
 @command(
+    argument('--force-install', action='store_true'),
     argument('--raw', action='store_true', help='package is directory, not a requirement'),
     argument('--long-names', action='store_true',
         help='automatically picks package names'),
@@ -37,7 +38,7 @@ def link(args):
     for req in req_set.iter_requirements():
 
         try:
-            req.install()
+            req.install(force=args.force_install)
         except AlreadyInstalled:
             pass
         

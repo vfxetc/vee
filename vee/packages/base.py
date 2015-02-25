@@ -217,6 +217,8 @@ class BasePackage(object):
         else:
             raise ValueError('unknown package type %r' % self.package_path)
 
+    _found_setup_py = None
+
     def build(self):
         """Build the package in the build directory."""
 
@@ -247,36 +249,19 @@ class BasePackage(object):
             self._install_subdir_from_build = env.get('VEE_INSTALL_SUBDIR_FROM_BUILD') or ''
             return
 
-        setup_py = _find_in_tree(self.build_path, 'setup.py')
+        setup_py = self._found_setup_py = _find_in_tree(self.build_path, 'setup.py')
         if setup_py:
-
-            top_level = os.path.dirname(setup_py)
-            self._build_subdir_to_install = os.path.join(top_level, 'dist/vee')
-
-            dist_dir = os.path.join('dist', 'vee')
-            dist_site_packages = os.path.join(dist_dir, site_packages)
-
-            # Setup the PYTHONPATH to point to the "install" directory.
-            env = env or self.fresh_environ()
-            env['PYTHONPATH'] = '%s:%s' % (dist_site_packages, env.get('PYTHONPATH', ''))
-            os.makedirs(os.path.join(top_level, dist_site_packages))
 
             print style('Building Python package...', 'blue', bold=True)
 
             # Need to inject setuptools for this.
-            # TODO: Should we defer the install stage until the install command?
             cmd = ['python', '-c', 'import setuptools; __file__=\'setup.py\'; execfile(__file__)']
             cmd.extend(['build'])
             cmd.extend(self.config)
-            cmd.extend(['install',
-                '--root', 'dist/vee', # Better than prefix
-                '--install-lib', site_packages, # So that we don't get lib64.
-                '--no-compile',
-                '--single-version-externally-managed',
-            ])
 
-            if call(cmd, cwd=top_level, env=env):
+            if call(cmd, cwd=os.path.dirname(setup_py), env=env):
                 raise RuntimeError('Could not build Python package')
+
             return
 
         egg_info = _find_in_tree(self.build_path, '*.egg-info', 'dir')
@@ -322,14 +307,40 @@ class BasePackage(object):
         if self.installed:
             raise AlreadyInstalled('was already installed at %s' % self.install_path)
         
-        print style('Installing to', 'blue', bold=True), style(self.install_path, bold=True)
+        # This was built as a Python package, and so we will install it like one.
+        if self._found_setup_py:
 
-        shutil.copytree(self.build_path_to_install, self.install_path_from_build, symlinks=True)
+            install_site_packages = os.path.join(self.install_path, site_packages)
+
+            # Setup the PYTHONPATH to point to the "install" directory.
+            env = self.fresh_environ()
+            env['PYTHONPATH'] = '%s:%s' % (install_site_packages, env.get('PYTHONPATH', ''))
+            os.makedirs(install_site_packages)
+
+            print style('Installing Python package...', 'blue', bold=True)
+
+            # Need to inject setuptools for this.
+            cmd = ['python', '-c', 'import setuptools; __file__=\'setup.py\'; execfile(__file__)']
+            cmd.extend(['install',
+                '--skip-build',
+                '--root', self.install_path, # Better than prefix
+                '--prefix', '.',
+                '--install-lib', site_packages, # So that we don't get lib64.
+                '--no-compile',
+                '--single-version-externally-managed',
+            ])
+
+            if call(cmd, cwd=os.path.dirname(self._found_setup_py), env=env):
+                raise RuntimeError('Could not install Python package')
+
+        else:
+            print style('Installing to', 'blue', bold=True), style(self.install_path, bold=True)
+            shutil.copytree(self.build_path_to_install, self.install_path_from_build, symlinks=True)
 
         # Link into $VEE/opt.
         if self._base_name:
             opt_link = self.home.abspath('opt', self._base_name)
-            print style('Linking to', 'blue', bold=True), style(opt_link, bold=True)
+            print style('Linking to opt/%s:' % self._base_name, 'blue', bold=True), style(opt_link, bold=True)
             if os.path.exists(opt_link):
                 os.unlink(opt_link)
             makedirs(os.path.dirname(opt_link))
