@@ -35,5 +35,5 @@ class GitPackage(BasePackage):
 
     def fetch(self):
         self.repo.checkout(self.revision or 'HEAD', fetch=self._force_fetch or None)
-        self.revision = self.repo.head
+        self.revision = self.repo.head[:8]
         

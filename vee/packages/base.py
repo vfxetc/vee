@@ -386,7 +386,7 @@ class BasePackage(object):
             self._db_id = cur.lastrowid
         return self._db_id
 
-    def resolve_existing(self):
+    def resolve_existing(self, env=None):
         """Check against the database to see if this was already installed."""
 
         if self._db_id is not None:
@@ -396,12 +396,20 @@ class BasePackage(object):
 
         clauses = ['type = ?', 'url = ?']
         values = [self.type, self.url]
+
+        if env:
+            join = 'JOIN links ON packages.id = links.package_id'
+            clauses.append('links.environment_id = ?')
+            values.append(env.db_id())
+        else:
+            join = ''
+
         for attr, column in (
             ('_base_name', 'name'),
             ('revision', 'revision'),
         ):
             if getattr(self, attr):
-                clauses.append('%s = ?' % attr)
+                clauses.append('%s = ?' % column)
                 values.append(getattr(self, attr))
         for attr in ('_package_name', '_build_name', '_install_name'):
             if getattr(self, attr):
@@ -409,11 +417,11 @@ class BasePackage(object):
                 values.append(getattr(self, attr))
 
         row = cur.execute('''
-            SELECT * FROM packages
+            SELECT packages.* FROM packages %s
             WHERE %s
             ORDER BY created_at DESC
             LIMIT 1
-        ''' % ' AND '.join(clauses), values).fetchone()
+        ''' % (join, ' AND '.join(clauses)), values).fetchone()
 
         if not row:
             return

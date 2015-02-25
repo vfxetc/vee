@@ -37,12 +37,17 @@ def link(args):
 
     for req in req_set.iter_requirements():
 
+        if not args.force_install:
+            req.package.resolve_existing(env=env) or req.package.resolve_existing()
+
         try:
             req.install(force=args.force_install)
         except AlreadyInstalled:
             pass
         
-        print style('Linking', 'blue', bold=True), style(str(req), bold=True)
+        frozen = req.package.freeze()
+        
+        print style('Linking', 'blue', bold=True), style(str(frozen), bold=True)
 
         req.package.link(env)
         
