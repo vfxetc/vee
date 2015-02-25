@@ -213,8 +213,8 @@ class BasePackage(object):
             self._clean_build_path()
             call(['tar', 'xzf', self.package_path], cwd=self.build_path)
 
-        # Zip files.
-        elif self.package_path.endswith('.zip'):
+        # Zip files (and Python wheels).
+        elif re.search(r'(\.zip|\.whl)$', self.package_path):
             self._clean_build_path()
             call(['unzip', self.package_path], cwd=self.build_path)
 
@@ -279,9 +279,16 @@ class BasePackage(object):
 
         egg_info = _find_in_tree(self.build_path, '*.egg-info', 'dir')
         if egg_info:
-            print style('Found Python egg:', 'blue', bold=True), style(os.path.basename(egg_info), bold=True)
+            print style('Found Python Egg:', 'blue', bold=True), style(os.path.basename(egg_info), bold=True)
             self._build_subdir_to_install = os.path.dirname(egg_info)
-            # TODO: Get the right Python version.
+            self._install_subdir_from_build = site_packages
+            return
+
+        # This is very similar to the above...
+        dist_info = _find_in_tree(self.build_path, '*.dist-info', 'dir')
+        if dist_info:
+            print style('Found Python Wheel:', 'blue', bold=True), style(os.path.basename(dist_info), bold=True)
+            self._build_subdir_to_install = os.path.dirname(dist_info)
             self._install_subdir_from_build = site_packages
             return
 

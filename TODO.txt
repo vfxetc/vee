@@ -51,6 +51,8 @@ MAJOR TODOS
 
 ---
 
+-  --make-install to also `make install`
+
 - parse_multiple_requirements(args) walks through a set of args, pulling out
   RequirementSet(s) when they are files that end in '.txt' (or no extendion),
   and requirements from the rest
