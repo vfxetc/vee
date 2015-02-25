@@ -47,6 +47,8 @@ class Environment(object):
         
         self.create_if_not_exists()
 
+        python = os.path.join(self.path, 'bin', 'python')
+
         # TODO: Be like Homebrew, and be smarter about what we link, and what
         # we copy.
 
@@ -63,11 +65,24 @@ class Environment(object):
             for file_name in file_names:
                 if file_name in IGNORE_FILES:
                     continue
+
+                old_path = os.path.join(old_dir_path, file_name)
+                new_path = os.path.join(new_dir_path, file_name)
+                rel_path = os.path.join(rel_dir_path, file_name)
+                
+                # If it starts with the Python shebang, rewrite it.
+                with open(old_path, 'rb') as old_fh:
+                    shebang = old_fh.readline()
+                    if re.match(r'^#!\S*python', shebang):
+                        print 'Rewriting shebang of', rel_path
+                        with open(new_path, 'wb') as new_fh:
+                            new_fh.write('#!%s\n' % python)
+                            new_fh.writelines(old_fh)
+                            continue
+
+                # Symlink it into place.
                 try:
-                    os.symlink(
-                        os.path.join(old_dir_path, file_name),
-                        os.path.join(new_dir_path, file_name),
-                    )
+                    os.symlink(old_path, new_path)
                 except OSError as e:
                     # TODO: have a vee-link-history.txt in each environment
                     # so that we can quickly check what is already linked there.
