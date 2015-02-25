@@ -4,14 +4,6 @@ import os
 from vee.utils import makedirs
 
 
-
-def envsplit(value):
-    return value.split(':') if value else []
-
-def envjoin(*values):
-    return ':'.join(x for x in values if x)
-
-
 IGNORE_DIRS = frozenset(('.git', '.svn'))
 IGNORE_FILES = frozenset(('.DS_Store', ))
 
@@ -69,10 +61,4 @@ class Environment(object):
                     # so that we can quickly check what is already linked there.
                     if e.errno != errno.EEXIST:
                         raise
-
-    def get_environ(self):
-        return {
-            'PATH': envjoin(os.path.join(self.path, 'bin'), os.environ.get('PATH')),
-            'PYTHONPATH': envjoin(os.path.join(self.path, 'lib/python2.7/site-packages'), os.environ.get('PYTHONPATH')),
-        }
 

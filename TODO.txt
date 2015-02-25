@@ -61,7 +61,7 @@ MAJOR TODOS
     - have this be a parameter of the install_vee.py script as well:
         python install_vee.py -c chmod=ugo=rwX
 
-- lib vs lib64 on linux (for Python builds)
+- does sitetools disprove the separate Python build/install process?
 
 - git might need to use different revisions on different platforms (for homebrew/linuxbrew)
     - if this is the only attribute that matters in this way, then we can have a

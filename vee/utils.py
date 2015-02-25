@@ -54,6 +54,56 @@ def guess_name(path):
     return next(part_iter)
 
 
+def envsplit(value):
+    return value.split(':') if value else []
+
+def envjoin(*values):
+    return ':'.join(x for x in values if x)
+
+
+def guess_environ(paths, sources=None, use_current=True):
+
+    if isinstance(paths, basestring):
+        paths = [paths]
+
+    if sources is None:
+        sources = []
+    elif isinstance(sources, dict):
+        sources = [sources]
+    else:
+        sources = list(existing)
+
+    if use_current:
+        sources.append(os.environ)
+
+    environ = {}   
+    sources.insert(0, environ)
+    
+    def existing(key):
+        for source in sources:
+            try:
+                return source[key]
+            except KeyError:
+                pass
+
+    for path in reversed(paths):
+
+        bin = os.path.join(path, 'bin')
+        if os.path.exists(bin):
+            environ['PATH'] = envjoin(bin, existing('PATH'))
+
+        for bits in '', '64':
+            lib = os.path.join(path, 'lib' + bits)
+            if os.path.exists(lib):
+                name = 'DYLD_LIBRARY_PATH' if sys.platform == 'darwin' else 'LD_LIBRARY_PATH'
+                environ[name] = envjoin(lib, existing(name))
+                site_packages = os.path.join(lib, 'python%d.%d' % sys.version_info[:2], 'site-packages')
+                if os.path.exists(site_packages):
+                    environ['PYTHONPATH'] = envjoin(site_packages, existing('PYTHONPATH'))
+
+    return environ
+
+
 def _call_reader(fh, size=2**10, buffer=None, callback=None):
     while True:
         chunk = fh.read(size)
