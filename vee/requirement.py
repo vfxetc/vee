@@ -111,7 +111,7 @@ class Requirement(object):
         for action in self._arg_parser._actions:
             name = action.dest
             value = getattr(self, name)
-            if value:
+            if value != action.default: # Easily wrong.
                 kwargs[name] = value
         return kwargs
 

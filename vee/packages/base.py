@@ -55,13 +55,23 @@ class BasePackage(object):
 
     def __init__(self, requirement=None, home=None):
 
-        self.abstract_requirement = requirement and requirement.to_json()
-        self.home = home or requirement.home
-
-        for action in Requirement._arg_parser._actions:
-            req_attr = action.dest
-            pkg_attr = self._req_to_pkg_attrs.get(req_attr, req_attr)
-            setattr(self, pkg_attr, requirement and getattr(requirement, req_attr))
+        # Set from item access.
+        if isinstance(requirement, dict):
+            self.abstract_requirement = json.dumps(requirement, sort_keys=True)
+            self.home = home
+            for action in Requirement._arg_parser._actions:
+                req_attr = action.dest
+                pkg_attr = self._req_to_pkg_attrs.get(req_attr, req_attr)
+                setattr(self, pkg_attr, requirement.get(req_attr, action.default))
+        
+        # Set from attr access.
+        else:
+            self.abstract_requirement = requirement and requirement.to_json()
+            self.home = home or requirement.home
+            for action in Requirement._arg_parser._actions:
+                req_attr = action.dest
+                pkg_attr = self._req_to_pkg_attrs.get(req_attr, req_attr)
+                setattr(self, pkg_attr, requirement and getattr(requirement, req_attr))
 
         # A few need special handling
         self.environ = self.environ.copy() if self.environ else {}
