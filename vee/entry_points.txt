@@ -4,22 +4,26 @@
 [vee_commands]
 
 # General
-config = vee.commands.config:config
-git = vee.commands.git:git
 init = vee.commands.init:init
-repo = vee.commands.repo:repo
+config = vee.commands.config:config
 self-update = vee.commands.self_update:self_update
 
+# Repos
+repo = vee.commands.repo:repo
+update = vee.commands.update:update
+
 # Requirements.
-brew = vee.commands.brew:brew
 install = vee.commands.install:install
-install-path = vee.commands.install_path:install_path
 link = vee.commands.link:link
 
 # Environments.
 prefix = vee.commands.prefix:prefix
 env = vee.commands.env:env
 exec = vee.commands.exec_:exec_
+
+# Underlying commands.
+git = vee.commands.git:git
+brew = vee.commands.brew:brew
 
 
 [vee_package_types]

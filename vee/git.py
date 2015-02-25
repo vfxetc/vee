@@ -1,4 +1,5 @@
 import os
+import re
 import subprocess
 
 from vee.utils import call, call_output, style
@@ -39,8 +40,14 @@ class GitRepo(object):
     def _call(self, *cmd, **kw):
         return call(('git', '--git-dir', self.git_dir, '--work-tree', self.work_tree) + cmd, **kw)
 
-    def rev_parse(self, revision, fetch=None):
+    def assert_remote_name(self, name='origin'):
+        self._call('config', 'remote.%s.url' % name, self.remote_url, silent=True)
+        self._call('config', 'remote.%s.fetch' % name, '+refs/heads/*:refs/remotes/%s/*' % name, silent=True)
 
+    def rev_parse(self, revision, fetch=None, remote=None):
+
+        remote = remote or self.remote_url
+        
         force_fetch = bool(fetch)
         allow_fetch = fetch or fetch is None
 
@@ -58,33 +65,58 @@ class GitRepo(object):
             if self.is_shallow:
 
                 # Fetch the new history on top of the shallow history.
-                print style('Fetching shallow', 'blue', bold=True), style(self.remote_url, bold=True)
-                self._call('fetch', '--update-shallow', self.remote_url, silent=True)
+                print style('Fetching shallow', 'blue', bold=True), style(remote, bold=True)
+                self._call('fetch', '--update-shallow', remote, silent=True)
                 commit = self._rev_parse(revision)
 
                 # Lets get the whole history.
                 if not commit:
-                    print style('Fetching unshallow', 'blue', bold=True), style(self.remote_url, bold=True)
-                    self._call('fetch', '--unshallow', self.remote_url, silent=True)
+                    print style('Fetching unshallow', 'blue', bold=True), style(remote, bold=True)
+                    self._call('fetch', '--unshallow', remote, silent=True)
                     commit = self._rev_parse(revision)
 
             else:
                 # Normal fetch here.
-                print style('Fetching', 'blue', bold=True), style(self.remote_url, bold=True)
-                self._call('fetch', self.remote_url, silent=True)
+                print style('Fetching', 'blue', bold=True), style(remote, bold=True)
+                self._call('fetch', remote, silent=True)
                 commit = self._rev_parse(revision)
 
         if not commit:
-            msg = 'revision %r does not exist in %s' % (revision, self.remote_url)
+            msg = 'revision %r does not exist in %s' % (revision, remote)
             raise ValueError(msg)
 
         return commit
 
-    def _rev_parse(self, revision):
-        try:
-            return self._call('rev-parse', '--verify', '--quiet', revision, stdout=True, silent=True).strip() or None
-        except subprocess.CalledProcessError:
-            pass
+    def _rev_parse(self, original_name):
+
+        git_dir = self.git_dir
+
+        name = original_name
+        res = None
+        visited = set()
+        while not res or not re.match(r'^[0-9a-f]{40}$', res):
+            
+            if res and res.startswith('ref:'):
+                name = res[4:].strip()
+            
+            if name in visited:
+                raise ValueError('recursion in refs: %r at %r' % (name, res))
+            visited.add(name)
+            
+            for path_parts in [
+                (git_dir, name),
+                (git_dir, 'refs/heads', name),
+                (git_dir, 'refs/remotes', name),
+            ]:
+                path = os.path.join(*path_parts)
+                if os.path.exists(path):
+                    res = open(path).read().strip()
+                    break
+            else:
+                # Warn?
+                res = self._call('rev-parse', '--verify', '--quiet', original_name, silent=True, stdout=True).strip()
+        
+        return res or None
 
     def _current_head(self):
         self._head = self.rev_parse('HEAD')
@@ -97,6 +129,32 @@ class GitRepo(object):
     @property
     def is_shallow(self):
         return os.path.exists(os.path.join(self.git_dir, 'shallow'))
+
+    def status(self):
+        # We use the machine-parsable git status.
+        encoded = self._call('status', '-z', stdout=True, silent=True)
+        # In theory, there can be a second NULL-terminated field, but I
+        # haven't seen it yet.
+        parts = encoded.split('\0')
+        for part in parts:
+            if not part:
+                continue
+            idx  = part[0].strip()
+            tree = part[1].strip()
+            name = part[3:]
+            yield (idx, tree, name)
+
+    def distance(self, left, right):
+        out = self._call('rev-list', '--left-right', '--count', '%s...%s' % (left, right), silent=True, stdout=True)
+        m = re.match(r'^\s*(\d+)\s+(\d+)\s*$', out)
+        if not m:
+            print 'Could not get distance'
+            # Warn here?
+            return (0, 0)
+        return int(m.group(1)), int(m.group(2))
+
+    def fetch(self, rev='origin/master', remote=None):
+        return self.rev_parse(rev, fetch=True, remote=remote)
 
     def checkout(self, revision, fetch=None):
         commit = self.rev_parse(revision, fetch=fetch)

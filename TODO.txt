@@ -56,16 +56,19 @@ MAJOR TODOS
 
 - repo workflow
   
-  - `vee init [--name NAME] [--repo REPO]`
+  √ `vee init [--name NAME] [--repo REPO]`
       Assert that the various directory structures exist, and add a new repo
       as a convenience
 
-  - `vee repo --add NAME REPO`
-  - `vee repo --remove NAME`
+  √ `vee repo --add [--default] [--parent PATH] NAME REPO`
+  √ `vee repo --remove NAME`
+  √ `vee repo --list`
 
-  - `vee clone OTHER_HOME NEW_HOME`
+  x `vee clone OTHER_HOME NEW_HOME`
+      - Do this later.
 
-
+  - `vee update` and `vee upgrade` (package-like)
+  - `vee fetch` and `vee merge` (git-like)
 
 - should environments be only named, or named and dated?
 

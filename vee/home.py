@@ -4,6 +4,7 @@ import pkg_resources
 from vee.config import Config
 from vee.database import Database
 from vee.git import GitRepo
+from vee.utils import makedirs
 
 
 class Home(object):
@@ -13,6 +14,11 @@ class Home(object):
         self.db = Database(self.abspath('.vee-db.sqlite'))
         self.config = Config(self)
         self._repo_args = {}
+
+    def makedirs(self):
+        for name in ('builds', 'environments', 'installs', 'packages', 'repos'):
+            path = self.abspath(name)
+            makedirs(path)
 
     def get_package(self, type=None, requirement=None):
         type = type or requirement.type
@@ -25,9 +31,20 @@ class Home(object):
     def abspath(self, *args):
         return os.path.abspath(os.path.join(self.root, *args))
 
-    def get_repo(self, name=None):
+    def get_repo(self, name=None, url=None):
+
         if name not in self._repo_args:
             real_name = self.config.get('repo.default.name', 'master') if name is None else name
-            url = self.config['repo.%s.url' % real_name]
-            self._repo_args[name] = (self.abspath('.vee-repos', real_name), url)
-        return GitRepo(*self._repo_args[name])
+            url = url or self.config['repo.%s.url' % real_name]
+            self._repo_args[name] = (real_name, self.abspath('repos', real_name), url)
+        
+        real_name, work_tree, url = self._repo_args[name]
+        repo = GitRepo(work_tree, url)
+        repo.name = real_name
+        return repo
+
+    def iter_repos(self):
+        for key, url in sorted(self.config.iteritems(glob='repo.*.url')):
+            name = key.split('.')[1]
+            yield self.get_repo(name, url)
+

@@ -1,6 +1,6 @@
 from vee.commands.main import command, argument
 from vee.requirement import Requirement
-from vee.utils import style, guess_name, makedirs
+from vee.utils import style
 
 
 @command(
@@ -17,9 +17,7 @@ def init(args):
 
     print style('Initializing home', 'blue', bold=True), style(home.root)
 
-    for name in ('builds', 'environments', 'installs', 'packages'):
-        path = home.abspath(name)
-        makedirs(path)
+    home.makedirs()
 
     config = home.config
 
