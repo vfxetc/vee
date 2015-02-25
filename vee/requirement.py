@@ -6,7 +6,7 @@ import shlex
 import json
 
 from vee.exceptions import AlreadyInstalled, CliException
-from vee.utils import style
+from vee.utils import style, cached_property
 
 
 class RequirementParseError(CliException):
@@ -102,7 +102,9 @@ class Requirement(object):
             else:
                 self.type = 'file'
 
-        self.package = self.home.get_package(requirement=self)
+    @cached_property
+    def package(self):
+        return self.home.get_package(requirement=self)
 
     def to_kwargs(self):
         kwargs = {}

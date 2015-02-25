@@ -72,13 +72,14 @@ class BasePackage(object):
             self.abstract_requirement,
         )
 
-    def freeze(self):
+    def freeze(self, environ=True):
         kwargs = {}
         for action in Requirement._arg_parser._actions:
             req_attr = action.dest
             pkg_attr = self._req_to_pkg_attrs.get(req_attr, req_attr)
             kwargs[req_attr] = getattr(self, pkg_attr)
-        kwargs['environ'] = self.environ_diff
+        if environ:
+            kwargs['environ'] = self.environ_diff
         return Requirement(home=self.home, **kwargs)
 
     def _resolve_environ(self, source=None):

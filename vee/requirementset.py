@@ -47,6 +47,8 @@ class RequirementSet(object):
 
     def parse(self, source, home=None):
         
+        environ = {}
+
         if isinstance(source, basestring):
             source = open(source, 'r')
 
@@ -68,7 +70,9 @@ class RequirementSet(object):
 
             m = re.match(r'^(\w+)=(\S.*)$', spec)
             if m:
-                self.elements.append((before, Envvar(*m.groups()), after))
+                name, value = m.groups()
+                environ[name] = value
+                self.elements.append((before, Envvar(name, value), after))
                 continue
 
             m = re.match(r'^([\w-]+): (\S.*)$', spec)
@@ -76,11 +80,40 @@ class RequirementSet(object):
                 self.elements.append((before, Header(*m.groups()), after))
                 continue
 
-            self.elements.append((before, Requirement(spec, home=home), after))
+            req = Requirement(spec, home=home)
+            for k, v in environ.iteritems():
+                req.environ.setdefault(k, v)
 
-    def dump(self):
+            self.elements.append((before, req, after))
+
+    def iter_requirements(self):
+        for _, element, _ in self.elements:
+            if isinstance(element, Requirement):
+                yield element
+
+    def iter_dump(self, freeze=False):
+
+        # We track the state of the environment as we progress, and don't
+        # include envvars in each requirement if they exactly match those
+        # in the current state.
+        environ = {}
+
         for before, element, after in self.elements:
+
+            if isinstance(element, Envvar):
+                environ[element.name] = element.value
+
+            if isinstance(element, Requirement):
+                if freeze:
+                    req = element = element.package.freeze(environ=False)
+                else:
+                    req = element
+                for k, v in environ.iteritems():
+                    if req.environ.get(k) == v:
+                        del req.environ[k]
+
             yield '%s%s%s\n' % (before, element, after)
+
 
 
 if __name__ == '__main__':
@@ -93,17 +126,7 @@ if __name__ == '__main__':
     rs = RequirementSet()
     rs.parse(sys.stdin, home=home)
 
-    for b, r, a in rs.elements:
-        print '%s%s%s' % (b, str(r) if r else '', a)
+    print ''.join(rs.iter_dump())
 
-    print
-
-    for b, e, a in rs.elements:
-        if isinstance(e, Requirement):
-            e.package.resolve_existing()
-            frozen_req = e.package.freeze()
-            print '%s%s%s' % (b, frozen_req, a)
-        else:
-            print '%s%s%s' % (b, e, a)
 
 
