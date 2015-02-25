@@ -6,10 +6,15 @@ import pkg_resources
 import re
 import shlex
 import shutil
+import sys
 
 from vee.exceptions import AlreadyInstalled
 from vee.utils import cached_property, style, call, call_log, makedirs
 from vee.requirement import Requirement
+
+
+python_version = '%d.%d' % (sys.version_info[:2])
+site_packages = os.path.join('lib', 'python' + python_version, 'site-packages')
 
 
 def _find_in_tree(root, name, type='file'):
@@ -248,20 +253,24 @@ class BasePackage(object):
             top_level = os.path.dirname(setup_py)
             self._build_subdir_to_install = os.path.join(top_level, 'dist/vee')
 
+            dist_dir = os.path.join('dist', 'vee')
+            dist_site_packages = os.path.join(dist_dir, site_packages)
+
             # Setup the PYTHONPATH to point to the "install" directory.
             env = env or self.fresh_environ()
-            env['PYTHONPATH'] = '%s:%s' % ('dist/vee/lib/python2.7/site-packages', env.get('PYTHONPATH', ''))
-            os.makedirs(os.path.join(top_level, 'dist/vee/lib/python2.7/site-packages'))
+            env['PYTHONPATH'] = '%s:%s' % (dist_site_packages, env.get('PYTHONPATH', ''))
+            os.makedirs(os.path.join(top_level, dist_site_packages))
 
             print style('Building Python package...', 'blue', bold=True)
 
             # Need to inject setuptools for this.
-            cmd = ['python', '-c', 'import setuptools; __file__="setup.py"; execfile(__file__)']
+            # TODO: Should we defer the install stage until the install command?
+            cmd = ['python', '-c', 'import setuptools; __file__=\'setup.py\'; execfile(__file__)']
             cmd.extend(['build'])
             cmd.extend(self.config)
             cmd.extend(['install',
-                '--root', '.',
-                '--prefix', 'dist/vee',
+                '--root', 'dist/vee', # Better than prefix
+                '--install-lib', site_packages, # So that we don't get lib64.
                 '--no-compile',
                 '--single-version-externally-managed',
             ])
@@ -275,7 +284,7 @@ class BasePackage(object):
             print style('Found Python egg:', 'blue', bold=True), style(os.path.basename(egg_info), bold=True)
             self._build_subdir_to_install = os.path.dirname(egg_info)
             # TODO: Get the right Python version.
-            self._install_subdir_from_build = 'lib/python2.7/site-packages'
+            self._install_subdir_from_build = site_packages
             return
 
         configure = _find_in_tree(self.build_path, 'configure')
