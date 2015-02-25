@@ -51,16 +51,11 @@ MAJOR TODOS
 
 ---
 
-- I can make something which guesses all of the names as long as a RequirementSet
-  asserts that there are no collisions!
-
 - does it make sense to have packages/builds/installs in the database, instead
   of having them all together?
 
 - build-subdir and install-prefix should be used to invalidate matches in the
   resolver
-
-- git submodules in git packages; git submodules update --init
 
 `vee config set chmod ugo=rwX` for vee to chmod everything writable by everyone
     - have this be a parameter of the install_vee.py script as well:

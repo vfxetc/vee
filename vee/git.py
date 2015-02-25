@@ -100,6 +100,7 @@ class GitRepo(object):
         if self.head != commit:
             print style('Checking out', 'blue', bold=True), style('%s [%s]' % (revision, commit), bold=True)
             self._call('reset', '--hard', commit, silent=True)
+            self._call('submodule', 'update', '--init', '--recursive', silent=True)
             self._head = commit
 
 
