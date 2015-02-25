@@ -3,11 +3,12 @@ from vee.environment import Environment
 from vee.requirement import Requirement
 from vee.requirementset import RequirementSet
 from vee.utils import style
-from vee.exceptions import CliException, AlreadyInstalled
+from vee.exceptions import CliException, AlreadyInstalled, AlreadyLinked
 
 
 @command(
-    argument('--force-install', action='store_true'),
+    argument('--reinstall', action='store_true'),
+    argument('--force', action='store_true'),
     argument('--raw', action='store_true', help='package is directory, not a requirement'),
     argument('--long-names', action='store_true',
         help='automatically picks package names'),
@@ -37,19 +38,19 @@ def link(args):
 
     for req in req_set.iter_requirements():
 
-        if not args.force_install:
-            req.package.resolve_existing(env=env) or req.package.resolve_existing()
+        if not args.reinstall:
+            req.package.resolve_existing(env=env)
 
         try:
-            req.install(force=args.force_install)
+            req.install(force=args.reinstall)
         except AlreadyInstalled:
             pass
         
-        frozen = req.package.freeze()
-        
-        print style('Linking', 'blue', bold=True), style(str(frozen), bold=True)
-
-        req.package.link(env)
+        try:
+            req.package.link(env, force=args.force)
+        except AlreadyLinked as e:
+            print style('Already linked', 'blue', bold=True), style(str(req), bold=True),
+            print style('(link %s)' % e.args[1], faint=True)
         
 
 

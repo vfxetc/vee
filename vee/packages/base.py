@@ -8,7 +8,7 @@ import shlex
 import shutil
 import sys
 
-from vee.exceptions import AlreadyInstalled
+from vee.exceptions import AlreadyInstalled, AlreadyLinked
 from vee.utils import cached_property, style, call, call_log, makedirs
 from vee.requirement import Requirement
 
@@ -68,6 +68,7 @@ class BasePackage(object):
         self.config = self.config[:] if self.config else []
 
         self._db_id = None
+        self._db_link_id = None
         self._package_name = self._build_name = None
 
 
@@ -353,8 +354,20 @@ class BasePackage(object):
         print style('Uninstalling', 'blue', bold=True), style(self.install_path, bold=True)
         shutil.rmtree(self.install_path)
 
-    def link(self, env):
+    def link(self, env, force=False):
         self._assert_paths(install=True)
+        frozen = self.freeze()
+
+        if not force:
+            if not self._db_link_id:
+                row = self.home.db.execute(
+                    'SELECT id FROM links WHERE package_id = ? AND environment_id = ?',
+                    [self.db_id(), env.db_id()]
+                ).fetchone()
+            if self._db_link_id or row:
+                raise AlreadyLinked(str(frozen), self._db_link_id or row[0])
+
+        print style('Linking', 'blue', bold=True), style(str(frozen), bold=True)
         env.link_directory(self.install_path)
         self._record_link(env)
 
@@ -392,17 +405,9 @@ class BasePackage(object):
         if self._db_id is not None:
             raise ValueError('requirement already in database')
 
-        cur = self.home.db.cursor()
 
         clauses = ['type = ?', 'url = ?']
         values = [self.type, self.url]
-
-        if env:
-            join = 'JOIN links ON packages.id = links.package_id'
-            clauses.append('links.environment_id = ?')
-            values.append(env.db_id())
-        else:
-            join = ''
 
         for attr, column in (
             ('_base_name', 'name'),
@@ -416,12 +421,25 @@ class BasePackage(object):
                 clauses.append('%s = ?' % attr.strip('_'))
                 values.append(getattr(self, attr))
 
-        row = cur.execute('''
-            SELECT packages.* FROM packages %s
-            WHERE %s
-            ORDER BY created_at DESC
-            LIMIT 1
-        ''' % (join, ' AND '.join(clauses)), values).fetchone()
+        cur = self.home.db.cursor()
+        clause = ' AND '.join(clauses)
+
+        if env:
+            values.append(env.db_id())
+            row = cur.execute('''
+                SELECT packages.*, links.id as link_id FROM packages
+                LEFT OUTER JOIN links ON packages.id = links.package_id
+                WHERE %s AND links.environment_id = ?
+                ORDER BY links.created_at DESC, packages.created_at DESC
+                LIMIT 1
+            ''' % clause, values).fetchone()
+        else:
+            row = cur.execute('''
+                SELECT packages.*, NULL as link_id FROM packages
+                WHERE %s
+                ORDER BY packages.created_at DESC
+                LIMIT 1
+            ''' % clause, values).fetchone()
 
         if not row:
             return
@@ -430,6 +448,7 @@ class BasePackage(object):
 
         # Everything below either already matches or was unset.
         self._db_id = row['id']
+        self._db_link_id = row['link_id']
         self._base_name = row['name']
         self.revision = row['revision']
         self._package_name = row['package_name']
@@ -450,4 +469,5 @@ class BasePackage(object):
             env.db_id(),
             self.abstract_requirement,
         ])
+        self._db_link_id = cur.lastrowid
 
