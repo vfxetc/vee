@@ -1,4 +1,6 @@
 
+.. highlight:: python
+
 VEE: Versioned Execution Environment
 ====================================
 
@@ -20,12 +22,12 @@ The initial goal is to include packages from:
 Example
 -------
 
-::
-    
+.. code-block:: bash
+
     # Install VEE.
     export VEE=/usr/local/vee
     sudo mkdir -p $VEE
-    sudo chmod -r g=rwXs,o=rwX $VEE
+    sudo chmod -R g=rwXs,o=rwX $VEE
     python <(curl -fsSL https://raw.githubusercontent.com/westernx/vee/master/install_vee.py)
     export PATH="$VEE/src/bin:$PATH"
 
@@ -50,8 +52,8 @@ Home:
     Where VEE installs and links environments.
 
 Environment:
-    A single "prefix", linked from installed packages. Contains `bin`, `etc`, `lib`,
-    `include`, `share`, `var`, etc..
+    A single "prefix", linked from installed packages. Contains ``bin``, ``etc``, ``lib``,
+    ``include``, ``share``, ``var``, etc..
 
 Requirement:
     A specification of a package that we would like to have installed in an environment.
@@ -105,17 +107,17 @@ Names and Paths
 
 There are a series of ``_*_name`` attribute of a :class:`Package`. They are
 set from :class:`Requirement` attributes, or self-determined on request via
-`Package._assert_names(build=True, ...)`.
+``Package._assert_names(build=True, ...)``.
 
 There are a series of ``*_path`` properties on a :class:`Package`. They usually
 incorporate the corresponding name, but don't have it. They are set from
-`Package._assert_paths(build=True, ...)`.
+``Package._assert_paths(build=True, ...)``.
 
 .. warning:: It is very important that an API consumer only every assert the existence of
     names or paths that they are about to use. This allows for the determination
-    of some of the names (especially `_install_name` and `install_path`) to be
+    of some of the names (especially ``_install_name`` and ``install_path``) to be
     deferred as long as possible so that they may use information revealed during
-    the fetching stage of the build pipeline.
+    the earlier of the build pipeline.
 
 The ``*_name`` attributes exist only for the construction of paths; API consumers
 should only ever use the ``*_path`` properties:
@@ -177,11 +179,15 @@ process:
 ............................
 
 If a ``setup.py`` file exists, the package is assumed to be a standard
-distutils-style Python package. The build process is to call::
+distutils-style Python package. The build process is to call:
+
+.. code-block:: bash
 
     python setup.py build
 
-and the install process will be (essentially) to call::
+and the install process will be (essentially) to call:
+
+.. code-block:: bash
 
     python setup.py install --skip-build --single-version-externally-managed
 
@@ -198,7 +204,9 @@ the package contents into ``lib/python2.7/site-packages``.
 ``./configure``
 ...................
 
-If a ``configure`` file exists, it will be executed and passed the install path::
+If a ``configure`` file exists, it will be executed and passed the install path:
+
+.. code-block:: bash
 
     ./configure --prefix={package.install_path}
 
