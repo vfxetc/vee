@@ -69,16 +69,22 @@ class Environment(object):
                 old_path = os.path.join(old_dir_path, file_name)
                 new_path = os.path.join(new_dir_path, file_name)
                 rel_path = os.path.join(rel_dir_path, file_name)
-                
-                # If it starts with the Python shebang, rewrite it.
+
+                # If it starts with a Python shebang, rewrite it.
                 with open(old_path, 'rb') as old_fh:
-                    shebang = old_fh.readline()
-                    if re.match(r'^#!\S*python', shebang):
-                        print 'Rewriting shebang of', rel_path
-                        with open(new_path, 'wb') as new_fh:
-                            new_fh.write('#!%s\n' % python)
-                            new_fh.writelines(old_fh)
-                            continue
+                    old_shebang = old_fh.readline()
+                    m = re.match(r'#!(|\S+/)([^\s/]+)', old_shebang)
+                    if m:
+                        new_bin = os.path.join(self.path, 'bin', m.group(2))
+                        if os.path.exists(new_bin):
+                            new_shebang = '#!%s%s' % (new_bin, old_shebang[m.end(2):])
+                            print 'Rewriting shebang of', rel_path
+                            print style('from: %s' % old_shebang.strip(), faint=True)
+                            print style('  to: %s' % new_shebang.strip(), faint=True)
+                            with open(new_path, 'wb') as new_fh:
+                                new_fh.write(new_shebang)
+                                new_fh.writelines(old_fh)
+                                continue
 
                 # Symlink it into place.
                 try:

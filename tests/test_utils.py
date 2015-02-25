@@ -28,5 +28,5 @@ class TestGuessName(TestCase):
         )
         self.assertEqual(
             guess_name('http://example.org/download/example/Example-v1.0.0-rc1.tar.gz?key=value'),
-            'Example',
+            'example',
         )
