@@ -6,7 +6,7 @@ PKG_CONFIG_PATH=$VEE/packages/homebrew/lib/pkgconfig:@
 
 # Shotgun's API.
 http://pyyaml.org/download/pyyaml/PyYAML-3.11.tar.gz
-git+https://github.com/shotgunsoftware/python-api.git
+git+https://github.com/shotgunsoftware/python-api.git --name shotgun_api3
 git+git@git.westernx:westernx/sgactions --force-fetch --revision origin/master
 git+git@git.westernx:westernx/sgfs      --force-fetch --revision origin/master
 git+git@git.westernx:westernx/sgmock    --force-fetch --revision origin/master

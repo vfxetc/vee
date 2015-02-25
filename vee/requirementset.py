@@ -1,6 +1,7 @@
 import re
 
 from vee.requirement import Requirement
+from vee.utils import guess_name
 
 
 class Envvar(tuple):
@@ -91,6 +92,13 @@ class RequirementSet(object):
             if isinstance(element, Requirement):
                 yield element
 
+    def guess_names(self):
+        names = set()
+        for req in self.iter_requirements():
+            name = req.name or guess_name(req.url)
+            req.name = None if name in names else name
+            names.add(name)
+
     def iter_dump(self, freeze=False):
 
         # We track the state of the environment as we progress, and don't
@@ -126,6 +134,8 @@ if __name__ == '__main__':
     rs = RequirementSet()
     rs.parse(sys.stdin, home=home)
 
+    rs.guess_names()
+    
     print ''.join(rs.iter_dump())
 
 

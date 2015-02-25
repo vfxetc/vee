@@ -1,12 +1,14 @@
 from vee.commands.main import command, argument
 from vee.environment import Environment
 from vee.requirement import Requirement
+from vee.requirementset import RequirementSet
 from vee.utils import style
 from vee.exceptions import CliException, AlreadyInstalled
 
 
 @command(
     argument('--raw', action='store_true', help='package is directory, not a requirement'),
+    argument('--guess-names', action='store_true'),
     argument('environment'),
     argument('specification', nargs='...'),
     help='link a package',
@@ -24,15 +26,15 @@ def link(args):
             env.link_directory(dir_)
         return
 
-    lines = list(open(args.specification[0]))
-    lines = [x.strip() for x in lines]
-    lines = [x for x in lines if x and not x[0] == '#']
-    while lines:
-        line = lines.pop(0).strip()
-        while lines and line.endswith('\\'):
-            line = line[:-1] + ' ' + lines.pop(0)
 
-        req = Requirement(line, home=args.home)
+    req_set = RequirementSet()
+    req_set.parse(args.specification[0], home=args.home)
+
+    if args.guess_names:
+        req_set.guess_names()
+
+    for req in req_set.iter_requirements():
+
         try:
             req.install()
         except AlreadyInstalled:
