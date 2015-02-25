@@ -416,7 +416,7 @@ class BasePackage(object):
 
     def _record_link(self, env):
         cur = self.home.db.cursor()
-        cur.execute('''INSERT INTO links (package_id, environment_id, abstract_requirement) VALUES (?, ?, ?, ?)''', [
+        cur.execute('''INSERT INTO links (package_id, environment_id, abstract_requirement) VALUES (?, ?, ?)''', [
             self.db_id(),
             env.db_id(),
             self.abstract_requirement,

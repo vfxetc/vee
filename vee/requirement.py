@@ -85,8 +85,7 @@ class Requirement(object):
 
             for action in self._arg_parser._actions:
                 name = action.dest
-                if name in kwargs:
-                    setattr(self, name, kwargs[name])
+                setattr(self, name, kwargs.get(name, action.default))
 
         # Manual args.
         self.home = home
@@ -126,13 +125,15 @@ class Requirement(object):
             if name in ('type', 'url'):
                 continue
 
+            option_str = action.option_strings[-1]
+
             value = getattr(self, name)
             if not value:
                 continue
 
             if action.__class__.__name__ == '_StoreTrueAction': # Gross.
                 if value:
-                    argsets.append(['--%s' % name])
+                    argsets.append([option_str])
                 continue
 
             if isinstance(value, dict):
@@ -144,7 +145,7 @@ class Requirement(object):
             if re.search(r'\s', value):
                 value = "'%s'" % value.replace("'", "''")
 
-            argsets.append(['--%s=%s' % (name.replace('_', '-'), str(value))])
+            argsets.append(['%s=%s' % (option_str, str(value))])
 
         args = [
             (self.type or '') +

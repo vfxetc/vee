@@ -1,3 +1,8 @@
+Name: WesternX
+Version: 1.0.0
+
+PKG_CONFIG_PATH=$VEE/packages/homebrew/lib/pkgconfig:@
+
 
 # Shotgun's API.
 http://pyyaml.org/download/pyyaml/PyYAML-3.11.tar.gz
