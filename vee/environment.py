@@ -1,7 +1,9 @@
 import errno
 import os
+import re
 
-from vee.utils import makedirs
+from vee.utils import makedirs, style
+import vee.vendor.virtualenv as virtualenv
 
 
 IGNORE_DIRS = frozenset(('.git', '.svn'))
@@ -20,6 +22,14 @@ class Environment(object):
             self.path = home.abspath('environments', name)
         self._db_id = None
 
+
+    def create_if_not_exists(self):
+        python = os.path.join(self.path, 'bin', 'python')
+        if not os.path.exists(python):
+            makedirs(self.path)
+            print style('Creating Python virtualenv', 'blue', bold=True), style(self.path, bold=True)
+            virtualenv.create_environment(self.path, no_setuptools=True, no_pip=True)
+
     def db_id(self):
         if self._db_id is None:
             cur = self.home.db.cursor()
@@ -35,6 +45,8 @@ class Environment(object):
 
     def link_directory(self, dir_to_link):
         
+        self.create_if_not_exists()
+
         # TODO: Be like Homebrew, and be smarter about what we link, and what
         # we copy.
 

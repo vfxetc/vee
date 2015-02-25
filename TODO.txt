@@ -51,10 +51,15 @@ MAJOR TODOS
 
 ---
 
+- parse_multiple_requirements(args) walks through a set of args, pulling out
+  RequirementSet(s) when they are files that end in '.txt' (or no extendion),
+  and requirements from the rest
+
 - entrypoints.yml at top_level is built by Makefile (in sgfs and others)
-  make a build_metatools distutils command?
+    - make a build_metatools_entrypoints distutils command
+
 - sgactions.yml at top_level is built by Makefile (in sgfs and others)
-  make a install_sgactions distutils command?
+    - this becomes the user's problem
 
 - how does this new Python install method deal with install_requires?
     - it doesn't! document it?
