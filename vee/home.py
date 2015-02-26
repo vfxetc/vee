@@ -7,6 +7,12 @@ from vee.git import GitRepo
 from vee.utils import makedirs
 
 
+# We shall call the default repository "primary", as it is a nice generic name
+# and it does not start with any other letters in the path:
+# $VEE/environments/primary/refs/origin/master
+PRIMARY_REPO = 'primary'
+
+
 class Home(object):
 
     def __init__(self, root):
@@ -34,12 +40,13 @@ class Home(object):
     def get_repo(self, name=None, url=None):
 
         if name not in self._repo_args:
-            real_name = self.config.get('repo.default.name', 'master') if name is None else name
+            real_name = self.config.get('repo.default.name', PRIMARY_REPO) if name is None else name
             url = url or self.config['repo.%s.url' % real_name]
-            self._repo_args[name] = (real_name, self.abspath('repos', real_name), url)
+            remote_name = self.config.get('repo.%s.remote' % real_name, 'origin')
+            self._repo_args[name] = (real_name, self.abspath('repos', real_name), url, remote_name)
         
-        real_name, work_tree, url = self._repo_args[name]
-        repo = GitRepo(work_tree, url)
+        real_name, work_tree, url, remote_name = self._repo_args[name]
+        repo = GitRepo(work_tree, url, remote_name=remote_name)
         repo.name = real_name
         return repo
 

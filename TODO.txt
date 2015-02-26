@@ -51,8 +51,13 @@ MAJOR TODOS
 
 ---
 
-- Does it ever make sense to have multiple repos?
+- environment heirarchy:
+    "envs/$repo/$remote/$branch-or-tag" which symlink to commit, and are
+        only for convenience
+    "envs/$repo/$commit"
 
+- don't need to track all of the repo info; just leave that to git, and assume
+  that we are using "origin"
 
 - repo workflow
   
@@ -67,8 +72,8 @@ MAJOR TODOS
   x `vee clone OTHER_HOME NEW_HOME`
       - Do this later.
 
-  - `vee update` and `vee upgrade` (package-like)
-  - `vee fetch` and `vee merge` (git-like)
+  √ `vee update`
+  - `vee upgrade`
 
 - should environments be only named, or named and dated?
 

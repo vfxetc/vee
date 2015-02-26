@@ -9,10 +9,11 @@ class GitRepo(object):
 
     _head = None
 
-    def __init__(self, work_tree, remote_url=None):
+    def __init__(self, work_tree, remote_url=None, remote_name='origin'):
         self.work_tree = work_tree
         self.git_dir = os.path.join(work_tree, '.git')
         self.remote_url = remote_url
+        self.remote_name = remote_name
 
     @property
     def exists(self):
@@ -40,14 +41,16 @@ class GitRepo(object):
     def _call(self, *cmd, **kw):
         return call(('git', '--git-dir', self.git_dir, '--work-tree', self.work_tree) + cmd, **kw)
 
-    def assert_remote_name(self, name='origin'):
+    def assert_remote_name(self, name=None):
+        name = name or self.remote_name
         self._call('config', 'remote.%s.url' % name, self.remote_url, silent=True)
         self._call('config', 'remote.%s.fetch' % name, '+refs/heads/*:refs/remotes/%s/*' % name, silent=True)
+        return name
 
     def rev_parse(self, revision, fetch=None, remote=None):
 
         remote = remote or self.remote_url
-        
+
         force_fetch = bool(fetch)
         allow_fetch = fetch or fetch is None
 

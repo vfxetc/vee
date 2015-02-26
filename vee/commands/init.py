@@ -1,10 +1,11 @@
 from vee.commands.main import command, argument
+from vee.home import PRIMARY_REPO
 from vee.requirement import Requirement
 from vee.utils import style
 
 
 @command(
-    argument('--name', default='master', help='name for new repository'),
+    argument('--name', default=PRIMARY_REPO, help='name for new repository'),
     argument('--repo', help='URL of new repository'),
     argument('--umask', help='default umask for all files'),
     argument('--chgrp', help='default group for all files'),

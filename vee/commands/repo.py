@@ -1,5 +1,6 @@
 from vee.commands.main import command, argument, group
 from vee.environment import Environment
+from vee.home import PRIMARY_REPO
 
 
 @command(
@@ -10,6 +11,7 @@ from vee.environment import Environment
         exclusive=True,
     ),
     argument('--default', action='store_true', help='with --add: set to be default'),
+    argument('--remote', help='with --add: sets git remote name'),
     argument('--parent', help='with --add: inherits from another VEE'),
     argument('name', nargs='?'),
     argument('url', nargs='?'),
@@ -21,7 +23,7 @@ def repo(args):
     config = home.config
 
     if args.action in ('list', None):
-        default = config.get('repo.default.name', 'master')
+        default = config.get('repo.default.name', PRIMARY_REPO)
         for key, url in sorted(config.iteritems(glob='repo.*.url')):
             name = key.split('.')[1]
             parent = config.get('repo.%s.parent' % name)
@@ -45,6 +47,8 @@ def repo(args):
             config['repo.%s.url' % args.name] = args.url
         if args.parent:
             config['repo.%s.parent' % args.name] = args.parent
+        if args.remote:
+            config['repo.%s.remote' % args.name] = args.remote
         if args.default:
             config['repo.default.name'] = args.name
         return

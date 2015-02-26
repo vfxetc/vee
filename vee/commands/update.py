@@ -27,8 +27,8 @@ def update(args):
         # This is kinda gross, but we need to do it to make sure that we are
         # fetching from the right URL AND we need to rev-parse a "$remote/master"
         # -ish revision.
-        repo.assert_remote_name('origin')
-        rev = repo.fetch('origin/master', remote='origin')
+        remote = repo.assert_remote_name()
+        rev = repo.fetch('%s/master' % remote, remote=remote)
 
         # Check the status of the work tree and index.
         status_ok = True
