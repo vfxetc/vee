@@ -9,11 +9,12 @@ class GitRepo(object):
 
     _head = None
 
-    def __init__(self, work_tree, remote_url=None, remote_name='origin'):
+    def __init__(self, work_tree, remote_url=None, remote_name='origin', branch_name='master'):
         self.work_tree = work_tree
         self.git_dir = os.path.join(work_tree, '.git')
         self.remote_url = remote_url
         self.remote_name = remote_name
+        self.branch_name = branch_name
 
     @property
     def exists(self):

@@ -16,7 +16,7 @@ class Environment(object):
         self.home = home
         if name.startswith('/'):
             self.path = name
-            self.name = os.path.basename(name)
+            self.name = os.path.relpath(name, home.abspath('environments'))
         else:
             self.name = name
             self.path = home.abspath('environments', name)

@@ -12,6 +12,7 @@ from vee.home import PRIMARY_REPO
     ),
     argument('--default', action='store_true', help='with --add: set to be default'),
     argument('--remote', help='with --add: sets git remote name'),
+    argument('--branch', help='with --add: sets git branch name'),
     argument('--parent', help='with --add: inherits from another VEE'),
     argument('name', nargs='?'),
     argument('url', nargs='?'),
@@ -49,6 +50,8 @@ def repo(args):
             config['repo.%s.parent' % args.name] = args.parent
         if args.remote:
             config['repo.%s.remote' % args.name] = args.remote
+        if args.branch:
+            config['repo.%s.branch' % args.name] = args.branch
         if args.default:
             config['repo.default.name'] = args.name
         return

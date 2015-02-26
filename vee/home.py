@@ -43,10 +43,11 @@ class Home(object):
             real_name = self.config.get('repo.default.name', PRIMARY_REPO) if name is None else name
             url = url or self.config['repo.%s.url' % real_name]
             remote_name = self.config.get('repo.%s.remote' % real_name, 'origin')
-            self._repo_args[name] = (real_name, self.abspath('repos', real_name), url, remote_name)
+            branch_name = self.config.get('repo.%s.branch' % real_name, 'master')
+            self._repo_args[name] = (real_name, self.abspath('repos', real_name), url, remote_name, branch_name)
         
-        real_name, work_tree, url, remote_name = self._repo_args[name]
-        repo = GitRepo(work_tree, url, remote_name=remote_name)
+        real_name, work_tree, url, remote_name, branch_name = self._repo_args[name]
+        repo = GitRepo(work_tree, url, remote_name=remote_name, branch_name=branch_name)
         repo.name = real_name
         return repo
 
