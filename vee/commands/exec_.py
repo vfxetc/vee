@@ -10,6 +10,7 @@ from vee.utils import guess_environ
 @command(
     argument('--export', action='store_true'),
     argument('-r', '--requirements'),
+    argument('--repo'),
     argument('-e', '--environment'),
     argument('command', nargs='...'),
     name='exec',
@@ -18,18 +19,21 @@ from vee.utils import guess_environ
 )
 def exec_(args):
 
-    if not (args.requirements or args.environment):
-        raise CliException('Must provide either requirements or environment')
+    home = args.assert_home()
+
+
     if not (args.export or args.command):
         raise CliException('Must either --export or provide a command')
 
-    args.assert_home()
+    if not (args.requirements or args.environment):
+        repo = home.get_repo(args.repo)
+        args.environment = '%s/%s/%s' % (repo.name, repo.remote_name, repo.branch_name)
     
     paths = []
 
     if args.requirements:
         req_set = RequirementSet()
-        req_set.parse(args.requirements, home=args.home)
+        req_set.parse(args.requirements, home=home)
         for req in req_set.iter_requirements():
             req.package.resolve_existing()
             req.package._assert_paths(install=True)
@@ -38,7 +42,7 @@ def exec_(args):
             paths.append(req.package.install_path)
 
     if args.environment:
-        env = Environment(args.environment, home=args.home)
+        env = Environment(args.environment, home=home)
         paths.append(env.path)
 
     environ_diff = guess_environ(paths)

@@ -51,11 +51,6 @@ MAJOR TODOS
 
 ---
 
-- environment heirarchy:
-    "envs/$repo/$remote/$branch-or-tag" which symlink to commit, and are
-        only for convenience
-    "envs/$repo/$commit"
-
 - don't need to track all of the repo info; just leave that to git, and assume
   that we are using "origin"
 
@@ -73,16 +68,9 @@ MAJOR TODOS
       - Do this later.
 
   √ `vee update`
-  - `vee upgrade`
+  √ `vee upgrade`
 
-- should environments be only named, or named and dated?
-
-  - environments/$name vs environments/$name/$date with "latest" symlink
-
-  - if we tend to do the dated ones, then `vee link` should link into the latest
-
-  - `vee link [--new|--reset] $name` would create a new one
-  - `vee link [--raw|--no-date] $name` would use the explicitly named one
+- `vee exec` defaults to the default repo/remote/branch combo
 
 - main environment could be called "master"
 
