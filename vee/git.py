@@ -1,8 +1,9 @@
 import os
 import re
 import subprocess
+from subprocess import CalledProcessError
 
-from vee.utils import call, call_output, style
+from vee.utils import call, style
 
 
 class GitRepo(object):
@@ -39,13 +40,13 @@ class GitRepo(object):
             print style('Cloning', 'blue', bold=True), style(self.remote_url, bold=True)
             call(['git', 'clone', self.remote_url, self.work_tree])
 
-    def _call(self, *cmd, **kw):
+    def git(self, *cmd, **kw):
         return call(('git', '--git-dir', self.git_dir, '--work-tree', self.work_tree) + cmd, **kw)
 
     def assert_remote_name(self, name=None):
         name = name or self.remote_name
-        self._call('config', 'remote.%s.url' % name, self.remote_url, silent=True)
-        self._call('config', 'remote.%s.fetch' % name, '+refs/heads/*:refs/remotes/%s/*' % name, silent=True)
+        self.git('config', 'remote.%s.url' % name, self.remote_url, silent=True)
+        self.git('config', 'remote.%s.fetch' % name, '+refs/heads/*:refs/remotes/%s/*' % name, silent=True)
         return name
 
     def rev_parse(self, revision, fetch=None, remote=None):
@@ -70,19 +71,19 @@ class GitRepo(object):
 
                 # Fetch the new history on top of the shallow history.
                 print style('Fetching shallow', 'blue', bold=True), style(remote, bold=True)
-                self._call('fetch', '--update-shallow', remote, silent=True)
+                self.git('fetch', '--update-shallow', remote, silent=True)
                 commit = self._rev_parse(revision)
 
                 # Lets get the whole history.
                 if not commit:
                     print style('Fetching unshallow', 'blue', bold=True), style(remote, bold=True)
-                    self._call('fetch', '--unshallow', remote, silent=True)
+                    self.git('fetch', '--unshallow', remote, silent=True)
                     commit = self._rev_parse(revision)
 
             else:
                 # Normal fetch here.
                 print style('Fetching', 'blue', bold=True), style(remote, bold=True)
-                self._call('fetch', remote, silent=True)
+                self.git('fetch', remote, silent=True)
                 commit = self._rev_parse(revision)
 
         if not commit:
@@ -118,7 +119,7 @@ class GitRepo(object):
                     break
             else:
                 # Warn?
-                res = self._call('rev-parse', '--verify', '--quiet', original_name, silent=True, stdout=True).strip()
+                res = self.git('rev-parse', '--verify', '--quiet', original_name, silent=True, stdout=True).strip()
         
         return res or None
 
@@ -136,7 +137,7 @@ class GitRepo(object):
 
     def status(self):
         # We use the machine-parsable git status.
-        encoded = self._call('status', '-z', stdout=True, silent=True)
+        encoded = self.git('status', '-z', stdout=True, silent=True)
         # In theory, there can be a second NULL-terminated field, but I
         # haven't seen it yet.
         parts = encoded.split('\0')
@@ -149,7 +150,7 @@ class GitRepo(object):
             yield (idx, tree, name)
 
     def distance(self, left, right):
-        out = self._call('rev-list', '--left-right', '--count', '%s...%s' % (left, right), silent=True, stdout=True)
+        out = self.git('rev-list', '--left-right', '--count', '%s...%s' % (left, right), silent=True, stdout=True)
         m = re.match(r'^\s*(\d+)\s+(\d+)\s*$', out)
         if not m:
             print 'Could not get distance'
@@ -164,8 +165,8 @@ class GitRepo(object):
         commit = self.rev_parse(revision, fetch=fetch)
         if self.head != commit:
             print style('Checking out', 'blue', bold=True), style('%s [%s]' % (revision, commit), bold=True)
-            self._call('reset', '--hard', commit, silent=True)
-            self._call('submodule', 'update', '--init', '--recursive', silent=True)
+            self.git('reset', '--hard', commit, silent=True)
+            self.git('submodule', 'update', '--init', '--recursive', silent=True)
             self._head = commit
 
 

@@ -6,7 +6,7 @@ from vee.utils import style
 
 @command(
     argument('--name', default=PRIMARY_REPO, help='name for new repository'),
-    argument('--repo', help='URL of new repository'),
+    argument('--url', help='URL of new repository'),
     argument('--umask', help='default umask for all files'),
     argument('--chgrp', help='default group for all files'),
     help='initialize VEE\'s home',
@@ -32,6 +32,6 @@ def init(args):
     if args.chgrp:
         config['os.chgrp'] = args.chgrp
 
-    if args.repo:
-        config['repo.%s.url' % args.name] = args.repo
+    if args.url:
+        config['repo.%s.url' % args.name] = args.url
 

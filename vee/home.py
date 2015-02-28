@@ -17,7 +17,7 @@ class Home(object):
 
     def __init__(self, root):
         self.root = root
-        self.db = Database(self.abspath('.vee-db.sqlite'))
+        self.db = Database(self.abspath('vee-index.sqlite'))
         self.config = Config(self)
         self._repo_args = {}
 

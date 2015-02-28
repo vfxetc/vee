@@ -1,3 +1,0 @@
-
-char const * const foo();
-

@@ -63,6 +63,10 @@ MAJOR TODOS
 
 ---
 
+- move repos to database
+
+- move database to $VEE/db.sqlite
+
 - don't need to track all of the repo info; just leave that to git, and assume
   that we are using "origin"
 

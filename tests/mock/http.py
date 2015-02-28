@@ -1,0 +1,77 @@
+from cStringIO import StringIO
+import fnmatch
+import os
+import re
+import tarfile
+import urllib2
+
+
+# Global state is gross.
+_host = 'vee.localhost.mock'
+_root = None
+
+
+def setup_mock_http(root):
+    global _root
+    if _root:
+        raise RuntimeError('mock http already setup')
+    _root = root
+    urllib2.install_opener(urllib2.build_opener(MockHTTPHandler))
+
+
+def mock_url(path):
+    rel_path = os.path.relpath(os.path.join(_root, path), _root)
+    if rel_path.startswith('.'):
+        raise ValueError('not a mock http path: %r' % path)
+    return 'http://%s/%s' % (_host, rel_path.strip('/'))
+
+
+class MockHTTPHandler(urllib2.HTTPHandler):
+
+    def http_open(self, req):
+
+        if req.get_host() != _host:
+            return urllib2.HTTPHandler.http_open(self, req)
+
+        # Files which exist.
+        path = os.path.join(_root, req.get_selector().strip('/'))
+        if os.path.exists(path):
+            res = urllib2.addinfourl(open(path), 'HEADERS', req.get_full_url())
+            res.code = 200
+            res.msg = 'OK'
+            return res
+
+        # Create tarballs on the fly.
+        basename, ext = os.path.splitext(path)
+        if os.path.exists(basename) and ext == '.tgz':
+
+            fh = StringIO()
+            tgz = tarfile.open(fileobj=fh, mode='w:gz')
+
+            ignore_path = os.path.join(basename, 'mockignore')
+            if os.path.exists(ignore_path):
+                patterns = [x.strip() for x in open(ignore_path)] + ['mockignore']
+                pattern = re.compile('|'.join(fnmatch.translate(x) for x in patterns if x))
+            else:
+                pattern = None
+
+            for dir_path, dir_names, file_names in os.walk(basename):
+                for file_name in file_names:
+                    if pattern and pattern.match(file_name):
+                        continue
+                    file_path = os.path.join(dir_path, file_name)
+                    tgz.add(file_path, os.path.relpath(file_path, basename))
+
+            tgz.close()
+            fh.seek(0)
+
+            res = urllib2.addinfourl(fh, 'HEADERS', req.get_full_url())
+            res.code = 200
+            res.msg = 'OK'
+            return res
+
+        res = urllib2.addinfourl(StringIO('404 NOT FOUND'), 'HEADERS', req.get_full_url())
+        res.code = 404
+        res.msg = 'NOT FOUND'
+        return res
+
