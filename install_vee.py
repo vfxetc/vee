@@ -24,10 +24,20 @@ bold   = lambda x: SGR(1) + x + SGR(0)
 faint  = lambda x: SGR(2) + x + SGR(0)
 
 
+def heading(heading, msg='', detail=''):
+    print blue(heading), bold(msg), detail
+
+def error(msg, detail=''):
+    print red("Error:"), bold(msg), detail
+
+def warning(msg, detail=''):
+    print yellow('Warning:'), bold(msg), detail
+
+
 import sys
 
 if sys.version_info < (2, 7):
-    print red("Error:"), "VEE requires Python 2.7"
+    error("VEE requires Python 2.7")
     exit(1)
 
 from subprocess import call, check_call, check_output, PIPE
@@ -68,7 +78,7 @@ class SwitchAction(argparse.Action):
 def main(argv=None):
 
     parser = argparse.ArgumentParser()
-    parser.add_argument('--prefix')
+    parser.add_argument('--prefix', help='where to install vee')
 
     parser.add_argument('--url', default='https://github.com/westernx/vee.git')
     parser.add_argument('--branch', default='master')
@@ -108,27 +118,48 @@ def main(argv=None):
         return prompt_bool(message)
 
 
+    # Running as root is scary.
+    if not os.getuid():
+        warning('Running as root is dangerous.')
+        if not prompt_bool('Continue anyways?'):
+            return
+
     # Make sure we have git.
     if not check_output(['which', 'git']):
-        print red('Error:'), bold('git was not found; cannot continue')
-        exit(1)
+        error('git was not found; cannot continue.')
+        return 2
 
     # Determine where to install.
     prefix = args.prefix or os.environ.get('VEE')
     if not prefix:
         prefix = get_arg('prefix', 'Where should we install VEE?', '/usr/local/vee')
     prefix = os.path.abspath(prefix)
-    makedirs(prefix)
+
+    if not os.path.exists(os.path.dirname(prefix)):
+        warning('Directory above install location does not exist.')
+        if not prompt_bool('Are you sure you want to create it?'):
+            return
+
+    # Create directory and set permissions.
+    if not os.access(prefix, os.W_OK):
+        warning('No write access to %s' % os.path.dirname(prefix))
+        if not prompt_bool('Use sudo to make the directory?'):
+            return
+        check_output(['sudo', 'mkdir', '-p', prefix])
+        check_output(['sudo', 'chown', str(os.getuid()), prefix])
+    else:
+        makedirs(prefix)
+
     vee_src = os.path.join(prefix, 'src')
 
     # Init or clone the repo.
     git_dir = os.path.join(vee_src, '.git')
     if not os.path.exists(vee_src):
-        print blue('Cloning'), bold(args.url)
+        heading('Cloning', args.url)
         check_call(['git', 'clone', args.url, vee_src])
     else:
         if not os.path.exists(git_dir):
-            print blue('Initing repo on top of existing')
+            heading('Initing repo on top of existing')
             check_call(['git', '--git-dir', git_dir, '--work-tree', vee_src, 'init'])
             check_call(['git', '--git-dir', git_dir, '--work-tree', vee_src, 'config', 'remote.origin.url', args.url])
             check_call(['git', '--git-dir', git_dir, '--work-tree', vee_src, 'config', 'remote.origin.fetch', '+refs/heads/*:refs/remotes/origin/*'])
@@ -136,27 +167,27 @@ def main(argv=None):
     # Assert the repo is clean.
     status = check_output(['git', '--git-dir', git_dir, '--work-tree', vee_src, 'status', '--porcelain']).strip()
     if status:
-        print yellow('Warning:'), bold('Repository is not clean.')
+        warning('Repository is not clean.')
         if not prompt_switch('force', 'Would you like to continue? All changes will be lost.'):
-            exit(0)
+            return
 
     # Fetch and reset.
-    print blue('Fetching updates from remote repo')
+    heading('Fetching updates from remote repo')
     check_call(['git', '--git-dir', git_dir, '--work-tree', vee_src, 'fetch', args.url, args.branch])
-    print blue('Updating to master')
+    heading('Updating to master')
     check_call(['git', '--git-dir', git_dir, '--work-tree', vee_src, 'reset', '--hard', 'FETCH_HEAD'])
-    print blue('Cleaning ignored files')
+    heading('Cleaning ignored files')
     check_call(['git', '--git-dir', git_dir, '--work-tree', vee_src, 'clean', '-dxf'], stdout=PIPE)
 
     # Basic sanity checks.
-    print blue('Performing self-check')
+    heading('Performing self-check')
     if not os.path.exists(os.path.join(vee_src, 'vee', '__init__.py')):
-        print red('Error:'), bold('Repository does not appear to be vee; cannot continue.')
-        exit(2)
+        error('Repository does not appear to be vee; cannot continue.')
+        return 3
     out = check_output([os.path.join(vee_src, 'bin', 'vee'), 'doctor', '--ping'])
     if out.strip() != 'pong':
-        print red('Error:'), bold('Basic self-check did not pass; try `vee doctor --ping`')
-        exit(3)
+        error('Basic self-check did not pass; try `vee doctor --ping`')
+        return 4
 
     shell_lines = [
         'export VEE="%s"' % prefix,
@@ -165,8 +196,8 @@ def main(argv=None):
 
     if prompt_switch('bashrc', 'Append to your ~/.bashrc?'):
 
-        print blue('Adding VEE to your ~/.bashrc')
-        print yellow('Note:'), 'You may need to open a new terminal, or `source ~/.bashrc`, for VEE to work.'
+        heading('Adding VEE to your ~/.bashrc')
+        print yellow('Note:'), bold('You may need to open a new terminal, or `source ~/.bashrc`, for VEE to work.')
 
         bashrc = os.path.expanduser('~/.bashrc')
         if os.path.exists(bashrc):
@@ -186,13 +217,13 @@ def main(argv=None):
 
 
     elif os.environ.get('VEE', '') != prefix:
-        print blue('Add the following to your environment:')
+        heading('Add the following to your environment:')
         for line in shell_lines:
             print '    ' + line.split('#')[0]
 
 
-    print blue('Done!')
+    heading('Done!')
 
 
 if __name__ == '__main__':
-    main()
+    exit(main() or 0)

@@ -1,9 +1,5 @@
 
 - test vee
-    - install_vee.py
-        - can depend on git
-        - --url and --revision args
-        - `vee doctor --verify-install` just returns "ok" if it can import
     - something to generate git repos out of a directory. all files are treated
       as templates, but we need a few simple things to be replace in them:
       __MOCK_XXX__, basic ones are REV_NO and NAME
