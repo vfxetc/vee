@@ -30,7 +30,7 @@ if sys.version_info < (2, 7):
     print red("Error:"), "VEE requires Python 2.7"
     exit(1)
 
-from subprocess import call, check_output, PIPE
+from subprocess import call, check_call, check_output, PIPE
 import argparse
 import errno
 import os
@@ -70,13 +70,10 @@ def main(argv=None):
     parser = argparse.ArgumentParser()
     parser.add_argument('--prefix')
 
-    parser.add_argument('--git-repo', default='https://github.com/westernx/vee.git')
-    parser.add_argument('--need-git', action='store_true', help='only install if git is availible')
+    parser.add_argument('--url', default='https://github.com/westernx/vee.git')
+    parser.add_argument('--branch', default='master')
 
-    parser.add_argument('--archive', default='https://github.com/westernx/vee/archive/master.zip', 
-        help='archive to use if git is not availible')
-
-    parser.add_argument('--force', action=SwitchAction, help='delete existing installation')
+    parser.add_argument('--force', action=SwitchAction, help='install over local changes')
     parser.add_argument('--bashrc', action=SwitchAction, help='add vee to your ~/.bashrc file')
     parser.add_argument('-y', '--yes', action='store_true', help='automatically confirm all prompts')
 
@@ -93,11 +90,7 @@ def main(argv=None):
         res = raw_input().strip()
         return res or default
 
-
-    def switch(key, message):
-        value = getattr(args, key)
-        if value is not None:
-            return value
+    def prompt_bool(message):
         if args.yes:
             return True
         while True:
@@ -108,88 +101,69 @@ def main(argv=None):
             if res in ('n', 'no'):
                 return False
 
+    def prompt_switch(key, message):
+        value = getattr(args, key)
+        if value is not None:
+            return value
+        return prompt_bool(message)
 
+
+    # Make sure we have git.
+    if not check_output(['which', 'git']):
+        print red('Error:'), bold('git was not found; cannot continue')
+        exit(1)
+
+    # Determine where to install.
     prefix = args.prefix or os.environ.get('VEE')
     if not prefix:
         prefix = get_arg('prefix', 'Where should we install VEE?', '/usr/local/vee')
     prefix = os.path.abspath(prefix)
     makedirs(prefix)
-
     vee_src = os.path.join(prefix, 'src')
 
-
-    if check_output(['which', 'git']):
-        if not os.path.exists(vee_src):
-            print blue('Cloning'), bold(args.git_repo)
-            call(['git', 'clone', args.git_repo, vee_src])
-        else:
-            git_dir = os.path.join(vee_src, '.git')
-            if not os.path.exists(git_dir):
-                print blue('Initing repo on top of existing')
-                call(['git', '--git-dir', git_dir, '--work-tree', vee_src, 'init'])
-            print blue('Fetching updates from remote repo')
-            call(['git', '--git-dir', git_dir, '--work-tree', vee_src, 'config', 'remote.origin.url', args.git_repo])
-            call(['git', '--git-dir', git_dir, '--work-tree', vee_src, 'config', 'remote.origin.fetch', '+refs/heads/*:refs/remotes/origin/*'])
-            call(['git', '--git-dir', git_dir, '--work-tree', vee_src, 'fetch', 'origin'])
-            print blue('Updating to master')
-            call(['git', '--git-dir', git_dir, '--work-tree', vee_src, 'reset', '--hard', 'origin/master'])
-            print blue('Cleaning ignored files')
-            call(['git', '--git-dir', git_dir, '--work-tree', vee_src, 'clean', '-dxf'], stdout=PIPE)
-
-
+    # Init or clone the repo.
+    git_dir = os.path.join(vee_src, '.git')
+    if not os.path.exists(vee_src):
+        print blue('Cloning'), bold(args.url)
+        check_call(['git', 'clone', args.url, vee_src])
     else:
+        if not os.path.exists(git_dir):
+            print blue('Initing repo on top of existing')
+            check_call(['git', '--git-dir', git_dir, '--work-tree', vee_src, 'init'])
+            check_call(['git', '--git-dir', git_dir, '--work-tree', vee_src, 'config', 'remote.origin.url', args.url])
+            check_call(['git', '--git-dir', git_dir, '--work-tree', vee_src, 'config', 'remote.origin.fetch', '+refs/heads/*:refs/remotes/origin/*'])
 
-        print yellow('Warning:'), bold('git was not found.')
-        if args.need_git:
-            print red('Error:'), bold('Cannot continue without git.')
-            exit(4)
+    # Assert the repo is clean.
+    status = check_output(['git', '--git-dir', git_dir, '--work-tree', vee_src, 'status', '--porcelain']).strip()
+    if status:
+        print yellow('Warning:'), bold('Repository is not clean.')
+        if not prompt_switch('force', 'Would you like to continue? All changes will be lost.'):
+            exit(0)
 
-        # Blast out existing.
-        if os.path.exists(vee_src):
-            print blue('VEE is already installed.')
-            if not switch('force', 'Delete existing installation?'):
-                exit()
-            shutil.rmtree(vee_src)
+    # Fetch and reset.
+    print blue('Fetching updates from remote repo')
+    check_call(['git', '--git-dir', git_dir, '--work-tree', vee_src, 'fetch', args.url, args.branch])
+    print blue('Updating to master')
+    check_call(['git', '--git-dir', git_dir, '--work-tree', vee_src, 'reset', '--hard', 'FETCH_HEAD'])
+    print blue('Cleaning ignored files')
+    check_call(['git', '--git-dir', git_dir, '--work-tree', vee_src, 'clean', '-dxf'], stdout=PIPE)
 
-        # Download the new one.
-        print blue('Downloading'), bold(args.archive)
-        res = urllib2.urlopen(args.archive)
-        base, ext = os.path.splitext(os.path.basename(args.archive.split('?')[0]))
-        tmp_src_root = os.path.join(prefix, 'tmp', 'vee-%s-%s' % (base, os.urandom(4).encode('hex')))
-        makedirs(tmp_src_root)
-        tmp_archive = tmp_src_root + ext
-        with open(tmp_archive, 'wb') as fh:
-            for chunk in iter(lambda: res.read(8192), ''):
-                fh.write(chunk)
-
-        # Unarchive.
-        if ext == '.zip':
-            zip_ = zipfile.ZipFile(tmp_archive)
-            zip_.extractall(tmp_src_root)
-        elif ext in ('.tgz', '.tar.gz'):
-            tar = tarfile.open(tmp_archive)
-            tar.extractall(tmp_src_root)
-        else:
-            print red('Error:'), bold('Cannot expand %r archive' % ext.strip('.'))
-            exit(2)
-
-        # Find setup.py, and copy its directory to the final location.
-        for tmp_src, dir_names, file_names in os.walk(tmp_src_root):
-            if 'vee' in dir_names and 'setup.py' in file_names:
-                break
-        else:
-            print red('Error:'), bold('Archive does not appear to be vee; exiting.')
-            exit(3)
-        shutil.copytree(tmp_src, vee_src)
-
-
+    # Basic sanity checks.
+    print blue('Performing self-check')
+    if not os.path.exists(os.path.join(vee_src, 'vee', '__init__.py')):
+        print red('Error:'), bold('Repository does not appear to be vee; cannot continue.')
+        exit(2)
+    out = check_output([os.path.join(vee_src, 'bin', 'vee'), 'doctor', '--ping'])
+    if out.strip() != 'pong':
+        print red('Error:'), bold('Basic self-check did not pass; try `vee doctor --ping`')
+        exit(3)
 
     shell_lines = [
         'export VEE="%s"' % prefix,
         'export PATH="$VEE/src/bin:$PATH" # Add VEE to your environment',
     ]
 
-    if switch('bashrc', 'Append to your ~/.bashrc?'):
+    if prompt_switch('bashrc', 'Append to your ~/.bashrc?'):
 
         print blue('Adding VEE to your ~/.bashrc')
         print yellow('Note:'), 'You may need to open a new terminal, or `source ~/.bashrc`, for VEE to work.'
@@ -217,7 +191,7 @@ def main(argv=None):
             print '    ' + line.split('#')[0]
 
 
-    print blue('Done')
+    print blue('Done!')
 
 
 if __name__ == '__main__':
