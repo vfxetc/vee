@@ -333,6 +333,9 @@ class BasePackage(object):
         
         installed = False
 
+        if self.make_install and not self._found_makefile:
+            print style('Warning:', 'yellow', bold=True), style('--make-install specified, but no Makefile found.', bold=True)
+
         # This was built as a Python package, and so we will install it like one.
         if self._found_setup_py:
 

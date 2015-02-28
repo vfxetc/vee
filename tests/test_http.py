@@ -12,6 +12,16 @@ class TestHttpManager(TestCase):
         ])
         self.assertTrue(os.path.exists(sandbox('vee/installs/foo/1.0.0/bin/foo')))
 
+    def test_standalone_python(self):
+        pkg = MockPackage('test_standalone_python', 'py_echo', {'NAME': 'pyfoo'})
+        pkg.render_commit()
+        vee(['install', mock_url('packages/test_standalone_python.tgz'),
+            '--install-name', 'pyfoo/1.0.0',
+        ])
+        self.assertTrue(os.path.exists(sandbox('vee/installs/pyfoo/1.0.0/bin/pyfoo')))
+        self.assertTrue(os.path.exists(sandbox('vee/installs/pyfoo/1.0.0/bin/pyfoo-ep')))
+        self.assertTrue(os.path.exists(sandbox('vee/installs/pyfoo/1.0.0/lib/python2.7/site-packages/pyfoo/__init__.py')))
+
     def test_foobar_step1_lib(self):
         pkg = MockPackage('test_foobar_step1_lib', 'c_libecho', {'NAME': 'bar'})
         pkg.render_commit()
