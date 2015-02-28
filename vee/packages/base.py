@@ -229,6 +229,7 @@ class BasePackage(object):
             raise ValueError('unknown package type %r' % self.package_path)
 
     _found_setup_py = None
+    _found_makefile = None
 
     def build(self):
         """Build the package in the build directory."""
@@ -303,12 +304,13 @@ class BasePackage(object):
             cmd.extend(self.config)
             call(cmd, cwd=os.path.dirname(configure), env=env)
 
-        makefile = _find_in_tree(self.build_path, 'Makefile')
+        makefile = self._found_makefile = _find_in_tree(self.build_path, 'Makefile')
         if makefile:
             self._build_subdir_to_install = os.path.dirname(makefile)
             print style('Making...', 'blue', bold=True)
             env = env or self.fresh_environ()
             call(['make', '-j4'], cwd=os.path.dirname(makefile), env=env)
+
 
     @property
     def installed(self):
@@ -329,6 +331,8 @@ class BasePackage(object):
         if self.installed:
             raise AlreadyInstalled('was already installed at %s' % self.install_path)
         
+        installed = False
+
         # This was built as a Python package, and so we will install it like one.
         if self._found_setup_py:
 
@@ -355,8 +359,30 @@ class BasePackage(object):
             if call(cmd, cwd=os.path.dirname(self._found_setup_py), env=env):
                 raise RuntimeError('Could not install Python package')
 
-        else:
-            print style('Installing to', 'blue', bold=True), style(self.install_path, bold=True)
+            installed = True
+
+        if not installed and self._found_makefile:
+            if not self.make_install:
+                if (not self._build_subdir_to_install or
+                    self._build_subdir_to_install == os.path.dirname(self._found_makefile)
+                   ) and not self._install_subdir_from_build:
+                    print style('Warning:', 'yellow', bold=True), 'Skipping `make install` and installing full package.'
+                    print 'Usually you will want to specify one of:'
+                    print '    --make-install'
+                    print '    --build-subdir PATH'
+                    print '    --install-subdir PATH'
+            else:
+                print style('Installing via `make install`', 'blue', bold=True)
+                if call(
+                    ['make', 'install', '-j4'],
+                    cwd=os.path.dirname(self._found_makefile),
+                    env=self.fresh_environ(),
+                ):
+                    raise RuntimeError('Could not `make install` package')
+                installed = True
+
+        if not installed:
+            print style('Installing via copy', 'blue', bold=True), style('to ' + self.install_path, bold=True)
             shutil.copytree(self.build_path_to_install, self.install_path_from_build, symlinks=True)
 
         # Link into $VEE/opt.

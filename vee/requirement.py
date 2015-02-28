@@ -58,12 +58,16 @@ class Requirement(object):
     _arg_parser.add_argument('-n', '--name')
     _arg_parser.add_argument('-r', '--revision')
     _arg_parser.add_argument('-f', '--force-fetch', action='store_true', help='always fetch git repos')
+
     _arg_parser.add_argument('-e', '--environ', nargs='*', action=_EnvironmentAction)
     _arg_parser.add_argument('-c', '--config', nargs='*', action=_configAction,
         help='args to pass to `./configure`, `python setup.py`, `brew install`, etc..')
+    _arg_parser.add_argument('--make-install', action='store_true', help='do `make install`')
+
     _arg_parser.add_argument('--install-name')
     _arg_parser.add_argument('--build-subdir')
     _arg_parser.add_argument('--install-prefix')
+    
     _arg_parser.add_argument('url')
 
     def __init__(self, args=None, home=None, **kwargs):
