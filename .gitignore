@@ -2,7 +2,7 @@
 *.pyc
 
 /docs/_build
-*.egg-info
+/*.egg-info
 /venv
 /tests/sandbox
 /build

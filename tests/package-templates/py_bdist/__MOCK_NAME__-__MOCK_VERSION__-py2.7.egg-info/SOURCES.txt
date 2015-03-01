@@ -1,0 +1,8 @@
+__MOCK_NAME__/__init__.py
+__MOCK_NAME__/__main__.py
+__MOCK_NAME__/core.py
+__MOCK_NAME__.egg-info/PKG-INFO
+__MOCK_NAME__.egg-info/SOURCES.txt
+__MOCK_NAME__.egg-info/dependency_links.txt
+__MOCK_NAME__.egg-info/entry_points.txt
+__MOCK_NAME__.egg-info/top_level.txt
