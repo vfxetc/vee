@@ -59,6 +59,15 @@ MAJOR TODOS
   - scripts work
   - their install_requires doesn't matter
 
+- install data that comes with Python wheels
+  $NAME-$VERSION.data dir at top-level, beside $NAME-$VERSION.dist-info
+- install Python commands listed in egg-info
+
+- vee.buildschemes.pyegg:PythonEggScheme
+    - there can be a separate build and install scheme
+    - consider changing "type" to "transport", so that there isn't the more
+      generic "type"
+
 - move repos to database
 
 - move database to $VEE/db.sqlite

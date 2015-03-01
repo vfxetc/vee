@@ -24,6 +24,7 @@ class MockPackage(object):
 
         self.defaults = defaults or {}
         self.defaults.setdefault('NAME', self.name)
+        self.defaults.setdefault('VERSION', '1.0.0')
 
         self._rev_count = None
 
