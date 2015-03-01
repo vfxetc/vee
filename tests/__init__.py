@@ -12,7 +12,7 @@ import sys
 import tarfile
 import urllib2
 
-from unittest import TestCase
+from unittest import TestCase as _TestCase
 from vee.commands.main import main as _main
 from vee.git import GitRepo
 
@@ -46,6 +46,11 @@ def vee(args, environ=None):
 def sandbox(*args):
     return os.path.join(sandbox_dir, *args)
 
+
+class TestCase(_TestCase):
+
+    def assertExists(self, path, *args):
+        self.assertTrue(os.path.exists(path), *args)
 
 
 

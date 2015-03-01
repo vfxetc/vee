@@ -1,7 +1,0 @@
-
-/libfoo/Makefile
-/bar/Makefile
-/bar/bar
-*.o
-*.so
-*.tgz
