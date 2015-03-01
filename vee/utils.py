@@ -270,6 +270,13 @@ def style(message='', fg=None, bg=None, bright=None, bold=None, faint=None,
 colour = color = style
 
 
+def style_error(msg, detail=''):
+    return '%s %s%s' % (
+        style('Error:', 'red', bold=True),
+        style(msg, bold=True),
+        detail and ' ' + detail
+    )
+
 if __name__ == '__main__':
 
     print 'ANSI Styles'

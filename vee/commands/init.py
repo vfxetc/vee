@@ -1,4 +1,4 @@
-from vee.commands.main import command, argument
+from vee.commands.main import command, argument, main
 from vee.home import PRIMARY_REPO
 from vee.requirement import Requirement
 from vee.utils import style
@@ -19,10 +19,7 @@ def init(args):
     print style('Initializing home', 'blue', bold=True), style(home.root)
 
     home.makedirs()
-
     config = home.config
-
-    config.setdefault('repo.default.name', args.name)
 
     if args.umask:
         config['os.umask'] = args.umask
@@ -33,5 +30,4 @@ def init(args):
         config['os.chgrp'] = args.chgrp
 
     if args.url:
-        config['repo.%s.url' % args.name] = args.url
-
+        main(['repo', '--add', '--default', args.name, args.url])

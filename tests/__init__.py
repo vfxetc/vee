@@ -15,6 +15,7 @@ import urllib2
 from unittest import TestCase as _TestCase
 from vee.commands.main import main as _main
 from vee.git import GitRepo
+from vee.home import Home
 
 # These may depend on the above paths.
 from .mock.http import setup_mock_http, mock_url
@@ -24,6 +25,7 @@ from .mock.package import MockPackage
 tests_dir = os.path.abspath(os.path.join(__file__, '..'))
 root_dir = os.path.dirname(tests_dir)
 sandbox_dir = os.path.join(tests_dir, 'sandbox')
+VEE = os.path.join(sandbox_dir, 'vee')
 
 
 
@@ -35,11 +37,12 @@ os.makedirs(sandbox_dir)
 # Setup mock HTTP server.
 setup_mock_http(sandbox_dir)
 
+home = Home(VEE)
 
 def vee(args, environ=None):
     full_environ = os.environ.copy()
     full_environ.update(environ or {})
-    full_environ['VEE'] = os.path.join(sandbox_dir, 'vee')
+    full_environ['VEE'] = VEE
     return _main(args, environ=full_environ)
 
 

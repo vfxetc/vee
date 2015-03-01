@@ -1,7 +1,11 @@
+import sqlite3
+
+
 from vee.commands.main import command, argument, group
 from vee.environment import Environment
 from vee.home import PRIMARY_REPO
-
+from vee.exceptions import CliException
+from vee.utils import style_error
 
 @command(
     group(
@@ -24,13 +28,10 @@ def repo(args):
     config = home.config
 
     if args.action in ('list', None):
-        default = config.get('repo.default.name', PRIMARY_REPO)
-        for key, url in sorted(config.iteritems(glob='repo.*.url')):
-            name = key.split('.')[1]
-            parent = config.get('repo.%s.parent' % name)
-            print '%s %s%s%s' % (name, url,
-                ' --default' if name == default else '',
-                ' --parent %s' % parent if parent else '',
+        for row in home.db.execute('SELECT * FROM repositories'):
+            print '%d %s %s%s%s' % (row['id'], row['name'], row['url'],
+                ' --default' if row['is_default'] else '',
+                ' --parent %s' % row['parent_path'] if row['parent_path'] else '',
             )
         return
 
@@ -38,21 +39,31 @@ def repo(args):
         raise CliException('name is required for --%s' % args.action)
 
     if args.action == 'delete':
-        del config['repo.%s.url' % args.name]
+        home.db.execute('DELETE FROM repositories WHERE name = ?', [args.name])
         return
 
     if args.action == 'add':
+
         if not (args.url or args.default or args.parent):
             raise CliException('--default, --parent, or url is required for --%s' % args.action)
-        if args.url:
-            config['repo.%s.url' % args.name] = args.url
-        if args.parent:
-            config['repo.%s.parent' % args.name] = args.parent
-        if args.remote:
-            config['repo.%s.remote' % args.name] = args.remote
-        if args.branch:
-            config['repo.%s.branch' % args.name] = args.branch
-        if args.default:
-            config['repo.default.name'] = args.name
-        return
 
+
+        data = {}
+        for attr, key in (
+            ('name', None),
+            ('url', None),
+            ('parent', 'parent_path'),
+            ('remote', None),
+            ('branch', None),
+            ('default', 'is_default'),
+        ):
+            value = getattr(args, attr)
+            if value is not None:
+                data[key or attr] = value
+
+        con = home.db.connect()
+        row = con.execute('SELECT id FROM repositories WHERE name = ?', [args.name]).fetchone()
+        if row:
+            home.db.update('repositories', data, where={'id': row['id']})
+        else:
+            home.db.insert('repositories', data)

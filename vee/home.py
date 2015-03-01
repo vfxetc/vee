@@ -19,7 +19,7 @@ class Home(object):
         self.root = root
         self.db = Database(self.abspath('vee-index.sqlite'))
         self.config = Config(self)
-        self._repo_args = {}
+        self._repo_rows = {}
 
     def makedirs(self):
         for name in ('builds', 'environments', 'installs', 'packages', 'repos'):
@@ -38,17 +38,18 @@ class Home(object):
         return os.path.abspath(os.path.join(self.root, *args))
 
     def get_repo(self, name=None, url=None):
-
-        if name not in self._repo_args:
-            real_name = self.config.get('repo.default.name', PRIMARY_REPO) if name is None else name
-            url = url or self.config['repo.%s.url' % real_name]
-            remote_name = self.config.get('repo.%s.remote' % real_name, 'origin')
-            branch_name = self.config.get('repo.%s.branch' % real_name, 'master')
-            self._repo_args[name] = (real_name, self.abspath('repos', real_name), url, remote_name, branch_name)
-        
-        real_name, work_tree, url, remote_name, branch_name = self._repo_args[name]
-        repo = GitRepo(work_tree, url, remote_name=remote_name, branch_name=branch_name)
-        repo.name = real_name
+        if name not in self._repo_rows:
+            con = self.db.connect()
+            if name is None:
+                row = con.execute('SELECT * FROM repositories WHERE is_default LIMIT 1').fetchone()
+                row = row or con.execute('SELECT * FROM repositories LIMIT 1').fetchone()
+            else:
+                row = con.execute('SELECT * FROM repositories WHERE name = ?', [name])
+            self._repo_rows[name] = row
+        row = self._repo_rows[name]
+        repo = GitRepo(self.abspath('repos', row['name']), url or row['url'],
+            remote_name=row['track_remote'], branch_name=row['track_branch'])
+        repo.name = row['name']
         return repo
 
     def iter_repos(self):

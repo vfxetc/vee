@@ -12,6 +12,43 @@ _migrations = []
 @_migrations.append
 def _create_initial_tables(con):
 
+    con.execute('''CREATE TABLE repositories (
+
+        id INTEGER PRIMARY KEY,
+        created_at TIMESTAMP NOT NULL DEFAULT (datetime('now')),
+        fetched_at TIMESTAMP,
+
+        name TEXT UNIQUE NOT NULL,
+        url TEXT NOT NULL,
+        parent_path TEXT,
+
+        is_default INTEGER NOT NULL DEFAULT 0,
+
+        track_remote TEXT NOT NULL DEFAULT 'origin',
+        track_branch TEXT NOT NULL DEFAULT 'master'
+
+    )''')
+
+    con.execute('''CREATE TRIGGER insert_default_repository
+
+        AFTER INSERT ON repositories
+        WHEN NEW.is_default
+        BEGIN
+            UPDATE repositories SET is_default = 0 WHERE id != NEW.id;
+        END
+
+    ''')
+
+    con.execute('''CREATE TRIGGER update_default_repository
+
+        AFTER UPDATE OF is_default ON repositories
+        WHEN NEW.is_default
+        BEGIN
+            UPDATE repositories SET is_default = 0 WHERE id != NEW.id;
+        END
+
+    ''')
+
     con.execute('''CREATE TABLE packages (
 
         id INTEGER PRIMARY KEY,
@@ -44,6 +81,9 @@ def _create_initial_tables(con):
         id INTEGER PRIMARY KEY,
         created_at TIMESTAMP NOT NULL DEFAULT (datetime('now')),
         modified_at TIMESTAMP NOT NULL DEFAULT (datetime('now')),
+
+        repository_id INTEGER REFERENCES repositories(id),
+        repository_commit TEXT,
 
         name TEXT NOT NULL,
         path TEXT NOT NULL,
@@ -117,8 +157,36 @@ class _Connection(sqlite3.Connection):
         return self
 
 
+def escape_identifier(x):
+    return '"%s"' % x.replace('"', '""')
+
+
 class _Cursor(sqlite3.Cursor):
-    pass
+    
+    def insert(self, table, data, on_conflict=None):
+        pairs = sorted(data.iteritems())
+        self.execute('INSERT %s INTO %s (%s) VALUES (%s)' % (
+            'OR ' + on_conflict if on_conflict else '',
+            escape_identifier(table),
+            ','.join(escape_identifier(k) for k, v in pairs),
+            ','.join('?' for _ in pairs),
+
+        ), [v for k, v in pairs])
+        return self.lastrowid
+
+    def update(self, table, data, where=None):
+        columns, params = zip(*sorted(data.iteritems()))
+        if where:
+            where = sorted(where.iteritems())
+            params = list(params)
+            params.extend(v for k, v in where)
+            where = 'WHERE %s' % ' AND '.join('%s = ?' % escape_identifier(k) for k, v in where)
+        self.execute('UPDATE %s SET %s %s' % (
+            escape_identifier(table),
+            ', '.join('%s = ?' % escape_identifier(c) for c in columns),
+            where or '',
+        ), params)
+        return self
 
 
 class Database(object):
@@ -140,5 +208,12 @@ class Database(object):
 
     def execute(self, *args):
         return self.connect().execute(*args)
+
+    def insert(self, *args, **kwargs):
+        return self.cursor().insert(*args, **kwargs)
+
+    def update(self, *args, **kwargs):
+        return self.cursor().update(*args, **kwargs)
+
 
 
