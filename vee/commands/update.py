@@ -18,6 +18,8 @@ def update(args):
     else:
         repos = [home.get_repo(args.name)]
 
+    retcode = 0
+
     for repo in repos:
 
         print style('Updating repo "%s"' % repo.name, 'blue', bold=True), style(repo.remote_url, bold=True)
@@ -53,6 +55,9 @@ def update(args):
         # Bail!
         if not status_ok:
             print style('Error:', 'red', bold=True), style('we cannot continue given above conditions', bold=True)
+            retcode = retcode or 1
             continue
 
         repo.checkout(rev)
+
+    return retcode

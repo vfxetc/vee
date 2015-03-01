@@ -17,9 +17,9 @@ from vee.commands.main import main as _main
 from vee.git import GitRepo
 from vee.home import Home
 
-# These may depend on the above paths.
 from .mock.http import setup_mock_http, mock_url
 from .mock.package import MockPackage
+from .mock.repo import MockRepo
 
 
 tests_dir = os.path.abspath(os.path.join(__file__, '..'))
@@ -38,6 +38,7 @@ os.makedirs(sandbox_dir)
 setup_mock_http(sandbox_dir)
 
 home = Home(VEE)
+os.chdir(sandbox_dir)
 
 def vee(args, environ=None):
     full_environ = os.environ.copy()

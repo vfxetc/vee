@@ -68,8 +68,6 @@ MAJOR TODOS
     - consider changing "type" to "transport", so that there isn't the more
       generic "type"
 
-- move repos to database
-
 - move database to $VEE/db.sqlite
 
 - don't need to track all of the repo info; just leave that to git, and assume

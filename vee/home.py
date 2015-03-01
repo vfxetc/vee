@@ -44,7 +44,7 @@ class Home(object):
                 row = con.execute('SELECT * FROM repositories WHERE is_default LIMIT 1').fetchone()
                 row = row or con.execute('SELECT * FROM repositories LIMIT 1').fetchone()
             else:
-                row = con.execute('SELECT * FROM repositories WHERE name = ?', [name])
+                row = con.execute('SELECT * FROM repositories WHERE name = ?', [name]).fetchone()
             self._repo_rows[name] = row
         row = self._repo_rows[name]
         repo = GitRepo(self.abspath('repos', row['name']), url or row['url'],

@@ -75,3 +75,5 @@ class MockPackage(object):
 
         self.repo.git('add', '--', self.path, silent=True, stdout=True)
         self.repo.git('commit', '-m', message or 'Rendered from template', silent=True, stdout=True)
+        
+        self._rev_count = (self._rev_count or 0) + 1
