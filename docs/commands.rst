@@ -95,18 +95,39 @@ dependencies, as they are generally outside of the standard build pipeline.
 Repositories
 ------------
 
-``vee repo``
+``vee repo [--add|--set|--delete|--list] [--default] [--branch BRANCH] NAME [URL]``
 ~~~~~~~~~~~~
 
 Manipulate repositories.
 
-.. note:: Not finalized.
+::
+    
+    # Add a new repo, and make it the default.
+    $ vee repo --add --default myrepo git@github.com:example/myrepo
+
+    # Change a repo's url and branch
+    $ vee repo --set --branch unstable myrepo
+
+    # Delete a repo.
+    $ vee repo --delete myrepo
+
+    # List all repos.
+    $ vee repo --list
 
 
 ``vee git``
 ~~~~~~~~~~~
 
-Run ``git`` commands on repositories.
+Run a ``git`` command on a repository's git repository. (Sorry for the name
+collision!)
+
+::
+
+    $ vee git -r primary status
+    On branch master
+    Your branch is behind 'origin/master' by 1 commit, and can be fast-forwarded.
+      (use "git pull" to update your local branch)
+    nothing to commit, working directory clean
 
 
 ``vee update``
@@ -146,20 +167,8 @@ Link the given requirement or requirements into the given environment, e.g.::
     $ vee link test-environ path/to/requirements.txt
 
 
-``vee env ENVIRON``
-~~~~~~~~~~~~~~~~~~~
-
-Dump environment variables for the given environment.
-
-
-``vee prefix ENVIRON``
-~~~~~~~~~~~~~~~~~~~~~~
-
-Print the path to the environment.
-
-
-``vee exec  [-e ENVIRON]+ [-r REQUIREMENTS]+ [NAME=VALUE]+ (--export|COMMAND ARGS*)``
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+``vee exec  [-e ENVIRON]+ [-r REPO]+ [-R REQUIREMENTS]+ [NAME=VALUE]+ (--export|COMMAND ARGS*)``
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Construct an environment, and either export it or run a command in it.
 

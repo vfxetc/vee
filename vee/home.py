@@ -61,7 +61,7 @@ class Home(object):
         if not row:
             raise ValueError('%s repo does not exist' % (repr(name) if row else 'default'))
         repo = GitRepo(self._abs_path('repos', row['name']), url or row['url'],
-            remote_name=row['track_remote'], branch_name=row['track_branch'])
+            remote_name='origin', branch_name=row['branch'])
         repo.name = row['name']
         return repo
 

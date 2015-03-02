@@ -36,11 +36,10 @@ ALL COMMANDS
 
 √ vee link ENVIRON (NAME|REQUIREMENT [ARGS])
 - vee unlink ENVIRON (NAME|REQUIREMENT [ARGS])
-~ vee prefix
-√ vee exec [--export] [-e ENVIRON]+ [-r REQUIREMENTS]+ [NAME=VALUE]+ COMMAND [...]
+√ vee exec [--export] [-e ENVIRON]+ [-R REQUIREMENTS]+ [NAME=VALUE]+ COMMAND [...]
 
-~ vee repo
-~ vee git
+√ vee repo [--add|--set|--delete|--list] [--default] [--branch BRANCH] NAME [URL]
+√ vee git
 ~ vee update [--all] [ENVIRON]
 ~ vee upgrade [--all] [ENVIRON]
 

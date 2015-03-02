@@ -15,5 +15,5 @@ def git(args, *command):
     repo = home.get_repo(args.repo)
 
     makedirs(repo.work_tree)
-    repo._call(*command, silent=True)
+    repo.git(*command, silent=True)
 

@@ -10,7 +10,7 @@ from vee.exceptions import CliException, AlreadyInstalled, AlreadyLinked
     argument('--re-install', action='store_true'),
     argument('--no-install', action='store_true'),
     argument('--force', action='store_true'),
-    argument('--raw', action='store_true', help='package is directory, not a requirement'),
+    argument('--raw', action='store_true', help='requirements are raw directories'),
     argument('--long-names', action='store_true',
         help='automatically picks package names'),
     argument('environment'),
@@ -27,7 +27,7 @@ def link(args):
     env = Environment(args.environment, home=home)
 
     if args.raw:
-        for dir_ in args.package:
+        for dir_ in args.requirements:
             print style('Linking', 'blue', bold=True), style(dir_, bold=True)
             env.link_directory(dir_)
         return

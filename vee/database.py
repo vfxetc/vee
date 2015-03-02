@@ -20,12 +20,9 @@ def _create_initial_tables(con):
 
         name TEXT UNIQUE NOT NULL,
         url TEXT NOT NULL,
-        parent_path TEXT,
+        branch TEXT NOT NULL DEFAULT 'master',
 
-        is_default INTEGER NOT NULL DEFAULT 0,
-
-        track_remote TEXT NOT NULL DEFAULT 'origin',
-        track_branch TEXT NOT NULL DEFAULT 'master'
+        is_default INTEGER NOT NULL DEFAULT 0
 
     )''')
 

@@ -17,7 +17,7 @@ class TestPackageSchemes(TestCase):
         exe = sandbox('vee/installs/%s/1.0.0/bin/%s' % (name, name))
         self.assertTrue(os.path.exists(exe))
         if call:
-            self.assertEqual(subprocess.check_output(['vee', 'exec', '-r', pkg.path, name]).strip(), '%s:1' % name)
+            self.assertEqual(subprocess.check_output(['vee', 'exec', '-R', pkg.path, name]).strip(), '%s:1' % name)
 
     def test_make(self):
         self.assert_echo('c_make')

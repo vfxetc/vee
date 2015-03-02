@@ -16,10 +16,9 @@ upgrade = vee.commands.upgrade:upgrade
 
 # Requirements.
 install = vee.commands.install:install
-link = vee.commands.link:link
 
 # Environments.
-prefix = vee.commands.prefix:prefix
+link = vee.commands.link:link
 exec = vee.commands.exec_:exec_
 
 # Underlying commands.

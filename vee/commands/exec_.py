@@ -10,8 +10,8 @@ from vee.utils import guess_environ
 
 @command(
     argument('--export', action='store_true', help='export the environment instead of executing in it'),
-    argument('-r', '--requirements', action='append', help='requirements or requirements files to include; may be comma separated'),
-    argument('-n', '--repo', action='append', help='a repo whose HEAD to include; defaults to the default repo'),
+    argument('-R', '--requirements', action='append', help='requirements or requirements files to include; may be comma separated'),
+    argument('-r', '--repo', action='append', help='a repo whose HEAD to include; defaults to the default repo'),
     argument('-e', '--environment', action='append', help='an environment to include'),
     argument('command', nargs='...', help='the command to run'),
     name='exec',
