@@ -1,6 +1,5 @@
-from vee.commands.main import command, argument, main
+from vee.commands.main import command, argument
 from vee.home import PRIMARY_REPO
-from vee.requirement import Requirement
 from vee.utils import style
 
 
@@ -13,17 +12,7 @@ from vee.utils import style
 def init(args):
 
     home = args.assert_home()
-    home.makedirs()
 
-    con = home.db.connect()
-    row = con.execute('SELECT id FROM repositories WHERE name = ?', [args.name]).fetchone()
-
-    print style('%sInitializing "%s"' % ('Re-' if row else '', args.name), 'blue', bold=True), home.root
-
-    if not args.url:
-        return
+    print style('Initializing "%s"' % args.name, 'blue', bold=True), home.root
+    home.init(name=args.name, url=args.url)
     
-    if row:
-        con.execute('UPDATE repositories SET url = ? WHERE id = ?', [args.url, row['id']])
-    else:
-        con.execute('INSERT INTO repositories (name, url, is_default) VALUES (?, ?, ?)', [args.name, args.url, True])

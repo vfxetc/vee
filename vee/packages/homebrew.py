@@ -72,7 +72,7 @@ class HomebrewPackage(GitPackage):
 
     @property
     def package_path(self):
-        return self.home.abspath('packages', self._name_for_platform)
+        return self.home._abs_path('packages', self._name_for_platform)
 
     @property
     def build_path(self):

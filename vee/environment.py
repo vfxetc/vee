@@ -16,10 +16,10 @@ class Environment(object):
         self.home = home
         if name.startswith('/'):
             self.path = name
-            self.name = os.path.relpath(name, home.abspath('environments'))
+            self.name = os.path.relpath(name, home._abs_path('environments'))
         else:
             self.name = name
-            self.path = home.abspath('environments', name)
+            self.path = home._abs_path('environments', name)
         self._db_id = None
 
 

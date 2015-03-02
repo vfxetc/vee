@@ -17,13 +17,27 @@ class Home(object):
 
     def __init__(self, root):
         self.root = root
-        self.db = Database(self.abspath('vee-index.sqlite'))
+        self.db = Database(self._abs_path('vee-index.sqlite'))
         self.config = Config(self)
         self._repo_rows = {}
 
-    def makedirs(self):
+    def init(self, url=None, name=PRIMARY_REPO):
+        self._makedirs()
+        if not url:
+            return
+        con = self.db.connect()
+        row = con.execute('SELECT id FROM repositories WHERE name = ?', [name]).fetchone()
+        if row:
+            con.execute('UPDATE repositories SET url = ? WHERE id = ?', [url, row['id']])
+        else:
+            con.execute('INSERT INTO repositories (name, url, is_default) VALUES (?, ?, ?)', [name, url, True])
+
+    def _abs_path(self, *args):
+        return os.path.abspath(os.path.join(self.root, *args))
+
+    def _makedirs(self):
         for name in ('builds', 'environments', 'installs', 'packages', 'repos'):
-            path = self.abspath(name)
+            path = self._abs_path(name)
             makedirs(path)
 
     def get_package(self, type=None, requirement=None):
@@ -33,9 +47,6 @@ class Home(object):
             return ep.load()(requirement, home=self)
         # TODO: look in repository.
         raise ValueError('unknown package type %r' % type)
-
-    def abspath(self, *args):
-        return os.path.abspath(os.path.join(self.root, *args))
 
     def get_repo(self, name=None, url=None):
         if name not in self._repo_rows:
@@ -49,15 +60,10 @@ class Home(object):
         row = self._repo_rows[name]
         if not row:
             raise ValueError('%s repo does not exist' % (repr(name) if row else 'default'))
-        repo = GitRepo(self.abspath('repos', row['name']), url or row['url'],
+        repo = GitRepo(self._abs_path('repos', row['name']), url or row['url'],
             remote_name=row['track_remote'], branch_name=row['track_branch'])
         repo.name = row['name']
         return repo
-
-    def iter_repos(self):
-        for key, url in sorted(self.config.iteritems(glob='repo.*.url')):
-            name = key.split('.')[1]
-            yield self.get_repo(name, url)
 
     def main(self, args, environ=None, **kwargs):
 

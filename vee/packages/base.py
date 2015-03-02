@@ -167,17 +167,17 @@ class BasePackage(object):
     @property
     def package_path(self):
         """Where the package is cached."""
-        return self._package_name and self.home.abspath('packages', self._package_name)
+        return self._package_name and self.home._abs_path('packages', self._package_name)
 
     @property
     def build_path(self):
         """Where the package will be built."""
-        return self._build_name and self.home.abspath('builds', self._build_name)
+        return self._build_name and self.home._abs_path('builds', self._build_name)
 
     @property
     def install_path(self):
         """The final location of the built package."""
-        return self._install_name and self.home.abspath('installs', self._install_name)
+        return self._install_name and self.home._abs_path('installs', self._install_name)
 
     def fetch(self):
         """Cache package from remote source; return something representing the package."""
@@ -390,7 +390,7 @@ class BasePackage(object):
 
         # Link into $VEE/opt.
         if self._base_name:
-            opt_link = self.home.abspath('opt', self._base_name)
+            opt_link = self.home._abs_path('opt', self._base_name)
             print style('Linking to opt/%s:' % self._base_name, 'blue', bold=True), style(opt_link, bold=True)
             if os.path.exists(opt_link):
                 os.unlink(opt_link)

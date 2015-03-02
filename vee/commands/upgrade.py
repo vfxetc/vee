@@ -35,8 +35,8 @@ def upgrade(args):
             print style('Error:', 'red', bold=True), style('%s repo is dirty' % repo.name, bold=True)
             continue
 
-        path_by_commit = home.abspath('environments', repo.name, 'commits', rev[:8])
-        path_by_branch = home.abspath('environments', repo.name, repo.remote_name, repo.branch_name)
+        path_by_commit = home._abs_path('environments', repo.name, 'commits', rev[:8])
+        path_by_branch = home._abs_path('environments', repo.name, repo.remote_name, repo.branch_name)
 
         args.main(['link', path_by_commit, repo.abspath('requirements.txt')])
 
