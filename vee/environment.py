@@ -1,6 +1,7 @@
 import errno
 import os
 import re
+import shutil
 
 from vee.utils import makedirs, style
 import vee.vendor.virtualenv as virtualenv
@@ -84,7 +85,8 @@ class Environment(object):
                             with open(new_path, 'wb') as new_fh:
                                 new_fh.write(new_shebang)
                                 new_fh.writelines(old_fh)
-                                continue
+                            shutil.copystat(old_path, new_path)
+                            continue
 
                 # Symlink it into place.
                 try:
