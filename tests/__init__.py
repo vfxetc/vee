@@ -1,16 +1,8 @@
-from cStringIO import StringIO
-import atexit
-import fnmatch
 import os
-import random
 import re
 import shutil
-import SimpleHTTPServer
-import SocketServer
-import subprocess
 import sys
-import tarfile
-import urllib2
+import subprocess
 
 from unittest import TestCase as _TestCase
 from vee.commands.main import main as _main
@@ -20,6 +12,10 @@ from vee.home import Home
 from .mock.http import setup_mock_http, mock_url
 from .mock.package import MockPackage
 from .mock.repo import MockRepo
+
+
+# For nose to capture stderr.
+os.dup2(1, 2)
 
 
 tests_dir = os.path.abspath(os.path.join(__file__, '..'))

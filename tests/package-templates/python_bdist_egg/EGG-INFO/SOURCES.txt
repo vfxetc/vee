@@ -1,0 +1,10 @@
+setup.py
+MOCKNAME/__init__.py
+MOCKNAME/__main__.py
+MOCKNAME/core.py
+MOCKNAME.egg-info/PKG-INFO
+MOCKNAME.egg-info/SOURCES.txt
+MOCKNAME.egg-info/dependency_links.txt
+MOCKNAME.egg-info/entry_points.txt
+MOCKNAME.egg-info/top_level.txt
+scripts/MOCKNAME

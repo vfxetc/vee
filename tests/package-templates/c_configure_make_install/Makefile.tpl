@@ -3,7 +3,7 @@
 
 default: build
 
-build: bin/__MOCK_NAME__
+build: bin/MOCKNAME
 
 bin/%: %.c
 	@ mkdir -p bin
@@ -11,7 +11,7 @@ bin/%: %.c
 
 install:
 	mkdir -p "{prefix}/bin"
-	cp bin/__MOCK_NAME__ "{prefix}/bin/"
+	cp bin/MOCKNAME "{prefix}/bin/"
 
 clean:
-	- rm __MOCK_NAME__ __MOCK_NAME__.o
+	- rm MOCKNAME MOCKNAME.o

@@ -45,11 +45,11 @@ class MockPackage(object):
         params = self.defaults.copy()
         params.update(kwargs)
         params.update(
-            REV_NO=self.rev_count + 1,
+            REVNO=self.rev_count + 1,
         )
 
         def render(contents):
-            return re.sub(r'__MOCK_(\w+)__', lambda m: str(params.get(m.group(1)) or ''), contents)
+            return re.sub(r'MOCK([A-Z0-9]+)', lambda m: str(params.get(m.group(1)) or ''), contents)
 
         ignore_path = os.path.join(self.template, 'mockignore')
         if os.path.exists(ignore_path):

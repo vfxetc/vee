@@ -1,0 +1,5 @@
+#!/Users/mikeboers/Documents/WesternX/dev/vee/venv/bin/python
+
+from MOCKNAME.core import main
+
+main()

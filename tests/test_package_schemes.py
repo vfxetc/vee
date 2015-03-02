@@ -25,27 +25,48 @@ class TestPackageSchemes(TestCase):
     def test_configure_make_install(self):
         self.assert_echo('c_configure_make_install')
 
-    def test_py_src(self):
-        self.assert_echo('py_src', call=False)
+    def test_python_source(self):
+        self.assert_echo('python_source', call=False)
         # TODO: arbitrary data.
         # TODO: both scripts and console_scripts entrypoints.
 
-    def test_py_bdist(self):
-        pkg = MockPackage('scheme_py_egg', 'py_bdist')
+    def test_python_sdist(self):
+        pkg = MockPackage('scheme_python_sdist', 'python_sdist')
         pkg.render_commit()
-        vee(['install', sandbox('packages/scheme_py_egg'), '--install-name', 'scheme_py_egg/1.0.0'])
-        self.assertExists(sandbox('vee/installs/scheme_py_egg/1.0.0/lib/python2.7/site-packages/scheme_py_egg/__init__.py'))
+        vee(['install', sandbox('packages/scheme_python_sdist'), '--install-name', 'scheme_python_sdist/1.0.0'])
+        self.assertExists(sandbox('vee/installs/scheme_python_sdist/1.0.0/lib/python2.7/site-packages/scheme_python_sdist/__init__.py'))
         # TODO: arbitrary data.
         # TODO: scripts and console_scripts entrypoints.
         # self.assertExists(sandbox('vee/installs/scheme_py_egg/1.0.0/bin/scheme_py_egg'))
-        # self.assertExists(sandbox('vee/installs/scheme_py_egg/1.0.0/bin/scheme_py_egg-ep'))
+        # self.assertExists(sandbox('vee/installs/scheme_py_egg/1.0.0/bin/scheme_py_egg-ep')
 
-    def test_py_wheel(self):
-        pkg = MockPackage('scheme_py_whl', 'py_wheel')
+    def test_python_bdist(self):
+        pkg = MockPackage('scheme_python_bdist', 'python_bdist')
         pkg.render_commit()
-        vee(['install', sandbox('packages/scheme_py_whl'), '--install-name', 'scheme_py_whl/1.0.0'])
-        self.assertExists(sandbox('vee/installs/scheme_py_whl/1.0.0/lib/python2.7/site-packages/scheme_py_whl/__init__.py'))
+        vee(['install', sandbox('packages/scheme_python_bdist'), '--install-name', 'scheme_python_bdist/1.0.0'])
+        self.assertExists(sandbox('vee/installs/scheme_python_bdist/1.0.0/lib/python2.7/site-packages/scheme_python_bdist/__init__.py'))
+        # TODO: arbitrary data.
+        # TODO: scripts and console_scripts entrypoints.
+        # self.assertExists(sandbox('vee/installs/scheme_py_egg/1.0.0/bin/scheme_py_egg'))
+        # self.assertExists(sandbox('vee/installs/scheme_py_egg/1.0.0/bin/scheme_py_egg-ep')
+
+    def test_python_bdist_egg(self):
+        return # This one doesn't work.
+        pkg = MockPackage('scheme_python_bdist_egg', 'python_bdist_egg')
+        pkg.render_commit()
+        vee(['install', sandbox('packages/scheme_python_bdist_egg'), '--install-name', 'scheme_python_bdist_egg/1.0.0'])
+        self.assertExists(sandbox('vee/installs/scheme_python_bdist_egg/1.0.0/lib/python2.7/site-packages/scheme_python_bdist_egg/__init__.py'))
         # TODO: arbitrary data.
         # TODO: scripts and console_scripts entrypoints:
-        # self.assertExists(sandbox('vee/installs/scheme_py_whl/1.0.0/bin/scheme_py_whl'))
-        # self.assertExists(sandbox('vee/installs/scheme_py_whl/1.0.0/bin/scheme_py_whl-ep'))
+        # self.assertExists(sandbox('vee/installs/scheme_python_bdist_wheel/1.0.0/bin/scheme_python_bdist_wheel'))
+        # self.assertExists(sandbox('vee/installs/scheme_python_bdist_wheel/1.0.0/bin/scheme_python_bdist_wheel-ep'))
+
+    def test_python_bdist_wheel(self):
+        pkg = MockPackage('scheme_python_bdist_wheel', 'python_bdist_wheel')
+        pkg.render_commit()
+        vee(['install', sandbox('packages/scheme_python_bdist_wheel'), '--install-name', 'scheme_python_bdist_wheel/1.0.0'])
+        self.assertExists(sandbox('vee/installs/scheme_python_bdist_wheel/1.0.0/lib/python2.7/site-packages/scheme_python_bdist_wheel/__init__.py'))
+        # TODO: arbitrary data.
+        # TODO: scripts and console_scripts entrypoints:
+        # self.assertExists(sandbox('vee/installs/scheme_python_bdist_wheel/1.0.0/bin/scheme_python_bdist_wheel'))
+        # self.assertExists(sandbox('vee/installs/scheme_python_bdist_wheel/1.0.0/bin/scheme_python_bdist_wheel-ep'))

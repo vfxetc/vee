@@ -1,0 +1,3 @@
+
+char const * const MOCKNAME();
+

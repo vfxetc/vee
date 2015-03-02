@@ -1,97 +1,88 @@
 
+BEFORE FIRST DEPLOY
+-------------------
 
-MAJOR TODOS
------------
-
-- permissions:
-
-    - install_vee.py should add the setgid bit, and make chmod the whole thing
-      to be readible by all. May need to sudo. It should assert that itself
-      isn't sudo
-
-      python install_vee.py --setgid vfx
-
-
-    - need permission setting as a step in Package.install()
-
-        - vee config --set os.umask 0002
-        - vee config --set os.setgid vfx
-
-- dev environment:
-
-    - how to dev install?
-        - `vee init --dev /path/to/other/vee [/path/to/dev]`
-        - `vee --dev xxx` is a shortcut for setting VEE to discovered dev
-        - `vee develop` does like `python setup.py develop`
-        - may need a `Package.develop()` method
-            - for git packages, it sets the package_path, and makes sure it
-              exists
-            - for non-git packages, it fails (for now)
-            - it adds a dev link to the DB, or some metadata file (or its own
-              .veedev.sqlite)
-
-    - how to run in dev?
-        - `vee runtime ENV` creates a shell for you to run it?
-    - how to inherit environments?
-
-- repo
-    - how to structure?
-    - how to manage?
-    - how to manage resulting environments?
-        - does it make sense to merge two repositories? Perhaps the structure
-          must be that they be git submodules
-        - make the concession that there is only a single repo ever attached
-
+- try to unify the arguments and attributes on Package and Requirement
+- dev environment
+- test everything?!
 - key_base
     - entrypoints
     - apps: can we build them in a central location, outside of the isolated
       build environments, or is the Finder going to be able to adapt to symlinks
       in the Dock?
     - scrap history
-
+- OS X apps via symlinks in docks?
+- assert all westernx packages transition
+    - entrypoints.yml at top_level is built by Makefile (in sgfs and others)
+        - make a build_metatools_entrypoints distutils command
+    - sgactions.yml at top_level is built by Makefile (in sgfs and others)
+        - this becomes the user's problem
 
 ---
 
-- test python packages:
-  - they import
-  - they import each other
-  - console_scripts entrypoints work
-  - scripts work
-  - their install_requires doesn't matter
+- change `vee repo --add` to `vee repo --set`
+
+- s/repositories/repos/g in general?
+- s/environments/envs/g in general?
+
+- do we need to track the git remote, or can we always just assume that it is
+  "origin"? We do want to know what branch to track.
+
+- make the mock Python projects (sdist, bdist, bdist_egg, bdist_wheel) from the
+  python_source one by running setup.py. The real problem is that the template
+  variables get mashed up. replace them with MOCK([A-Z0-9]), e.g.: MOCKNAME, MOCKREVNO
+
+- permissions
+
+    - install_vee.py
+        - just warn if they are running as root, but don't stop them
+        - default to assuming a single user
+        - --multi-user signals that it should try to setup a group setup, OR we
+          can just let them figure that out themselves
+
+    - `vee doctor` should do the main permission checks
+
+    - do we need to set our umask, or can permission bits somehow handle that?
+        - document the result
+    - do we need to chgrp, or can setgid handle that?
+        - document the result
+
+- build/install classes: Base, Make, Python, PythonEgg, PythonWheel, etc..
+    - this have methods for handling build, install, develop, and runtime
+    - may use different classes for each of the above stages.
+    - package.set_handlers(build=True, install=True); package.builder.build()
+    - pkgname.tgz --builder python_source
+
+- dev environment:
+
+    - `vee init --parent /path/to/other/vee /path/to/dev`
+
+    - `vee --dev xxx` is a shortcut for setting VEE to discovered dev
+    - `vee install --develop` does like `python setup.py develop`
+    - may need a `Package.develop()` method
+        - for git packages, it sets the package_path, and makes sure it
+          exists
+        - for non-git packages, it fails (for now)
+        - it adds a dev link to the DB, or some metadata file (or its own
+          .veedev.sqlite)
+
+    - how to run in dev?
+        - `vee runtime ENV` creates a shell for you to run it?
+
+    - how to inherit environments?
+
+- should $repo/requirements.txt be moved to $repo/vee[/-]requirements.txt ?
+
+- test python packages (for each of source, sdist, bdist, bdist_wheel):
+    - they import
+    - they import each other
+    - console_scripts entrypoints work
+    - scripts work
+    - their install_requires doesn't matter
 
 - install data that comes with Python wheels
   $NAME-$VERSION.data dir at top-level, beside $NAME-$VERSION.dist-info
 - install Python commands listed in egg-info
-
-- vee.buildschemes.pyegg:PythonEggScheme
-    - there can be a separate build and install scheme
-    - consider changing "type" to "transport", so that there isn't the more
-      generic "type"
-
-- move database to $VEE/db.sqlite
-
-- don't need to track all of the repo info; just leave that to git, and assume
-  that we are using "origin"
-
-- repo workflow
-  
-  √ `vee init [--name NAME] [--repo REPO]`
-      Assert that the various directory structures exist, and add a new repo
-      as a convenience
-
-  √ `vee repo --add [--default] [--parent PATH] NAME REPO`
-  √ `vee repo --remove NAME`
-  √ `vee repo --list`
-
-  x `vee clone OTHER_HOME NEW_HOME`
-      - Do this later.
-
-  √ `vee update`
-  √ `vee upgrade`
-
-- `vee exec` defaults to the default repo/remote/branch combo
-
-- main environment could be called "master"
 
 - linking could check if a previous revision of the same thing was already
   linked into an environment, and stop you
@@ -100,26 +91,11 @@ MAJOR TODOS
   RequirementSet(s) when they are files that end in '.txt' (or no extendion),
   and requirements from the rest
 
-- entrypoints.yml at top_level is built by Makefile (in sgfs and others)
-    - make a build_metatools_entrypoints distutils command
-
-- sgactions.yml at top_level is built by Makefile (in sgfs and others)
-    - this becomes the user's problem
 
 - how does this new Python install method deal with install_requires?
     - it doesn't! document it?
 
-- Can we make each environment into a virtualenv too?
-    - vendor virtualenv.py, or install it as a Package
-    - call virtualenv.create_environment('test', no_setuptools=True, no_pip=True)
-
 - s/Home/Vee/g ??
-
-- we might need to rewrite all of the shebangs during linking to the virtual
-  python
-
-- etc/vee/environ/$name.txt is a file that contains environment variables
-  provided by each package
 
 - does it make sense to have packages/builds/installs in the database, instead
   of having them all together?
@@ -127,15 +103,12 @@ MAJOR TODOS
 - build-subdir and install-prefix should be used to invalidate matches in the
   resolver
 
-`vee config set chmod ugo=rwX` for vee to chmod everything writable by everyone
-    - have this be a parameter of the install_vee.py script as well:
-        python install_vee.py -c chmod=ugo=rwX
-
 - does sitetools disprove the separate Python build/install process?
 
 - git might need to use different revisions on different platforms (for homebrew/linuxbrew)
     - if this is the only attribute that matters in this way, then we can have a
         --linux-revision and --osx-revision which it picks from
+    - `--revision:osx` or `osx:--revision`
 
 - '--refresh' or --latest' or '--head' to always request the latest; this is a more general
   case of --force-fetch
@@ -163,10 +136,8 @@ MAJOR TODOS
             - out:$pid -> stdout of nth exe
             - err:$pid -> stderr of nth exe
 
-- Home.{package,build,install,environment}_root attributes
+- Home.{package,build,install,develop,environment}_root attributes
 - Home.to_environ()
-
-- `vee exec --latest name` looks for a "name/%" environment, and uses that
 
 - `vee gc`
   - delete installs (and their DB records) which are not linked to
@@ -180,16 +151,8 @@ MAJOR TODOS
 
     out 2015-02-18T15:02:01 sdflkjsdf
 
-- add functions to resolve_environ(): $VEE_INSTALLS
-  - this requires either scanning for, or knowing about installed things
-
 - Http/File/Base could do checksums of files to see if they have changed
   - memoize the caches based on inode,size,mtime
-
-- test all the things!
-  - libfoo, bar in Testbrew
-  - http://localhost:10000/qux-1.0.0.tgz
-  - git+git@github.com:mikeboers/norf
 
 - cythonmagick is pulling in the "wrong" sqlite?
 
@@ -197,20 +160,6 @@ MAJOR TODOS
 
 - `vee list` lists environments
 - `vee list ENVIRONMENT` lists the various buildtimes of environments
-
-- environment structure:
-  $VEE/environments/$NAME/latest -> $BUILDTIME
-
-- $VEE/repo structure
-    
-    managers/{name}.py
-    environments/{name}.txt
-
-    - default environment name is "master"
-    - can we have updates to non-git environments?
-        - `vee update` could pull in a new repo, and hash it to see if it
-          changed
-
 
 - dev
 
@@ -258,21 +207,8 @@ MAJOR TODOS
 
 
 
-- commands
-
-    vee init REPO
-    vee update
-    vee upgrade
-
-    √ vee install REQUIREMENT
-    - vee install -r requirements.txt
-    √ vee link NAME REQUIREMENTS_FILE
-
-
 LATER
 -----
-
-- `vee install xxx --make-install` to also `make install`
 
 - custom managers
   - e.g. `vee install PyAV.py`, where PyAV.py contains:
@@ -290,14 +226,7 @@ LATER
     - we would need a way to detect which tap it is
     - we can grep `brew info $forumla` for From: https://github.com/#{user}/#{repo}/blob/master/#{path}
 
-- Homebrew is only installing the tree of the one package, not any of the
-  dependencies. It should also link the dependencies. Perhaps there should be
-  a Requirements.dependencies() which returns them all, and then makes
-  sure they are all linked.
-
-  Another solution to this problem is to have paths_to_install() return a list.
-
-  Another solution is for HomebrewManager.install() to do this itself
+- Requirement.dependencies() and Requirement.provisions()
 
   An AbstractRequirement is one like "lib:ffmpeg", "py:yaml", etc., that just
   know what result they want, but not where it is from. A DependencyInterface
@@ -315,3 +244,4 @@ LATER
         .linearize()
 
 
+  

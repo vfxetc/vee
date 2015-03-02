@@ -1,5 +1,5 @@
 
-build: bin/__MOCK_NAME__
+build: bin/MOCKNAME
 
 bin/%: %.c
 	@ mkdir -p bin

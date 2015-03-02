@@ -3,16 +3,16 @@
 
 default: build
 
-build: lib__MOCK_NAME__.so
+build: libMOCKNAME.so
 
-lib__MOCK_NAME__.so: lib__MOCK_NAME__.c
+libMOCKNAME.so: libMOCKNAME.c
 	gcc -o $@ -shared -fPIC $<
 
 install:
 	mkdir -p "{prefix}/lib"
-	cp lib__MOCK_NAME__.so "{prefix}/lib/"
+	cp libMOCKNAME.so "{prefix}/lib/"
 	mkdir -p "{prefix}/include"
-	cp __MOCK_NAME__.h "{prefix}/include/"
+	cp MOCKNAME.h "{prefix}/include/"
 
 clean:
-	- rm lib__MOCK_NAME__.so
+	- rm libMOCKNAME.so

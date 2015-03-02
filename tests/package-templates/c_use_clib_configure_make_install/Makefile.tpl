@@ -3,16 +3,16 @@
 
 default: build
 
-build: bin/__MOCK_NAME__
+build: bin/MOCKNAME
 
-bin/__MOCK_NAME__: __MOCK_NAME__.c
+bin/MOCKNAME: MOCKNAME.c
 	@ mkdir bin
 	gcc -c -o $@.o $(CFLAGS) $<
-	gcc -o $@ -l__MOCK_LIB__ $(LDFLAGS) $@.o
+	gcc -o $@ -lMOCKLIB $(LDFLAGS) $@.o
 
 install:
 	mkdir -p "{prefix}/bin"
-	cp bin/__MOCK_NAME__ "{prefix}/bin/"
+	cp bin/MOCKNAME "{prefix}/bin/"
 
 clean:
-	- rm __MOCK_NAME__ __MOCK_NAME__.o
+	- rm MOCKNAME MOCKNAME.o

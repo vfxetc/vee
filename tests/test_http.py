@@ -13,7 +13,7 @@ class TestHttpManager(TestCase):
         self.assertTrue(os.path.exists(sandbox('vee/installs/foo/1.0.0/bin/foo')))
 
     def test_standalone_python(self):
-        pkg = MockPackage('test_standalone_python', 'py_src', {'NAME': 'pyfoo'})
+        pkg = MockPackage('test_standalone_python', 'python_source', {'NAME': 'pyfoo'})
         pkg.render_commit()
         vee(['install', mock_url('packages/test_standalone_python.tgz'),
             '--install-name', 'pyfoo/1.0.0',
