@@ -407,22 +407,20 @@ class BasePackage(object):
     def link(self, env, force=False):
         self._assert_paths(install=True)
         frozen = self.freeze()
-
         if not force:
-            self._assert_unlinked(env)
-
+            self._assert_unlinked(env, frozen)
         print style('Linking', 'blue', bold=True), style(str(frozen), bold=True)
         env.link_directory(self.install_path)
         self._record_link(env)
 
-    def _assert_unlinked(self, env):
+    def _assert_unlinked(self, env, frozen=None):
         if not self._db_link_id:
             row = self.home.db.execute(
                 'SELECT id FROM links WHERE package_id = ? AND environment_id = ?',
                 [self.db_id(), env.db_id()]
             ).fetchone()
         if self._db_link_id or row:
-            raise AlreadyLinked(str(frozen), self._db_link_id or row[0])
+            raise AlreadyLinked(str(frozen or self.freeze()), self._db_link_id or row[0])
 
     def db_id(self):
         if self._db_id is None:
@@ -497,7 +495,7 @@ class BasePackage(object):
         if not row:
             return
 
-        print style('DEBUG: found existing install %d' % row['id'], faint=True)
+        # print style('DEBUG: found existing install %d' % row['id'], faint=True)
 
         # Everything below either already matches or was unset.
         self._db_id = row['id']

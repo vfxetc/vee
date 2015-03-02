@@ -39,18 +39,33 @@ class Header(tuple):
         return '%s: %s' % self
 
 
-class RequirementSet(object):
+class RequirementSet(list):
 
-    def __init__(self, source=None):
-        self.elements = []
-        if source:
-            self.parse(source)
+    def __init__(self, source=None, home=None):
 
-    def parse(self, source, home=None):
+        self.home = home
+        self._cumulative_environ = {}
+
+        if isinstance(source, (list, tuple)):
+            self.parse_args(source)
+        elif source:
+            self.parse_file(source)
+
+    def parse_args(self, args):
+
+        remaining = args
+        while remaining:
+            args, remaining = Requirement._arg_parser.parse_known_args(remaining)
+            if args.url.endswith('.txt'):
+                self.parse_file(args.url)
+            else:
+                self.append(('', Requirement(args, home=self.home), ''))
+
+    def parse_file(self, source):
         
-        environ = {}
-
-        if isinstance(source, basestring):
+        if source == '-':
+            source = sys.stdin
+        elif isinstance(source, basestring):
             source = open(source, 'r')
 
         line_iter = iter(source)
@@ -66,29 +81,29 @@ class RequirementSet(object):
             after = after or ''
 
             if not spec:
-                self.elements.append((before, '', after))
+                self.append((before, '', after))
                 continue
 
             m = re.match(r'^(\w+)=(\S.*)$', spec)
             if m:
                 name, value = m.groups()
-                environ[name] = value
-                self.elements.append((before, Envvar(name, value), after))
+                self._cumulative_environ[name] = value
+                self.append((before, Envvar(name, value), after))
                 continue
 
             m = re.match(r'^([\w-]+): (\S.*)$', spec)
             if m:
-                self.elements.append((before, Header(*m.groups()), after))
+                self.append((before, Header(*m.groups()), after))
                 continue
 
-            req = Requirement(spec, home=home)
-            for k, v in environ.iteritems():
-                req.environ.setdefault(k, v)
+            req = Requirement(spec, home=self.home)
+            for k, v in self._cumulative_environ.iteritems():
+                req.self._cumulative_environ.setdefault(k, v)
 
-            self.elements.append((before, req, after))
+            self.append((before, req, after))
 
     def iter_requirements(self):
-        for _, element, _ in self.elements:
+        for _, element, _ in self:
             if isinstance(element, Requirement):
                 yield element
 
@@ -124,8 +139,6 @@ class RequirementSet(object):
                 names.add(name.lower())
                 req.name = name
 
-
-
     def iter_dump(self, freeze=False):
 
         # We track the state of the environment as we progress, and don't
@@ -133,7 +146,7 @@ class RequirementSet(object):
         # in the current state.
         environ = {}
 
-        for before, element, after in self.elements:
+        for before, element, after in self:
 
             if isinstance(element, Envvar):
                 environ[element.name] = element.value
@@ -147,7 +160,7 @@ class RequirementSet(object):
                     if req.environ.get(k) == v:
                         del req.environ[k]
 
-            yield '%s%s%s\n' % (before, element, after)
+            yield '%s%s%s\n' % (before or '', element, after or '')
 
 
 
@@ -157,13 +170,9 @@ if __name__ == '__main__':
 
     from vee.home import Home
 
-    home = Home('/usr/local/vee')
-    rs = RequirementSet()
-    rs.parse(sys.stdin, home=home)
-
-    rs.guess_names()
-    
-    print ''.join(rs.iter_dump())
+    reqs = RequirementSet(sys.argv[1:], home=Home('/usr/local/vee'))
+    reqs.guess_names()
+    print ''.join(reqs.iter_dump())
 
 
 

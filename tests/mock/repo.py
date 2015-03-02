@@ -41,7 +41,7 @@ class MockRepo(object):
         old = RequirementSet()
         path = os.path.join(self.path, 'requirements.txt')
         if os.path.exists(path):
-            old.parse(path)
+            old.parse_file(path)
 
         new = RequirementSet(StringIO(raw))
         new_urls = set()
@@ -50,15 +50,15 @@ class MockRepo(object):
             new_names.add(req.name or guess_name(req.url))
             new_urls.add(req.url)
 
-        for prefix, element, postfix in old.elements:
+        for prefix, element, postfix in old:
             if (not isinstance(element, Requirement) or
                 (element.name or guess_name(element.url)) not in new_names or
                 element.url not in new_urls
             ):
                 if insert:
-                    new.elements.append((prefix, element, postfix))
+                    new.append((prefix, element, postfix))
                 else:
-                    new.elements.insert(0, (prefix, element, postfix))
+                    new.insert(0, (prefix, element, postfix))
 
         with open(path, 'wb') as fh:
             for line in new.iter_dump():

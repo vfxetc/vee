@@ -7,21 +7,24 @@ from vee.exceptions import CliException, AlreadyInstalled, AlreadyLinked
 
 
 @command(
-    argument('--reinstall', action='store_true'),
+    argument('--re-install', action='store_true'),
+    argument('--no-install', action='store_true'),
     argument('--force', action='store_true'),
     argument('--raw', action='store_true', help='package is directory, not a requirement'),
     argument('--long-names', action='store_true',
         help='automatically picks package names'),
     argument('environment'),
-    argument('specification', nargs='...'),
-    help='link a package',
-    usage='vee link [--raw] ENVIRONMENT SPECIFICATION',
+    argument('requirements', nargs='...'),
+    help='link a package, or requirements.txt, into an environment',
+    usage='vee link [--raw] ENVIRONMENT REQUIREMENTS',
 )
 def link(args):
 
-    args.assert_home()
+    if args.no_install and args.re_install:
+        raise CliException('please use only one of --no-install and --re-install')
 
-    env = Environment(args.environment, home=args.home)
+    home = args.assert_home()
+    env = Environment(args.environment, home=home)
 
     if args.raw:
         for dir_ in args.package:
@@ -29,35 +32,28 @@ def link(args):
             env.link_directory(dir_)
         return
 
-
-    req_set = RequirementSet()
-
-    unknown_args = args.specification
-    while unknown_args:
-        req_args, unknown_args = Requirement._arg_parser.parse_known_args(unknown_args)
-        if req_args.url.endswith('.txt'):
-            req_set.parse(req_args.url, home=args.home)
-        else:
-            req_set.elements.append(('', Requirement(req_args, home=args.home), ''))
+    reqs = RequirementSet(args.requirements, home=home)
 
     if not args.long_names:
-        req_set.guess_names()
+        reqs.guess_names()
 
-    for req in req_set.iter_requirements():
+    for req in reqs.iter_requirements():
 
-        if not args.reinstall:
+        if args.no_install and not req.installed:
+            raise CliError('not installed: %s' % req)
+
+        if not args.re_install:
             req.package.resolve_existing(env=env)
 
         try:
-            req.install(force=args.reinstall)
+            req.install(force=args.re_install)
         except AlreadyInstalled:
             pass
         
         try:
             req.package.link(env, force=args.force)
         except AlreadyLinked as e:
-            print style('Already linked', 'blue', bold=True), style(str(req), bold=True),
-            print style('(link %s)' % e.args[1], faint=True)
-        
+            print style('Already linked', 'blue', bold=True), style(str(req), bold=True)
+      
 
 

@@ -1,26 +1,30 @@
 from vee.commands.main import command, argument
-from vee.requirement import Requirement
-from vee.utils import style, guess_name
+from vee.exceptions import AlreadyInstalled
+from vee.requirementset import RequirementSet
+from vee.utils import style
 
 
 @command(
     argument('--force', action='store_true', help='force install over old package'),
-    argument('--guess-name', action='store_true', help='pick a sensible package name'),
-    argument('package', nargs='...'),
+    argument('--long-names', action='store_true', help='don\'t automatically pick names'),
+    argument('requirements', nargs='...'),
     help='install a package',
     usage='vee install [--force] PACKAGE [OPTIONS]',
 )
 def install(args):
 
-    args.assert_home()
+    home = args.assert_home()
 
-    req = Requirement(args.package, home=args.home)
+    reqs = RequirementSet(args.requirements, home=home)
 
-    if args.guess_name:
-        req.name = req.name or guess_name(req.url)
-    
-    if not args.force:
-        req.package.resolve_existing()
+    if not args.long_names:
+        reqs.guess_names()
 
-    req.install(force=args.force)
+    for req in reqs.iter_requirements():
+        if not args.force:
+            req.package.resolve_existing()
+        try:
+            req.install(force=args.force)
+        except AlreadyInstalled:
+            print style('Already installed', 'blue', bold=True), style(str(req.package.freeze()), bold=True)
     

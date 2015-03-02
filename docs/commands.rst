@@ -58,10 +58,21 @@ arguments.
 Packages
 --------
 
-``vee install REQUIREMENT [ARGS]``
+``vee install (REQUIREMENT [OPTIONS])+``
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Install the given requirement.
+Install the given requirement or requirements, e.g.::
+    
+    # Install a single package.
+    $ vee install git+git@github.com:westernx/sgmock
+
+    # Install multiple packages.
+    $ vee install git+git@github.com:westernx/sgmock git+git@github.com:westernx/sgsession \
+        http:/example.org/path/to/tarball.tgz --make-install
+
+    # Install from a requirement set.
+    $ vee install path/to/requirements.txt
+
 
 
 ``vee brew``
@@ -119,10 +130,20 @@ Environments
 Upgrade environments created from repositories.
 
 
-``vee link ENVIRON REQUIREMENT``
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+``vee link ENVIRON (REQUIREMENT [OPTIONS])+``
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Link the given requirement into the given environment.
+Link the given requirement or requirements into the given environment, e.g.::
+    
+    # Install a single package.
+    $ vee link test-environ git+git@github.com:westernx/sgmock
+
+    # Install multiple packages.
+    $ vee link test-environ git+git@github.com:westernx/sgmock git+git@github.com:westernx/sgsession \
+        http:/example.org/path/to/tarball.tgz --make-install
+
+    # Install from a requirement set.
+    $ vee link test-environ path/to/requirements.txt
 
 
 ``vee env ENVIRON``
