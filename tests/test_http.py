@@ -37,7 +37,7 @@ class TestHttpManager(TestCase):
         vee(['install', mock_url('packages/test_foobar_step2_bin.tgz'),
             '--install-name', 'baz/1.0.0',
             '--make-install',
-            '--environ', 'CFLAGS=-I$VEE/installs/libbar/1.0.0/include,LDFLAGS=-L$VEE/installs/libbar/1.0.0/lib -rpath $VEE/installs/libbar/1.0.0/lib',
+            '--environ', 'CFLAGS=-I$VEE/installs/libbar/1.0.0/include,LDFLAGS=-L$VEE/installs/libbar/1.0.0/lib -Wl,-rpath,$VEE/installs/libbar/1.0.0/lib',
         ])
         self.assertTrue(os.path.exists(sandbox('vee/installs/baz/1.0.0/bin/baz')))
 
