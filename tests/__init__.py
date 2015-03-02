@@ -50,7 +50,20 @@ def sandbox(*args):
 
 class TestCase(_TestCase):
 
+    def class_home(self):
+        return Home(sandbox('homes', self.__class__.__name__, 'class'))
+
+    def home(self):
+        return Home(sandbox('homes', self.__class__.__name__, self._testMethodName))
+
+    def repo(self):
+        return MockRepo('%s/%s' % (self.__class__.__name__, self._testMethodName))
+
+    def package(self, name='foo', type=None, defaults=None):
+        return MockPackage(name, type or 'c_configure_make_install', defaults, os.path.join(self.__class__.__name__, self._testMethodName, name))
+
     def assertExists(self, path, *args):
+        args = args or [path + ' does not exist']
         self.assertTrue(os.path.exists(path), *args)
 
 

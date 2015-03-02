@@ -7,16 +7,18 @@ import shutil
 from vee.git import GitRepo
 from vee.utils import makedirs
 
+from .http import mock_url
+
 
 class MockPackage(object):
 
-    def __init__(self, name, template, defaults=None):
+    def __init__(self, name, template, defaults=None, path=None):
         self.name = name
         self.template = os.path.abspath(os.path.join(
             __file__, '..', '..', 'package-templates', template
         ))
         self.path = os.path.abspath(os.path.join(
-            __file__, '..', '..', 'sandbox', 'packages', name
+            __file__, '..', '..', 'sandbox', 'packages', path or name
         ))
         makedirs(self.path)
         self.repo = GitRepo(self.path)
@@ -27,6 +29,10 @@ class MockPackage(object):
         self.defaults.setdefault('VERSION', '1.0.0')
 
         self._rev_count = None
+
+    @property
+    def url(self):
+        return mock_url(self.path + '.tgz')
 
     def rev_list(self):
         try:

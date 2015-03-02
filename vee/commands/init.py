@@ -6,28 +6,24 @@ from vee.utils import style
 
 @command(
     argument('--name', default=PRIMARY_REPO, help='name for new repository'),
-    argument('--url', help='URL of new repository'),
-    argument('--umask', help='default umask for all files'),
-    argument('--chgrp', help='default group for all files'),
+    argument('url', nargs='?', help='URL of new repository'),
     help='initialize VEE\'s home',
-    usage='vee init',
+    usage='vee init URL',
 )
 def init(args):
 
     home = args.assert_home()
-
-    print style('Initializing home', 'blue', bold=True), style(home.root)
-
     home.makedirs()
-    config = home.config
 
-    if args.umask:
-        config['os.umask'] = args.umask
+    con = home.db.connect()
+    row = con.execute('SELECT id FROM repositories WHERE name = ?', [args.name]).fetchone()
+
+    print style('%sInitializing "%s"' % ('Re-' if row else '', args.name), 'blue', bold=True), home.root
+
+    if not args.url:
+        return
+    
+    if row:
+        con.execute('UPDATE repositories SET url = ? WHERE id = ?', [args.url, row['id']])
     else:
-        config.setdefault('os.umask', '0002')
-
-    if args.chgrp:
-        config['os.chgrp'] = args.chgrp
-
-    if args.url:
-        main(['repo', '--add', '--default', args.name, args.url])
+        con.execute('INSERT INTO repositories (name, url, is_default) VALUES (?, ?, ?)', [args.name, args.url, True])

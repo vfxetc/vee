@@ -112,11 +112,10 @@ def main(argv=None, environ=None, as_main=__name__=="__main__"):
     args.environ = os.environ if environ is None else environ
     args.home_path = args.home_path or args.environ.get('VEE')
     
-    def recurse(argv, environ=None, as_main=False):
-        return main(argv, environ or args.environ, as_main)
-    args.main = recurse
 
     args.home = args.home_path and Home(args.home_path)
+    args.main = getattr(args.home, 'main')
+    
 
     if args.func:
         try:

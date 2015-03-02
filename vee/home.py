@@ -47,6 +47,8 @@ class Home(object):
                 row = con.execute('SELECT * FROM repositories WHERE name = ?', [name]).fetchone()
             self._repo_rows[name] = row
         row = self._repo_rows[name]
+        if not row:
+            raise ValueError('%s repo does not exist' % (repr(name) if row else 'default'))
         repo = GitRepo(self.abspath('repos', row['name']), url or row['url'],
             remote_name=row['track_remote'], branch_name=row['track_branch'])
         repo.name = row['name']
@@ -56,4 +58,15 @@ class Home(object):
         for key, url in sorted(self.config.iteritems(glob='repo.*.url')):
             name = key.split('.')[1]
             yield self.get_repo(name, url)
+
+    def main(self, args, environ=None, **kwargs):
+
+        from vee.commands.main import main
+
+        environ = (environ or os.environ).copy()
+        environ['VEE'] = self.root
+
+        return main(args, environ, **kwargs)
+
+
 
