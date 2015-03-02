@@ -56,5 +56,8 @@ html_theme = 'default'
 html_static_path = ['_static']
 
 
+todo_include_todos = True
+
+
 # Configuration for intersphinx: refer to the Python standard library.
 intersphinx_mapping = {'http://docs.python.org/': None}

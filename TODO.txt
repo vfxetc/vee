@@ -13,14 +13,104 @@ BEFORE FIRST DEPLOY
     - scrap history
 - OS X apps via symlinks in docks?
 - assert all westernx packages transition
+
+
     - entrypoints.yml at top_level is built by Makefile (in sgfs and others)
         - make a build_metatools_entrypoints distutils command
     - sgactions.yml at top_level is built by Makefile (in sgfs and others)
         - this becomes the user's problem
 
+
+ALL COMMANDS
+------------
+
+~ vee init
+- vee clone (or vee init --clone)
+√ vee config
+- vee doctor
+√ vee self-update
+- vee gc
+
+√ vee install REQUIREMENT [ARGS]
+- vee uninstall (NAME|REQUIREMENT [ARGS])
+√ vee brew
+
+~ vee link ENVIRON (NAME|REQUIREMENT [ARGS])
+- vee unlink ENVIRON (NAME|REQUIREMENT [ARGS])
+~ vee env ENVIRON; replace with `vee exec --export`
+~ vee prefix
+~ vee exec [--export] [-e ENVIRON]+ [-r REQUIREMENTS]+ [NAME=VALUE]+ COMMAND [...]
+
+~ vee repo
+√ vee git
+√ vee update [--all] [ENVIRON]
+√ vee upgrade [--all] [ENVIRON]
+
+- vee develop (NAME|REQUIREMENT)
+- dev [...] COMMAND [ARGS]
+
+- vee add [NAME|PATH]
+- vee status
+- vee commit [--major,--minor,--patch] [-m MESSAGE]
+- vee push
+
+
+WORKFLOWS
+---------
+
+Primary consumer:
+
+    export VEE=/usr/local/vee
+    export VEE_REPO=westernx
+
+    vee init git@git.westernx:westernx/veerepo
+    vee update
+    vee upgrade
+
+    .bashrc:
+        eval "$(vee exec --export)"
+
+
+Developer, version 1:
+
+    # Same as above, and then:
+
+    export VEE_DEV=~/dev:~/key_tools
+
+    vee develop TOOL
+    # create .vee-dev-env within the tools directory
+
+    cd TOOL
+    # develop here; use `dev` to run in the dev environment
+    git commit -am 'What you did to this tools.'
+    git push # may not be nessesary
+
+    vee add [--all|TOOL_NAME|TOOL_PATH]
+    vee commit [--major,--minor,--patch] [-m MESSAGE]
+    vee push # Makes sure the tool is also pushed.
+
+    vee commit -a
+    vee push
+
+    vee update --upgrade
+
+
 ---
 
+- parenting and cloning and garbage is something that can be added on later, if
+  we realy want
+
+- if environments can provide their own home (by walking up their paths), then
+  `vee exec` can link together multiple homes
+
+- VEE_DEV=$VEE/dev by default, but is only really used by `vee develop` and `dev -u USER`
+- VEE_REPO=westernx sets the default repo
+
 - change `vee repo --add` to `vee repo --set`
+
+- can repos have parent repos and parent homes?
+    - then one repo could make use of another, and-or inherit from it
+    - parent homes is for development
 
 - s/repositories/repos/g in general?
 - s/environments/envs/g in general?

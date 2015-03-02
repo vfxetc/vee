@@ -3,6 +3,9 @@ Version: 1.0.0
 
 PKG_CONFIG_PATH=$VEE/packages/homebrew/lib/pkgconfig:@
 
+git+git@git.westernx:westernx/metatools         --force-fetch --revision origin/master
+PYTHONPATH=$VEE/opt/metatools/lib/python2.7/site-package
+
 
 # Shotgun's API.
 http://pyyaml.org/download/pyyaml/PyYAML-3.11.tar.gz
@@ -51,7 +54,6 @@ git+git@git.westernx:westernx/aaftools          --force-fetch --revision origin/
 git+git@git.westernx:westernx/dailymaker        --force-fetch --revision origin/master
 # git+git@git.westernx:westernx/iotools           --force-fetch --revision origin/master
 git+git@git.westernx:westernx/mayatools         --force-fetch --revision origin/master
-git+git@git.westernx:westernx/metatools         --force-fetch --revision origin/master
 git+git@git.westernx:westernx/nuketemplate      --force-fetch --revision origin/master
 git+git@git.westernx:westernx/qbfutures         --force-fetch --revision origin/master
 git+git@git.westernx:westernx/remotecontrol     --force-fetch --revision origin/master
