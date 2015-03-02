@@ -409,17 +409,20 @@ class BasePackage(object):
         frozen = self.freeze()
 
         if not force:
-            if not self._db_link_id:
-                row = self.home.db.execute(
-                    'SELECT id FROM links WHERE package_id = ? AND environment_id = ?',
-                    [self.db_id(), env.db_id()]
-                ).fetchone()
-            if self._db_link_id or row:
-                raise AlreadyLinked(str(frozen), self._db_link_id or row[0])
+            self._assert_unlinked(env)
 
         print style('Linking', 'blue', bold=True), style(str(frozen), bold=True)
         env.link_directory(self.install_path)
         self._record_link(env)
+
+    def _assert_unlinked(self, env):
+        if not self._db_link_id:
+            row = self.home.db.execute(
+                'SELECT id FROM links WHERE package_id = ? AND environment_id = ?',
+                [self.db_id(), env.db_id()]
+            ).fetchone()
+        if self._db_link_id or row:
+            raise AlreadyLinked(str(frozen), self._db_link_id or row[0])
 
     def db_id(self):
         if self._db_id is None:

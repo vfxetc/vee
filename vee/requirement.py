@@ -82,6 +82,10 @@ class Requirement(object):
                 args = shlex.split(args)
             if isinstance(args, (list, tuple)):
                 self._arg_parser.parse_args(args, namespace=self)
+            elif isinstance(args, argparse.Namespace):
+                for action in self._arg_parser._actions:
+                    name = action.dest
+                    setattr(self, name, getattr(args, name))
             else:
                 raise TypeError('args must be in (str, list, tuple); got %s' % args.__class__)
 

@@ -24,8 +24,7 @@ BEFORE FIRST DEPLOY
 ALL COMMANDS
 ------------
 
-~ vee init
-- vee clone (or vee init --clone)
+√ vee init
 √ vee config
 - vee doctor
 √ vee self-update

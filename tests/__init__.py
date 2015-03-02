@@ -27,8 +27,22 @@ VEE = os.path.join(sandbox_dir, 'vee')
 
 # Clear out the sandbox.
 if os.path.exists(sandbox_dir):
-    shutil.rmtree(sandbox_dir)
-os.makedirs(sandbox_dir)
+    for name in os.listdir(sandbox_dir):
+        if name == 'Homebrew':
+            continue
+        path = os.path.join(sandbox_dir, name)
+        if os.path.isdir(path):
+            shutil.rmtree(path)
+        else:
+            os.unlink(path)
+else:
+    os.makedirs(sandbox_dir)
+
+def sandbox(*args):
+    return os.path.join(sandbox_dir, *args)
+
+os.environ.setdefault('VEE_HOMEBREW', sandbox('Homebrew'))
+
 
 # Setup mock HTTP server.
 setup_mock_http(sandbox_dir)
@@ -44,8 +58,6 @@ def vee(args, environ=None):
     return _main(args, environ=full_environ)
 
 
-def sandbox(*args):
-    return os.path.join(sandbox_dir, *args)
 
 
 class TestCase(_TestCase):

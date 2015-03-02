@@ -72,7 +72,11 @@ class HomebrewPackage(GitPackage):
 
     @property
     def package_path(self):
-        return self.home._abs_path('packages', self._name_for_platform)
+        override = os.environ.get('VEE_HOMEBREW')
+        if override:
+            return override
+        else:
+            return self.home._abs_path('packages', self._name_for_platform)
 
     @property
     def build_path(self):
@@ -97,8 +101,13 @@ class HomebrewPackage(GitPackage):
         # Disable BasePackage.install().
         pass
 
-    def link(self, env):
+    def link(self, env, force=None):
+        
         self._assert_paths(install=True)
+
+        if not force:
+            self._assert_unlinked(env)
+
         # We want to link in all dependencies as well.
         for name in self._brew('deps', '-n', self.url, silent=True, stdout=True).strip().split():
             path = os.path.join(self.package_path, 'Cellar', self._install_name_from_info(name))

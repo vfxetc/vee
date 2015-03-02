@@ -270,12 +270,27 @@ def style(message='', fg=None, bg=None, bright=None, bold=None, faint=None,
 colour = color = style
 
 
+def style_note(heading, msg='', detail=''):
+    return '%s%s%s' % (
+        style(heading, 'blue', bold=True),
+        ' ' + style(msg, bold=True) if msg else '',
+        ' ' + detail if detail else ''
+    )
+
 def style_error(msg, detail=''):
     return '%s %s%s' % (
         style('Error:', 'red', bold=True),
         style(msg, bold=True),
         detail and ' ' + detail
     )
+
+def style_warning(msg, detail=''):
+    return '%s %s%s' % (
+        style('Warning:', 'yellow', bold=True),
+        style(msg, bold=True),
+        detail and ' ' + detail
+    )
+
 
 if __name__ == '__main__':
 

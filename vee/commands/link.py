@@ -31,7 +31,14 @@ def link(args):
 
 
     req_set = RequirementSet()
-    req_set.parse(args.specification[0], home=args.home)
+
+    unknown_args = args.specification
+    while unknown_args:
+        req_args, unknown_args = Requirement._arg_parser.parse_known_args(unknown_args)
+        if req_args.url.endswith('.txt'):
+            req_set.parse(req_args.url, home=args.home)
+        else:
+            req_set.elements.append(('', Requirement(req_args, home=args.home), ''))
 
     if not args.long_names:
         req_set.guess_names()

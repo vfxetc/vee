@@ -114,7 +114,7 @@ def main(argv=None, environ=None, as_main=__name__=="__main__"):
     
 
     args.home = args.home_path and Home(args.home_path)
-    args.main = getattr(args.home, 'main')
+    args.main = getattr(args.home, 'main', None)
     
 
     if args.func:
