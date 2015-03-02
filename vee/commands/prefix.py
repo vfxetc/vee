@@ -10,5 +10,5 @@ from vee.environment import Environment
 def prefix(args):
     args.assert_home()
     env = Environment(args.environment, home=args.home)
-    print env.root
+    print env.path
 

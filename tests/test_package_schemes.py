@@ -13,11 +13,11 @@ class TestPackageSchemes(TestCase):
         name = 'scheme_' + type
         pkg = MockPackage(name, type)
         pkg.render_commit()
-        vee(['install', sandbox('packages/%s' % name), '--install-name', '%s/1.0.0' % name])
+        vee(['install', pkg.path, '--install-name', '%s/1.0.0' % name])
         exe = sandbox('vee/installs/%s/1.0.0/bin/%s' % (name, name))
         self.assertTrue(os.path.exists(exe))
         if call:
-            self.assertEqual(subprocess.check_output([exe]).strip(), '%s:1' % name)
+            self.assertEqual(subprocess.check_output(['vee', 'exec', '-r', pkg.path, name]).strip(), '%s:1' % name)
 
     def test_make(self):
         self.assert_echo('c_make')
@@ -26,7 +26,7 @@ class TestPackageSchemes(TestCase):
         self.assert_echo('c_configure_make_install')
 
     def test_python_source(self):
-        self.assert_echo('python_source', call=False)
+        self.assert_echo('python_source')
         # TODO: arbitrary data.
         # TODO: both scripts and console_scripts entrypoints.
 

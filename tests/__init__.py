@@ -21,8 +21,10 @@ os.dup2(1, 2)
 tests_dir = os.path.abspath(os.path.join(__file__, '..'))
 root_dir = os.path.dirname(tests_dir)
 sandbox_dir = os.path.join(tests_dir, 'sandbox')
-VEE = os.path.join(sandbox_dir, 'vee')
 
+# Setup root for inheriting.
+VEE = os.path.join(sandbox_dir, 'vee')
+os.environ['VEE'] = VEE
 
 
 # Clear out the sandbox.

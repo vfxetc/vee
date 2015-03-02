@@ -28,22 +28,21 @@ ALL COMMANDS
 √ vee config
 √ vee doctor
 √ vee self-update
-- vee gc
+- vee gc [--installs] [--environs]
 
 √ vee install REQUIREMENT [ARGS]
 - vee uninstall (NAME|REQUIREMENT [ARGS])
 √ vee brew
 
-~ vee link ENVIRON (NAME|REQUIREMENT [ARGS])
+√ vee link ENVIRON (NAME|REQUIREMENT [ARGS])
 - vee unlink ENVIRON (NAME|REQUIREMENT [ARGS])
-~ vee env ENVIRON; replace with `vee exec --export`
 ~ vee prefix
-~ vee exec [--export] [-e ENVIRON]+ [-r REQUIREMENTS]+ [NAME=VALUE]+ COMMAND [...]
+√ vee exec [--export] [-e ENVIRON]+ [-r REQUIREMENTS]+ [NAME=VALUE]+ COMMAND [...]
 
 ~ vee repo
-√ vee git
-√ vee update [--all] [ENVIRON]
-√ vee upgrade [--all] [ENVIRON]
+~ vee git
+~ vee update [--all] [ENVIRON]
+~ vee upgrade [--all] [ENVIRON]
 
 - vee develop (NAME|REQUIREMENT)
 - dev [...] COMMAND [ARGS]
@@ -62,7 +61,7 @@ Primary consumer:
     export VEE=/usr/local/vee
     export VEE_REPO=westernx
 
-    vee init git@git.westernx:westernx/veerepo
+    vee init git@git.westernx:westernx/vee-repo
     vee update
     vee upgrade
 
@@ -96,30 +95,20 @@ Developer, version 1:
 
 ---
 
+- @path/to/requirements for sets?
+
 - parenting and cloning and garbage is something that can be added on later, if
   we realy want
-
-- if environments can provide their own home (by walking up their paths), then
-  `vee exec` can link together multiple homes
 
 - VEE_DEV=$VEE/dev by default, but is only really used by `vee develop` and `dev -u USER`
 - VEE_REPO=westernx sets the default repo
 
 - change `vee repo --add` to `vee repo --set`
 
-- can repos have parent repos and parent homes?
-    - then one repo could make use of another, and-or inherit from it
-    - parent homes is for development
-
-- s/repositories/repos/g in general?
-- s/environments/envs/g in general?
-
 - do we need to track the git remote, or can we always just assume that it is
   "origin"? We do want to know what branch to track.
 
-- make the mock Python projects (sdist, bdist, bdist_egg, bdist_wheel) from the
-  python_source one by running setup.py. The real problem is that the template
-  variables get mashed up. replace them with MOCK([A-Z0-9]), e.g.: MOCKNAME, MOCKREVNO
+- detect all Python variants, and have special builders for them
 
 - permissions
 
@@ -142,24 +131,6 @@ Developer, version 1:
     - package.set_handlers(build=True, install=True); package.builder.build()
     - pkgname.tgz --builder python_source
 
-- dev environment:
-
-    - `vee init --parent /path/to/other/vee /path/to/dev`
-
-    - `vee --dev xxx` is a shortcut for setting VEE to discovered dev
-    - `vee install --develop` does like `python setup.py develop`
-    - may need a `Package.develop()` method
-        - for git packages, it sets the package_path, and makes sure it
-          exists
-        - for non-git packages, it fails (for now)
-        - it adds a dev link to the DB, or some metadata file (or its own
-          .veedev.sqlite)
-
-    - how to run in dev?
-        - `vee runtime ENV` creates a shell for you to run it?
-
-    - how to inherit environments?
-
 - should $repo/requirements.txt be moved to $repo/vee[/-]requirements.txt ?
 
 - test python packages (for each of source, sdist, bdist, bdist_wheel):
@@ -171,15 +142,15 @@ Developer, version 1:
 
 - install data that comes with Python wheels
   $NAME-$VERSION.data dir at top-level, beside $NAME-$VERSION.dist-info
+
 - install Python commands listed in egg-info
 
-- linking could check if a previous revision of the same thing was already
+- linking should check if a previous revision of the same thing was already
   linked into an environment, and stop you
 
 - parse_multiple_requirements(args) walks through a set of args, pulling out
   RequirementSet(s) when they are files that end in '.txt' (or no extendion),
   and requirements from the rest
-
 
 - how does this new Python install method deal with install_requires?
     - it doesn't! document it?

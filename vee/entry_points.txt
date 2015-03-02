@@ -20,7 +20,6 @@ link = vee.commands.link:link
 
 # Environments.
 prefix = vee.commands.prefix:prefix
-env = vee.commands.env:env
 exec = vee.commands.exec_:exec_
 
 # Underlying commands.

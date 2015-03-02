@@ -158,9 +158,30 @@ Dump environment variables for the given environment.
 Print the path to the environment.
 
 
-``vee exec [-e ENVIRON] [-r REQUIREMENTS] COMMAND [...]``
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+``vee exec  [-e ENVIRON]+ [-r REQUIREMENTS]+ [NAME=VALUE]+ (--export|COMMAND ARGS*)``
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Run the given command in the given environment.
+Construct an environment, and either export it or run a command in it.
+
+::
+    
+    # Run in the default repository.
+    $ vee exec $command
+
+    # Run within a given repository.
+    $ vee exec --repo named_repo $command
+
+    # Run within a named environment.
+    $ vee exec -e named_environ $command
+
+    # Run within a constructed runtime for a set of requirements.
+    $ vee exec -r requirements.txt $command
+
+    # Export the default environment.
+    $ vee exec --export
+    export LD_LIBRARY_PATH="/usr/local/vee/lib:$LD_LIBRARY_PATH"
+    export PATH="/usr/local/vee/bin:$PATH"
+    export PYTHONPATH="/usr/local/vee/lib/python2.7/site-packages"
+
 
 

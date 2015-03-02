@@ -28,8 +28,10 @@ def repo(args):
     config = home.config
 
     if args.action in ('list', None):
-        for row in home.db.execute('SELECT * FROM repositories'):
-            print '%d %s %s%s%s' % (row['id'], row['name'], row['url'],
+        rows = list(home.db.execute('SELECT * FROM repositories'))
+        max_len = max(len(row['name']) for row in rows)
+        for row in rows:
+            print '%d %s %s%s%s' % (row['id'], '%%%ds' % max_len % row['name'], row['url'],
                 ' --default' if row['is_default'] else '',
                 ' --parent %s' % row['parent_path'] if row['parent_path'] else '',
             )
