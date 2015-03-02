@@ -4,17 +4,8 @@ python:
   - "2.7"
   - "pypy"
 
-before_install:
+before_script:
   - git config --global user.email "travisci-vee@mikeboers.com"
   - git config --global user.name  "TravisCI"
-
-install:
-  - pip install Flask$FLASK_VERSION
-  - pip install -e .
-
-before_script:
-  - export VEE=/usr/local/vee
-  - sudo mkdir -p $VEE
-  - sudo chown $(whoami) $VEE
 
 script: nosetests

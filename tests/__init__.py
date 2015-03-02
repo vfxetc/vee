@@ -36,6 +36,7 @@ setup_mock_http(sandbox_dir)
 home = Home(VEE)
 os.chdir(sandbox_dir)
 
+
 def vee(args, environ=None):
     full_environ = os.environ.copy()
     full_environ.update(environ or {})

@@ -1,6 +1,6 @@
 import os
 
-from vee.commands.main import command, argument, group, main
+from vee.commands.main import command, argument, group
 from vee.environment import Environment
 from vee.utils import style, makedirs
 
@@ -38,7 +38,7 @@ def upgrade(args):
         path_by_commit = home.abspath('environments', repo.name, 'commits', rev[:8])
         path_by_branch = home.abspath('environments', repo.name, repo.remote_name, repo.branch_name)
 
-        main(['link', path_by_commit, repo.abspath('requirements.txt')])
+        args.main(['link', path_by_commit, repo.abspath('requirements.txt')])
 
         if os.path.exists(path_by_branch):
             os.unlink(path_by_branch)
