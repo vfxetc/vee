@@ -11,23 +11,11 @@ import sys
 from vee.exceptions import AlreadyInstalled, AlreadyLinked
 from vee.utils import cached_property, style, call, call_log, makedirs
 from vee.requirement import Requirement, requirement_parser
+from vee.builds.generic import get_package_builder
 
 
-python_version = '%d.%d' % (sys.version_info[:2])
-site_packages = os.path.join('lib', 'python' + python_version, 'site-packages')
 
 
-def _find_in_tree(root, name, type='file'):
-    pattern = fnmatch.translate(name)
-    for dir_path, dir_names, file_names in os.walk(root):
-        # Look for the file/directory.
-        candidates = dict(file=file_names, dir=dir_names)[type]
-        found = next((x for x in candidates if re.match(pattern, x)), None)
-        if found:
-            return os.path.join(dir_path, found)
-        # Bail when we hit a fork in the directory tree.
-        if len(dir_names) > 1 or file_names:
-            return
 
 
 class BasePackage(object):
@@ -214,165 +202,29 @@ class BasePackage(object):
         else:
             raise ValueError('unknown package type %r' % self.package_path)
 
-    _found_setup_py = None
-    _found_makefile = None
+    @cached_property
+    def builder(self):
+        return get_package_builder(self)
 
     def build(self):
         """Build the package in the build directory."""
-
-        env = None
         self._assert_paths(build=True)
-
-        build_sh = _find_in_tree(self.build_path, 'vee-build.sh')
-        if build_sh:
-
-            print style('Running vee-build.sh...', 'blue', bold=True)
-            env = env or self.fresh_environ()
-            env.update(
-                VEE=self.home.root,
-                VEE_BUILD_PATH=self.build_path,
-                VEEinstall_name=self.install_name,
-                VEE_INSTALL_PATH=self.install_path,
-            )
-
-            cwd = os.path.dirname(build_sh)
-            envfile = os.path.join(cwd, 'vee-env-' + os.urandom(8).encode('hex'))
-            call_log(['bash', '-c', '. vee-build.sh; env | grep VEE > %s' % (envfile)], env=env, cwd=cwd)
-
-            env = list(open(envfile))
-            env = dict(line.strip().split('=', 1) for line in env)
-            os.unlink(envfile)
-
-            self.build_subdir = env.get('VEEbuild_subdir') or ''
-            self.install_prefix = env.get('VEEinstall_prefix') or ''
-            return
-
-        setup_py = self._found_setup_py = _find_in_tree(self.build_path, 'setup.py')
-        if setup_py:
-
-            print style('Building Python package...', 'blue', bold=True)
-
-            # Need to inject setuptools for this.
-            cmd = ['python', '-c', 'import setuptools; __file__=\'setup.py\'; execfile(__file__)']
-            cmd.extend(['build',
-                '--executable', '/usr/bin/env python',
-            ])
-            cmd.extend(self.config)
-
-            if call(cmd, cwd=os.path.dirname(setup_py), env=env):
-                raise RuntimeError('Could not build Python package')
-
-            return
-
-        egg_info = _find_in_tree(self.build_path, '*.egg-info', 'dir')
-        if egg_info:
-            print style('Found Python Egg:', 'blue', bold=True), style(os.path.basename(egg_info), bold=True)
-            self.build_subdir = os.path.dirname(egg_info)
-            self.install_prefix = site_packages
-            return
-
-        # This is very similar to the above...
-        dist_info = _find_in_tree(self.build_path, '*.dist-info', 'dir')
-        if dist_info:
-            print style('Found Python Wheel:', 'blue', bold=True), style(os.path.basename(dist_info), bold=True)
-            if not self.package_path.endswith('.whl'):
-                print style('Warning:', 'yellow', bold=True), style('package does not appear to be a Wheel', bold=True)
-            self.build_subdir = os.path.dirname(dist_info)
-            self.install_prefix = site_packages
-            return
-
-        configure = _find_in_tree(self.build_path, 'configure')
-        if configure:
-            self.build_subdir = os.path.dirname(configure)
-            print style('Configuring...', 'blue', bold=True)
-            cmd = ['./configure', '--prefix', self.install_path]
-            env = env or self.fresh_environ()
-            cmd.extend(self.config)
-            call(cmd, cwd=os.path.dirname(configure), env=env)
-
-        makefile = self._found_makefile = _find_in_tree(self.build_path, 'Makefile')
-        if makefile:
-            self.build_subdir = os.path.dirname(makefile)
-            print style('Making...', 'blue', bold=True)
-            env = env or self.fresh_environ()
-            call(['make', '-j4'], cwd=os.path.dirname(makefile), env=env)
-
+        self.builder.build()
 
     @property
     def installed(self):
-        self._set_names(install=True)
+        self._assert_paths(install=True)
         return self.install_path and os.path.exists(self.install_path)
 
     def install(self):
         """Install the build artifact into a final location."""
 
-        self._set_names(build=True, install=True)
-        if not self.build_path or not self.build_path_to_install:
-            raise RuntimeError('need build path for default Package.install')
-        if not self.install_path or not self.install_path_from_build:
-            raise RuntimeError('need install path for default Package.install')
+        self._assert_paths(build=True, install=True)
 
-        # We are not using our wrapper, as we want this to fail if it is
-        # already installed.
         if self.installed:
             raise AlreadyInstalled('was already installed at %s' % self.install_path)
-        
-        installed = False
 
-        if self.make_install and not self._found_makefile:
-            print style('Warning:', 'yellow', bold=True), style('--make-install specified, but no Makefile found.', bold=True)
-
-        # This was built as a Python package, and so we will install it like one.
-        if self._found_setup_py:
-
-            install_site_packages = os.path.join(self.install_path, site_packages)
-
-            # Setup the PYTHONPATH to point to the "install" directory.
-            env = self.fresh_environ()
-            env['PYTHONPATH'] = '%s:%s' % (install_site_packages, env.get('PYTHONPATH', ''))
-            os.makedirs(install_site_packages)
-
-            print style('Installing Python package...', 'blue', bold=True)
-
-            # Need to inject setuptools for this.
-            cmd = ['python', '-c', 'import setuptools; __file__=\'setup.py\'; execfile(__file__)']
-            cmd.extend(['install',
-                '--skip-build',
-                '--root', self.install_path, # Better than prefix
-                '--prefix', '.',
-                '--install-lib', site_packages, # So that we don't get lib64.
-                '--no-compile',
-                '--single-version-externally-managed',
-            ])
-
-            if call(cmd, cwd=os.path.dirname(self._found_setup_py), env=env):
-                raise RuntimeError('Could not install Python package')
-
-            installed = True
-
-        if not installed and self._found_makefile:
-            if not self.make_install:
-                if (not self.build_subdir or
-                    self.build_subdir == os.path.dirname(self._found_makefile)
-                   ) and not self.install_prefix:
-                    print style('Warning:', 'yellow', bold=True), 'Skipping `make install` and installing full package.'
-                    print 'Usually you will want to specify one of:'
-                    print '    --make-install'
-                    print '    --build-subdir PATH'
-                    print '    --install-subdir PATH'
-            else:
-                print style('Installing via `make install`', 'blue', bold=True)
-                if call(
-                    ['make', 'install', '-j4'],
-                    cwd=os.path.dirname(self._found_makefile),
-                    env=self.fresh_environ(),
-                ):
-                    raise RuntimeError('Could not `make install` package')
-                installed = True
-
-        if not installed:
-            print style('Installing via copy', 'blue', bold=True), style('to ' + self.install_path, bold=True)
-            shutil.copytree(self.build_path_to_install, self.install_path_from_build, symlinks=True)
+        self.builder.install()
 
         # Link into $VEE/opt.
         if self.name:

@@ -72,37 +72,15 @@ BEFORE FIRST DEPLOY
     - do we need to chgrp, or can setgid handle that?
         - document the result
 
-- build/install classes: Base, Make, Python, PythonEgg, PythonWheel, etc..
+- Build types
 
-    - technically, the scheme of a URL includes anything before the colon, so
-      schemes in our system are: git+git, git+http, http, https, homebrew (kinda)
+  Build.factory_priority
 
-      if Package.type was package.transport_type, or vcs_type, then I might
-      feel better
+  Build.factory(package) -> instance or None
+  
+  Build.build()
+  Build.install()
 
-      Should the transport stuff be isolated to another class?
-            BaseTransport, GitTransport, HttpTransport, HomebrewTransport?
-
-      Can I just merge Requirement and Package completely? Do I really need to
-      have different ones? There is SO little on a Requirement, much of which
-      is there to support going to/from Package.
-
-      The new classes are then:
-
-        Requirements -> a set of Package(s)
-        Package -> a combo of Package and Requirement, all about the meta.
-        Pipeline -> Fetcher/Extractor/Builder/Installer/Linker,
-
-        How are names handled?
-        
-
-
-- Package vs Build
-
-    package types: git, homebrew, http, file
-    build types: make, python, generic
-
-    all names, at this point, are still handled by packages
 
 
 - test python packages (for each of source, sdist, bdist, bdist_wheel):

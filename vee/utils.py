@@ -2,6 +2,7 @@
 
 import datetime
 import errno
+import fnmatch
 import functools
 import os
 import re
@@ -38,6 +39,19 @@ def makedirs(*args):
             raise e
     return path
 
+
+
+def find_in_tree(root, name, type='file'):
+    pattern = fnmatch.translate(name)
+    for dir_path, dir_names, file_names in os.walk(root):
+        # Look for the file/directory.
+        candidates = dict(file=file_names, dir=dir_names)[type]
+        found = next((x for x in candidates if re.match(pattern, x)), None)
+        if found:
+            return os.path.join(dir_path, found)
+        # Bail when we hit a fork in the directory tree.
+        if len(dir_names) > 1 or file_names:
+            return
 
 
 def guess_name(path):

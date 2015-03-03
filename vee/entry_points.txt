@@ -27,7 +27,16 @@ brew = vee.commands.brew:brew
 
 
 [vee_package_types]
+
 file = vee.packages.file:FilePackage
 git = vee.packages.git:GitPackage
 homebrew = vee.packages.homebrew:HomebrewPackage
 http = vee.packages.http:HttpPackage
+
+
+[vee_build_types]
+
+generic = vee.builds.generic:GenericBuild
+make = vee.builds.make:MakeBuild
+python = vee.builds.python:PythonBuild
+self = vee.builds.self:SelfBuild
