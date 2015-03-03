@@ -56,16 +56,16 @@ requirement_parser = _requirement_parser(add_help=False)
 
 requirement_parser.add_argument('-n', '--name')
 requirement_parser.add_argument('-r', '--revision')
-requirement_parser.add_argument('-f', '--force-fetch', dest='_force_fetch', action='store_true', help='always fetch git repos')
+requirement_parser.add_argument('-f', '--force-fetch', action='store_true', help='always fetch git repos')
 
 requirement_parser.add_argument('-e', '--environ', nargs='*', action=_EnvironmentAction)
 requirement_parser.add_argument('-c', '--config', nargs='*', action=_configAction, help='args to pass to `./configure`, `python setup.py`, `brew install`, etc..')
 
 requirement_parser.add_argument('--make-install', action='store_true', help='do `make install`')
 
-requirement_parser.add_argument('--install-name', dest='_install_name')
-requirement_parser.add_argument('--build-subdir', dest='_build_subdir_to_install')
-requirement_parser.add_argument('--install-prefix', dest='_install_subdir_from_build')
+requirement_parser.add_argument('--install-name')
+requirement_parser.add_argument('--build-subdir')
+requirement_parser.add_argument('--install-prefix')
 
 requirement_parser.add_argument('url')
 

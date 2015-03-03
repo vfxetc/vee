@@ -55,11 +55,11 @@ class HomebrewPackage(GitPackage):
 
     def _set_names(self, package=False, build=False, install=False):
         if package:
-            self._package_name = self.url
+            self.package_name = self.url
         if build or install:
-            self._build_name = self._install_name = self._install_name_from_info()
+            self.build_name = self.install_name = self.install_name_from_info()
 
-    def _install_name_from_info(self, name=None, info=None):
+    def install_name_from_info(self, name=None, info=None):
         name = name or self.url
         info = info or self._brew_info(name)
         if not info:
@@ -80,7 +80,7 @@ class HomebrewPackage(GitPackage):
 
     @property
     def build_path(self):
-        return self._install_name and os.path.join(self.package_path, 'Cellar', self._install_name)
+        return self.install_name and os.path.join(self.package_path, 'Cellar', self.install_name)
 
     install_path = build_path
 
@@ -110,7 +110,7 @@ class HomebrewPackage(GitPackage):
 
         # We want to link in all dependencies as well.
         for name in self._brew('deps', '-n', self.url, silent=True, stdout=True).strip().split():
-            path = os.path.join(self.package_path, 'Cellar', self._install_name_from_info(name))
+            path = os.path.join(self.package_path, 'Cellar', self.install_name_from_info(name))
             if os.path.exists(path):
                 print style('Linking', 'blue', bold=True), style('homebrew+%s (homebrew+%s dependency)' % (name, self.url), bold=True)
                 env.link_directory(path)

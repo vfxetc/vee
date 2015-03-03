@@ -66,7 +66,7 @@ class BasePackage(object):
 
         self._db_id = None
         self._db_link_id = None
-        self._package_name = self._build_name = None
+        self.package_name = self.build_name = None
 
 
     def __repr__(self):
@@ -121,16 +121,16 @@ class BasePackage(object):
         return environ
 
     def _set_default_names(self, package=False, build=False, install=False):
-        if (package or build or install) and self._package_name is None:
-            self._package_name = self.url and os.path.join(self.type, re.sub(r'^https?://', '', self.url).strip('/'))
-        if (install or build) and self._install_name is None:
+        if (package or build or install) and self.package_name is None:
+            self.package_name = self.url and os.path.join(self.type, re.sub(r'^https?://', '', self.url).strip('/'))
+        if (install or build) and self.install_name is None:
             if self.name and self.revision:
-                self._install_name = '%s/%s' % (self.name, self.revision)
+                self.install_name = '%s/%s' % (self.name, self.revision)
             else:
-                self._install_name = self._package_name and re.sub(r'(\.(tar|gz|tgz|zip))+$', '', self._package_name)
-        if build and self._build_name is None:
-            self._build_name = self._install_name and ('%s/%s-%s' % (
-                self._install_name,
+                self.install_name = self.package_name and re.sub(r'(\.(tar|gz|tgz|zip))+$', '', self.package_name)
+        if build and self.build_name is None:
+            self.build_name = self.install_name and ('%s/%s-%s' % (
+                self.install_name,
                 datetime.datetime.utcnow().strftime('%y%m%d%H%M%S'),
                 os.urandom(4).encode('hex'),
             ))
@@ -153,28 +153,28 @@ class BasePackage(object):
     @property
     def package_path(self):
         """Where the package is cached."""
-        return self._package_name and self.home._abs_path('packages', self._package_name)
+        return self.package_name and self.home._abs_path('packages', self.package_name)
 
     @property
     def build_path(self):
         """Where the package will be built."""
-        return self._build_name and self.home._abs_path('builds', self._build_name)
+        return self.build_name and self.home._abs_path('builds', self.build_name)
 
     @property
     def install_path(self):
         """The final location of the built package."""
-        return self._install_name and self.home._abs_path('installs', self._install_name)
+        return self.install_name and self.home._abs_path('installs', self.install_name)
 
     def fetch(self):
         """Cache package from remote source; return something representing the package."""
 
     @property
     def build_path_to_install(self):
-        return os.path.join(self.build_path, self._build_subdir_to_install or '').rstrip('/')
+        return os.path.join(self.build_path, self.build_subdir or '').rstrip('/')
 
     @property
     def install_path_from_build(self):
-        return os.path.join(self.install_path, self._install_subdir_from_build or '').rstrip('/')
+        return os.path.join(self.install_path, self.install_prefix or '').rstrip('/')
 
     def _clean_build_path(self, makedirs=True):
         if self.build_path and os.path.exists(self.build_path):
@@ -231,7 +231,7 @@ class BasePackage(object):
             env.update(
                 VEE=self.home.root,
                 VEE_BUILD_PATH=self.build_path,
-                VEE_INSTALL_NAME=self._install_name,
+                VEEinstall_name=self.install_name,
                 VEE_INSTALL_PATH=self.install_path,
             )
 
@@ -243,8 +243,8 @@ class BasePackage(object):
             env = dict(line.strip().split('=', 1) for line in env)
             os.unlink(envfile)
 
-            self._build_subdir_to_install = env.get('VEE_BUILD_SUBDIR_TO_INSTALL') or ''
-            self._install_subdir_from_build = env.get('VEE_INSTALL_SUBDIR_FROM_BUILD') or ''
+            self.build_subdir = env.get('VEEbuild_subdir') or ''
+            self.install_prefix = env.get('VEEinstall_prefix') or ''
             return
 
         setup_py = self._found_setup_py = _find_in_tree(self.build_path, 'setup.py')
@@ -267,8 +267,8 @@ class BasePackage(object):
         egg_info = _find_in_tree(self.build_path, '*.egg-info', 'dir')
         if egg_info:
             print style('Found Python Egg:', 'blue', bold=True), style(os.path.basename(egg_info), bold=True)
-            self._build_subdir_to_install = os.path.dirname(egg_info)
-            self._install_subdir_from_build = site_packages
+            self.build_subdir = os.path.dirname(egg_info)
+            self.install_prefix = site_packages
             return
 
         # This is very similar to the above...
@@ -277,13 +277,13 @@ class BasePackage(object):
             print style('Found Python Wheel:', 'blue', bold=True), style(os.path.basename(dist_info), bold=True)
             if not self.package_path.endswith('.whl'):
                 print style('Warning:', 'yellow', bold=True), style('package does not appear to be a Wheel', bold=True)
-            self._build_subdir_to_install = os.path.dirname(dist_info)
-            self._install_subdir_from_build = site_packages
+            self.build_subdir = os.path.dirname(dist_info)
+            self.install_prefix = site_packages
             return
 
         configure = _find_in_tree(self.build_path, 'configure')
         if configure:
-            self._build_subdir_to_install = os.path.dirname(configure)
+            self.build_subdir = os.path.dirname(configure)
             print style('Configuring...', 'blue', bold=True)
             cmd = ['./configure', '--prefix', self.install_path]
             env = env or self.fresh_environ()
@@ -292,7 +292,7 @@ class BasePackage(object):
 
         makefile = self._found_makefile = _find_in_tree(self.build_path, 'Makefile')
         if makefile:
-            self._build_subdir_to_install = os.path.dirname(makefile)
+            self.build_subdir = os.path.dirname(makefile)
             print style('Making...', 'blue', bold=True)
             env = env or self.fresh_environ()
             call(['make', '-j4'], cwd=os.path.dirname(makefile), env=env)
@@ -352,9 +352,9 @@ class BasePackage(object):
 
         if not installed and self._found_makefile:
             if not self.make_install:
-                if (not self._build_subdir_to_install or
-                    self._build_subdir_to_install == os.path.dirname(self._found_makefile)
-                   ) and not self._install_subdir_from_build:
+                if (not self.build_subdir or
+                    self.build_subdir == os.path.dirname(self._found_makefile)
+                   ) and not self.install_prefix:
                     print style('Warning:', 'yellow', bold=True), 'Skipping `make install` and installing full package.'
                     print 'Usually you will want to specify one of:'
                     print '    --make-install'
@@ -425,9 +425,9 @@ class BasePackage(object):
                   self.url,
                   self.name,
                   self.revision,
-                  self._package_name,
-                  self._build_name,
-                  self._install_name,
+                  self.package_name,
+                  self.build_name,
+                  self.install_name,
                   self.package_path,
                   self.build_path,
                   self.install_path,
@@ -453,7 +453,7 @@ class BasePackage(object):
             if getattr(self, attr):
                 clauses.append('%s = ?' % column)
                 values.append(getattr(self, attr))
-        for attr in ('_package_name', '_build_name', '_install_name'):
+        for attr in ('package_name', 'build_name', 'install_name'):
             if getattr(self, attr):
                 clauses.append('%s = ?' % attr.strip('_'))
                 values.append(getattr(self, attr))
@@ -488,9 +488,9 @@ class BasePackage(object):
         self._db_link_id = row['link_id']
         self.name = row['name']
         self.revision = row['revision']
-        self._package_name = row['package_name']
-        self._build_name = row['build_name']
-        self._install_name = row['install_name']
+        self.package_name = row['package_name']
+        self.build_name = row['build_name']
+        self.install_name = row['install_name']
         if (self.package_path != row['package_path'] or
             self.build_path != row['build_path'] or
             self.install_path != row['install_path']
@@ -518,7 +518,7 @@ class BasePackage(object):
 
     def auto_install(self, force=False):
 
-        if not self._force_fetch:
+        if not self.force_fetch:
             self._reinstall_check(force)
 
         self.fetch()
