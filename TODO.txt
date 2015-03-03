@@ -76,7 +76,15 @@ BEFORE FIRST DEPLOY
     - this have methods for handling build, install, develop, and runtime
     - may use different classes for each of the above stages.
     - package.set_handlers(build=True, install=True); package.builder.build()
-    - pkgname.tgz --builder python_source
+    - what to name these?
+        - Builder (despite being innaccurate, it is still a good generic one)
+        - Builder and Installer
+        - Processor
+        - Handler
+        - PackageScheme
+        - PackageStandard
+        - nothing! they only implement an API
+
 
 - test python packages (for each of source, sdist, bdist, bdist_wheel):
     - they import

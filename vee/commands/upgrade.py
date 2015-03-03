@@ -25,7 +25,7 @@ def upgrade(args):
 
         repo.clone_if_not_exists()
 
-        rev = repo.rev_parse('%s/%s' % (repo.remote_name, repo.branch_name))
+        rev = repo.head if args.head else repo.rev_parse('%s/%s' % (repo.remote_name, repo.branch_name))
 
         if not args.head and rev != repo.head:
             print style('Error:', 'red', bold=True), style('%s repo not checked out to %s/%s; force with --head' % (

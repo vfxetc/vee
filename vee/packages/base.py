@@ -214,7 +214,7 @@ class BasePackage(object):
             call(['tar', 'xzf', self.package_path], cwd=self.build_path)
 
         # Zip files (and Python wheels).
-        elif re.search(r'(\.zip|\.whl)$', self.package_path):
+        elif re.search(r'(\.zip|\.egg|\.whl)$', self.package_path):
             self._clean_build_path()
             call(['unzip', self.package_path], cwd=self.build_path)
 

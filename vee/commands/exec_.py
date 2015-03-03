@@ -35,7 +35,7 @@ def exec_(args):
     for name in args.repo or ():
         repo = home.get_repo(name or None) # Allow '' to be the default.
         args.environment = args.environment or []
-        args.environment.append('%s/%s/%s' % (repo.name, repo.remote_name, repo.branch_name))
+        args.environment.append('%s/%s' % (repo.name, repo.branch_name))
 
     # Requirements and requirement sets.
     req_args = []
