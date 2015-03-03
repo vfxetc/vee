@@ -19,39 +19,13 @@ The initial goal is to include packages from:
 - ad-hoc general packages.
 
 
-Example
--------
-
-.. code-block:: bash
-
-    # Install VEE.
-    export VEE=/usr/local/vee
-    sudo mkdir -p $VEE
-    sudo chmod -R g=rwXs,o=rwX $VEE
-    python <(curl -fsSL https://raw.githubusercontent.com/westernx/vee/master/install_vee.py)
-    export PATH="$VEE/src/bin:$PATH"
-
-    # Install some individual packages.
-    vee install homebrew+sqlite
-    vee install homebrew+ffmpeg --configuration='--with-faac'
-    vee install git+https://github.com/shotgunsoftware/python-api.git --name shotgun_api3
-    vee install --force https://github.com/westernx/sgmock/archive/master.zip --install-name sgmock/0.1
-    vee install git+git@git.westernx:westernx/sgsession
-
-    # Link a few packages into an "example" environment.
-    vee link example tests/example-env.txt
-
-    # Execute within the "example" environment.
-    vee exec -e example python -c 'import sgmock; print sgmock'
-
-
-
 Contents
 ========
 
 .. toctree::
     :maxdepth: 2
 
+    workflow
     pipeline
     commands
 

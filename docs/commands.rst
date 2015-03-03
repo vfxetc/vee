@@ -5,7 +5,7 @@ General
 -------
 
 ``vee init REPO_URL``
-~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~
 
 Initialize the structures, and setup the primary repository. This should be
 run before any other commands.
@@ -59,7 +59,7 @@ Packages
 --------
 
 ``vee install (REQUIREMENT [OPTIONS])+``
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Install the given requirement or requirements, e.g.::
     
@@ -76,7 +76,7 @@ Install the given requirement or requirements, e.g.::
 
 
 ``vee brew COMMAND+``
-~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~
 
 Run a command on VEE's Homebrew. This is sometimes nessesary to manage Homebrew
 dependencies, as they are generally outside of the standard build pipeline.
@@ -96,7 +96,7 @@ Repositories
 ------------
 
 ``vee repo [--add|--set|--delete|--list] [--default] [--branch BRANCH] NAME [URL]``
-~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Manipulate repositories.
 
@@ -116,7 +116,7 @@ Manipulate repositories.
 
 
 ``vee git [-r REPO] COMMAND+``
-~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Run a ``git`` command on a repository's git repository. (Sorry for the name
 collision!)
@@ -131,7 +131,7 @@ collision!)
 
 
 ``vee update [--all] REPOS*``
-~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Update the repositories. This will fail if your repositories are dirty, or have
 forked from the remotes.

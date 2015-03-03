@@ -21,91 +21,39 @@ BEFORE FIRST DEPLOY
         - this becomes the user's problem
 
 
-ALL COMMANDS
-------------
+---
 
-√ vee init
-√ vee config
-√ vee doctor
-√ vee self-update
-- vee gc [--installs] [--environs]
-
-√ vee install REQUIREMENT [ARGS]
-- vee uninstall (NAME|REQUIREMENT [ARGS])
-√ vee brew
-
-√ vee link ENVIRON (NAME|REQUIREMENT [ARGS])
-- vee unlink ENVIRON (NAME|REQUIREMENT [ARGS])
-√ vee exec [--export] [-e ENVIRON]+ [-R REQUIREMENTS]+ [NAME=VALUE]+ COMMAND [...]
-
-√ vee repo [--add|--set|--delete|--list] [--default] [--branch BRANCH] NAME [URL]
-√ vee git
-√ vee update [--all] [ENVIRON]
-√ vee upgrade [--all] [ENVIRON]
-
-- vee develop (NAME|REQUIREMENT)
-- dev [...] COMMAND [ARGS]
-
-- vee add [NAME|PATH]
-- vee status
-- vee commit [--major,--minor,--patch] [-m MESSAGE]
-- vee push
-
-
-WORKFLOWS
----------
-
-Primary consumer:
-
-    export VEE=/usr/local/vee
-    export VEE_REPO=westernx
-
-    vee init git@git.westernx:westernx/vee-repo
-    vee update
-    vee upgrade
-
-    .bashrc:
-        eval "$(vee exec --export)"
-
-
-Developer, version 1:
-
-    # Same as above, and then:
-
-    export VEE_DEV=~/dev:~/key_tools
-
-    vee develop TOOL
-    # create .vee-dev-env within the tools directory
-
-    cd TOOL
-    # develop here; use `dev` to run in the dev environment
-    git commit -am 'What you did to this tools.'
-    git push # may not be nessesary
-
-    vee add [--all|TOOL_NAME|TOOL_PATH]
-    vee commit [--major,--minor,--patch] [-m MESSAGE]
-    vee push # Makes sure the tool is also pushed.
-
-    vee commit -a
-    vee push
-
-    vee update --upgrade
+- commands to write:
+    - vee gc [--installs] [--environs]
+        - delete installs (and their DB records) which are not linked to
+        - delete installs in DB that don't exist on disk
+        - delete anything on disk that isn't referred to by the index
+            build a set of relative paths (and all their ancestors), then walk the
+            root looking for directories which aren't mentioned, then delete them
+    - vee uninstall (NAME|REQUIREMENT [ARGS])
+    - vee unlink ENVIRON (NAME|REQUIREMENT [ARGS])
+    - vee develop (NAME|REQUIREMENT)
+        - clone the project into $VEE_DEV, somehow link it in (likely into the database)
+    - dev [...] COMMAND [ARGS]
+        - runtime linking of dev tools over default repo
+    - vee add [NAME|PATH]
+        - add new commits to the repo requirements
+    - vee status
+        - check on status of each dev tool, and where they are vs the repo
+    - vee commit [--major,--minor,--patch] [-m MESSAGE]
+        - commit the current state of the repo
+    - vee push
+        - push all tools that aren't already, and the repo
+    - vee list
+        - list packages, environments, etc..
 
 
 ---
 
 - @path/to/requirements for sets?
 
-- parenting and cloning and garbage is something that can be added on later, if
-  we realy want
-
 - VEE_DEV=$VEE/dev by default, but is only really used by `vee develop` and `dev -u USER`
 - VEE_REPO=westernx sets the default repo
-
-- change `vee repo --add` to `vee repo --set`
-
-- do we need to track the git remote, or can we always just assume that it is
-  "origin"? We do want to know what branch to track.
 
 - detect all Python variants, and have special builders for them
 
@@ -130,8 +78,6 @@ Developer, version 1:
     - package.set_handlers(build=True, install=True); package.builder.build()
     - pkgname.tgz --builder python_source
 
-- should $repo/requirements.txt be moved to $repo/vee[/-]requirements.txt ?
-
 - test python packages (for each of source, sdist, bdist, bdist_wheel):
     - they import
     - they import each other
@@ -147,17 +93,13 @@ Developer, version 1:
 - linking should check if a previous revision of the same thing was already
   linked into an environment, and stop you
 
-- parse_multiple_requirements(args) walks through a set of args, pulling out
-  RequirementSet(s) when they are files that end in '.txt' (or no extendion),
-  and requirements from the rest
-
 - how does this new Python install method deal with install_requires?
     - it doesn't! document it?
 
 - s/Home/Vee/g ??
 
-- does it make sense to have packages/builds/installs in the database, instead
-  of having them all together?
+- does it make sense to have packages/builds/installs separate in the database,
+  instead of having them all together under "packages"
 
 - build-subdir and install-prefix should be used to invalidate matches in the
   resolver
@@ -171,9 +113,6 @@ Developer, version 1:
 
 - '--refresh' or --latest' or '--head' to always request the latest; this is a more general
   case of --force-fetch
-
-- render_in_environ(list_or_dict, environ)
-  - process the configuration this way too
 
 - log everything about the different steps, and stuff it into the database
 - CLI IO/API/logging package
@@ -198,13 +137,6 @@ Developer, version 1:
 - Home.{package,build,install,develop,environment}_root attributes
 - Home.to_environ()
 
-- `vee gc`
-  - delete installs (and their DB records) which are not linked to
-  - delete installs in DB that don't exist on disk
-  - delete anything on disk that isn't referred to by the index
-      build a set of relative paths (and all their ancestors), then walk the
-      root looking for directories which aren't mentioned, then delete them
-
 - record stdout/stderr from build process in the database. Use a timestamped
   format: each line starts with "out" or "err" and the timestamp
 
@@ -214,56 +146,6 @@ Developer, version 1:
   - memoize the caches based on inode,size,mtime
 
 - cythonmagick is pulling in the "wrong" sqlite?
-
-- wxfab fabric package for deploying and debugging these things
-
-- `vee list` lists environments
-- `vee list ENVIRONMENT` lists the various buildtimes of environments
-
-- dev
-
-    - Builder class encapsulates the base building logic; can be overridden for
-      DevBuilder (so that python can `python setup.py develop` instead)
-
-    - DevManager proxies to the "normal" manager to fetch a package into the
-      dev location, and in the case of Python packages build the egg-info so it
-      knows how to link the environment.
-
-    - `dev` then just discovers your dev environment, and merges its envvars
-      on top of the master one.
-
-    - sitetools is installed in the master one, and the tools which set envvars
-      also setup KS_SITES (or a renamed versions). However, we won't really
-      need KS_SITES since we are installing everything without .pth files.
-
-    - !! How can we have a tool auto-update an environment.txt with the current
-      git commits?
-
-        - Scan your dev directory, looking for git repos with remotes that match
-          the repos in the env.txt
-        - See if the current commit differs from that which would be installed
-          by the env.txt
-
-    - use the standard managers for fetching/installing repos
-
-    - `vee init git@git.westernx:westernx/veerepo /usr/local/vee`
-    - `vee init --inherit-from /usr/local/vee ~/dev/vee-env`
-
-        - the git repo it clones is the same that the indicated uses
-        - the runtime will link against the master
-        - a $VEE/config file (YAML) contains this sort of info:
-
-          repo_requirement: git+git@git.westernx:westernx/veerepo --force-fetch --revision origin/master
-          repo_install_path: /home/mboers/dev/vee-env/installs/veerepo/1.0.0
-          parent_path: /usr/local/vee
-
-    - `vee add [--major,--minor,--patch] .` add changes to the current package (likely a git repo) to the
-      repo's environment file. The change-level flags increment the "version" flag, if set
-
-    - `vee commit [-a] [--major|--minor|--patch] [-m MESSAGE]`] 
-    - `vee push`
-
-
 
 
 LATER
