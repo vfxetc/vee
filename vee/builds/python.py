@@ -19,7 +19,7 @@ class PythonBuild(GenericBuild):
         
 
         setup_path = find_in_tree(pkg.build_path, 'setup.py')
-        egg_path = find_in_tree(pkg.build_path, '*.egg-info', 'dir')
+        egg_path = find_in_tree(pkg.build_path, 'EGG-INFO', 'dir')
         dist_path = find_in_tree(pkg.build_path, '*.dist-info', 'dir')
 
         if setup_path or egg_path or dist_path:
@@ -49,19 +49,48 @@ class PythonBuild(GenericBuild):
 
             return
 
+        # python setup.py bdist_egg
         if self.egg_path:
 
             print style('Found Python Egg:', 'blue', bold=True), style(os.path.basename(self.egg_path), bold=True)
+            print style('Warning:', 'yellow', bold=True), style('Scripts and other data will not be installed.', bold=True)
+
+            if not pkg.package_path.endswith('.egg'):
+                print style('Warning:', 'yellow', bold=True), style('package does not appear to be an Egg', bold=True)
+
+            # We must rename the egg!
+            pkg_info_path = os.path.join(self.egg_path, 'PKG-INFO')
+            if not os.path.exists(pkg_info_path):
+                print style('Warning:', 'yellow', bold=True), style('EGG-INFO/PKG-INFO does not exist', bold=True)
+            else:
+                pkg_info = {}
+                for line in open(pkg_info_path, 'rU'):
+                    line = line.strip()
+                    if not line:
+                        continue
+                    name, value = line.split(':')
+                    pkg_info[name.strip().lower()] = value.strip()
+                try:
+                    pkg_name = pkg_info['name']
+                    pkg_version = pkg_info['version']
+                except KeyError:
+                    print style('Warning:', 'yellow', bold=True), style('EGG-INFO/PKG-INFO is malformed', bold=True)
+                else:
+                    new_egg_path = os.path.join(os.path.dirname(self.egg_path), '%s-%s.egg-info' % (pkg_name, pkg_version))
+                    shutil.move(self.egg_path, new_egg_path)
+                    self.egg_path = new_egg_path
 
             pkg.build_subdir = os.path.dirname(self.egg_path)
             pkg.install_prefix = site_packages
 
             return
 
-        # This is very similar to the above...
+        # python setup.py bdist_wheel
         if self.dist_path:
 
             print style('Found Python Wheel:', 'blue', bold=True), style(os.path.basename(self.dist_path), bold=True)
+            print style('Warning:', 'yellow', bold=True), style('Scripts and other data will not be installed.', bold=True)
+            
             if not pkg.package_path.endswith('.whl'):
                 print style('Warning:', 'yellow', bold=True), style('package does not appear to be a Wheel', bold=True)
 
@@ -74,7 +103,6 @@ class PythonBuild(GenericBuild):
 
         if not self.setup_path:
             return super(PythonBuild, self).install()
-
         
         pkg = self.package
 
