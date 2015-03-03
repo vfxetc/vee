@@ -1,6 +1,6 @@
 import re
 
-from vee.requirement import Requirement
+from vee.requirement import Requirement, requirement_parser
 from vee.utils import guess_name
 
 
@@ -55,7 +55,7 @@ class RequirementSet(list):
 
         remaining = args
         while remaining:
-            args, remaining = Requirement._arg_parser.parse_known_args(remaining)
+            args, remaining = requirement_parser.parse_known_args(remaining)
             if args.url.endswith('.txt'):
                 self.parse_file(args.url)
             else:

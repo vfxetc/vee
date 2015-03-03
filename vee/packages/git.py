@@ -24,8 +24,8 @@ class GitPackage(BasePackage):
             self.repo.clone_if_not_exists()
             commit = self.repo.rev_parse(self.revision or 'HEAD')
             if commit:
-                if self._base_name:
-                    self._build_name = '%s/%s' % (self._base_name, commit[:8])
+                if self.name:
+                    self._build_name = '%s/%s' % (self.name, commit[:8])
                 else:
                     super(GitPackage, self)._set_names(package=True)
                     self._build_name = '%s-%s' % (self._package_name, commit[:8])

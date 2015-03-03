@@ -10,7 +10,7 @@ import sys
 
 from vee.exceptions import AlreadyInstalled, AlreadyLinked
 from vee.utils import cached_property, style, call, call_log, makedirs
-from vee.requirement import Requirement
+from vee.requirement import Requirement, requirement_parser
 
 
 python_version = '%d.%d' % (sys.version_info[:2])
@@ -41,17 +41,6 @@ class BasePackage(object):
 
     type = 'base'
 
-    # Pairs of Package vs Requirement attributes.
-    _pkg_to_req_attrs = {
-        '_base_name': 'name',
-        '_force_fetch': 'force_fetch',
-        '_install_name': 'install_name',
-        '_install_subdir_from_build': 'install_prefix',
-        '_build_subdir_to_install': 'build_subdir',
-    }
-
-    _req_to_pkg_attrs = dict((v, k) for k, v in _pkg_to_req_attrs.iteritems())
-
 
     def __init__(self, requirement=None, home=None):
 
@@ -59,19 +48,17 @@ class BasePackage(object):
         if isinstance(requirement, dict):
             self.abstract_requirement = json.dumps(requirement, sort_keys=True)
             self.home = home
-            for action in Requirement._arg_parser._actions:
-                req_attr = action.dest
-                pkg_attr = self._req_to_pkg_attrs.get(req_attr, req_attr)
-                setattr(self, pkg_attr, requirement.get(req_attr, action.default))
+            for action in requirement_parser._actions:
+                name = action.dest
+                setattr(self, name, requirement.get(name, action.default))
         
         # Set from attr access.
         else:
             self.abstract_requirement = requirement and requirement.to_json()
             self.home = home or requirement.home
-            for action in Requirement._arg_parser._actions:
-                req_attr = action.dest
-                pkg_attr = self._req_to_pkg_attrs.get(req_attr, req_attr)
-                setattr(self, pkg_attr, requirement and getattr(requirement, req_attr))
+            for action in requirement_parser._actions:
+                name = action.dest
+                setattr(self, name, requirement and getattr(requirement, name))
 
         # A few need special handling
         self.environ = self.environ.copy() if self.environ else {}
@@ -90,10 +77,9 @@ class BasePackage(object):
 
     def freeze(self, environ=True):
         kwargs = {}
-        for action in Requirement._arg_parser._actions:
-            req_attr = action.dest
-            pkg_attr = self._req_to_pkg_attrs.get(req_attr, req_attr)
-            kwargs[req_attr] = getattr(self, pkg_attr)
+        for action in requirement_parser._actions:
+            name = action.dest
+            kwargs[name] = getattr(self, name)
         if environ:
             kwargs['environ'] = self.environ_diff
         return Requirement(home=self.home, **kwargs)
@@ -138,8 +124,8 @@ class BasePackage(object):
         if (package or build or install) and self._package_name is None:
             self._package_name = self.url and os.path.join(self.type, re.sub(r'^https?://', '', self.url).strip('/'))
         if (install or build) and self._install_name is None:
-            if self._base_name and self.revision:
-                self._install_name = '%s/%s' % (self._base_name, self.revision)
+            if self.name and self.revision:
+                self._install_name = '%s/%s' % (self.name, self.revision)
             else:
                 self._install_name = self._package_name and re.sub(r'(\.(tar|gz|tgz|zip))+$', '', self._package_name)
         if build and self._build_name is None:
@@ -389,9 +375,9 @@ class BasePackage(object):
             shutil.copytree(self.build_path_to_install, self.install_path_from_build, symlinks=True)
 
         # Link into $VEE/opt.
-        if self._base_name:
-            opt_link = self.home._abs_path('opt', self._base_name)
-            print style('Linking to opt/%s:' % self._base_name, 'blue', bold=True), style(opt_link, bold=True)
+        if self.name:
+            opt_link = self.home._abs_path('opt', self.name)
+            print style('Linking to opt/%s:' % self.name, 'blue', bold=True), style(opt_link, bold=True)
             if os.path.exists(opt_link):
                 os.unlink(opt_link)
             makedirs(os.path.dirname(opt_link))
@@ -437,7 +423,7 @@ class BasePackage(object):
                   self.freeze().to_json(),
                   self.type,
                   self.url,
-                  self._base_name,
+                  self.name,
                   self.revision,
                   self._package_name,
                   self._build_name,
@@ -461,7 +447,7 @@ class BasePackage(object):
         values = [self.type, self.url]
 
         for attr, column in (
-            ('_base_name', 'name'),
+            ('name', 'name'),
             ('revision', 'revision'),
         ):
             if getattr(self, attr):
@@ -500,7 +486,7 @@ class BasePackage(object):
         # Everything below either already matches or was unset.
         self._db_id = row['id']
         self._db_link_id = row['link_id']
-        self._base_name = row['name']
+        self.name = row['name']
         self.revision = row['revision']
         self._package_name = row['package_name']
         self._build_name = row['build_name']
@@ -521,4 +507,29 @@ class BasePackage(object):
             self.abstract_requirement,
         ])
         self._db_link_id = cur.lastrowid
+
+
+    def _reinstall_check(self, force):
+        if self.installed:
+            if force:
+                self.uninstall()
+            else:
+                raise AlreadyInstalled(str(self.freeze()))
+
+    def auto_install(self, force=False):
+
+        if not self._force_fetch:
+            self._reinstall_check(force)
+
+        self.fetch()
+        self._reinstall_check(force) # We may only know once we have fetched.
+    
+        self.extract()
+        self._reinstall_check(force) # Packages may self-describe.
+
+        self.build()
+        self.install()
+
+        # Record it!
+        self.db_id()
 

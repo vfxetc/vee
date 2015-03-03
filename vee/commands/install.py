@@ -24,7 +24,7 @@ def install(args):
         if not args.force:
             req.package.resolve_existing()
         try:
-            req.install(force=args.force)
+            req.auto_install(force=args.force)
         except AlreadyInstalled:
             print style('Already installed', 'blue', bold=True), style(str(req.package.freeze()), bold=True)
     

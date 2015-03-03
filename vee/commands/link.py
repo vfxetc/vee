@@ -46,7 +46,7 @@ def link(args):
             req.package.resolve_existing(env=env)
 
         try:
-            req.install(force=args.re_install)
+            req.auto_install(force=args.re_install)
         except AlreadyInstalled:
             pass
         
