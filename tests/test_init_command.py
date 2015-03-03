@@ -32,5 +32,5 @@ class TestInitCommand(TestCase):
         home.main(['update'])
         home.main(['upgrade'])
 
-        self.assertExists(home._abs_path('environments/primary/origin/master/bin/foo'))
+        self.assertExists(home._abs_path('environments/primary/master/bin/foo'))
 

@@ -4,7 +4,7 @@ Commands
 General
 -------
 
-``vee init``
+``vee init REPO_URL``
 ~~~~~~~~~~~~
 
 Initialize the structures, and setup the primary repository. This should be
@@ -75,7 +75,7 @@ Install the given requirement or requirements, e.g.::
 
 
 
-``vee brew``
+``vee brew COMMAND+``
 ~~~~~~~~~~~~
 
 Run a command on VEE's Homebrew. This is sometimes nessesary to manage Homebrew
@@ -115,7 +115,7 @@ Manipulate repositories.
     $ vee repo --list
 
 
-``vee git``
+``vee git [-r REPO] COMMAND+``
 ~~~~~~~~~~~
 
 Run a ``git`` command on a repository's git repository. (Sorry for the name
@@ -130,10 +130,11 @@ collision!)
     nothing to commit, working directory clean
 
 
-``vee update``
+``vee update [--all] REPOS*``
 ~~~~~~~~~~~~~~
 
-Update the repositories.
+Update the repositories. This will fail if your repositories are dirty, or have
+forked from the remotes.
 
 
 Development
@@ -145,8 +146,8 @@ Development
 Environments
 ------------
 
-``vee upgrade``
-~~~~~~~~~~~~~~~
+``vee upgrade [--all] REPO*``
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Upgrade environments created from repositories.
 

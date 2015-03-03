@@ -18,7 +18,7 @@ class TestUpdateCommand(TestCase):
 
         commit = repo.rev_list()[0][:8]
         self.assertExists(os.path.join(VEE, 'installs/tr_basics_foo/1.0.0/bin/tr_basics_foo'))
-        self.assertExists(os.path.join(VEE, 'environments', repo.name, 'origin/master/bin/tr_basics_foo'))
+        self.assertExists(os.path.join(VEE, 'environments', repo.name, 'master/bin/tr_basics_foo'))
         self.assertExists(os.path.join(VEE, 'environments', repo.name, 'commits', commit, 'bin/tr_basics_foo'))
 
         bar_pkg = MockPackage('tr_basics_bar', 'c_configure_make_install')
@@ -31,9 +31,9 @@ class TestUpdateCommand(TestCase):
 
         commit = repo.rev_list()[0][:8]
         self.assertExists(os.path.join(VEE, 'installs/tr_basics_foo/1.0.0/bin/tr_basics_foo'))
-        self.assertExists(os.path.join(VEE, 'environments', repo.name, 'origin/master/bin/tr_basics_foo'))
+        self.assertExists(os.path.join(VEE, 'environments', repo.name, 'master/bin/tr_basics_foo'))
         self.assertExists(os.path.join(VEE, 'environments', repo.name, 'commits', commit, 'bin/tr_basics_foo'))
         self.assertExists(os.path.join(VEE, 'installs/tr_basics_bar/1.0.0/bin/tr_basics_bar'))
-        self.assertExists(os.path.join(VEE, 'environments', repo.name, 'origin/master/bin/tr_basics_bar'))
+        self.assertExists(os.path.join(VEE, 'environments', repo.name, 'master/bin/tr_basics_bar'))
         self.assertExists(os.path.join(VEE, 'environments', repo.name, 'commits', commit, 'bin/tr_basics_bar'))
 

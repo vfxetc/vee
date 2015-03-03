@@ -5,18 +5,18 @@ from vee.utils import style
 
 @command(
     argument('--all', action='store_true', help='update all repos'),
-    argument('name', nargs='?'),
+    argument('--force', action='store_true', help='force checkout, even if not fast-forward'),
+    argument('repos', nargs='*'),
     help='update repos',
 )
 def update(args):
 
     home = args.assert_home()
-    config = home.config
 
     if args.all:
         repos = list(home.iter_repos())
     else:
-        repos = [home.get_repo(args.name)]
+        repos = [home.get_repo(x) for x in args.repos] if args.repos else [home.get_repo()]
 
     retcode = 0
 
@@ -32,29 +32,8 @@ def update(args):
         remote = repo.assert_remote_name()
         rev = repo.fetch('%s/master' % remote, remote=remote)
 
-        # Check the status of the work tree and index.
-        status_ok = True
-        for idx, tree, name in repo.status():
-            if idx or tree:
-                print style('Error:', 'red', bold=True), style('uncomitted changes:', bold=True)
-                repo._call('status', silent=True)
-                status_ok = False
-                break
-
-        # Make sure we haven't forked.
-        ahead, behind = repo.distance(repo.head, rev)
-        if ahead and behind:
-            print style('Error:', 'red', bold=True), style('your and the repo have forked', bold=True)
-            status_ok = False
-        elif ahead:
-            print style('Warning:', 'yellow', bold=True), style('you are %s commits ahead of the remote repo; please `vee push`' % ahead, bold=True)
-            status_ok = False
-        elif behind:
-            print style('You are %d commits behind.' % behind, bold=True)
-
-        # Bail!
-        if not status_ok:
-            print style('Error:', 'red', bold=True), style('we cannot continue given above conditions', bold=True)
+        if not args.force and not repo.check_ff_safety(rev):
+            print style('Error:', 'red', bold=True), style('Cannot fast-forward; skipping.', bold=True)
             retcode = retcode or 1
             continue
 

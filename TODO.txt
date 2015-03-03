@@ -40,8 +40,8 @@ ALL COMMANDS
 
 √ vee repo [--add|--set|--delete|--list] [--default] [--branch BRANCH] NAME [URL]
 √ vee git
-~ vee update [--all] [ENVIRON]
-~ vee upgrade [--all] [ENVIRON]
+√ vee update [--all] [ENVIRON]
+√ vee upgrade [--all] [ENVIRON]
 
 - vee develop (NAME|REQUIREMENT)
 - dev [...] COMMAND [ARGS]
