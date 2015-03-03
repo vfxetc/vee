@@ -1,5 +1,6 @@
 from vee.commands.main import command, argument
 from vee.exceptions import CliException
+from vee.requirement import Requirement
 
 
 @command(
@@ -11,6 +12,8 @@ def brew(args, *command):
     if not command:
         raise CliException('please specify a homebrew command')
 
-    args.assert_home()
-    manager = args.home.get_package('homebrew', None)
-    manager._brew(*command)
+    home = args.assert_home()
+
+    # This is such a hack.
+    req = Requirement('homebrew:', home=home)
+    req.package._brew(*command)

@@ -1,8 +1,9 @@
 import os
+import re
 import subprocess
 
 from vee.packages.base import BasePackage
-from vee.utils import call, call_output, makedirs, style
+from vee.utils import call, call_output, makedirs, style, cached_property
 from vee.git import GitRepo
 
 
@@ -10,14 +11,21 @@ class GitPackage(BasePackage):
 
     type = 'git'
 
+    factory_priority = 1000
+
+    @classmethod
+    def factory(cls, req, home):
+        if re.match(r'^git[:+]', req.url):
+            return cls(req, home)
+
     def __init__(self, *args, **kwargs):
         super(GitPackage, self).__init__(*args, **kwargs)
         self._assert_paths(package=True)
         self.repo = GitRepo(work_tree=self.package_path, remote_url=self._git_remote_url)
 
-    @property
+    @cached_property
     def _git_remote_url(self):
-        return self.url
+        return re.sub(r'^git\+', '', self.url)
     
     def _set_names(self, build=False, install=False, **kwargs):
         if (build or install) and not self.build_name:

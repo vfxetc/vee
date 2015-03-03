@@ -40,14 +40,6 @@ class Home(object):
             path = self._abs_path(name)
             makedirs(path)
 
-    def get_package(self, type=None, requirement=None):
-        type = type or requirement.type
-        ep = next(pkg_resources.iter_entry_points('vee_package_types', type), None)
-        if ep:
-            return ep.load()(requirement, home=self)
-        # TODO: look in repository.
-        raise ValueError('unknown package type %r' % type)
-
     def get_repo(self, name=None, url=None):
         if name not in self._repo_rows:
             con = self.db.connect()

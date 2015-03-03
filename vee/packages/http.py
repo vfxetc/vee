@@ -2,6 +2,7 @@ import datetime
 import os
 import urllib2
 import urlparse
+import re
 import shutil
 
 from vee.packages.base import BasePackage
@@ -11,6 +12,13 @@ from vee.utils import makedirs, style
 class HttpPackage(BasePackage):
 
     type = 'http'
+    
+    factory_priority = 1000
+
+    @classmethod
+    def factory(cls, req, home):
+        if re.match(r'^https?://', req.url):
+            return cls(req, home)
 
     @property
     def _derived_package_name(self):

@@ -7,6 +7,7 @@ import json
 
 from vee.exceptions import AlreadyInstalled, CliException
 from vee.utils import style, cached_property
+from vee.packages import make_package
 
 
 class RequirementParseError(CliException):
@@ -99,20 +100,9 @@ class Requirement(object):
         # Manual args.
         self.home = home
 
-        # Extract the package type. Usually this is of the form:
-        # type+specification. Otherwise we assume it is a simple URL or file.
-        m = re.match(r'^(\w+)\+(.+)$', self.url)
-        if m:
-            self.type = m.group(1)
-            self.url = m.group(2)
-        elif re.match(r'^https?://', self.url):
-            self.type = 'http'
-        else:
-            self.type = 'file'
-
     @cached_property
     def package(self):
-        return self.home.get_package(requirement=self)
+        return make_package(self, self.home)
 
     def to_kwargs(self):
         kwargs = {}
@@ -157,11 +147,7 @@ class Requirement(object):
 
             argsets.append(['%s=%s' % (option_str, str(value))])
 
-        args = [
-            (self.type or '') +
-            ('+' if self.type else '') +
-            self.url
-        ]
+        args = [self.url]
         for argset in sorted(argsets):
             args.extend(argset)
         return args

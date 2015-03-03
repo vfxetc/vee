@@ -50,7 +50,14 @@ BEFORE FIRST DEPLOY
 
 ---
 
-- @path/to/requirements for sets?
+
+- set:path/to/sets for sets
+
+- use actual schemes to select packages, instead of this plus nonsense; the
+  only one that will change is homebrew, which will be homebrew:sqlite
+  
+
+
 
 - VEE_DEV=$VEE/dev by default, but is only really used by `vee develop` and `dev -u USER`
 - VEE_REPO=westernx sets the default repo
@@ -71,16 +78,6 @@ BEFORE FIRST DEPLOY
         - document the result
     - do we need to chgrp, or can setgid handle that?
         - document the result
-
-- Build types
-
-  Build.factory_priority
-
-  Build.factory(package) -> instance or None
-  
-  Build.build()
-  Build.install()
-
 
 
 - test python packages (for each of source, sdist, bdist, bdist_wheel):

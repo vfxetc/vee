@@ -11,6 +11,12 @@ from vee.utils import makedirs, style
 class FilePackage(BasePackage):
 
     type = 'file'
+    
+    factory_priority = 0
+
+    @classmethod
+    def factory(cls, req, home):
+        return cls(req, home)
 
     def __init__(self, *args, **kwargs):
         super(FilePackage, self).__init__(*args, **kwargs)

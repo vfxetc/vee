@@ -11,7 +11,7 @@ import sys
 from vee.exceptions import AlreadyInstalled, AlreadyLinked
 from vee.utils import cached_property, style, call, call_log, makedirs
 from vee.requirement import Requirement, requirement_parser
-from vee.builds.generic import get_package_builder
+from vee.builds import make_builder
 
 
 
@@ -204,7 +204,7 @@ class BasePackage(object):
 
     @cached_property
     def builder(self):
-        return get_package_builder(self)
+        return make_builder(self)
 
     def build(self):
         """Build the package in the build directory."""
