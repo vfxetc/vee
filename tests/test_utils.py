@@ -1,7 +1,7 @@
 from . import *
 
 from vee.utils import guess_name
-from vee.packages.git import normalize_git_url
+from vee.git import normalize_git_url
 
 
 class TestGuessName(TestCase):
@@ -38,39 +38,39 @@ class TestGitURLs(TestCase):
     def test_scp_urls(self):
         self.assertEqual(
             normalize_git_url('user@example.com:path/to/git'),
-            'git+ssh://user@example.com/path/to/git'
+            'ssh://user@example.com/path/to/git'
         )
         self.assertEqual(
             normalize_git_url('user@example.com:/path/to/git'),
-            'git+ssh://user@example.com/path/to/git'
+            'ssh://user@example.com/path/to/git'
         )
         self.assertEqual(
             normalize_git_url('example.com:path/to/git'),
-            'git+ssh://example.com/path/to/git'
+            'ssh://example.com/path/to/git'
         )
         self.assertEqual(
             normalize_git_url('git+user@example.com:path/to/git'),
-            'git+ssh://user@example.com/path/to/git'
+            'ssh://user@example.com/path/to/git'
         )
 
     def test_http_urls(self):
         self.assertEqual(
             normalize_git_url('http://user@example.com/path/to/git'),
-            'git+http://user@example.com/path/to/git'
+            'http://user@example.com/path/to/git'
         )
         self.assertEqual(
             normalize_git_url('git+http://example.com/path/to/git'),
-            'git+http://example.com/path/to/git'
+            'http://example.com/path/to/git'
         )
 
     def test_ssh_urls(self):
         self.assertEqual(
             normalize_git_url('ssh://user@example.com/path/to/git'),
-            'git+ssh://user@example.com/path/to/git'
+            'ssh://user@example.com/path/to/git'
         )
         self.assertEqual(
             normalize_git_url('git+ssh://example.com/path/to/git'),
-            'git+ssh://example.com/path/to/git'
+            'ssh://example.com/path/to/git'
         )
 
     def test_git_urls(self):
@@ -86,10 +86,10 @@ class TestGitURLs(TestCase):
     def test_file_urls(self):
         self.assertEqual(
             normalize_git_url('git+file:///path/to/git'),
-            'git+file:///path/to/git'
+            'file:///path/to/git'
         )
         self.assertEqual(
             normalize_git_url('git+/path/to/git'),
-            'git+file:///path/to/git'
+            'file:///path/to/git'
         )
 

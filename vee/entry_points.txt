@@ -27,6 +27,7 @@ brew = vee.commands.brew:brew
 
 # Development.
 develop = vee.commands.develop:develop
+add = vee.commands.add:add
 
 
 [vee_package_types]

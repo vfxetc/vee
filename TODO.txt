@@ -25,6 +25,7 @@ BEFORE FIRST DEPLOY
 
 
 - commands to write:
+
     - vee gc [--installs] [--environs]
         - delete installs (and their DB records) which are not linked to
         - delete installs in DB that don't exist on disk
@@ -34,37 +35,18 @@ BEFORE FIRST DEPLOY
     - vee uninstall (NAME|REQUIREMENT [ARGS])
     - vee unlink ENVIRON (NAME|REQUIREMENT [ARGS])
 
-    - vee develop (NAME|REQUIREMENT)
-
-        √ clone the project into $VEE_DEV
-        √ pkg.builder.develop()
-
-        - inspect the package, and store a base_environ in the db
-            PYTHONPATH=.:@
-
-        - cli args to add to user_environ in the db
-            could these be evaluated relative to the current path?
-            if they re.match(r'^\.(/|$)')
-            vee dev --environ --set PYTHONPATH '.'
-
-        - vee dev [--path PATH] name
-            - if the path already exists and is a git repo, then it just links
-              it up
-            - if the git repo doesnt exist, then it makes it
-        - vee dev --init name
-            - it makes a new package, and assumes it 
-        - vee dev --build [NAME|PATH]
-            - make a Package, set the build path, get a Builder, and call develop()
-
-        - it looks at the origin later to figure this nonsense out
-
-
-
-    - dev [...] COMMAND [ARGS]
+    √ vee develop ...
+    √ dev [...] COMMAND [ARGS]
         - runtime linking of dev tools over default repo
 
-    - vee add [NAME|PATH]
+    √ vee add [NAME|PATH]
         - add new commits to the repo requirements
+    √ vee add --bake-heads
+        - update the repo to the current revision of everything that is
+          installed
+
+    - vee upgrade --remotes
+
 
     - vee status
         - check on status of each dev tool, and where they are vs the repo
@@ -86,6 +68,9 @@ BEFORE FIRST DEPLOY
     Package.factory(args)
     make_package(args)
 
+- s/environ/envvars/g (when referring to environment variables)
+
+- refactor all of the envvars handling code
 
 - set:path/to/sets for sets
 

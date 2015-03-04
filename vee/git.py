@@ -6,6 +6,40 @@ from subprocess import CalledProcessError
 from vee.utils import call, style
 
 
+
+def normalize_git_url(url, prefix=False):
+
+    if not isinstance(prefix, basestring):
+        prefix = 'git+' if prefix else ''
+
+    # Strip fragments.
+    url = re.sub(r'#.*$', '', url)
+
+    # The git protocol.
+    m = re.match(r'^git:(//)?(.+)$', url)
+    if m:
+        return 'git://' + m.group(2)
+
+    # Assert prefix on ssh and http urls. Note: this accepts at least all of
+    # the schemes that git does.
+    m = re.match(r'^(?:git\+)?(\w+):(.+)$', url)
+    if m:
+        scheme, the_rest = m.groups()
+        return '%s%s:%s' % (prefix, scheme, the_rest)
+
+    # Convert quick files into SSH.
+    m = re.match(r'^git\+(/.+)$', url)
+    if m:
+        return '%sfile://%s' % (prefix, m.group(1))
+
+    # Convert scp-like urls into SSH.
+    m = re.match(r'^(?:git\+)?([^:@]+@)?([^:]+):/*(.*)$', url)
+    if m:
+        userinfo, host, path = m.groups()
+        return '%sssh://%s%s/%s' % (prefix, userinfo or '', host, path.strip('/'))
+
+
+
 class GitRepo(object):
 
     _head = None
@@ -194,6 +228,13 @@ class GitRepo(object):
 
         return status_ok
 
+    def remotes(self):
+        remotes = {}
+        for line in self.git('config', '--get-regexp', 'remote.*.url', stdout=True, silent=True).splitlines():
+            cname, url = line.strip().split(None, 1)
+            _, name, _ = cname.split('.')
+            remotes[name] = url
+        return remotes
 
 
 

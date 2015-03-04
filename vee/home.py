@@ -5,6 +5,7 @@ from vee.config import Config
 from vee.database import Database
 from vee.git import GitRepo
 from vee.utils import makedirs
+from vee.requirementrepo import RequirementRepo
 
 
 # We shall call the default repository "primary", as it is a nice generic name
@@ -52,10 +53,13 @@ class Home(object):
         row = self._repo_rows[name]
         if not row:
             raise ValueError('%s repo does not exist' % (repr(name) if row else 'default'))
-        repo = GitRepo(self._abs_path('repos', row['name']), url or row['url'],
-            remote_name='origin', branch_name=row['branch'])
-        repo.name = row['name']
-        return repo
+
+        return RequirementRepo(
+            self._abs_path('repos', row['name']),
+            url or row['url'],
+            remote_name='origin',
+            branch_name=row['branch'],
+        )
 
     def main(self, args, environ=None, **kwargs):
 
@@ -69,5 +73,21 @@ class Home(object):
     @property
     def dev_root(self):
         return self._abs_path(os.environ.get('VEE_DEV', 'dev'))
+
+    def get_development_record(self, input, paths=True):
+        con = self.db.connect()
+
+        # Look by name.
+        for row in con.execute('SELECT * FROM dev_packages WHERE name = ?', [input]):
+            if os.path.exists(row['path']):
+                return row
+
+        if not paths:
+            return
+        # Look by path.
+        path = os.path.abspath(input)
+        for row in con.execute('SELECT * FROM dev_packages WHERE path = ? OR ? LIKE (path || "/%")', [path, path]):
+            if os.path.exists(row['path']):
+                return row
 
 
