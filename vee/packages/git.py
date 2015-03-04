@@ -20,8 +20,8 @@ def normalize_git_url(url, prefix=True):
     if m:
         return 'git://' + m.group(2)
 
-    # Assert prefix on ssh and http urls. Note: this does not accept all
-    # actual schemes.
+    # Assert prefix on ssh and http urls. Note: this accepts at least all of
+    # the schemes that git does.
     m = re.match(r'^(?:git\+)?(\w+):(.+)$', url)
     if m:
         scheme, the_rest = m.groups()

@@ -1,3 +1,4 @@
+import json
 import os
 
 from vee.commands.main import command, argument, group
@@ -5,7 +6,7 @@ from vee.exceptions import AlreadyInstalled, CliException
 from vee.requirement import Requirement
 from vee.requirementset import RequirementSet
 from vee.git import GitRepo
-from vee.utils import style, style_error, style_note, style_warning, makedirs
+from vee.utils import style, style_error, style_note, style_warning, makedirs, resolve_environ
 from vee.packages.git import normalize_git_url
 
 
@@ -24,7 +25,7 @@ def iter_availible_requirements(home):
 @command(
     aliases=['dev'],
     help='develop a package',
-    usage="vee develop (init|clone|install) [ARGS]"
+    usage="vee develop (list|init|clone|install) [ARGS]",
 )
 def develop(args):
     pass
@@ -32,6 +33,7 @@ def develop(args):
 
 @develop.subcommand(
     argument('-a', '--availible', action='store_true'),
+    argument('-e', '--environ', dest='show_environ', action='store_true'),
     help='list dev packages'
 )
 def list(args):
@@ -46,9 +48,17 @@ def list(args):
     for row in home.db.execute('SELECT * FROM dev_packages ORDER BY name'):
         path = row['path'].replace(home.dev_root, '$VEE_DEV').replace(home.root, '$VEE')
         print style_note(row['name'], path)
+        if args.show_environ:
+            for k, v in sorted(resolve_environ(json.loads(row['environ']), row['path']).iteritems()):
+                v = v.replace(home.dev_root, '$VEE_DEV')
+                v = v.replace(home.root, '$VEE')
+                if os.environ.get(k):
+                    v = v.replace(os.environ[k], '$' + k)
+                print style('    %s=' % k) + v
 
 
 @develop.subcommand(
+    argument('--force', action='store_true'),
     argument('--path'),
     argument('name'),
 )
@@ -57,6 +67,7 @@ def install(args):
 
 
 @develop.subcommand(
+    argument('--force', action='store_true'),
     argument('--path'),
     argument('url'),
     argument('name', nargs='?'),
@@ -71,6 +82,7 @@ def clone(args):
 
 
 @develop.subcommand(
+    argument('--force', action='store_true'),
     argument('--path'),
     argument('name'),
 )
@@ -86,7 +98,7 @@ def init(args, do_clone=False, do_install=False):
     # Make sure there are no other packages already, and clear out old ones
     # which no longer exist.
     for row in con.execute('SELECT * FROM dev_packages WHERE name = ?', [name]):
-        if os.path.exists(os.path.join(row['path'], '.git')):
+        if not args.force and os.path.exists(os.path.join(row['path'], '.git')):
             print style_error('"%s" already exists:' % name, row['path'])
             return 1
         else:
@@ -124,12 +136,12 @@ def init(args, do_clone=False, do_install=False):
         makedirs(dev_repo.work_tree)
         dev_repo.clone_if_not_exists(url, shallow=False)
 
-
-    print style_note('Linking dev package', name, path)
-    con.execute('INSERT INTO dev_packages (name, path) VALUES (?, ?)', [name, path])
-
     req = Requirement(['file:' + path], home=home)
     package = req.package
     package.package_name = package.build_name = path
     package.builder.develop()
+
+    print style_note('Linking dev package', name, path)
+    con.execute('INSERT INTO dev_packages (name, path, environ) VALUES (?, ?, ?)', [name, path, json.dumps(package.environ)])
+
 

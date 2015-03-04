@@ -118,7 +118,9 @@ def _create_initial_tables(con):
         created_at TIMESTAMP NOT NULL DEFAULT (datetime('now')),
 
         name TEXT NOT NULL,
-        path TEXT NOT NULL
+        path TEXT NOT NULL,
+
+        environ TEXT NOT NULL DEFAULT "{}"
 
     )''')
 

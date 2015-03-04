@@ -1,6 +1,7 @@
+import os
 import shutil
 
-from vee.utils import style_note, style
+from vee.utils import style_note, style, envjoin
 
 
 class GenericBuild(object):
@@ -29,4 +30,11 @@ class GenericBuild(object):
         shutil.copytree(pkg.build_path_to_install, pkg.install_path_from_build, symlinks=True)
 
     def develop(self):
-        print style_note('Generic package; nothing to setup for development.')
+        pkg = self.package
+
+        for name in ('bin', 'scripts'):
+            path = os.path.join(pkg.build_path, name)
+            if os.path.exists(path):
+                print style_note("Adding ./%s to $PATH" % name)
+                pkg.environ['PATH'] = envjoin('./' + name, pkg.environ.get('PATH', '@'))
+

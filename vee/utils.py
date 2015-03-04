@@ -74,6 +74,17 @@ def envsplit(value):
 def envjoin(*values):
     return ':'.join(x for x in values if x)
 
+def resolve_environ(diff, work_dir=None, environ=None):
+    environ = environ or os.environ
+    res = {}
+    for k, value in diff.iteritems():
+        if work_dir:
+            value = value.split(':')
+            value = [os.path.normpath(os.path.join(work_dir, x)) if re.match(r'^\.\.?(/|$)', x) else x for x in value]
+            value = ':'.join(value)
+        res[k] = value.replace('@', environ.get(k, ''))
+    return res
+
 
 def guess_environ(paths, sources=None, use_current=True):
 

@@ -2,7 +2,7 @@ import os
 import sys
 
 from vee.builds.generic import GenericBuild
-from vee.utils import find_in_tree, style, call, style_note, style_warning
+from vee.utils import find_in_tree, style, call, style_note, style_warning, envjoin
 
 
 python_version = '%d.%d' % (sys.version_info[:2])
@@ -132,14 +132,28 @@ class PythonBuild(GenericBuild):
             raise RuntimeError('Could not install Python package')
 
     def develop(self):
+        pkg = self.package
+
+        super(PythonBuild, self).develop()
 
         if self.setup_path:
+
             print style_note('Building egg-info')
             cmd = ['python', '-c', 'import setuptools; __file__=\'setup.py\'; execfile(__file__)']
             cmd.extend(['egg_info'])
             if call(cmd, cwd=os.path.dirname(self.setup_path)):
-                raise RuntimeError('Could not build egg info')
+                raise RuntimeError('Could not build egg-info')
 
-        else:
-            print style_warning('Non-source Python distribution; nothing to do for development.')
+            egg_info = find_in_tree(os.path.dirname(self.setup_path), '*.egg-info', 'dir')
+            if not egg_info:
+                raise RuntimeError('Could not find built egg-info')
+
+            dirs_to_link = set()
+            for line in open(os.path.join(egg_info, 'top_level.txt')):
+                dirs_to_link.add(os.path.dirname(line.strip()))
+            for name in sorted(dirs_to_link):
+                print style_note("Adding ./%s to $PYTHONPATH" % name)
+                pkg.environ['PYTHONPATH'] = envjoin('./' + name, pkg.environ.get('PYTHONPATH', '@'))       
+
+
 

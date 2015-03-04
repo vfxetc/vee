@@ -1,3 +1,4 @@
+import json
 import os
 import re
 
@@ -5,7 +6,7 @@ from vee.commands.main import command, argument, group
 from vee.environment import Environment
 from vee.exceptions import CliException
 from vee.requirementset import RequirementSet
-from vee.utils import guess_environ
+from vee.utils import guess_environ, resolve_environ
 
 
 @command(
@@ -13,6 +14,9 @@ from vee.utils import guess_environ
     argument('-R', '--requirements', action='append', help='requirements or requirements files to include; may be comma separated'),
     argument('-r', '--repo', action='append', help='a repo whose HEAD to include; defaults to the default repo'),
     argument('-e', '--environment', action='append', help='an environment to include'),
+
+    argument('-d', '--dev', action='store_true', help='include the development environment'),
+
     argument('command', nargs='...', help='the command to run'),
     name='exec',
     help='execute in this environment',
@@ -55,7 +59,20 @@ def exec_(args):
         env = Environment(name, home=home)
         paths.append(env.path)
 
+    dev_packages = []
+    if args.dev:
+        for pkg in home.db.execute('SELECT * FROM dev_packages'):
+            path = pkg['path']
+            if os.path.exists(path):
+                paths.append(path)
+                dev_packages.append(pkg)
+
     environ_diff = guess_environ(paths)
+
+    for pkg in dev_packages:
+        pkg_environ = json.loads(pkg['environ'])
+        if pkg_environ:
+            environ_diff.update(resolve_environ(pkg_environ, pkg['path'], environ_diff))
 
     # More environment variables.
     command = args.command or []
