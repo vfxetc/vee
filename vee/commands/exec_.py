@@ -11,6 +11,8 @@ from vee.utils import guess_environ, resolve_environ
 
 @command(
     argument('--export', action='store_true', help='export the environment instead of executing in it'),
+    argument('--prefix', action='store_true', help='print the prefixes that would be linked together'),
+
     argument('-R', '--requirements', action='append', help='requirements or requirements files to include; may be comma separated'),
     argument('-r', '--repo', action='append', help='a repo whose HEAD to include; defaults to the default repo'),
     argument('-e', '--environment', action='append', help='an environment to include'),
@@ -26,8 +28,8 @@ def exec_(args):
 
     home = args.assert_home()
 
-    if not (args.export or args.command):
-        raise CliException('Must either --export or provide a command')
+    if not (args.export or args.command or args.prefix):
+        raise CliException('Must either --prefix, --export, or provide a command')
 
     # Default to the default repo.
     if not (args.requirements or args.environment or args.repo):
@@ -58,6 +60,11 @@ def exec_(args):
     for name in args.environment or ():
         env = Environment(name, home=home)
         paths.append(env.path)
+
+    if args.prefix:
+        for path in paths:
+            print path
+        return
 
     dev_packages = []
     if args.dev:
