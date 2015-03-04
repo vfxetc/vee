@@ -25,6 +25,9 @@ exec = vee.commands.exec_:exec_
 git = vee.commands.git:git
 brew = vee.commands.brew:brew
 
+# Development.
+develop = vee.commands.develop:develop
+
 
 [vee_package_types]
 

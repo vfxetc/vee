@@ -34,16 +34,24 @@ BEFORE FIRST DEPLOY
     - vee unlink ENVIRON (NAME|REQUIREMENT [ARGS])
 
     - vee develop (NAME|REQUIREMENT)
+
         - clone the project into $VEE_DEV
         - pkg.builder.develop()
         - INSERT INTO packages (develop_path) VALUES (?)
+            OR
+          INSERT INTO dev_packages (name, url, path)
 
-        - vee develop name
-            - it looks for a package in the primary repo
+        - vee develop [--path PATH] name
+            - if the path already exists and is a git repo, then it just links
+              it up
+            - if the git repo doesnt exist, then it makes it
         - vee develop --init name
             - it makes a new package, and assumes it 
-        - vee develop --build [.]
+        - vee develop --build [NAME|PATH]
             - make a Package, set the build path, get a Builder, and call develop()
+
+        - it looks at the origin later to figure this nonsense out
+
 
 
     - dev [...] COMMAND [ARGS]

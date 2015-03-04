@@ -30,10 +30,10 @@ class GitRepo(object):
             return
         if not self.remote_url:
             raise ValueError('git repo %r does not exist; need remote url' % self.git_dir)
-        if os.path.exists(self.work_tree):
+        # if os.path.exists(self.work_tree):
             # TODO: we can deal with this; see install_vee.py
-            raise ValueError('work tree %r exists without repo' % self.work_tree)
-        elif shallow:
+            # raise ValueError('work tree %r exists without repo' % self.work_tree)
+        if shallow:
             print style('Cloning shallow', 'blue', bold=True), style(self.remote_url, bold=True)
             call(['git', 'clone', '--depth=1', self.remote_url, self.work_tree])
         else:

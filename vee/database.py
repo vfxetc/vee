@@ -66,13 +66,11 @@ def _create_initial_tables(con):
         package_name TEXT,
         build_name TEXT,
         install_name TEXT,
-        develop_name TEXT,
 
         -- Paths for direct lookup.
         package_path TEXT,
         build_path TEXT,
-        install_path TEXT,
-        develop_path TEXT
+        install_path TEXT
 
     )''')
 
@@ -113,6 +111,16 @@ def _create_initial_tables(con):
         END
 
     ''')
+
+    con.execute('''CREATE TABLE dev_packages (
+
+        id INTEGER PRIMARY KEY,
+        created_at TIMESTAMP NOT NULL DEFAULT (datetime('now')),
+
+        name TEXT NOT NULL,
+        path TEXT NOT NULL
+
+    )''')
 
     con.execute('''CREATE TABLE config (
 

@@ -1,7 +1,7 @@
 from . import *
 
 
-class TestPackageSchemes(TestCase):
+class TestBuildTypes(TestCase):
 
     def test_static_file(self):
         pkg = MockPackage('scheme_static', 'static_file', {'PATH': 'etc/scheme_static'})

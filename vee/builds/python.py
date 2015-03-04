@@ -2,7 +2,7 @@ import os
 import sys
 
 from vee.builds.generic import GenericBuild
-from vee.utils import find_in_tree, style, call
+from vee.utils import find_in_tree, style, call, style_note, style_warning
 
 
 python_version = '%d.%d' % (sys.version_info[:2])
@@ -131,4 +131,15 @@ class PythonBuild(GenericBuild):
         if call(cmd, cwd=os.path.dirname(self.setup_path), env=env):
             raise RuntimeError('Could not install Python package')
 
+    def develop(self):
+
+        if self.setup_path:
+            print style_note('Building egg-info')
+            cmd = ['python', '-c', 'import setuptools; __file__=\'setup.py\'; execfile(__file__)']
+            cmd.extend(['egg_info'])
+            if call(cmd, cwd=os.path.dirname(self.setup_path)):
+                raise RuntimeError('Could not build egg info')
+
+        else:
+            print style_warning('Non-source Python distribution; nothing to do for development.')
 

@@ -76,3 +76,6 @@ def repo(args):
         home.db.update('repositories', data, where={'id': row['id']})
     else:
         home.db.insert('repositories', data)
+
+    repo = home.get_repo(args.name)
+    repo.clone_if_not_exists()

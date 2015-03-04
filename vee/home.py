@@ -66,5 +66,8 @@ class Home(object):
 
         return main(args, environ, **kwargs)
 
+    @property
+    def dev_root(self):
+        return self._abs_path(os.environ.get('VEE_DEV', 'dev'))
 
 

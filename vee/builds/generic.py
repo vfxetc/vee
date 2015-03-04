@@ -27,3 +27,6 @@ class GenericBuild(object):
 
         print style('Installing via copy', 'blue', bold=True), style('to ' + pkg.install_path, bold=True)
         shutil.copytree(pkg.build_path_to_install, pkg.install_path_from_build, symlinks=True)
+
+    def develop(self):
+        print style_note('Generic package; nothing to setup for development.')
