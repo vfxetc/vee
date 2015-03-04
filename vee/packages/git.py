@@ -7,7 +7,10 @@ from vee.utils import call, call_output, makedirs, style, cached_property
 from vee.git import GitRepo
 
 
-def normalize_git_url(url):
+def normalize_git_url(url, prefix=True):
+
+    if not isinstance(prefix, basestring):
+        prefix = 'git+' if prefix else ''
 
     # Strip fragments.
     url = re.sub(r'#.*$', '', url)
@@ -22,18 +25,18 @@ def normalize_git_url(url):
     m = re.match(r'^(?:git\+)?(\w+):(.+)$', url)
     if m:
         scheme, the_rest = m.groups()
-        return 'git+%s:%s' % (scheme, the_rest)
+        return '%s%s:%s' % (prefix, scheme, the_rest)
 
     # Convert quick files into SSH.
     m = re.match(r'^git\+(/.+)$', url)
     if m:
-        return 'git+file://%s' % m.group(1)
+        return '%sfile://%s' % (prefix, m.group(1))
 
     # Convert scp-like urls into SSH.
     m = re.match(r'^(?:git\+)?([^:@]+@)?([^:]+):/*(.*)$', url)
     if m:
         userinfo, host, path = m.groups()
-        return 'git+ssh://%s%s/%s' % (userinfo or '', host, path.strip('/'))
+        return '%sssh://%s%s/%s' % (prefix, userinfo or '', host, path.strip('/'))
 
 
 

@@ -5,7 +5,7 @@ from vee.commands.main import command, argument, group
 from vee.environment import Environment
 from vee.home import PRIMARY_REPO
 from vee.exceptions import CliException
-from vee.utils import style_error
+from vee.utils import style_error, style_warning, style_note
 
 @command(
     group(
@@ -28,11 +28,12 @@ def repo(args):
 
     if args.action in ('list', None):
         rows = list(home.db.execute('SELECT * FROM repositories'))
+        if not rows:
+            print style_warning('No repositories.')
+            return
         max_len = max(len(row['name']) for row in rows)
         for row in rows:
-            print '%d %s %s%s' % (row['id'], '%%%ds' % max_len % row['name'], row['url'],
-                ' --default' if row['is_default'] else '',
-            )
+            print style_note(row['name'], row['url'], '--default' if row['is_default'] else '')
         return
 
     if not args.name:

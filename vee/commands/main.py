@@ -6,6 +6,7 @@ See: `vee <command> --help` for more on individual commands.
 
 import argparse
 import cProfile
+import functools
 import os
 import pkg_resources
 import sys
@@ -22,7 +23,7 @@ class AliasedSubParsersAction(argparse._SubParsersAction):
         aliases = kwargs.pop('aliases', [])
         parser = super(AliasedSubParsersAction, self).add_parser(name, **kwargs)
         for alias in aliases:
-            pass # self._name_parser_map[alias] = parser
+            self._name_parser_map[alias] = parser
         return parser
 
 
@@ -37,9 +38,18 @@ def group(*args, **kwargs):
 def command(*args, **kwargs):
     def _decorator(func):
         func.__command_spec__ = (args, kwargs)
+        func.__subcommands__ = []
+        func.subcommand = functools.partial(subcommand, func)
         return func
     return _decorator
 
+def subcommand(parent, *args, **kwargs):
+    def _decorator(func):
+        parent.__subcommands__.append(func)
+        func.__command_spec__ = (args, kwargs)
+        func.subcommand = functools.partial(subcommand, func)
+        return func
+    return _decorator
 
 
 class Namespace(argparse.Namespace):
@@ -68,7 +78,7 @@ def get_parser():
     )
 
     parser.register('action', 'parsers', AliasedSubParsersAction)
-    subparsers = parser.add_subparsers(metavar='COMMAND')
+    command_subparser = parser.add_subparsers(metavar='COMMAND')
 
     parser.add_argument('--home',
         dest='home_path',
@@ -76,29 +86,55 @@ def get_parser():
     )
 
     funcs = [ep.load() for ep in pkg_resources.iter_entry_points('vee_commands')]
+
+    populate_subparser(command_subparser, funcs)
+
+    return parser
+
+
+def populate_subparser(parent_subparser, funcs, depth=0):
+
     funcs.sort(key=lambda f: f.__command_spec__[1].get('name', f.__name__))
 
     for func in funcs:
+
         args, kwargs = func.__command_spec__
         func.__parse_known_args = kwargs.pop('parse_known_args', False)
         name = kwargs.pop('name', func.__name__)
         kwargs.setdefault('aliases', [])
         kwargs.setdefault('formatter_class', argparse.RawDescriptionHelpFormatter)
-        subparser = subparsers.add_parser(name, **kwargs)
-        subparser.set_defaults(func=func)
+
+        parser = parent_subparser.add_parser(name, **kwargs)
+        parser.set_defaults(**{'func%d' % depth: func})
+        parser.register('action', 'parsers', AliasedSubParsersAction)
+
+        subcommands = getattr(func, '__subcommands__', None)
+        if subcommands:
+            command_subparser = parser.add_subparsers(metavar='SUBCMD')
+            populate_subparser(command_subparser, subcommands, depth + 1)
 
         for arg_args, arg_kwargs in args:
             if arg_kwargs.pop('__type__', None) == 'group':
                 if arg_kwargs.pop('exclusive', False):
-                    group = subparser.add_mutually_exclusive_group(**arg_kwargs)
+                    group = parser.add_mutually_exclusive_group(**arg_kwargs)
                 else:
-                    group = subparser.add_argument_group(**arg_kwargs)
+                    group = parser.add_argument_group(**arg_kwargs)
                 for arg_args, arg_kwargs in arg_args:
                     group.add_argument(*arg_args, **arg_kwargs)
             else:
-                subparser.add_argument(*arg_args, **arg_kwargs)
+                parser.add_argument(*arg_args, **arg_kwargs)
 
-    return parser
+
+def get_func(args):
+    depth = 0
+    func = None
+    while True:
+        try:
+            func = getattr(args, 'func%d' % depth)
+        except AttributeError:
+            return func
+        else:
+            depth += 1
 
 
 def main(argv=None, environ=None, as_main=__name__=="__main__"):
@@ -106,8 +142,10 @@ def main(argv=None, environ=None, as_main=__name__=="__main__"):
     parser = get_parser()
 
     args, unparsed = parser.parse_known_args(argv, namespace=Namespace())
-    if args.func and unparsed and not args.func.__parse_known_args:
+    func = get_func(args)
+    if func and unparsed and not func.__parse_known_args:
         args = parser.parse_args(argv, namespace=Namespace())
+        func = get_func(args)
 
     args.environ = os.environ if environ is None else environ
     args.home_path = args.home_path or args.environ.get('VEE')
@@ -117,9 +155,9 @@ def main(argv=None, environ=None, as_main=__name__=="__main__"):
     args.main = getattr(args.home, 'main', None)
     
 
-    if args.func:
+    if func:
         try:
-            res = args.func(args, *unparsed) or 0
+            res = func(args, *unparsed) or 0
         except Exception as e:
             if as_main:
                 if isinstance(e, CliException):

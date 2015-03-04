@@ -1,9 +1,13 @@
 .DS_Store
-*.pyc
 
-/docs/_build
+# Build products.
+*.pyc
 /*.egg-info
-/venv
-/tests/sandbox
+/docs/_build
+
+# Test products.
 /build
 /demo
+/sandbox
+/tests/sandbox # Old sandbox.
+/venv

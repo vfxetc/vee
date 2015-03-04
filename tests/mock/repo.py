@@ -16,7 +16,7 @@ class MockRepo(object):
     def __init__(self, name):
         self.name = name
         self.path = os.path.abspath(os.path.join(
-            __file__, '..', '..', 'sandbox', 'repos', name
+            __file__, '..', '..', '..', 'sandbox', 'repos', name
         ))
         makedirs(self.path)
         self.repo = GitRepo(self.path)

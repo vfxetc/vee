@@ -123,8 +123,8 @@ class PythonBuild(GenericBuild):
             '--skip-build',
             '--root', pkg.install_path, # Better than prefix
             '--prefix', '.',
-            '--install-lib', site_packages, # So that we don't get lib64.
-            '--no-compile',
+            '--install-lib', site_packages, # So that we don't get lib64; virtualenv symlinks them together anyways.
+            # '--no-compile',
             '--single-version-externally-managed',
         ])
 

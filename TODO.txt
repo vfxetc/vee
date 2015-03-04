@@ -35,19 +35,24 @@ BEFORE FIRST DEPLOY
 
     - vee develop (NAME|REQUIREMENT)
 
-        - clone the project into $VEE_DEV
-        - pkg.builder.develop()
-        - INSERT INTO packages (develop_path) VALUES (?)
-            OR
-          INSERT INTO dev_packages (name, url, path)
+        √ clone the project into $VEE_DEV
+        √ pkg.builder.develop()
 
-        - vee develop [--path PATH] name
+        - inspect the package, and store a base_environ in the db
+            PYTHONPATH=.:@
+
+        - cli args to add to user_environ in the db
+            could these be evaluated relative to the current path?
+            if they re.match(r'^\.(/|$)')
+            vee dev --environ --set PYTHONPATH '.'
+
+        - vee dev [--path PATH] name
             - if the path already exists and is a git repo, then it just links
               it up
             - if the git repo doesnt exist, then it makes it
-        - vee develop --init name
+        - vee dev --init name
             - it makes a new package, and assumes it 
-        - vee develop --build [NAME|PATH]
+        - vee dev --build [NAME|PATH]
             - make a Package, set the build path, get a Builder, and call develop()
 
         - it looks at the origin later to figure this nonsense out
@@ -74,6 +79,11 @@ BEFORE FIRST DEPLOY
 
 
 ---
+
+- merge Requirement into Package
+
+    Package.factory(args)
+    make_package(args)
 
 
 - set:path/to/sets for sets

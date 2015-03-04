@@ -18,7 +18,7 @@ class MockPackage(object):
             __file__, '..', '..', 'package-templates', template
         ))
         self.path = os.path.abspath(os.path.join(
-            __file__, '..', '..', 'sandbox', 'packages', path or name
+            __file__, '..', '..', '..', 'sandbox', 'packages', path or name
         ))
         makedirs(self.path)
         self.repo = GitRepo(self.path)
@@ -30,6 +30,10 @@ class MockPackage(object):
 
         self._rev_count = None
 
+    @property
+    def git_url(self):
+        return 'git+' + self.path
+    
     @property
     def url(self):
         return mock_url(self.path + '.tgz')
