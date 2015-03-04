@@ -6,6 +6,8 @@ from vee.utils import find_in_tree, style, call
 
 class MakeBuild(GenericBuild):
 
+    type = 'make'
+
     factory_priority = 1000
 
     @classmethod

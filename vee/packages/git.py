@@ -7,6 +7,39 @@ from vee.utils import call, call_output, makedirs, style, cached_property
 from vee.git import GitRepo
 
 
+def normalize_git_url(url):
+
+    # Strip fragments.
+    url = re.sub(r'#.*$', '', url)
+
+    # The git protocol.
+    m = re.match(r'^git:(//)?(.+)$', url)
+    if m:
+        return 'git://' + m.group(2)
+
+    # Assert prefix on ssh and http urls. Note: this does not accept all
+    # actual schemes.
+    m = re.match(r'^(?:git\+)?(\w+):(.+)$', url)
+    if m:
+        scheme, the_rest = m.groups()
+        return 'git+%s:%s' % (scheme, the_rest)
+
+    # Convert quick files into SSH.
+    m = re.match(r'^git\+(/.+)$', url)
+    if m:
+        return 'git+file://%s' % m.group(1)
+
+    # Convert scp-like urls into SSH.
+    m = re.match(r'^(?:git\+)?([^:@]+@)?([^:]+):/*(.*)$', url)
+    if m:
+        userinfo, host, path = m.groups()
+        return 'git+ssh://%s%s/%s' % (userinfo or '', host, path.strip('/'))
+
+
+
+
+
+
 class GitPackage(BasePackage):
 
     type = 'git'
@@ -20,6 +53,11 @@ class GitPackage(BasePackage):
 
     def __init__(self, *args, **kwargs):
         super(GitPackage, self).__init__(*args, **kwargs)
+        
+        # We need to allow this to fail because the homebrew URLs, and others,
+        # will likely fail.
+        self.url = normalize_git_url(self.url) or self.url
+
         self._assert_paths(package=True)
         self.repo = GitRepo(work_tree=self.package_path, remote_url=self._git_remote_url)
 
@@ -44,4 +82,3 @@ class GitPackage(BasePackage):
     def fetch(self):
         self.repo.checkout(self.revision or 'HEAD', fetch=self.force_fetch or None)
         self.revision = self.repo.head[:8]
-        

@@ -12,6 +12,8 @@ site_packages = os.path.join('lib', 'python' + python_version, 'site-packages')
 
 class PythonBuild(GenericBuild):
 
+    type = 'python'
+
     factory_priority = 5000
 
     @classmethod
@@ -90,7 +92,7 @@ class PythonBuild(GenericBuild):
 
             print style('Found Python Wheel:', 'blue', bold=True), style(os.path.basename(self.dist_path), bold=True)
             print style('Warning:', 'yellow', bold=True), style('Scripts and other data will not be installed.', bold=True)
-            
+
             if not pkg.package_path.endswith('.whl'):
                 print style('Warning:', 'yellow', bold=True), style('package does not appear to be a Wheel', bold=True)
 

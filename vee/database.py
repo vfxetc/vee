@@ -55,21 +55,24 @@ def _create_initial_tables(con):
         abstract_requirement TEXT NOT NULL,
         concrete_requirement TEXT NOT NULL,
 
-        type TEXT NOT NULL,
         url TEXT NOT NULL,
-
         name TEXT,
         revision TEXT,
 
+        package_type TEXT NOT NULL,
+        build_type TEXT NOT NULL,
+
         -- Names, either from the user or discovered.
-        package_name TEXT NOT NULL,
-        build_name TEXT NOT NULL,
-        install_name TEXT NOT NULL,
+        package_name TEXT,
+        build_name TEXT,
+        install_name TEXT,
+        develop_name TEXT,
 
         -- Paths for direct lookup.
-        package_path TEXT NOT NULL,
-        build_path TEXT NOT NULL,
-        install_path TEXT NOT NULL
+        package_path TEXT,
+        build_path TEXT,
+        install_path TEXT,
+        develop_path TEXT
 
     )''')
 

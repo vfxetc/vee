@@ -32,18 +32,35 @@ BEFORE FIRST DEPLOY
             root looking for directories which aren't mentioned, then delete them
     - vee uninstall (NAME|REQUIREMENT [ARGS])
     - vee unlink ENVIRON (NAME|REQUIREMENT [ARGS])
+
     - vee develop (NAME|REQUIREMENT)
-        - clone the project into $VEE_DEV, somehow link it in (likely into the database)
+        - clone the project into $VEE_DEV
+        - pkg.builder.develop()
+        - INSERT INTO packages (develop_path) VALUES (?)
+
+        - vee develop name
+            - it looks for a package in the primary repo
+        - vee develop --init name
+            - it makes a new package, and assumes it 
+        - vee develop --build [.]
+            - make a Package, set the build path, get a Builder, and call develop()
+
+
     - dev [...] COMMAND [ARGS]
         - runtime linking of dev tools over default repo
+
     - vee add [NAME|PATH]
         - add new commits to the repo requirements
+
     - vee status
         - check on status of each dev tool, and where they are vs the repo
+
     - vee commit [--major,--minor,--patch] [-m MESSAGE]
         - commit the current state of the repo
+
     - vee push
         - push all tools that aren't already, and the repo
+
     - vee list
         - list packages, environments, etc..
 
@@ -53,7 +70,8 @@ BEFORE FIRST DEPLOY
 
 - set:path/to/sets for sets
 
-
+- normalization of git URLs:
+    git+user@host:path/to/repo -> git+ssh://user@host/path/to/repo
 
 - VEE_DEV=$VEE/dev by default, but is only really used by `vee develop` and `dev -u USER`
 - VEE_REPO=westernx sets the default repo

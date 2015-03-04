@@ -5,6 +5,8 @@ from vee.utils import style_note, style
 
 class GenericBuild(object):
 
+    type = 'generic'
+    
     factory_priority = 0
 
     @classmethod

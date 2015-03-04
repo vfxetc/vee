@@ -56,7 +56,6 @@ class BasePackage(object):
         self._db_link_id = None
         self.package_name = self.build_name = None
 
-
     def __repr__(self):
         return '<%s for %s>' % (
             self.__class__.__name__,
@@ -110,7 +109,12 @@ class BasePackage(object):
 
     def _set_default_names(self, package=False, build=False, install=False):
         if (package or build or install) and self.package_name is None:
-            self.package_name = self.url and os.path.join(self.type, re.sub(r'^https?://', '', self.url).strip('/'))
+            if self.url:
+                # Strip out the scheme.
+                name = re.sub(r'^[\w._+-]+:', '', self.url)
+                name = re.sub(r':?/+:?', '/', name)
+                name = name.strip('/')
+                self.package_name = os.path.join(self.type, name)
         if (install or build) and self.install_name is None:
             if self.name and self.revision:
                 self.install_name = '%s/%s' % (self.name, self.revision)
@@ -268,12 +272,13 @@ class BasePackage(object):
             cur = self.home.db.cursor()
             cur.execute('''
                 INSERT INTO packages (abstract_requirement, concrete_requirement,
-                                      type, url, name, revision, package_name, build_name,
+                                      package_type, build_type, url, name, revision, package_name, build_name,
                                       install_name, package_path, build_path, install_path)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             ''', [self.abstract_requirement,
                   self.freeze().to_json(),
                   self.type,
+                  self.builder.type,
                   self.url,
                   self.name,
                   self.revision,
@@ -295,8 +300,8 @@ class BasePackage(object):
             raise ValueError('requirement already in database')
 
 
-        clauses = ['type = ?', 'url = ?']
-        values = [self.type, self.url]
+        clauses = ['install_path IS NOT NULL', 'url = ?']
+        values = [self.url]
 
         for attr, column in (
             ('name', 'name'),
@@ -384,4 +389,5 @@ class BasePackage(object):
 
         # Record it!
         self.db_id()
+
 

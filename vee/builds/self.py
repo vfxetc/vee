@@ -4,6 +4,8 @@ from vee.utils import find_in_tree
 
 class SelfBuild(GenericBuild):
 
+    type = 'self'
+
     factory_priority = 9999
 
     @classmethod
