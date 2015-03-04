@@ -139,40 +139,41 @@ def get_func(args):
 
 def main(argv=None, environ=None, as_main=__name__=="__main__"):
 
-    parser = get_parser()
+    try:
 
-    args, unparsed = parser.parse_known_args(argv, namespace=Namespace())
-    func = get_func(args)
-    if func and unparsed and not func.__parse_known_args:
-        args = parser.parse_args(argv, namespace=Namespace())
+        parser = get_parser()
+
+        args, unparsed = parser.parse_known_args(argv, namespace=Namespace())
         func = get_func(args)
+        if func and unparsed and not func.__parse_known_args:
+            args = parser.parse_args(argv, namespace=Namespace())
+            func = get_func(args)
 
-    args.environ = os.environ if environ is None else environ
-    args.home_path = args.home_path or args.environ.get('VEE')
-    
+        args.environ = os.environ if environ is None else environ
+        args.home_path = args.home_path or args.environ.get('VEE')
+        
 
-    args.home = args.home_path and Home(args.home_path)
-    args.main = getattr(args.home, 'main', None)
-    
-
-    if func:
-        try:
+        args.home = args.home_path and Home(args.home_path)
+        args.main = getattr(args.home, 'main', None)
+        
+        if func:
             res = func(args, *unparsed) or 0
-        except Exception as e:
-            if as_main:
-                if isinstance(e, CliException):
-                    print e.clistr
-                    res = e.errno
-                else:
-                    stack = traceback.format_list(traceback.extract_tb(sys.exc_traceback))
-                    print style(''.join(stack).rstrip(), faint=True)
-                    print style(e.__class__.__name__ + ':', 'red', bold=True), style(str(e), bold=True)
-                    res = 1
+        else:
+            parser.print_help()
+            res = 1
+
+    except Exception as e:
+        if as_main:
+            if isinstance(e, CliException):
+                print e.clistr
+                res = e.errno
             else:
-                raise
-    else:
-        parser.print_help()
-        res = 1
+                stack = traceback.format_list(traceback.extract_tb(sys.exc_traceback))
+                print style(''.join(stack).rstrip(), faint=True)
+                print style(e.__class__.__name__ + ':', 'red', bold=True), style(str(e), bold=True)
+                res = 1
+        else:
+            raise
     
     return res
 

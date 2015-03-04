@@ -1,19 +1,40 @@
 import re
 
 from vee.commands.main import command, argument
-from vee.utils import style, style_error, style_note
-from vee.git import GitRepo, normalize_git_url
 from vee.exceptions import CliException
+from vee.git import GitRepo, normalize_git_url
+from vee.utils import style, style_error, style_note
 
 
 @command(
-    argument('--bake-heads', action='store_true'),
+    argument('--update', action='store_true', help='update all repos themselves'),
+    argument('--bake-installed', action='store_true', help='bake all installed revisions'),
     argument('package', nargs='?', default='.'),
 )
 def add(args):
 
     home = args.assert_home()
 
+    if args.update:
+        req_repo = home.get_repo()
+        baked_any = False
+        for req in req_repo.iter_git_requirements(home):
+            pkg = req.package
+            print style_note('Fetching', str(req))
+            pkg.repo.fetch('origin/master', remote='origin')
+            if pkg.repo.check_ff_safety('origin/master'):
+                pkg.repo.checkout('origin/master')
+                head = pkg.repo.head[:8]
+                if head != req.revision:
+                    req.revision = pkg.repo.head[:8]
+                    req.force_fetch = False
+                    print style_note('Updated', str(req))
+                    baked_any = True
+        if baked_any:
+            req_repo.dump()
+        else:
+            print style_note('No changes.')
+        return
 
     if args.bake_heads:
         req_repo = home.get_repo()

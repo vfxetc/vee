@@ -35,17 +35,19 @@ BEFORE FIRST DEPLOY
     - vee uninstall (NAME|REQUIREMENT [ARGS])
     - vee unlink ENVIRON (NAME|REQUIREMENT [ARGS])
 
-    √ vee develop ...
-    √ dev [...] COMMAND [ARGS]
+    ~ vee develop ...
+    ~ dev [...] COMMAND [ARGS]
         - runtime linking of dev tools over default repo
 
-    √ vee add [NAME|PATH]
+    ~ vee add [NAME|PATH]
         - add new commits to the repo requirements
-    √ vee add --bake-heads
+    ~ vee add --bake-heads
         - update the repo to the current revision of everything that is
           installed
+    ~ vee add --update
 
-    - vee upgrade --remotes
+    √ vee update
+    √ vee upgrade
 
 
     - vee status

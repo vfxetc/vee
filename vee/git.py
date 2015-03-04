@@ -16,7 +16,7 @@ def normalize_git_url(url, prefix=False):
     url = re.sub(r'#.*$', '', url)
 
     # The git protocol.
-    m = re.match(r'^git:(//)?(.+)$', url)
+    m = re.match(r'^(?:git\+)?git:(//)?(.+)$', url)
     if m:
         return 'git://' + m.group(2)
 
@@ -27,16 +27,17 @@ def normalize_git_url(url, prefix=False):
         scheme, the_rest = m.groups()
         return '%s%s:%s' % (prefix, scheme, the_rest)
 
-    # Convert quick files into SSH.
+    # Direct paths. This one MUST have the git+ on the front in order to be
+    # detected by this method.
     m = re.match(r'^git\+(/.+)$', url)
     if m:
-        return '%sfile://%s' % (prefix, m.group(1))
+        return '%s%s' % (prefix, m.group(1))
 
-    # Convert scp-like urls into SSH.
-    m = re.match(r'^(?:git\+)?([^:@]+@)?([^:]+):/*(.*)$', url)
+    # SCP-like.
+    m = re.match(r'^(?:git\+)?([^:@]+@)?([^:]+):(.*)$', url)
     if m:
         userinfo, host, path = m.groups()
-        return '%sssh://%s%s/%s' % (prefix, userinfo or '', host, path.strip('/'))
+        return '%s%s%s:%s' % (prefix, userinfo or '', host, path.rstrip('/'))
 
 
 

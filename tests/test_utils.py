@@ -38,19 +38,19 @@ class TestGitURLs(TestCase):
     def test_scp_urls(self):
         self.assertEqual(
             normalize_git_url('user@example.com:path/to/git'),
-            'ssh://user@example.com/path/to/git'
+            'user@example.com:path/to/git'
         )
         self.assertEqual(
             normalize_git_url('user@example.com:/path/to/git'),
-            'ssh://user@example.com/path/to/git'
+            'user@example.com:/path/to/git'
         )
         self.assertEqual(
             normalize_git_url('example.com:path/to/git'),
-            'ssh://example.com/path/to/git'
+            'example.com:path/to/git'
         )
         self.assertEqual(
             normalize_git_url('git+user@example.com:path/to/git'),
-            'ssh://user@example.com/path/to/git'
+            'user@example.com:path/to/git'
         )
 
     def test_http_urls(self):
@@ -90,6 +90,10 @@ class TestGitURLs(TestCase):
         )
         self.assertEqual(
             normalize_git_url('git+/path/to/git'),
-            'file:///path/to/git'
+            '/path/to/git'
+        )
+        self.assertEqual(
+            normalize_git_url('git+/path/to/git', prefix=True),
+            'git+/path/to/git'
         )
 
