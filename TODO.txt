@@ -75,6 +75,8 @@ COMMANDS TO WRITE
     - Container
     - Stack
     - Runtime
+    - Heirarchy
+    - Filesystem Heirarchy Standard
 
 - assert that $VEE_HOMEBREW is used properly everywhere
 - assert other envvars are used:

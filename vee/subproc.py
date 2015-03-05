@@ -6,15 +6,17 @@ import threading
 from vee.cli import style
 
 
-def _call_reader(fh, size=2**10, buffer=None, callback=None):
+def _call_reader(fh, size=2**10, buffer=None, callback=None, stream=None):
     while True:
         chunk = fh.read(size)
         if not chunk:
             return
         if buffer is not None:
             buffer.append(chunk)
-        if callback:
+        if callback is not None:
             callback(chunk)
+        if stream is not None:
+            stream.write(chunk)
 
 
 def call(cmd, **kwargs):

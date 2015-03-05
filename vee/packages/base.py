@@ -373,8 +373,7 @@ class BasePackage(object):
 
     def auto_install(self, force=False):
 
-        if not self.force_fetch:
-            self._reinstall_check(force)
+        self._reinstall_check(force)
 
         self.fetch()
         self._reinstall_check(force) # We may only know once we have fetched.

@@ -27,7 +27,6 @@ def add(args):
                 head = pkg.repo.head[:8]
                 if head != req.revision:
                     req.revision = pkg.repo.head[:8]
-                    req.force_fetch = False
                     print style_note('Updated', str(req))
                     baked_any = True
         if baked_any:
@@ -41,13 +40,9 @@ def add(args):
         baked_any = False
         for req in req_repo.iter_git_requirements(home):
             pkg = req.package
-            # TODO: this should be elsewhere
-            if pkg.force_fetch:
-                pkg.fetch()
             pkg.resolve_existing()
             if pkg.installed and req.revision != pkg.repo.head[:8]:
                 req.revision = pkg.repo.head[:8]
-                req.force_fetch = False
                 print style_note('Baked', str(req))
                 baked_any = True
             else:
@@ -85,7 +80,6 @@ def add(args):
     if req.revision == pkg_repo.head[:8]:
         print style_note('No change to', str(req))
     else:
-        req.force_fetch = False
         req.revision = pkg_repo.head[:8]
         print style_note('Updated', str(req))
         req_repo.dump()

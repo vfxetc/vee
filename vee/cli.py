@@ -1,5 +1,49 @@
 # encoding: utf-8
 
+import contextlib
+import re
+import sys
+
+
+INDENT_STR = '    '
+
+_settings = [{
+    'indent': 0,
+    'style': {},
+}]
+
+
+class StreamStyler(object):
+
+    def __init__(self, stream):
+        self._stream = stream
+
+    def write(self, x):
+        self.writelines(re.split(r'(?<=\n)', x))
+
+    def writelines(self, lines):
+
+        indent = INDENT_STR * _settings[-1]['indent']
+        style_kwargs = _settings[-1]['style']
+
+        for line in lines:
+            if line.endswith('\n'):
+                line = indent + line
+            if style_kwargs:
+                line = style(line, **style_kwargs)
+            self._stream.write(line)
+
+    def flush(self):
+        self._stream.flush()
+
+
+# TODO: override this only in the CLI
+# sys.stdout = StreamStyler(sys.stdout)
+# sys.stderr = StreamStyler(sys.stderr)
+
+
+
+
 
 CSI = '\x1b['
 _colour_codes = dict(
@@ -29,9 +73,6 @@ def _colour_to_code(c):
     if isinstance(c, int):
         return str(c)
     raise ValueError('bad colour %r' % c)
-
-
-
 
 
 def style(message='', fg=None, bg=None, bright=None, bold=None, faint=None,
@@ -67,9 +108,6 @@ def style(message='', fg=None, bg=None, bright=None, bold=None, faint=None,
         parts.extend((CSI, '0m'))
 
     return ''.join(parts)
-
-
-colour = color = style
 
 
 def style_note(heading, msg='', detail=''):

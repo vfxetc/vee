@@ -49,5 +49,5 @@ class GitPackage(BasePackage):
         super(GitPackage, self)._set_names(**kwargs)
 
     def fetch(self):
-        self.repo.checkout(self.revision or 'HEAD', fetch=self.force_fetch or None)
+        self.repo.checkout(self.revision or 'HEAD')
         self.revision = self.repo.head[:8]
