@@ -59,6 +59,7 @@ class Home(object):
             url or row['url'],
             remote_name='origin',
             branch_name=row['branch'],
+            home=self,
         )
 
     def main(self, args, environ=None, **kwargs):

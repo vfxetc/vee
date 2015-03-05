@@ -28,6 +28,7 @@ brew = vee.commands.brew:brew
 # Development.
 develop = vee.commands.develop:develop
 add = vee.commands.add:add
+commit = vee.commands.commit:commit
 
 
 [vee_package_types]

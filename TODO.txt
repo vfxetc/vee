@@ -49,7 +49,6 @@ BEFORE FIRST DEPLOY
     √ vee update
     √ vee upgrade
 
-
     - vee status
         - check on status of each dev tool, and where they are vs the repo
 

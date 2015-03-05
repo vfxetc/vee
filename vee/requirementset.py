@@ -21,22 +21,14 @@ class Envvar(tuple):
         return '%s=%s' % self
 
 
-class Header(tuple):
+class Header(object):
 
-    def __new__(cls, name, value):
-        name = '-'.join(x.title() for x in name.split('-'))
-        return super(Header, cls).__new__(cls, (name, value))
-
-    @property
-    def name(self):
-        return self[0]
-
-    @property
-    def value(self):
-        return self[1]
+    def __init__(self, name, value):
+        self.name = '-'.join(x.title() for x in name.split('-'))
+        self.value = value
 
     def __str__(self):
-        return '%s: %s' % self
+        return '%s: %s' % (self.name, self.value)
 
 
 class RequirementSet(list):
@@ -45,6 +37,7 @@ class RequirementSet(list):
 
         self.home = home
         self._cumulative_environ = {}
+        self.headers = {}
 
         if isinstance(source, (list, tuple)):
             self.parse_args(source)
@@ -93,7 +86,9 @@ class RequirementSet(list):
 
             m = re.match(r'^([\w-]+): (\S.*)$', spec)
             if m:
-                self.append((before, Header(*m.groups()), after))
+                header = Header(*m.groups())
+                self.headers[header.name] = header
+                self.append((before, header, after))
                 continue
 
             req = Requirement(spec, home=self.home)
