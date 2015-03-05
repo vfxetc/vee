@@ -8,7 +8,7 @@ class TestUpdateCommand(TestCase):
         repo = MockRepo('tr_basics')
         repo.add_requirements('packages/tr_basics_foo --install-name tr_basics_foo/1.0.0 --make-install')
         
-        vee(['repo', '--add', repo.name, repo.path])
+        vee(['repo', 'add', repo.name, repo.path])
 
         foo_pkg = MockPackage('tr_basics_foo', 'c_configure_make_install')
         foo_pkg.render_commit()

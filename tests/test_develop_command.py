@@ -21,7 +21,7 @@ class TestDevelopCommand(TestCase):
         req_repo = MockRepo('tdc_simple')
         req_repo.add_requirements(pkg.git_url)
         
-        vee(['repo', '--add', req_repo.name, req_repo.path])
+        vee(['repo', 'add', req_repo.name, req_repo.path])
 
         vee(['update', req_repo.name])
         vee(['upgrade', req_repo.name])

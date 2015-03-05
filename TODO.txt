@@ -73,8 +73,6 @@ COMMANDS TO WRITE
     - Heirarchy
     - Filesystem Heirarchy Standard
 
-- refactor repo to use subcommands
-
 - refactor develop to not use subcommands (just --init, --clone, --install)
 
 - GitRepo.fetch('origin/master') could be smarter
