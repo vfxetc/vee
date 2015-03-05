@@ -2,9 +2,9 @@
 BEFORE FIRST DEPLOY
 -------------------
 
-- try to unify the arguments and attributes on Package and Requirement
-- dev environment
-- test everything?!
+√ try to unify the arguments and attributes on Package and Requirement
+~ dev environment
+~ test everything?!
 - key_base
     - entrypoints
     - apps: can we build them in a central location, outside of the isolated
@@ -13,7 +13,6 @@ BEFORE FIRST DEPLOY
     - scrap history
 - OS X apps via symlinks in docks?
 - assert all westernx packages transition
-
 
     - entrypoints.yml at top_level is built by Makefile (in sgfs and others)
         - make a build_metatools_entrypoints distutils command
@@ -32,6 +31,7 @@ BEFORE FIRST DEPLOY
         - delete anything on disk that isn't referred to by the index
             build a set of relative paths (and all their ancestors), then walk the
             root looking for directories which aren't mentioned, then delete them
+
     - vee uninstall (NAME|REQUIREMENT [ARGS])
     - vee unlink ENVIRON (NAME|REQUIREMENT [ARGS])
 
@@ -41,7 +41,7 @@ BEFORE FIRST DEPLOY
 
     ~ vee add [NAME|PATH]
         - add new commits to the repo requirements
-    ~ vee add --bake-heads
+    ~ vee add --bake-installed
         - update the repo to the current revision of everything that is
           installed
     ~ vee add --update
@@ -52,8 +52,7 @@ BEFORE FIRST DEPLOY
     - vee status
         - check on status of each dev tool, and where they are vs the repo
 
-    - vee commit [--major,--minor,--patch] [-m MESSAGE]
-        - commit the current state of the repo
+    ~ vee commit [--major,--minor,--patch] [-m MESSAGE]
 
     - vee push
         - push all tools that aren't already, and the repo

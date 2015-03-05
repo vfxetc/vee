@@ -143,7 +143,9 @@ def _call_reader(fh, size=2**10, buffer=None, callback=None):
 def call(cmd, **kwargs):
 
     if not kwargs.pop('silent', False):
-        print colour('$', 'blue', bold=True), colour(cmd[0], bold=True), ' '.join(cmd[1:])
+        VEE = os.environ.get('VEE')
+        cmd_collapsed = [x.replace(VEE, '$VEE') if VEE else x for x in cmd]
+        print colour('$', 'blue', bold=True), colour(cmd_collapsed[0], bold=True), ' '.join(cmd_collapsed[1:])
 
     stdout = kwargs.pop('stdout', None)
     on_stdout = kwargs.pop('on_stdout', None)

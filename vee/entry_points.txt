@@ -29,6 +29,8 @@ brew = vee.commands.brew:brew
 develop = vee.commands.develop:develop
 add = vee.commands.add:add
 commit = vee.commands.commit:commit
+status = vee.commands.status:status
+push = vee.commands.push:push
 
 
 [vee_package_types]

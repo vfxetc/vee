@@ -36,7 +36,7 @@ def add(args):
             print style_note('No changes.')
         return
 
-    if args.bake_heads:
+    if args.bake_installed:
         req_repo = home.get_repo()
         baked_any = False
         for req in req_repo.iter_git_requirements(home):
