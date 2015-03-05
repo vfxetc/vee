@@ -1,7 +1,7 @@
 Name: WesternX
 Version: 1.0.0
 
-PKG_CONFIG_PATH=$VEE/packages/homebrew/lib/pkgconfig:@
+PKG_CONFIG_PATH=$VEE_HOMEBREW/lib/pkgconfig:@
 
 git+git@git.westernx:westernx/metatools         --force-fetch --revision origin/master
 PYTHONPATH=$VEE/opt/metatools/lib/python2.7/site-package
@@ -20,8 +20,7 @@ git+git@git.westernx:westernx/sgsession --force-fetch --revision origin/master
 homebrew+x264 -c='--HEAD'
 homebrew+ffmpeg -c='--HEAD'
 git+git@git.westernx:westernx/PyAV \
-    --force-fetch \
-    -e PKG_CONFIG_PATH=$VEE/packages/homebrew/lib/pkgconfig:@
+    --force-fetch
 
 # TODO: get these to link
 # http:/path/to/AAF-1.1.6.0.tgz --install-name aaf/1.1.6
@@ -32,8 +31,9 @@ homebrew+imagemagick
 git+git@git.westernx:westernx/cythonmagick \
     --force-fetch \
     --revision origin/master \
-    -e PATH=$VEE/packages/homebrew/bin:@ \
-    -e PKG_CONFIG_PATH=$VEE/packages/homebrew/lib/pkgconfig:@
+    -e PATH=$VEE_HOMEBREW/bin:@ \
+    -e PKG_CONFIG_PATH=$VEE_HOMEBREW/lib/pkgconfig:@
+
 
 git+git@git.westernx:westernx/docs              --force-fetch --revision origin/master \
     --build-subdir _build/html --install-prefix share/docs/westernx

@@ -41,12 +41,17 @@ def add(args):
         baked_any = False
         for req in req_repo.iter_git_requirements(home):
             pkg = req.package
+            # TODO: this should be elsewhere
+            if pkg.force_fetch:
+                pkg.fetch()
             pkg.resolve_existing()
-            if pkg.installed and re.match(r'^[0-9a-f]{8}$', pkg.revision) and req.revision != pkg.revision:
-                req.revision = pkg.revision
+            if pkg.installed and req.revision != pkg.repo.head[:8]:
+                req.revision = pkg.repo.head[:8]
                 req.force_fetch = False
                 print style_note('Baked', str(req))
                 baked_any = True
+            else:
+                print pkg.installed, pkg.repo.head[:8]
         if baked_any:
             req_repo.dump()
         else:

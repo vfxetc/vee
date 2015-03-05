@@ -22,6 +22,15 @@ BEFORE FIRST DEPLOY
 
 ---
 
+- $PKG_CONFIG_PATH at top level of requirements.txt is not picked up by
+  Cythonmagick, and needed to be on the requirement
+
+- assert that $VEE_HOMEBREW
+
+- many of the requirements in westernx.txt are not resolving against existing.
+  This is because they are --force-fetch, and need their revisions resolved.
+  This should be done by resolve_existing, by calling fetch(with force) and
+  parsing revisions
 
 - commands to write:
 
