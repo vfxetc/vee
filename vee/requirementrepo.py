@@ -25,18 +25,18 @@ class RequirementRepo(GitRepo):
     def name(self):
         return os.path.basename(self.work_tree)
 
-    def iter_requirements(self, home):
-        for req in self.set.iter_requirements():
+    def iter_requirements(self):
+        for req in self.reqs.iter_requirements():
             yield req
 
-    def iter_git_requirements(self, home):
-        for req in self.iter_requirements(home):
+    def iter_git_requirements(self):
+        for req in self.iter_requirements():
             if req.package.type == 'git':
                 yield req
 
     def dump(self):
         with open(self._req_path, 'wb') as fh:
-            for line in self.set.iter_dump():
+            for line in self.reqs.iter_dump():
                 fh.write(line)
 
     def commit(self, message, level=None):
@@ -54,10 +54,10 @@ class RequirementRepo(GitRepo):
 
         if level is not None:
 
-            header = self.set.headers.get('version')
+            header = self.reqs.headers.get('version')
             if not header:
                 header = Header('Version', '0.0.0')
-                self.set.insert(0, ('', header, ''))
+                self.reqs.insert(0, ('', header, ''))
             version = []
             for i, x in enumerate(re.split(r'[.-]', header.value)):
                 try:

@@ -60,7 +60,7 @@ Package:
 Names and Paths
 ---------------
 
-There are a series of ``_*_name`` attribute of a :class:`Package`. They are
+There are a series of ``*_name`` attribute of a :class:`Package`. They are
 set from :class:`Requirement` attributes, or self-determined on request via
 ``Package._assert_names(build=True, ...)``.
 
@@ -70,7 +70,7 @@ incorporate the corresponding name, but don't have it. They are set from
 
 .. warning:: It is very important that an API consumer only every assert the existence of
     names or paths that they are about to use. This allows for the determination
-    of some of the names (especially ``_install_name`` and ``install_path``) to be
+    of some of the names (especially ``install_name`` and ``install_path``) to be
     deferred as long as possible so that they may use information revealed during
     the earlier of the build pipeline.
 
@@ -93,12 +93,12 @@ should only ever use the ``*_path`` properties:
     The final location of a built artifact. May be ``None`` if it cannot be
     determined. This must not change once installed.
 
-.. attribute:: Package.build_subdir_to_install
+.. attribute:: Package.build_subdir
 
     Where within the build_path to install from. Good for selecting a sub directory
     that the package build itself into.
 
-.. attribute:: Package.install_subdir_from_build
+.. attribute:: Package.install_prefix
 
     Where within the install_path to install into. Good for installing packages
     into the correct place within the standard tree.
@@ -126,8 +126,8 @@ the package. A few environment variables are passed to assist it:
 The script may export a few environment variables to modify the install
 process:
 
-    - ``VEE_BUILD_SUBDIR_TO_INSTALL``
-    - ``VEE_INSTALL_SUBDIR_FROM_BUILD``
+    - ``VEE_build_subdir``
+    - ``VEE_install_prefix``
 
 
 ``python setup.py build``
@@ -147,10 +147,10 @@ and the install process will be (essentially) to call:
     python setup.py install --skip-build --single-version-externally-managed
 
 
-``*.egg-info`` or ``*.dist-info``
+``EGG-INFO`` or ``*.dist-info``
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-If an ``*.egg-info`` or ``*.dist-info`` directory exists, the package is
+If an ``EGG-INFO`` or ``*.dist-info`` directory exists, the package is
 assumed to be a prepared Python package (an Egg or Wheel, respectively), and no
 further build steps are taken. The install process will be modified to install
 the package contents into ``lib/python2.7/site-packages``.
@@ -183,8 +183,8 @@ Unless overridden (either by the package type, or the discovered build type
 the build path are copied to the install path, like::
 
     shutils.copytree(
-        os.path.join(pkg.build_path, pkg.build_subdir_to_install)),
-        os.path.join(pkg.install_path, pkg.install_subdir_from_build))
+        os.path.join(pkg.build_path, pkg.build_subdir)),
+        os.path.join(pkg.install_path, pkg.install_prefix))
     )
 
 

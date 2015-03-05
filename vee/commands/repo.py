@@ -1,11 +1,11 @@
 import sqlite3
 
-
+from vee.cli import style_error, style_warning, style_note
 from vee.commands.main import command, argument, group
 from vee.environment import Environment
-from vee.home import PRIMARY_REPO
 from vee.exceptions import CliException
-from vee.utils import style_error, style_warning, style_note
+from vee.home import PRIMARY_REPO
+
 
 @command(
     group(

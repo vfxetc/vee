@@ -1,6 +1,6 @@
+from vee.cli import style
 from vee.commands.main import command, argument
 from vee.home import PRIMARY_REPO
-from vee.utils import style
 
 
 @command(

@@ -1,9 +1,9 @@
+from vee.cli import style
 from vee.commands.main import command, argument
 from vee.environment import Environment
+from vee.exceptions import CliException, AlreadyInstalled, AlreadyLinked
 from vee.requirement import Requirement
 from vee.requirementset import RequirementSet
-from vee.utils import style
-from vee.exceptions import CliException, AlreadyInstalled, AlreadyLinked
 
 
 @command(

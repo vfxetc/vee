@@ -1,7 +1,9 @@
 import os
 
 from vee.builds.generic import GenericBuild
-from vee.utils import find_in_tree, style, call
+from vee.cli import style
+from vee.subproc import call
+from vee.utils import find_in_tree
 
 
 class MakeBuild(GenericBuild):

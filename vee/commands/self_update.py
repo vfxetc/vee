@@ -2,8 +2,6 @@ import os
 import sys
 
 from vee.commands.main import command, argument
-from vee.requirement import Requirement
-from vee.utils import style
 
 
 @command(

@@ -1,13 +1,14 @@
 import argparse
 import datetime
+import json
 import os
 import re
 import shlex
-import json
 
+from vee.cli import style
 from vee.exceptions import AlreadyInstalled, CliException
-from vee.utils import style, cached_property
 from vee.packages import make_package
+from vee.utils import cached_property
 
 
 class RequirementParseError(CliException):

@@ -2,14 +2,11 @@ import os
 import re
 import subprocess
 
-from vee.packages.base import BasePackage
-from vee.utils import call, call_output, makedirs, style, cached_property
+from vee.cli import style
 from vee.git import GitRepo, normalize_git_url
-
-
-
-
-
+from vee.packages.base import BasePackage
+from vee.subproc import call, call_output
+from vee.utils import makedirs, cached_property
 
 
 class GitPackage(BasePackage):

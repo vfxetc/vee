@@ -4,8 +4,10 @@ import re
 import shlex
 import sys
 
+from vee.cli import style
 from vee.packages.git import GitPackage
-from vee.utils import call, makedirs, style, cached_property
+from vee.subproc import call
+from vee.utils import makedirs, cached_property
 
 
 class HomebrewPackage(GitPackage):

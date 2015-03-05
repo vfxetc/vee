@@ -4,9 +4,9 @@ import re
 
 from vee.commands.main import command, argument, group
 from vee.environment import Environment
+from vee.envvars import guess_envvars, render_envvars
 from vee.exceptions import CliException
 from vee.requirementset import RequirementSet
-from vee.utils import guess_environ, resolve_environ
 
 
 @command(
@@ -74,12 +74,12 @@ def exec_(args):
                 paths.append(path)
                 dev_packages.append(pkg)
 
-    environ_diff = guess_environ(paths)
+    environ_diff = guess_envvars(paths)
 
     for pkg in dev_packages:
         pkg_environ = json.loads(pkg['environ'])
         if pkg_environ:
-            environ_diff.update(resolve_environ(pkg_environ, pkg['path'], environ_diff))
+            environ_diff.update(render_envvars(pkg_environ, pkg['path'], environ_diff))
 
     # More environment variables.
     command = args.command or []

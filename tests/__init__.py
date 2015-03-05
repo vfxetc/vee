@@ -47,6 +47,7 @@ _environ_diff = {
     # 'VEE_DEV': os.path.join(VEE, 'dev'),
     # 'VEE_REPO': 'sandbox',
     'VEE_HOMEBREW': sandbox('Homebrew'),
+    'PATH': '%s:%s' % (os.path.join(root_dir, 'bin'), os.environ['PATH']),
 }
 os.environ.update(_environ_diff)
 

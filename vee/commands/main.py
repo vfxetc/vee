@@ -12,9 +12,9 @@ import pkg_resources
 import sys
 import traceback
 
+from vee.cli import style
 from vee.exceptions import CliException
 from vee.home import Home
-from vee.utils import style
 
 
 class AliasedSubParsersAction(argparse._SubParsersAction):

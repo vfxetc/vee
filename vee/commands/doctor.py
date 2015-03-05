@@ -1,5 +1,5 @@
+from vee.cli import style, style_note, style_warning
 from vee.commands.main import command, argument
-from vee.utils import style, style_note, style_warning
 
 
 @command(

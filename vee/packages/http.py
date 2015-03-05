@@ -5,8 +5,9 @@ import urlparse
 import re
 import shutil
 
+from vee.cli import style
 from vee.packages.base import BasePackage
-from vee.utils import makedirs, style
+from vee.utils import makedirs
 
 
 class HttpPackage(BasePackage):

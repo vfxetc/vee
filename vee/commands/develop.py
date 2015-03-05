@@ -1,13 +1,15 @@
 import json
 import os
 
+from vee.cli import style, style_error, style_note, style_warning
 from vee.commands.main import command, argument, group
+from vee.envvars import render_envvars
 from vee.exceptions import AlreadyInstalled, CliException
+from vee.git import GitRepo
+from vee.packages.git import normalize_git_url
 from vee.requirement import Requirement
 from vee.requirementset import RequirementSet
-from vee.git import GitRepo
-from vee.utils import style, style_error, style_note, style_warning, makedirs, resolve_environ
-from vee.packages.git import normalize_git_url
+from vee.utils import makedirs
 
 
 def iter_availible_requirements(home):
@@ -49,7 +51,7 @@ def list(args):
         path = row['path'].replace(home.dev_root, '$VEE_DEV').replace(home.root, '$VEE')
         print style_note(row['name'], path)
         if args.show_environ:
-            for k, v in sorted(resolve_environ(json.loads(row['environ']), row['path']).iteritems()):
+            for k, v in sorted(render_envvars(json.loads(row['environ']), row['path']).iteritems()):
                 v = v.replace(home.dev_root, '$VEE_DEV')
                 v = v.replace(home.root, '$VEE')
                 if os.environ.get(k):

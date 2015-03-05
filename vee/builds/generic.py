@@ -1,7 +1,8 @@
 import os
 import shutil
 
-from vee.utils import style_note, style, envjoin
+from vee.cli import style_note, style
+from vee.envvars import join_env_path
 
 
 class GenericBuild(object):
@@ -36,5 +37,5 @@ class GenericBuild(object):
             path = os.path.join(pkg.build_path, name)
             if os.path.exists(path):
                 print style_note("Adding ./%s to $PATH" % name)
-                pkg.environ['PATH'] = envjoin('./' + name, pkg.environ.get('PATH', '@'))
+                pkg.environ['PATH'] = join_env_path('./' + name, pkg.environ.get('PATH', '@'))
 

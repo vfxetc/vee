@@ -2,12 +2,13 @@ import os
 import sys
 
 from vee.builds.generic import GenericBuild
-from vee.utils import find_in_tree, style, call, style_note, style_warning, envjoin
-
+from vee.cli import style, style_note, style_warning
+from vee.envvars import join_env_path
+from vee.subproc import call
+from vee.utils import find_in_tree
 
 python_version = '%d.%d' % (sys.version_info[:2])
 site_packages = os.path.join('lib', 'python' + python_version, 'site-packages')
-
 
 
 class PythonBuild(GenericBuild):
@@ -153,7 +154,7 @@ class PythonBuild(GenericBuild):
                 dirs_to_link.add(os.path.dirname(line.strip()))
             for name in sorted(dirs_to_link):
                 print style_note("Adding ./%s to $PYTHONPATH" % name)
-                pkg.environ['PYTHONPATH'] = envjoin('./' + name, pkg.environ.get('PYTHONPATH', '@'))       
+                pkg.environ['PYTHONPATH'] = join_env_path('./' + name, pkg.environ.get('PYTHONPATH', '@'))       
 
 
 

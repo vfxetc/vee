@@ -9,5 +9,5 @@
 /build
 /demo
 /sandbox
-/tests/sandbox # Old sandbox.
+/tests/sandbox
 /venv

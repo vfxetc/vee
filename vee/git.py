@@ -1,9 +1,10 @@
+from subprocess import CalledProcessError
 import os
 import re
 import subprocess
-from subprocess import CalledProcessError
 
-from vee.utils import call, style
+from vee.cli import style
+from vee.subproc import call
 
 
 

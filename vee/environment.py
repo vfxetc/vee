@@ -3,7 +3,8 @@ import os
 import re
 import shutil
 
-from vee.utils import makedirs, style
+from vee.cli import style
+from vee.utils import makedirs
 import vee.vendor.virtualenv as virtualenv
 
 

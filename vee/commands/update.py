@@ -1,6 +1,6 @@
+from vee.cli import style
 from vee.commands.main import command, argument, group
 from vee.environment import Environment
-from vee.utils import style
 
 
 @command(

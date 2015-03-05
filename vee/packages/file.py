@@ -1,12 +1,13 @@
 import datetime
 import os
-import urllib2
-import urlparse
 import re
 import shutil
+import urllib2
+import urlparse
 
+from vee.cli import style
 from vee.packages.base import BasePackage
-from vee.utils import makedirs, style
+from vee.utils import makedirs
 
 
 class FilePackage(BasePackage):

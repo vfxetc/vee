@@ -1,4 +1,4 @@
-from vee.utils import style
+from vee.cli import style
 
 
 class CliException(Exception):
