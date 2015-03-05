@@ -93,7 +93,7 @@ class RequirementSet(list):
 
             req = Requirement(spec, home=self.home)
             for k, v in self._cumulative_environ.iteritems():
-                self._cumulative_environ.setdefault(k, v)
+                req.environ.setdefault(k, v)
 
             self.append((before, req, after))
 
