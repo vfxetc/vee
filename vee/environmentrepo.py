@@ -7,11 +7,11 @@ from vee.utils import cached_property
 from vee.exceptions import CliException
 
 
-class RequirementRepo(GitRepo):
+class EnvironmentRepo(GitRepo):
 
     def __init__(self, *args, **kwargs):
         self.home = kwargs.pop('home')
-        super(RequirementRepo, self).__init__(*args, **kwargs)
+        super(EnvironmentRepo, self).__init__(*args, **kwargs)
         self._req_path = os.path.join(self.work_tree, 'requirements.txt')
 
     @cached_property

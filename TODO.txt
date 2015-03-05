@@ -65,11 +65,6 @@ COMMANDS TO WRITE
 
 ---
 
-- move all CLI stuff into vee.cli
-- move all environ stuff into vee.envvars
-
-- it is OK to have CLI globals
-
 - rename Environment so there is no Environment vs os.environ conflict?
     - Prefix
     - Container
@@ -77,14 +72,6 @@ COMMANDS TO WRITE
     - Runtime
     - Heirarchy
     - Filesystem Heirarchy Standard
-
-- assert that $VEE_HOMEBREW is used properly everywhere
-- assert other envvars are used:
-    - VEE_DEV=$VEE/dev by default, but is only really used by `vee develop` and `dev -u USER`
-    - VEE_REPO=westernx sets the default repo
-
-- remove --force-fetch, as it was a crutch for development. In the future, we
-  may add a --HEAD that would have effect with `vee update --heads` (or similar)
 
 - refactor repo to use subcommands
 
@@ -104,10 +91,6 @@ COMMANDS TO WRITE
 
     it is nice having them be separate, and one being user specifications
     perhaps an AbstractPackage would fit the bill
-
-- s/environ/envvars/g (when referring to environment variables)
-
-- refactor all of the envvars handling code
 
 - preprocessing for requirement files?
     #if VEE_PLATFORM == "darwin"
@@ -147,8 +130,6 @@ COMMANDS TO WRITE
   linked into an environment, and stop you
 
     - Package.resolve_existing(any_revision=True)
-
-- s/Home/Vee/g ??
 
 - does it make sense to have packages/builds/installs separate in the database,
   instead of having them all together under "packages"

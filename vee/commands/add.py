@@ -16,9 +16,9 @@ def add(args):
     home = args.assert_home()
 
     if args.update:
-        req_repo = home.get_repo()
+        env_repo = home.get_env_repo()
         baked_any = False
-        for req in req_repo.iter_git_requirements(home):
+        for req in env_repo.iter_git_requirements(home):
             pkg = req.package
             print style_note('Fetching', str(req))
             pkg.repo.fetch('origin/master', remote='origin')
@@ -30,15 +30,15 @@ def add(args):
                     print style_note('Updated', str(req))
                     baked_any = True
         if baked_any:
-            req_repo.dump()
+            env_repo.dump()
         else:
             print style_note('No changes.')
         return
 
     if args.bake_installed:
-        req_repo = home.get_repo()
+        env_repo = home.get_env_repo()
         baked_any = False
-        for req in req_repo.iter_git_requirements(home):
+        for req in env_repo.iter_git_requirements(home):
             pkg = req.package
             pkg.resolve_existing()
             if pkg.installed and req.revision != pkg.repo.head[:8]:
@@ -48,7 +48,7 @@ def add(args):
             else:
                 print pkg.installed, pkg.repo.head[:8]
         if baked_any:
-            req_repo.dump()
+            env_repo.dump()
         else:
             print style_note('No changes.')
         return
@@ -69,8 +69,8 @@ def add(args):
     if not pkg_url:
         raise CliException('%s does not appear to be a git url' % pkg_url)
 
-    req_repo = home.get_repo()
-    for req in req_repo.iter_git_requirements(home):
+    env_repo = home.get_env_repo()
+    for req in env_repo.iter_git_requirements(home):
         req_url = normalize_git_url(req.url)
         if req_url == pkg_url:
             break
@@ -82,4 +82,4 @@ def add(args):
     else:
         req.revision = pkg_repo.head[:8]
         print style_note('Updated', str(req))
-        req_repo.dump()
+        env_repo.dump()

@@ -9,5 +9,5 @@ from vee.git import GitRepo, normalize_git_url
 @command()
 def push(args):
     home = args.assert_home()
-    req_repo = home.get_repo()
-    req_repo.git('push')
+    env_repo = home.get_env_repo()
+    env_repo.git('push')

@@ -78,5 +78,5 @@ def repo(args):
     else:
         home.db.insert('repositories', data)
 
-    repo = home.get_repo(args.name)
+    repo = home.get_env_repo(args.name)
     repo.clone_if_not_exists()

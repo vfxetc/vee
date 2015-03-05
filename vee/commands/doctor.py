@@ -17,7 +17,7 @@ def doctor(args):
     print style_note('Home:', home.root)
 
     try:
-        repo = home.get_repo()
+        repo = home.get_env_repo()
     except ValueError:
         print style_warning('No default repo.', 'Use `vee repo --add URL`.')
         return

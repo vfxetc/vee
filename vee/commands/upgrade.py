@@ -19,7 +19,7 @@ def upgrade(args):
     if args.all:
         repos = list(home.iter_repos())
     else:
-        repos = [home.get_repo(x) for x in args.repos] if args.repos else [home.get_repo()]
+        repos = [home.get_env_repo(x) for x in args.repos] if args.repos else [home.get_env_repo()]
 
     for repo in repos:
 

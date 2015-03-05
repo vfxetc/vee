@@ -12,8 +12,8 @@ def status(args):
 
     home = args.assert_home()
 
-    req_repo = home.get_repo()
-    req_repo.set.guess_names()
+    env_repo = home.get_env_repo()
+    env_repo.set.guess_names()
 
     # Grab all of the dev packages.
     dev_packages = {}
@@ -26,7 +26,7 @@ def status(args):
 
     # Lets match everything up.
     matched_packages = []
-    for req in req_repo.iter_requirements(home):
+    for req in env_repo.iter_requirements(home):
 
         pkg = req.package
         if pkg.type != 'git':

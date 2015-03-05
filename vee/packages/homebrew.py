@@ -105,7 +105,7 @@ class HomebrewPackage(GitPackage):
 
     def build(self):
         if self.installed:
-            print style('Warning:', 'red', bold=True), style(self.package_name + ' is already built', 'black', bold=True)
+            print style('Warning:', 'yellow', bold=True), style(self.package_name + ' is already built', 'black', bold=True)
             return
         self._brew('install', self.package_name, *self.config)
 

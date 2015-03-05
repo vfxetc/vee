@@ -17,9 +17,9 @@ levels = ['major', 'minor', 'patch']
 def commit(args):
 
     home = args.assert_home()
-    req_repo = home.get_repo()
+    env_repo = home.get_env_repo()
 
-    if not req_repo.status():
+    if not env_repo.status():
         print style_error('Nothing to commit.')
         return 1
 
@@ -40,4 +40,4 @@ def commit(args):
         ),
         args.message = raw_input().strip() or default_message
 
-    req_repo.commit(args.message, args.semver_level)
+    env_repo.commit(args.message, args.semver_level)

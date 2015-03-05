@@ -11,7 +11,7 @@ class TestInitCommand(TestCase):
         home.main(['init'])
 
         # Should not have a repo.
-        self.assertRaises(ValueError, home.get_repo)
+        self.assertRaises(ValueError, home.get_env_repo)
 
     def test_init_with_repo(self):
 
@@ -26,7 +26,7 @@ class TestInitCommand(TestCase):
         home.main(['init', mock_repo.path])
 
         # Should have a repo.
-        repo = home.get_repo()
+        repo = home.get_env_repo()
 
         # Lets install our package.
         home.main(['update'])
