@@ -3,21 +3,24 @@ import sqlite3
 from vee.cli import style_error, style_warning, style_note
 from vee.commands.main import command, argument, group
 from vee.environment import Environment
+from vee.environmentrepo import EnvironmentRepo
 from vee.exceptions import CliException
 from vee.home import PRIMARY_REPO
 
 
 @command(
     help='manage remote repos',
-    usage='vee repo (clone|set|delete|list) [OPTIONS]'
+    usage='vee repo (init|clone|set|delete|list) [OPTIONS]'
 )
 def repo(args):
     # Never goes here.
     pass
 
 
-@repo.subcommand()
-def list(args):
+@repo.subcommand(
+    name='list',
+)
+def list_(args):
     home = args.assert_home()
     rows = list(home.db.execute('SELECT * FROM repositories'))
     if not rows:
@@ -25,7 +28,17 @@ def list(args):
         return
     max_len = max(len(row['name']) for row in rows)
     for row in rows:
-        print style_note(row['name'], row['url'], '--default' if row['is_default'] else '')
+        env_repo = EnvironmentRepo(row, home=home)
+        if env_repo.exists:
+            print style_note(
+                env_repo.name,
+                '%s/%s from %s' % (
+                    env_repo.remote_name,
+                    env_repo.branch_name,
+                    env_repo.remotes().get(env_repo.remote_name, 'NO URL'),
+                ),
+                '--default' if row['is_default'] else '',
+            )
 
 
 @repo.subcommand(
@@ -62,13 +75,29 @@ def set(args):
     argument('--default', action='store_true', help='this repo is the default'),
     argument('--remote', help='git remote to track', default='origin'),
     argument('--branch', help='git branch to track', default='master'),
+    argument('name', nargs='?'),
+)
+def init(args, is_set=False):
+    home = args.assert_home()
+    home.create_env_repo(
+        name=args.name,
+        url=None,
+        remote=args.remote,
+        branch=args.branch,
+        is_default=args.default,
+    )
+
+
+@repo.subcommand(
+    argument('--default', action='store_true', help='this repo is the default'),
+    argument('--remote', help='git remote to track', default='origin'),
+    argument('--branch', help='git branch to track', default='master'),
     argument('url'),
     argument('name', nargs='?'),
 )
 def clone(args, is_set=False):
     home = args.assert_home()
-    args.name = args.name or re.sub(r'\.git$', '', os.path.basename(args.url))
-    home.clone_env_repo(
+    home.create_env_repo(
         name=args.name,
         url=args.url,
         remote=args.remote,

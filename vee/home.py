@@ -35,7 +35,7 @@ class Home(object):
     def init(self, url=None, name=None, is_default=True):
         self._makedirs()
         if url:
-            env_repo = self.clone_env_repo(
+            env_repo = self.create_env_repo(
                 url=url,
                 name=name or self.default_repo_name or PRIMARY_REPO,
                 is_default=is_default
@@ -70,9 +70,12 @@ class Home(object):
             raise ValueError('%r repo does not exist' % env_repo.name)
         return env_repo
 
-    def clone_env_repo(self, url, name=None, remote=None, branch=None, is_default=None):
+    def create_env_repo(self, url=None, name=None, remote=None, branch=None, is_default=None):
 
-        name or re.sub(r'\.git$', '', os.path.basename(url))
+        if url:
+            name or re.sub(r'\.git$', '', os.path.basename(url))
+        else:
+            name = name or self.default_repo_name or PRIMARY_REPO
 
         # Make sure it doesn't exist.
         try:
@@ -88,12 +91,11 @@ class Home(object):
         row = con.execute('SELECT * FROM repositories WHERE id = ?', [cur.lastrowid]).fetchone()
 
         env_repo = EnvironmentRepo(row, home=self)
-        env_repo.clone_if_not_exists(url)
-        con.execute('UPDATE repositories SET remote = ?, branch = ?, is_default = ?', [
-            env_repo.remote_name,
-            env_repo.branch_name,
-            int(bool(is_default or row['is_default']))
-        ])
+        if url:
+            env_repo.clone_if_not_exists(url)
+        else:
+            makedirs(env_repo.work_tree)
+            env_repo.git('init')
 
     def update_env_repo(self, name, url=None, remote=None, branch=None, is_default=None):
 

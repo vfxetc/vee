@@ -285,10 +285,15 @@ class GitRepo(object):
     def remotes(self, **kwargs):
 
         remotes = {}
-        for line in self.git('config', '--get-regexp', 'remote.*.url', stdout=True, silent=True).splitlines():
-            cname, url = line.strip().split(None, 1)
-            _, name, _ = cname.split('.')
-            remotes[name] = url
+        try:
+            lines = self.git('config', '--get-regexp', 'remote.*.url', stdout=True, silent=True).splitlines()
+        except CalledProcessError:
+            pass
+        else:
+            for line in lines:
+                cname, url = line.strip().split(None, 1)
+                _, name, _ = cname.split('.')
+                remotes[name] = url
 
         # Updates!
         if kwargs:
