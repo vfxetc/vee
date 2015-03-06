@@ -9,21 +9,33 @@ from vee.exceptions import CliException
 
 class EnvironmentRepo(GitRepo):
 
-    def __init__(self, *args, **kwargs):
-        self.home = kwargs.pop('home')
-        super(EnvironmentRepo, self).__init__(*args, **kwargs)
+    def __init__(self, dbrow, home):
+        super(EnvironmentRepo, self).__init__(
+            work_tree=home._abs_path('repos', dbrow['name']),
+            remote_name=dbrow['remote'],
+            branch_name=dbrow['branch'],
+        )
+        self.id = dbrow['id']
+        self.name = dbrow['name']
+        self.home = home
         self._req_path = os.path.join(self.work_tree, 'requirements.txt')
 
+    def fetch(self):
+        return super(EnvironmentRepo, self).fetch(self.remote_name, self.branch_name)
+
+    def checkout(self, force=False):
+        super(EnvironmentRepo, self).checkout(
+            revision='%s/%s' % (self.remote_name, self.branch_name), 
+            branch=self.branch_name,
+            force=force
+        )
+
     @cached_property
-    def set(self):
+    def reqs(self):
         reqs = RequirementSet(home=self.home)
         if os.path.exists(self._req_path):
             reqs.parse_file(self._req_path)
         return reqs
-
-    @property
-    def name(self):
-        return os.path.basename(self.work_tree)
 
     def iter_requirements(self):
         for req in self.reqs.iter_requirements():

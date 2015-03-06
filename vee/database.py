@@ -19,7 +19,7 @@ def _create_initial_tables(con):
         fetched_at TIMESTAMP,
 
         name TEXT UNIQUE NOT NULL,
-        url TEXT NOT NULL,
+        remote TEXT NOT NULL DEFAULT 'origin',
         branch TEXT NOT NULL DEFAULT 'master',
 
         is_default INTEGER NOT NULL DEFAULT 0
@@ -39,7 +39,7 @@ def _create_initial_tables(con):
     con.execute('''CREATE TRIGGER update_default_repository
 
         AFTER UPDATE OF is_default ON repositories
-        WHEN NEW.is_default
+        WHEN NEW.is_default != 0
         BEGIN
             UPDATE repositories SET is_default = 0 WHERE id != NEW.id;
         END

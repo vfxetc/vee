@@ -65,6 +65,8 @@ COMMANDS TO WRITE
 
 ---
 
+- repos don't need the URL in the database at all
+
 - rename Environment so there is no Environment vs os.environ conflict?
     - Prefix
     - Container

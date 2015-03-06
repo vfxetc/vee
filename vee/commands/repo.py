@@ -9,7 +9,7 @@ from vee.home import PRIMARY_REPO
 
 @command(
     help='manage remote repos',
-    usage='vee repo (add|set|delete|list) [OPTIONS]'
+    usage='vee repo (clone|set|delete|list) [OPTIONS]'
 )
 def repo(args):
     # Never goes here.
@@ -39,54 +39,41 @@ def delete(args):
 
 
 @repo.subcommand(
-    argument('--default', action='store_true', help='with --add/--set: set to be default'),
-    argument('--branch', help='with --add/--set: sets git branch to track'),
+    argument('--default', action='store_true', help='this repo is the default'),
+    argument('--remote', help='git remote to track'),
+    argument('--branch', help='git branch to track'),
+    argument('--url', help='remote url'),
     argument('name'),
-    argument('url', nargs='?'),
 )
 def set(args):
-    return add(args, is_set=True)
+    home = args.assert_home()
+    if not (args.default or args.remote or args.branch or args.url):
+        raise CliException('please specify something to set')
+    home.update_env_repo(
+        name=args.name,
+        url=args.url,
+        remote=args.remote,
+        branch=args.branch,
+        is_default=args.default,
+    )
+
 
 @repo.subcommand(
-    argument('--default', action='store_true', help='with --add/--set: set to be default'),
-    argument('--branch', help='with --add/--set: sets git branch to track'),
-    argument('name'),
+    argument('--default', action='store_true', help='this repo is the default'),
+    argument('--remote', help='git remote to track', default='origin'),
+    argument('--branch', help='git branch to track', default='master'),
     argument('url'),
+    argument('name', nargs='?'),
 )
-def add(args, is_set=False):
-
-    is_add = not is_set
-
+def clone(args, is_set=False):
     home = args.assert_home()
+    args.name = args.name or re.sub(r'\.git$', '', os.path.basename(args.url))
+    home.clone_env_repo(
+        name=args.name,
+        url=args.url,
+        remote=args.remote,
+        branch=args.branch,
+        is_default=args.default,
+    )
 
-    con = home.db.connect()
-    row = con.execute('SELECT id FROM repositories WHERE name = ?', [args.name]).fetchone()
 
-    if is_add and row:
-        raise CliException('repo %s already exists' % args.name)
-
-    if is_set:
-        if not (args.url or args.default):
-            raise CliException('--default or url is required')
-        if not row:
-            raise CliException('repo %s does not exist' % args.name)
-
-    data = {}
-    for attr, key in (
-        ('name', None),
-        ('url', None),
-        ('branch', None),
-        ('default', 'is_default'),
-    ):
-        value = getattr(args, attr)
-        if value is not None:
-            data[key or attr] = value
-
-    if row:
-        home.db.update('repositories', data, where={'id': row['id']})
-    else:
-        home.db.insert('repositories', data)
-
-    if args.url:
-        repo = home.get_env_repo(args.name)
-        repo.clone_if_not_exists()

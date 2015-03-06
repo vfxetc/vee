@@ -282,12 +282,26 @@ class GitRepo(object):
 
         return status_ok
 
-    def remotes(self):
+    def remotes(self, **kwargs):
+
         remotes = {}
         for line in self.git('config', '--get-regexp', 'remote.*.url', stdout=True, silent=True).splitlines():
             cname, url = line.strip().split(None, 1)
             _, name, _ = cname.split('.')
             remotes[name] = url
+
+        # Updates!
+        if kwargs:
+            for k, v in kwargs.iteritems():
+                if v is None:
+                    if k not in remotes:
+                        raise KeyError(k)
+                    self.git('remote', 'rm', k, silent=True)
+                elif k in remotes:
+                    self.git('remote', 'set-url', k, v)
+                else:
+                    self.git('remote', 'add', k, v)
+
         return remotes
 
 

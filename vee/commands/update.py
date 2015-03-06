@@ -1,4 +1,4 @@
-from vee.cli import style
+from vee.cli import style, style_note
 from vee.commands.main import command, argument, group
 from vee.environment import Environment
 
@@ -22,10 +22,10 @@ def update(args):
 
     for env_repo in env_repos:
 
-        print style('Updating repo "%s"' % env_repo.name, 'blue', bold=True), style(env_repo.remote_url, bold=True)
+        print style_note('Updating repo', env_repo.name)
 
         env_repo.clone_if_not_exists()
-        rev = env_repo.fetch('origin', 'master')
+        rev = env_repo.fetch()
 
         if not args.force and not env_repo.check_ff_safety(rev):
             print style('Error:', 'red', bold=True), style('Cannot fast-forward; skipping.', bold=True)
@@ -33,6 +33,6 @@ def update(args):
             continue
 
         print 'CHECKING OUT', rev
-        env_repo.checkout('origin/master', branch='master', force=args.force)
+        env_repo.checkout(force=args.force)
 
     return retcode
