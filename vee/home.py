@@ -49,25 +49,27 @@ class Home(object):
             path = self._abs_path(name)
             makedirs(path)
 
+    def iter_env_repos(self):
+        for row in self.db.execute('SELECT * FROM repositories'):
+            env_repo = EnvironmentRepo(row, home=self)
+            if env_repo.exists:
+                yield env_repo
+
     def get_env_repo(self, name=None):
-
+        
         name = name or self.default_repo_name
-
+        
         if name:
-            # If directly named, the repo must exist.
-            git_repo = GitRepo(self._abs_path('repos', name))
-            if not git_repo.exists:
-                raise ValueError('%r repo does not exist' % name)
             row = self.db.execute('SELECT * FROM repositories WHERE name = ?', [name]).fetchone()
         else:
             row = self.db.execute('SELECT * FROM repositories WHERE is_default').fetchone()
-
         if not row:
             raise ValueError('%s repo does not exist' % (repr(name) if row else 'default'))
         
         env_repo = EnvironmentRepo(row, home=self)
         if not env_repo.exists:
             raise ValueError('%r repo does not exist' % env_repo.name)
+        
         return env_repo
 
     def create_env_repo(self, url=None, name=None, remote=None, branch=None, is_default=None):
@@ -86,7 +88,7 @@ class Home(object):
             raise ValueError('%r repo already exists' % name)
 
         con = self.db.connect()
-        cur = con.execute('INSERT INTO repositories (name, remote, branch, is_default) VALUES (?, ?, ?, ?)', [
+        cur = con.execute('INSERT OR REPLACE INTO repositories (name, remote, branch, is_default) VALUES (?, ?, ?, ?)', [
                           name, remote or 'origin', branch or 'master', bool(is_default)])
         row = con.execute('SELECT * FROM repositories WHERE id = ?', [cur.lastrowid]).fetchone()
 

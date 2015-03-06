@@ -14,7 +14,7 @@ def update(args):
     home = args.assert_home()
 
     if args.all:
-        env_repos = list(home.iter_repos())
+        env_repos = list(home.iter_env_repos())
     else:
         env_repos = [home.get_env_repo(x) for x in args.repos] if args.repos else [home.get_env_repo()]
 

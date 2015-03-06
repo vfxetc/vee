@@ -18,30 +18,6 @@ def repo(args):
 
 
 @repo.subcommand(
-    name='list',
-)
-def list_(args):
-    home = args.assert_home()
-    rows = list(home.db.execute('SELECT * FROM repositories'))
-    if not rows:
-        print style_warning('No repositories.')
-        return
-    max_len = max(len(row['name']) for row in rows)
-    for row in rows:
-        env_repo = EnvironmentRepo(row, home=home)
-        if env_repo.exists:
-            print style_note(
-                env_repo.name,
-                '%s/%s from %s' % (
-                    env_repo.remote_name,
-                    env_repo.branch_name,
-                    env_repo.remotes().get(env_repo.remote_name, 'NO URL'),
-                ),
-                '--default' if row['is_default'] else '',
-            )
-
-
-@repo.subcommand(
     argument('name'),
 )
 def delete(args):
@@ -104,5 +80,41 @@ def clone(args, is_set=False):
         branch=args.branch,
         is_default=args.default,
     )
+
+
+@repo.subcommand(
+    name='list',
+)
+def list_(args):
+    home = args.assert_home()
+    rows = list(home.db.execute('SELECT * FROM repositories'))
+    if not rows:
+        print style_warning('No repositories.')
+        return
+    max_len = max(len(row['name']) for row in rows)
+    for row in rows:
+        env_repo = EnvironmentRepo(row, home=home)
+        if env_repo.exists:
+            print style_note(
+                env_repo.name,
+                '%s/%s' % (env_repo.remote_name, env_repo.branch_name),
+                env_repo.remotes().get(env_repo.remote_name, '') + 
+                ' --default' if row['is_default'] else '',
+            )
+
+
+@repo.subcommand(
+    argument('-r', '--repo', help='which repo to use'),
+    help='run a git command in the repo',
+    parse_known_args=True,
+)
+def git(args, *command):
+
+    home = args.assert_home()
+    repo = home.get_env_repo(args.repo)
+
+    makedirs(repo.work_tree)
+    repo.git(*command, silent=True)
+
 
 

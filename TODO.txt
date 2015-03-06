@@ -73,9 +73,13 @@ COMMANDS TO WRITE
     - Stack
     - Runtime
     - Heirarchy
-    - Filesystem Heirarchy Standard
+    - Stage
+    - Theatre
+
 
 - refactor develop to not use subcommands (just --init, --clone, --install)
+
+- GitRepo.git could scan stderr for "fatal: ..." and raise that as an exception
 
 - GitRepo.fetch('origin/master') could be smarter
 

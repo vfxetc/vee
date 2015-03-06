@@ -22,7 +22,6 @@ link = vee.commands.link:link
 exec = vee.commands.exec_:exec_
 
 # Underlying commands.
-git = vee.commands.git:git
 brew = vee.commands.brew:brew
 
 # Development.

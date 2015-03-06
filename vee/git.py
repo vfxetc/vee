@@ -6,7 +6,11 @@ import subprocess
 
 from vee.cli import style
 from vee.subproc import call
+from vee.exceptions import CliException
 
+
+class GitError(CliException):
+    pass
 
 
 def normalize_git_url(url, prefix=False):
@@ -62,12 +66,28 @@ class GitRepo(object):
         return os.path.join(self.work_tree, *args)
 
     def git(self, *cmd, **kw):
-        # If we can, run as if we are within the work tree.
-        if self.work_tree and self.git_dir == os.path.join(self.work_tree, '.git'):
-            kw['cwd'] = self.work_tree
-            return call(('git', ) + cmd, **kw)
-        else:
-            return call(('git', '--git-dir', self.git_dir, '--work-tree', self.work_tree) + cmd, **kw)
+
+        stderr = []
+        if kw.get('on_stderr'):
+            raise NotImplementedError('cant nest on_stderr (yet)')
+        kw['on_stderr'] = stderr.append
+
+        try:
+            # If we can, run as if we are within the work tree.
+            if self.work_tree and self.git_dir == os.path.join(self.work_tree, '.git'):
+                kw['cwd'] = self.work_tree
+                res = call(('git', ) + cmd, **kw)
+            else:
+                res = call(('git', '--git-dir', self.git_dir, '--work-tree', self.work_tree) + cmd, **kw)
+
+        except CalledProcessError:
+            fatal = next((line for line in stderr if line.startswith('fatal:')), None)
+            if fatal:
+                fatal = fatal.splitlines()[0][6:].strip()
+                raise GitError(fatal, detail=''.join(stderr).rstrip())
+            raise
+
+        return res
 
     def clone_if_not_exists(self, remote_url=None, shallow=True):
         self.remote_url = remote_url or self.remote_url
