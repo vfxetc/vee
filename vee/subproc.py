@@ -26,6 +26,8 @@ def call(cmd, **kwargs):
         cmd_collapsed = [x.replace(VEE, '$VEE') if VEE else x for x in cmd]
         print style('$', 'blue', bold=True), style(cmd_collapsed[0], bold=True), ' '.join(cmd_collapsed[1:])
 
+    check = kwargs.pop('check', True)
+
     stdout = kwargs.pop('stdout', None)
     on_stdout = kwargs.pop('on_stdout', None)
     stderr = kwargs.pop('stderr', None)
@@ -67,7 +69,7 @@ def call(cmd, **kwargs):
     for thread in threads:
         thread.join()
 
-    if (stdout or stderr) and proc.returncode:
+    if (check or stdout or stderr) and proc.returncode:
         raise subprocess.CalledProcessError(proc.returncode, cmd)
 
     if stdout and stderr:

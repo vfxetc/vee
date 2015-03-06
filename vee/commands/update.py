@@ -14,29 +14,25 @@ def update(args):
     home = args.assert_home()
 
     if args.all:
-        repos = list(home.iter_repos())
+        env_repos = list(home.iter_repos())
     else:
-        repos = [home.get_env_repo(x) for x in args.repos] if args.repos else [home.get_env_repo()]
+        env_repos = [home.get_env_repo(x) for x in args.repos] if args.repos else [home.get_env_repo()]
 
     retcode = 0
 
-    for repo in repos:
+    for env_repo in env_repos:
 
-        print style('Updating repo "%s"' % repo.name, 'blue', bold=True), style(repo.remote_url, bold=True)
+        print style('Updating repo "%s"' % env_repo.name, 'blue', bold=True), style(env_repo.remote_url, bold=True)
 
-        repo.clone_if_not_exists()
+        env_repo.clone_if_not_exists()
+        rev = env_repo.fetch('origin', 'master')
 
-        # This is kinda gross, but we need to do it to make sure that we are
-        # fetching from the right URL AND we need to rev-parse a "$remote/master"
-        # -ish revision.
-        remote = repo.assert_remote_name()
-        rev = repo.fetch('%s/master' % remote, remote=remote)
-
-        if not args.force and not repo.check_ff_safety(rev):
+        if not args.force and not env_repo.check_ff_safety(rev):
             print style('Error:', 'red', bold=True), style('Cannot fast-forward; skipping.', bold=True)
             retcode = retcode or 1
             continue
 
-        repo.checkout(rev)
+        print 'CHECKING OUT', rev
+        env_repo.checkout('origin/master', branch='master', force=args.force)
 
     return retcode

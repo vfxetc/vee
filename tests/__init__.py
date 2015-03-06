@@ -68,11 +68,17 @@ def vee(args, environ=None):
 
 class TestCase(_TestCase):
 
+    def class_sandbox(self, *args):
+        return sandbox('homes', self.__class__.__name__, 'class', *args)
+
+    def sandbox(self, *args):
+        return self.class_sandbox(self._testMethodName, *args)
+
     def class_home(self):
-        return Home(sandbox('homes', self.__class__.__name__, 'class'))
+        return Home(self.class_sandbox())
 
     def home(self):
-        return Home(sandbox('homes', self.__class__.__name__, self._testMethodName))
+        return Home(self.sandbox())
 
     def repo(self):
         return MockRepo('%s/%s' % (self.__class__.__name__, self._testMethodName))
