@@ -9,11 +9,6 @@ config = vee.commands.config:config
 doctor = vee.commands.doctor:doctor
 self-update = vee.commands.self_update:self_update
 
-# Repos
-repo = vee.commands.repo:repo
-update = vee.commands.update:update
-upgrade = vee.commands.upgrade:upgrade
-
 # Requirements.
 install = vee.commands.install:install
 
@@ -25,11 +20,15 @@ exec = vee.commands.exec_:exec_
 brew = vee.commands.brew:brew
 
 # Development.
-develop = vee.commands.develop:develop
 add = vee.commands.add:add
 commit = vee.commands.commit:commit
-status = vee.commands.status:status
+develop = vee.commands.develop:develop
+edit = vee.commands.edit:edit
 push = vee.commands.push:push
+repo = vee.commands.repo:repo
+status = vee.commands.status:status
+update = vee.commands.update:update
+upgrade = vee.commands.upgrade:upgrade
 
 
 [vee_package_types]

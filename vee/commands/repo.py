@@ -10,8 +10,8 @@ from vee.home import PRIMARY_REPO
 @command(
     help='manage environment repos',
     usage="""
-       vee repo init NAME
-   or: vee repo clone URL [NAME]
+       vee repo init OPTIONS NAME
+   or: vee repo clone OPTIONS URL [NAME]
    or: vee repo set OPTIONS NAME
    or: vee repo delete NAME
    or: vee repo list
@@ -20,37 +20,6 @@ from vee.home import PRIMARY_REPO
 def repo(args):
     # Never goes here.
     pass
-
-
-@repo.subcommand(
-    argument('name'),
-)
-def delete(args):
-    home = args.assert_home()
-    cur = home.db.execute('DELETE FROM repositories WHERE name = ?', [args.name])
-    if not cur.rowcount:
-        print style_error('No %r repository.' % args.name)
-
-
-@repo.subcommand(
-    argument('--default', action='store_true', help='this repo is the default'),
-    argument('--remote', help='git remote to track'),
-    argument('--branch', help='git branch to track'),
-    argument('--url', help='remote url (set via `git remote`)'),
-    argument('name'),
-    help='set options on an existing repository'
-)
-def set(args):
-    home = args.assert_home()
-    if not (args.default or args.remote or args.branch or args.url):
-        raise ValueError('please specify something to set')
-    home.update_env_repo(
-        name=args.name,
-        url=args.url,
-        remote=args.remote,
-        branch=args.branch,
-        is_default=args.default,
-    )
 
 
 @repo.subcommand(
@@ -82,6 +51,37 @@ def init(args, is_set=False):
 def clone(args, is_set=False):
     home = args.assert_home()
     home.create_env_repo(
+        name=args.name,
+        url=args.url,
+        remote=args.remote,
+        branch=args.branch,
+        is_default=args.default,
+    )
+
+
+@repo.subcommand(
+    argument('name'),
+)
+def delete(args):
+    home = args.assert_home()
+    cur = home.db.execute('DELETE FROM repositories WHERE name = ?', [args.name])
+    if not cur.rowcount:
+        print style_error('No %r repository.' % args.name)
+
+
+@repo.subcommand(
+    argument('--default', action='store_true', help='this repo is the default'),
+    argument('--remote', help='git remote to track'),
+    argument('--branch', help='git branch to track'),
+    argument('--url', help='remote url (set via `git remote`)'),
+    argument('name'),
+    help='set options on an existing repository'
+)
+def set(args):
+    home = args.assert_home()
+    if not (args.default or args.remote or args.branch or args.url):
+        raise ValueError('please specify something to set')
+    home.update_env_repo(
         name=args.name,
         url=args.url,
         remote=args.remote,

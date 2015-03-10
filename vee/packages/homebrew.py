@@ -23,7 +23,7 @@ class HomebrewPackage(GitPackage):
 
     def __init__(self, *args, **kwargs):
         super(HomebrewPackage, self).__init__(*args, **kwargs)
-        self.package_name = re.sub(r'^homebrew[:+]', '', self.url)
+        self.package_name = re.sub(r'^(git\+)?homebrew[:+]', '', self.url)
         self.url = 'homebrew:' + self.package_name
 
     @cached_property

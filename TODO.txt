@@ -75,12 +75,6 @@ COMMANDS TO WRITE
     - Theatre
 
 
-- refactor develop to not use subcommands (just --init, --clone, --install)
-
-- GitRepo.git could scan stderr for "fatal: ..." and raise that as an exception
-
-- GitRepo.fetch('origin/master') could be smarter
-
 - install_vee.py could take --repo-name and --repo-url
 
 - RequirementSet elements should be their own class:

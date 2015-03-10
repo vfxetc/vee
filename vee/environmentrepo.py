@@ -66,7 +66,7 @@ class EnvironmentRepo(GitRepo):
 
         if level is not None:
 
-            header = self.reqs.headers.get('version')
+            header = self.reqs.headers.get('Version')
             if not header:
                 header = Header('Version', '0.0.0')
                 self.reqs.insert(0, ('', header, ''))

@@ -1,4 +1,4 @@
-from vee.cli import style, style_note
+from vee.cli import style, style_note, style_warning
 from vee.commands.main import command, argument, group
 from vee.environment import Environment
 
@@ -25,6 +25,11 @@ def update(args):
         print style_note('Updating repo', env_repo.name)
 
         env_repo.clone_if_not_exists()
+
+        if env_repo.remote_name not in env_repo.remotes():
+            print style_warning('"%s" does not have remote "%s"' % (env_repo.name, env_repo.remote_name))
+            continue
+
         rev = env_repo.fetch()
 
         if not args.force and not env_repo.check_ff_safety(rev):

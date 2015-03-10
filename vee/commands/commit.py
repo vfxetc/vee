@@ -26,9 +26,9 @@ def commit(args):
     while args.semver_level is None:
         print '%s [%s]:' % (
             style('How severe are the changes?', 'green', bold=True),
-            style('MAJOR,minor,patch', faint=True),
+            style('major,minor,PATCH', faint=True),
         ),
-        res = raw_input().strip() or 'major'
+        res = raw_input().strip() or 'patch'
         args.semver_level = dict(major=0, minor=1, patch=2).get(res)
 
     if args.message is None:

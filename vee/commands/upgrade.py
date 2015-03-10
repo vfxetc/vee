@@ -1,13 +1,13 @@
 import os
+from subprocess import CalledProcessError
 
-from vee.cli import style
+from vee.cli import style, style_warning
 from vee.commands.main import command, argument, group
 from vee.utils import makedirs
 
 
 @command(
     argument('--all', action='store_true', help='upgrade all repositories'),
-    argument('--head', action='store_true', help='build head, even if it doesnt match remote branch'),
     argument('--dirty', action='store_true', help='build even when work tree is dirty'),
     argument('repos', nargs='*'),
     help='upgrade packages specified by repositories, and link into environments',
@@ -25,24 +25,34 @@ def upgrade(args):
 
         repo.clone_if_not_exists()
 
-        rev = repo.head if args.head else repo.rev_parse('%s/%s' % (repo.remote_name, repo.branch_name))
+        try:
+            head = repo.head
+        except CalledProcessError:
+            print style_warning('no commits in repository')
+            head = None
 
-        if not args.head and rev != repo.head:
-            print style('Error:', 'red', bold=True), style('%s repo not checked out to %s/%s; force with --head' % (
-                repo.name, repo.remote_name, repo.branch_name), bold=True)
-            continue
+        try:
+            remote_head = repo.rev_parse('%s/%s' % (repo.remote_name, repo.branch_name))
+        except CalledProcessError:
+            print style_warning('tracked %s/%s does not exist in repo' % (repo.remote_name, repo.branch_name))
+            remote_head = None
 
-        if not args.dirty and list(repo.status()):
+        if remote_head and head != remote_head:
+            print style_warning('%s repo not checked out to %s/%s' % (
+                repo.name, repo.remote_name, repo.branch_name))
+
+        dirty = bool(list(repo.status()))
+        if not args.dirty and dirty:
             print style('Error:', 'red', bold=True), style('%s repo is dirty; force with --dirty' % repo.name, bold=True)
             continue
 
-        path_by_commit = home._abs_path('environments', repo.name, 'commits', rev[:8])
+        path_by_commit = home._abs_path('environments', repo.name, 'commits', (head[:8] + ('-dirty' if dirty else '')) if head else 'nocommit')
         path_by_branch = home._abs_path('environments', repo.name, repo.branch_name)
 
         args.main(['link', path_by_commit, repo.abspath('requirements.txt')])
 
         # Create a symlink by branch.
-        if os.path.exists(path_by_branch):
+        if os.path.lexists(path_by_branch):
             os.unlink(path_by_branch)
         makedirs(os.path.dirname(path_by_branch))
         os.symlink(path_by_commit, path_by_branch)
