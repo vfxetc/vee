@@ -12,8 +12,8 @@ from vee.environment import Environment
         exclusive=True,
     ),
     argument('args', nargs='...'),
-    help='manage the configuration',
-    # usage='vee env ENVIRONMENT',
+    # We have no help so the command doesn't show up in main help.
+    # help='manage the configuration',
 )
 def config(args):
 

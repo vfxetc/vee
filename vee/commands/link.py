@@ -15,7 +15,7 @@ from vee.requirementset import RequirementSet
         help='automatically picks package names'),
     argument('environment'),
     argument('requirements', nargs='...'),
-    help='link a package, or requirements.txt, into an environment',
+    help='link a package, or requirements.txt, into an environment; low-level',
     usage='vee link [--raw] ENVIRONMENT REQUIREMENTS',
 )
 def link(args):

@@ -8,12 +8,15 @@ from vee.requirementset import RequirementSet
     argument('--force', action='store_true', help='force install over old package'),
     argument('--long-names', action='store_true', help='don\'t automatically pick names'),
     argument('requirements', nargs='...'),
-    help='install a package',
+    help='install a package; low-level',
     usage='vee install [--force] PACKAGE [OPTIONS]',
 )
 def install(args):
 
     home = args.assert_home()
+
+    if not args.requirements:
+        raise ValueError('please provide requirements to install')
 
     reqs = RequirementSet(args.requirements, home=home)
 

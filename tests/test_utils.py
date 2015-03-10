@@ -53,6 +53,12 @@ class TestGitURLs(TestCase):
             'user@example.com:path/to/git'
         )
 
+    def test_github(self):
+        self.assertEqual(
+            normalize_git_url('git@github.com:example/repo.git'),
+            'git@github.com:example/repo'
+        )
+
     def test_http_urls(self):
         self.assertEqual(
             normalize_git_url('http://user@example.com/path/to/git'),

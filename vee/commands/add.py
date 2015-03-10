@@ -1,6 +1,6 @@
 import re
 
-from vee.cli import style, style_error, style_note
+from vee.cli import style, style_error, style_note, style_warning
 from vee.commands.main import command, argument
 from vee.git import GitRepo, normalize_git_url
 
@@ -9,6 +9,7 @@ from vee.git import GitRepo, normalize_git_url
     argument('--update', action='store_true', help='update all repos themselves'),
     argument('--bake-installed', action='store_true', help='bake all installed revisions'),
     argument('package', nargs='?', default='.'),
+    help='record changes to dev packages in environment repo',
 )
 def add(args):
 
@@ -17,7 +18,7 @@ def add(args):
     if args.update:
         env_repo = home.get_env_repo()
         baked_any = False
-        for req in env_repo.iter_git_requirements(home):
+        for req in env_repo.iter_git_requirements():
             pkg = req.package
             print style_note('Fetching', str(req))
             pkg.repo.fetch('origin/master', remote='origin')
@@ -37,7 +38,7 @@ def add(args):
     if args.bake_installed:
         env_repo = home.get_env_repo()
         baked_any = False
-        for req in env_repo.iter_git_requirements(home):
+        for req in env_repo.iter_git_requirements():
             pkg = req.package
             pkg.resolve_existing()
             if pkg.installed and req.revision != pkg.repo.head[:8]:
@@ -58,27 +59,31 @@ def add(args):
     if not row:
         raise ValueError('No development package %r' % args.package)
 
-    pkg_repo = GitRepo(row['path'])
+    dev_repo = GitRepo(row['path'])
 
     # Get the normalized origin.
-    pkg_url = pkg_repo.remotes().get('origin')
-    if not pkg_url:
-        raise ValueError('%s does not have an origin' % row['path'])
-    pkg_url = normalize_git_url(pkg_url)
-    if not pkg_url:
-        raise ValueError('%s does not appear to be a git url' % pkg_url)
+    dev_remote_urls = set()
+    for url in dev_repo.remotes().itervalues():
+        url = normalize_git_url(url)
+        if url:
+            dev_remote_urls.add(url)
+        else:
+            print style_warning('%s does not appear to be a git url' % url)
+    if not dev_remote_urls:
+        print style_error('No git remotes for %s' % row['path'])
+        return 1
 
     env_repo = home.get_env_repo()
-    for req in env_repo.iter_git_requirements(home):
+    for req in env_repo.iter_git_requirements():
         req_url = normalize_git_url(req.url)
-        if req_url == pkg_url:
+        if req_url in dev_remote_urls:
             break
     else:
         raise ValueError('could not find matching package')
 
-    if req.revision == pkg_repo.head[:8]:
+    if req.revision == dev_repo.head[:8]:
         print style_note('No change to', str(req))
     else:
-        req.revision = pkg_repo.head[:8]
+        req.revision = dev_repo.head[:8]
         print style_note('Updated', str(req))
         env_repo.dump()

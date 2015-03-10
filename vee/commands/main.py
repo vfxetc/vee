@@ -13,7 +13,7 @@ import sys
 import traceback
 
 from vee.cli import style
-from vee.exceptions import cli_exc_str, cli_errno
+from vee.exceptions import cli_exc_str, cli_errno, print_cli_exc
 from vee.home import Home
 
 
@@ -168,10 +168,7 @@ def main(argv=None, environ=None, as_main=__name__=="__main__"):
 
     except Exception as e:
         if as_main:
-            if args is None or args.verbose:
-                stack = traceback.format_list(traceback.extract_tb(sys.exc_traceback))
-                print style(''.join(stack).rstrip(), faint=True)
-            print cli_exc_str(e)
+            print_cli_exc(e, verbose=args is None or args.verbose)
             res = cli_errno(e)
         else:
             raise

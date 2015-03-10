@@ -43,6 +43,8 @@ def normalize_git_url(url, prefix=False):
     m = re.match(r'^(?:git\+)?([^:@]+@)?([^:]+):(.*)$', url)
     if m:
         userinfo, host, path = m.groups()
+        if host == 'github.com' and path.endswith('.git'):
+            path = path[:-4]
         return '%s%s%s:%s' % (prefix, userinfo or '', host, path.rstrip('/'))
 
 
@@ -225,38 +227,45 @@ class GitRepo(object):
 
     def fetch(self, remote=None, ref=None, shallow=True):
 
+        args = []
+
         remote = remote or self.remote_url
+        if remote:
+            args.append(remote)
 
         if ref:
+            args.append(ref)
             if re.match(r'\w+', remote):
-                revision = '%s/%s' % (remote, ref)
+                rev_to_parse = '%s/%s' % (remote, ref)
             else:
-                revision = 'FETCH_HEAD'
-        ref_args = (ref, ) if ref else ()
+                rev_to_parse = 'FETCH_HEAD'
+        else:
+            rev_to_parse = None
+
 
         if self.is_shallow:
 
             # Fetch the new history on top of the shallow history.
             if shallow:
-                print style('Fetching shallow', 'blue', bold=True), style(remote, bold=True)
-                self.git('fetch', '--update-shallow', remote, *ref_args, silent=True)
-                if not revision:
+                print style('Fetching shallow', 'blue', bold=True), style(remote or 'defaults', bold=True)
+                self.git('fetch', '--update-shallow', *args, silent=True)
+                if not rev_to_parse:
                     return
-                commit = self._rev_parse(revision)
+                commit = self._rev_parse(rev_to_parse)
 
             # Lets get the whole history.
             if not shallow or not commit:
-                print style('Fetching unshallow', 'blue', bold=True), style(remote, bold=True)
-                self.git('fetch', '--unshallow', remote, *ref_args, silent=True)
-                commit = self._rev_parse(revision)
+                print style('Fetching unshallow', 'blue', bold=True), style(remote or 'defaults', bold=True)
+                self.git('fetch', '--unshallow', *args, silent=True)
+                commit = self._rev_parse(rev_to_parse)
 
         else:
             # Normal fetch here.
-            print style('Fetching', 'blue', bold=True), style(remote, bold=True)
-            self.git('fetch', remote, *ref_args, silent=True)
-            if not revision:
+            print style('Fetching', 'blue', bold=True), style(remote or 'defaults', bold=True)
+            self.git('fetch', *args, silent=True)
+            if not rev_to_parse:
                 return
-            commit = self._rev_parse(revision)
+            commit = self._rev_parse(rev_to_parse)
 
         return commit
 
