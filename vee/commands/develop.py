@@ -27,7 +27,12 @@ def iter_availible_requirements(home):
 @command(
     aliases=['dev'],
     help='develop a package',
-    usage="vee develop (list|init|clone|install) [ARGS]",
+    usage="""
+       vee develop init [NAME]
+   or: vee develop clone URL [NAME]
+   or: vee develop install NAME
+   or: vee develop list [-a] [-e]
+""".strip(),
 )
 def develop(args):
     pass
@@ -36,9 +41,10 @@ def develop(args):
 @develop.subcommand(
     argument('-a', '--availible', action='store_true'),
     argument('-e', '--environ', dest='show_environ', action='store_true'),
+    name='list',
     help='list dev packages'
 )
-def list(args):
+def list_(args):
 
     home = args.assert_home()
 

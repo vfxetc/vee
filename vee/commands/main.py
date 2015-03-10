@@ -13,7 +13,7 @@ import sys
 import traceback
 
 from vee.cli import style
-from vee.exceptions import CliException
+from vee.exceptions import CliException, cli_exc_str, cli_errno
 from vee.home import Home
 
 
@@ -84,6 +84,7 @@ def get_parser():
         dest='home_path',
         help='path of managed environments',
     )
+    parser.add_argument('-v', '--verbose', action='count', default=0)
 
     funcs = [ep.load() for ep in pkg_resources.iter_entry_points('vee_commands')]
 
@@ -164,14 +165,11 @@ def main(argv=None, environ=None, as_main=__name__=="__main__"):
 
     except Exception as e:
         if as_main:
-            if isinstance(e, CliException):
-                print e.clistr
-                res = e.errno
-            else:
+            if args.verbose:
                 stack = traceback.format_list(traceback.extract_tb(sys.exc_traceback))
                 print style(''.join(stack).rstrip(), faint=True)
-                print style(e.__class__.__name__ + ':', 'red', bold=True), style(str(e), bold=True)
-                res = 1
+            print cli_exc_str(e)
+            res = cli_errno(e)
         else:
             raise
     
