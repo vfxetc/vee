@@ -1,7 +1,7 @@
 from vee.cli import style
 from vee.commands.main import command, argument
 from vee.environment import Environment
-from vee.exceptions import CliException, AlreadyInstalled, AlreadyLinked
+from vee.exceptions import AlreadyInstalled, AlreadyLinked
 from vee.requirement import Requirement
 from vee.requirementset import RequirementSet
 
@@ -21,7 +21,7 @@ from vee.requirementset import RequirementSet
 def link(args):
 
     if args.no_install and args.re_install:
-        raise CliException('please use only one of --no-install and --re-install')
+        raise ValueError('please use only one of --no-install and --re-install')
 
     home = args.assert_home()
     env = Environment(args.environment, home=home)

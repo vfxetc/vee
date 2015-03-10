@@ -4,13 +4,18 @@ from vee.cli import style_error, style_warning, style_note
 from vee.commands.main import command, argument, group
 from vee.environment import Environment
 from vee.environmentrepo import EnvironmentRepo
-from vee.exceptions import CliException
 from vee.home import PRIMARY_REPO
 
 
 @command(
-    help='manage remote repos',
-    usage='vee repo (init|clone|set|delete|list) [OPTIONS]'
+    help='manage environment repos',
+    usage="""
+       vee repo init NAME
+   or: vee repo clone URL [NAME]
+   or: vee repo set OPTIONS NAME
+   or: vee repo delete NAME
+   or: vee repo list
+""".strip()
 )
 def repo(args):
     # Never goes here.
@@ -31,13 +36,14 @@ def delete(args):
     argument('--default', action='store_true', help='this repo is the default'),
     argument('--remote', help='git remote to track'),
     argument('--branch', help='git branch to track'),
-    argument('--url', help='remote url'),
+    argument('--url', help='remote url (set via `git remote`)'),
     argument('name'),
+    help='set options on an existing repository'
 )
 def set(args):
     home = args.assert_home()
     if not (args.default or args.remote or args.branch or args.url):
-        raise CliException('please specify something to set')
+        raise ValueError('please specify something to set')
     home.update_env_repo(
         name=args.name,
         url=args.url,
@@ -52,6 +58,7 @@ def set(args):
     argument('--remote', help='git remote to track', default='origin'),
     argument('--branch', help='git branch to track', default='master'),
     argument('name', nargs='?'),
+    help='create a blank repository'
 )
 def init(args, is_set=False):
     home = args.assert_home()
@@ -70,6 +77,7 @@ def init(args, is_set=False):
     argument('--branch', help='git branch to track', default='master'),
     argument('url'),
     argument('name', nargs='?'),
+    help='clone a remote repository'
 )
 def clone(args, is_set=False):
     home = args.assert_home()
@@ -84,6 +92,7 @@ def clone(args, is_set=False):
 
 @repo.subcommand(
     name='list',
+    help='list local repositories'
 )
 def list_(args):
     home = args.assert_home()
@@ -105,7 +114,7 @@ def list_(args):
 
 @repo.subcommand(
     argument('-r', '--repo', help='which repo to use'),
-    help='run a git command in the repo',
+    help='run a git command in a repository',
     parse_known_args=True,
 )
 def git(args, *command):

@@ -2,7 +2,6 @@ import re
 
 from vee.cli import style, style_error, style_note
 from vee.commands.main import command, argument
-from vee.exceptions import CliException
 from vee.git import GitRepo, normalize_git_url
 
 

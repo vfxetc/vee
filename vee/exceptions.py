@@ -10,41 +10,52 @@ def cli_exc_str(obj, use_magic=True):
         if method:
             return method()
 
-    title = getattr(obj, '__cli_title__', None) or re.sub(r'(?<=[^A-Z])([A-Z])', '\1 \2', obj.__class__.__name__)
-    message = str(obj)
+    title = getattr(obj, '__cli_title__', obj.__class__.__name__)
+    format = getattr(obj, '__cli_format__', None)
+    if format is not None:
+        message = format.format(self=e)
+    else:
+        message = str(obj)
     detail = getattr(obj, '__cli_detail__', None)
-    return '%s %s\n%s' % (
-        style('%s: ' % title, 'red', bold=True),
-        style(message,  bold=True),
+
+    return ('%s %s\n%s' % (
+        style('%s:' % title, 'red', bold=True) if title is not None else '',
+        style(message,  bold=True) if message is not None else '',
         style(detail, faint=True) if detail is not None else ''
-    ).strip()
+    )).strip()
 
 
 def cli_errno(e):
     return getattr(e, '__cli_errno__', 1)
 
 
-class CliException(Exception):
+def setup_cli_error(e, title='', format=None, detail='', errno=1):
+    e.__cli_detail__ = detail
+    e.__cli_errno__ = errno
+    e.__cli_format__ = format
+    e.__cli_title__ = title
+    return e
+
+
+class CliMixin(object):
 
     def __init__(self, *args, **kwargs):
-        super(CliException, self).__init__(*args)
-        self.errno = kwargs.pop('errno', 1)
-        self.__cli_detail__ = kwargs.pop('detail', '')
-
-    def __cli_str__(self):
-        return cli_exc_str(self, use_magic=False)
+        setup_cli_error(self,
+            detail=kwargs.pop('detail', ''),
+            errno=kwargs.pop('errno', 1))
+        super(CliMixin, self).__init__(*args, **kwargs)
 
 
-class AlreadyInstalled(CliException, RuntimeError):
-
-    @property
-    def __cli_str__(self):
-        return style_error(self.args[0] + ' is already installed')
+class NotInstalled(RuntimeError):
+    __cli_format__ = '{self} is not installed'
 
 
-class AlreadyLinked(CliException, RuntimeError):
+class AlreadyInstalled(RuntimeError):
+    __cli_format__ = '{self} is already installed'
 
-    @property
-    def __cli_str__(self):
-        return style_error(self.args[0] + ' is already linked into the environment')
+
+
+class AlreadyLinked(RuntimeError):
+    __cli_format__ = '{self} is already linked into the environment'
+
 

@@ -13,7 +13,7 @@ import sys
 import traceback
 
 from vee.cli import style
-from vee.exceptions import CliException, cli_exc_str, cli_errno
+from vee.exceptions import cli_exc_str, cli_errno
 from vee.home import Home
 
 
@@ -56,7 +56,7 @@ class Namespace(argparse.Namespace):
 
     def assert_home(self):
         if not self.home:
-            raise CliException('please set $VEE or use --home')
+            raise RuntimeError('please set $VEE or use --home')
         return self.home
 
 
@@ -80,11 +80,12 @@ def get_parser():
     parser.register('action', 'parsers', AliasedSubParsersAction)
     command_subparser = parser.add_subparsers(metavar='COMMAND')
 
+    parser.add_argument('-v', '--verbose', action='count', default=0)
     parser.add_argument('--home',
         dest='home_path',
+        metavar='VEE',
         help='path of managed environments',
     )
-    parser.add_argument('-v', '--verbose', action='count', default=0)
 
     funcs = [ep.load() for ep in pkg_resources.iter_entry_points('vee_commands')]
 
@@ -111,7 +112,7 @@ def populate_subparser(parent_subparser, funcs, depth=0):
 
         subcommands = getattr(func, '__subcommands__', None)
         if subcommands:
-            command_subparser = parser.add_subparsers(metavar='SUBCMD')
+            command_subparser = parser.add_subparsers(metavar='SUBCOMMAND')
             populate_subparser(command_subparser, subcommands, depth + 1)
 
         for arg_args, arg_kwargs in args:
@@ -140,6 +141,8 @@ def get_func(args):
 
 def main(argv=None, environ=None, as_main=__name__=="__main__"):
 
+    args = None
+
     try:
 
         parser = get_parser()
@@ -165,7 +168,7 @@ def main(argv=None, environ=None, as_main=__name__=="__main__"):
 
     except Exception as e:
         if as_main:
-            if args.verbose:
+            if args is None or args.verbose:
                 stack = traceback.format_list(traceback.extract_tb(sys.exc_traceback))
                 print style(''.join(stack).rstrip(), faint=True)
             print cli_exc_str(e)

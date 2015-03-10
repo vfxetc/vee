@@ -2,7 +2,6 @@ import re
 
 from vee.cli import style, style_error, style_note
 from vee.commands.main import command, argument
-from vee.exceptions import CliException
 from vee.git import GitRepo, normalize_git_url
 
 
@@ -57,17 +56,17 @@ def add(args):
     row = home.get_development_record(args.package)
 
     if not row:
-        raise CliException('No development package %r' % args.package)
+        raise ValueError('No development package %r' % args.package)
 
     pkg_repo = GitRepo(row['path'])
 
     # Get the normalized origin.
     pkg_url = pkg_repo.remotes().get('origin')
     if not pkg_url:
-        raise CliException('%s does not have an origin' % row['path'])
+        raise ValueError('%s does not have an origin' % row['path'])
     pkg_url = normalize_git_url(pkg_url)
     if not pkg_url:
-        raise CliException('%s does not appear to be a git url' % pkg_url)
+        raise ValueError('%s does not appear to be a git url' % pkg_url)
 
     env_repo = home.get_env_repo()
     for req in env_repo.iter_git_requirements(home):
@@ -75,7 +74,7 @@ def add(args):
         if req_url == pkg_url:
             break
     else:
-        raise CliException('could not find matching package')
+        raise ValueError('could not find matching package')
 
     if req.revision == pkg_repo.head[:8]:
         print style_note('No change to', str(req))

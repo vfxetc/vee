@@ -4,7 +4,7 @@ import re
 from vee.git import GitRepo
 from vee.requirementset import RequirementSet, Header
 from vee.utils import cached_property
-from vee.exceptions import CliException
+from vee.exceptions import CliMixin
 
 
 class EnvironmentRepo(GitRepo):
@@ -57,12 +57,12 @@ class EnvironmentRepo(GitRepo):
         
         status = list(self.status())
         if not status:
-            raise CliException('nothing to commit')
+            raise RuntimeError('nothing to commit')
 
         # Make sure there are no other changes.
         for idx, tree, name in status:
             if tree.strip():
-                raise CliException('work-tree is dirty')
+                raise RuntimeError('work-tree is dirty')
 
         if level is not None:
 

@@ -4,7 +4,7 @@ import os
 from vee.cli import style, style_error, style_note, style_warning
 from vee.commands.main import command, argument, group
 from vee.envvars import render_envvars
-from vee.exceptions import AlreadyInstalled, CliException
+from vee.exceptions import AlreadyInstalled
 from vee.git import GitRepo
 from vee.packages.git import normalize_git_url
 from vee.requirement import Requirement
@@ -31,7 +31,7 @@ def iter_availible_requirements(home):
        vee develop init [NAME]
    or: vee develop clone URL [NAME]
    or: vee develop install NAME
-   or: vee develop list [-a] [-e]
+   or: vee develop list [--availible] [--environ]
 """.strip(),
 )
 def develop(args):
@@ -42,7 +42,7 @@ def develop(args):
     argument('-a', '--availible', action='store_true'),
     argument('-e', '--environ', dest='show_environ', action='store_true'),
     name='list',
-    help='list dev packages'
+    help='list all installed or availible tools'
 )
 def list_(args):
 
@@ -69,6 +69,7 @@ def list_(args):
     argument('--force', action='store_true'),
     argument('--path'),
     argument('name'),
+    help='install a tool that is managed by the default repository'
 )
 def install(args):
     return init(args, do_install=True)
@@ -79,6 +80,7 @@ def install(args):
     argument('--path'),
     argument('url'),
     argument('name', nargs='?'),
+    help='clone a remote git repository to develop',
 )
 def clone(args):
     if not args.name:
@@ -93,6 +95,7 @@ def clone(args):
     argument('--force', action='store_true'),
     argument('--path'),
     argument('name'),
+    help='init a new git repository'
 )
 def init(args, do_clone=False, do_install=False):
 

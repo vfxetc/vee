@@ -6,12 +6,12 @@ import re
 import shlex
 
 from vee.cli import style
-from vee.exceptions import AlreadyInstalled, CliException
+from vee.exceptions import AlreadyInstalled, CliMixin
 from vee.packages import make_package
 from vee.utils import cached_property
 
 
-class RequirementParseError(CliException):
+class RequirementParseError(CliMixin, ValueError):
     pass
 
 

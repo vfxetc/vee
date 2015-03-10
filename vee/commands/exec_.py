@@ -5,7 +5,7 @@ import re
 from vee.commands.main import command, argument, group
 from vee.environment import Environment
 from vee.envvars import guess_envvars, render_envvars
-from vee.exceptions import CliException
+from vee.exceptions import NotInstalled
 from vee.requirementset import RequirementSet
 
 
@@ -29,7 +29,7 @@ def exec_(args):
     home = args.assert_home()
 
     if not (args.export or args.command or args.prefix):
-        raise CliException('Must either --prefix, --export, or provide a command')
+        raise ValueError('Must either --prefix, --export, or provide a command')
 
     # Default to the default repo.
     if not (args.requirements or args.environment or args.repo):
@@ -53,7 +53,7 @@ def exec_(args):
         req.package.resolve_existing()
         req.package._assert_paths(install=True)
         if not req.package.installed:
-            raise CliException('Requirement is not installed: %s' % req)
+            raise NotInstalled(str(req))
         paths.append(req.package.install_path)
 
     # Named environments.

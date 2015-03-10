@@ -6,10 +6,10 @@ import subprocess
 
 from vee.cli import style
 from vee.subproc import call
-from vee.exceptions import CliException
+from vee.exceptions import CliMixin
 
 
-class GitError(CliException):
+class GitError(CliMixin, RuntimeError):
     pass
 
 
@@ -80,7 +80,7 @@ class GitRepo(object):
             else:
                 res = call(('git', '--git-dir', self.git_dir, '--work-tree', self.work_tree) + cmd, **kw)
 
-        except CalledProcessError:
+        except CalledProcessError as e:
             fatal = next((line for line in stderr if line.startswith('fatal:')), None)
             if fatal:
                 fatal = fatal.splitlines()[0][6:].strip()

@@ -1,5 +1,4 @@
 from vee.commands.main import command, argument
-from vee.exceptions import CliException
 from vee.requirement import Requirement
 
 
@@ -10,7 +9,7 @@ from vee.requirement import Requirement
 def brew(args, *command):
 
     if not command:
-        raise CliException('please specify a homebrew command')
+        raise ValueError('please specify a homebrew command')
 
     home = args.assert_home()
 
