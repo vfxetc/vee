@@ -15,10 +15,8 @@ from vee.utils import makedirs
 
 def iter_availible_requirements(home):
     env_repo = home.get_env_repo()
-    req_path = os.path.join(env_repo.work_tree, 'requirements.txt')
-    reqs = RequirementSet(req_path)
-    reqs.guess_names()
-    for req in reqs.iter_requirements():
+    reqs = env_repo.requirement_set()
+    for req in reqs.iter_git_requirements():
         # Make sure it is a Git package.
         url = normalize_git_url(req.url, prefix=False)
         if url:

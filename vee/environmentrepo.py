@@ -30,31 +30,24 @@ class EnvironmentRepo(GitRepo):
             force=force
         )
 
-    def reqs(self, revision=None, guess_names=True):
+    def requirement_set(self, revision=None):
         reqs = RequirementSet(home=self.home)
         if revision is not None:
-            contents = self.git('show', '%s:requirements.txt' % revision, stdout=True, silent=True)
-            reqs.parse_file(contents.splitlines())
+            contents = self.show(revision, 'requirements.txt')
+            if contents:
+                reqs.parse_file(contents.splitlines())
         else:
             if os.path.exists(self._req_path):
                 reqs.parse_file(self._req_path)
-        if guess_names:
-            reqs.guess_names()
+        reqs.guess_names()
         return reqs
 
-    def iter_requirements(self):
-        for req in self.reqs().iter_requirements():
-            yield req
-
-    def iter_git_requirements(self):
-        for req in self.iter_requirements():
-            if req.package.type == 'git':
-                yield req
-
-    def dump(self):
-        with open(self._req_path, 'wb') as fh:
-            for line in self.reqs.iter_dump():
+    def dump(self, req_set):
+        tmp = self._req_path + '.tmp'
+        with open(tmp, 'wb') as fh:
+            for line in req_set.iter_dump():
                 fh.write(line)
+        os.rename(tmp, self._req_path)
 
     def commit(self, message, level=None):
 
@@ -71,10 +64,11 @@ class EnvironmentRepo(GitRepo):
 
         if level is not None:
 
-            header = self.reqs.headers.get('Version')
+            req_set = self.requirement_set()
+            header = req_set.headers.get('Version')
             if not header:
                 header = Header('Version', '0.0.0')
-                self.reqs.insert(0, ('', header, ''))
+                req_set.insert(0, ('', header, ''))
             version = []
             for i, x in enumerate(re.split(r'[.-]', header.value)):
                 try:
@@ -86,7 +80,7 @@ class EnvironmentRepo(GitRepo):
             version[level] = (version[level] if isinstance(version[level], int) else 0) + 1
             header.value = '.'.join(str(x) for x in version)
 
-            self.dump()
+            self.dump(req_set)
             self.git('add', self._req_path, silent=True)
 
         self.git('commit', '-m', message, silent=True)

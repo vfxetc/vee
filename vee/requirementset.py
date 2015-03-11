@@ -102,6 +102,11 @@ class RequirementSet(list):
             if isinstance(element, Requirement):
                 yield element
 
+    def iter_git_requirements(self):
+        for req in self.iter_requirements():
+            if req.package.type == 'git':
+                yield req
+    
     def guess_names(self, strict=True):
         """Guess names for every requirement which does not already have one.
 

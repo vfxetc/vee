@@ -3,6 +3,7 @@ import re
 from vee.cli import style, style_error, style_note, style_warning
 from vee.commands.main import command, argument
 from vee.git import GitRepo, normalize_git_url
+from vee.requirement import Requirement
 
 
 @command(
@@ -18,7 +19,8 @@ def add(args):
     if args.update:
         env_repo = home.get_env_repo()
         baked_any = False
-        for req in env_repo.iter_git_requirements():
+        req_set = env_repo.requirement_set()
+        for req in req_set.iter_git_requirements():
             pkg = req.package
             print style_note('Fetching', str(req))
             pkg.repo.fetch('origin/master', remote='origin')
@@ -30,7 +32,7 @@ def add(args):
                     print style_note('Updated', str(req))
                     baked_any = True
         if baked_any:
-            env_repo.dump()
+            env_repo.dump(req_set)
         else:
             print style_note('No changes.')
         return
@@ -38,7 +40,8 @@ def add(args):
     if args.bake_installed:
         env_repo = home.get_env_repo()
         baked_any = False
-        for req in env_repo.iter_git_requirements():
+        req_set = env_repo.requirement_set()
+        for req in req_set.iter_git_requirements():
             pkg = req.package
             pkg.resolve_existing()
             if pkg.installed and req.revision != pkg.repo.head[:8]:
@@ -48,7 +51,7 @@ def add(args):
             else:
                 print style_note('Unchanged', str(req))
         if baked_any:
-            env_repo.dump()
+            env_repo.dump(req_set)
         else:
             print style_note('No changes.')
         return
@@ -74,16 +77,21 @@ def add(args):
         return 1
 
     env_repo = home.get_env_repo()
-    for req in env_repo.iter_git_requirements():
+    req_set = env_repo.requirement_set()
+    for req in req_set.iter_git_requirements():
         req_url = normalize_git_url(req.url)
         if req_url in dev_remote_urls:
+            if req.revision == dev_repo.head[:8]:
+                print style_note('No change to', str(req))
+            else:
+                req.revision = dev_repo.head[:8]
+                print style_note('Updated', str(req))
             break
     else:
-        raise ValueError('could not find matching package')
+        req = Requirement(
+            url=normalize_git_url(dev_repo.remotes()['origin'], prefix=True),
+            revision=dev_repo.head[:8],
+        )
+        req_set.append(('', req, ''))
 
-    if req.revision == dev_repo.head[:8]:
-        print style_note('No change to', str(req))
-    else:
-        req.revision = dev_repo.head[:8]
-        print style_note('Updated', str(req))
-        env_repo.dump()
+    env_repo.dump(req_set)

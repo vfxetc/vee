@@ -62,10 +62,9 @@ def status(args):
     # Current requirements.
     for revision, name in [
         (None, 'work'),
-        ('', 'index'),
         ('HEAD', 'head'),
     ]:
-        for req in env_repo.reqs(revision=revision).iter_requirements():
+        for req in env_repo.requirement_set(revision=revision).iter_requirements():
             pkg = req.package
             if pkg.type != 'git':
                 continue
@@ -80,23 +79,31 @@ def status(args):
 
         dev_row = everything.get('dev')
         work_req = everything.get('work')
-        index_req = everything.get('index')
         head_req = everything.get('head')
 
+        has_dev = dev_row is not None
+        only_has_dev = has_dev and not (work_req or head_req)
 
-        if work_req or args.all_dev:
+        # Skip dev-only stuff most of the time.
+        if only_has_dev and not args.all_dev:
+            continue
 
-            if dev_row and work_req:
-                print '%s %s' % (style('==> ' + name, fg='blue'), work_req)
-            elif dev_row:
-                print '%s %s' % (style('==> ' + name, fg='blue'), '(dev only)')
-            else:
-                print '%s %s' % (style('--> ' + name, fg='blue'), work_req)
+        # Title.
+        print '%s %s' % (
+            style('%s %s' % ('==>' if has_dev else '-->', name), fg='blue'),
+            '(dev only)' if only_has_dev else ''
+        )
+
+        # Status of requirements.
+        if work_req and head_req and str(work_req) == str(head_req):
+            print '=== %s' % work_req
+        else:
+            if head_req is not None:
+                print style('--- %s' % head_req, fg='red')
+            if work_req is not None:
+                print style('+++ %s' % work_req, fg='green')
 
         if dev_row:
-
-            if not work_req and not args.all_dev:
-                continue
 
             if 'warning' in dev_row:
                 print dev_row['warning']
@@ -115,6 +122,9 @@ def status(args):
             dev_row = dev_repo = None
 
         if dev_repo:
+
+            if dev_repo.status():
+                print '    ' + style_warning('Work tree is dirty.')
 
             if args.fetch:
                 dev_remote_head = dev_repo.fetch(dev_row['remote_name'], 'master')
@@ -140,11 +150,5 @@ def status(args):
                     remote_name='"%s" repo' % env_repo.name,
                     ahead_action='you may `vee add %s`' % name,
                 )
-
-
-
-
-        # TODO: compare dev vs req
-        # TODO: compare dev vs dev's remote
 
 

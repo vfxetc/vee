@@ -4,7 +4,7 @@ import re
 from subprocess import CalledProcessError
 import shutil
 
-from vee.git import GitRepo
+from vee.git import GitRepo, GitError
 from vee.utils import makedirs
 
 from .http import mock_url
@@ -41,7 +41,7 @@ class MockPackage(object):
     def rev_list(self):
         try:
             return self.repo.git('rev-list', '--all', silent=True, stdout=True, stderr=True)[0].strip().split()
-        except CalledProcessError:
+        except GitError:
             return []
 
     @property

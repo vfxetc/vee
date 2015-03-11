@@ -21,6 +21,8 @@ def _call_reader(fh, size=2**10, buffer=None, callback=None, stream=None):
 
 def call(cmd, **kwargs):
 
+    # Print out the call to the console.
+    # TODO: vary this depending on global verbosity.
     if not kwargs.pop('silent', False):
         VEE = os.environ.get('VEE')
         cmd_collapsed = [x.replace(VEE, '$VEE') if VEE else x for x in cmd]

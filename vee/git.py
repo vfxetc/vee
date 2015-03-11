@@ -70,10 +70,10 @@ class GitRepo(object):
     def git(self, *cmd, **kw):
 
         stderr = []
-        if kw.get('on_stderr'):
-            raise NotImplementedError('cant nest on_stderr (yet)')
         kw['on_stderr'] = stderr.append
+        kw['check'] = False # We will do it ourselves.
 
+        e = None
         try:
             # If we can, run as if we are within the work tree.
             if self.work_tree and self.git_dir == os.path.join(self.work_tree, '.git'):
@@ -81,14 +81,24 @@ class GitRepo(object):
                 res = call(('git', ) + cmd, **kw)
             else:
                 res = call(('git', '--git-dir', self.git_dir, '--work-tree', self.work_tree) + cmd, **kw)
-
         except CalledProcessError as e:
-            fatal = next((line for line in stderr if line.startswith('fatal:')), None)
-            if fatal:
-                fatal = fatal.splitlines()[0][6:].strip()
-                raise GitError(fatal, detail=''.join(stderr).rstrip())
-            raise
+            res = e.returncode
 
+        stderr = ''.join(stderr).rstrip()
+        fatal = []
+        nonfatal = False
+        for line in stderr.splitlines():
+            if line.startswith('fatal:'):
+                fatal.append(line[6:].strip())
+            elif line.strip():
+                nonfatal = True
+
+        if fatal:
+            raise GitError(*fatal, errno=res, detail=stderr if nonfatal else None)
+        if isinstance(res, int) and res:
+            raise GitError('%s returned %d; %s' % (' '.join(cmd), res, stderr.strip()), errno=res, detail=stderr if nonfatal else None)
+        if e: # This should never happen.
+            raise
         return res
 
     def clone_if_not_exists(self, remote_url=None, shallow=True):
@@ -153,7 +163,7 @@ class GitRepo(object):
         rev = reference
         seen = set()
 
-        while not re.match(r'^[0-9a-f]{8,40}($|\s)', rev):
+        while not re.match(r'^[0-9a-f]{7,40}($|\s)', rev):
 
             if rev in seen:
                 raise ValueError('recursion in refs: %r' % rev)
@@ -174,7 +184,7 @@ class GitRepo(object):
             else:
 
                 # Glob into the objects.
-                m = re.match(r'^[0-9a-f]{8,40}(\s|$)', rev)
+                m = re.match(r'^[0-9a-f]{7,40}(\s|$)', rev)
                 if m:
                     hash_ = m.group(1)
                     paths = glob.glob(os.path.join(git_dir, 'objects', hash_[:2], hash_[2:] + '*'))
@@ -186,16 +196,20 @@ class GitRepo(object):
                 if fallback:
                     try:
                         rev = self.git('rev-parse', '--verify', '--quiet', reference, silent=True, stdout=True).strip()
-                    except CalledProcessError:
+                    except GitError:
                         return
                 
                 break
         
-        return rev[:40] if rev and re.match(r'^[0-9a-f]{8,40}($|\s)', rev) else None
+        return rev[:40] if rev and re.match(r'^[0-9a-f]{7,40}($|\s)', rev) else None
 
     def _current_head(self):
-        self._head = self.rev_parse('HEAD')
-        return self._head
+        try:
+            self._head = self.rev_parse('HEAD')
+        except ValueError:
+            pass
+        else:
+            return self._head
 
     @property
     def head(self):
@@ -353,6 +367,12 @@ class GitRepo(object):
                     self.git('remote', 'add', k, v)
 
         return remotes
+
+    def show(self, revision, path):
+        try:
+            return self.git('show', '%s:%s' % (revision, path), stdout=True, silent=True)
+        except GitError as e:
+            pass
 
 
 

@@ -68,6 +68,11 @@ COMMANDS TO WRITE
 
 ---
 
+- there are a ton of times we need to guess which dev remote to use; perhaps
+  we should have a remote/branch to track in the database, OR figure out how
+  to interpret that from the repo itself. Git seems to store a repo per branch,
+  so we could always look at the active branch
+
 - `vee status` and `vee diff` should give you an overview of what will happen
   when you `vee commit`. Current `vee status` could be moved to `vee dev status`
 
