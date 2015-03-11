@@ -48,64 +48,54 @@ def status(args):
     home = args.assert_home()
 
     env_repo = home.get_env_repo(args.repo)
-    env_repo.reqs.guess_names()
 
-    # Grab all of the dev packages.
-    dev_by_url = {}
-    dev_by_name = {}
+    by_name = {}
+
+    # Dev packages.
     for row in home.db.execute('SELECT * FROM dev_packages'):
         row = dict(row)
 
         dev_repo = GitRepo(row['path'])
         row['remotes'] = dev_repo.remotes()
+        by_name.setdefault(row['name'], {})['dev'] = row
 
-        for url in row['remotes'].itervalues():
-            url = normalize_git_url(url)
-            dev_by_url[url] = row
-        dev_by_name[row['name']] = row
+    # Current requirements.
+    for revision, name in [
+        (None, 'work'),
+        ('', 'index'),
+        ('HEAD', 'head'),
+    ]:
+        for req in env_repo.reqs(revision=revision).iter_requirements():
+            pkg = req.package
+            if pkg.type != 'git':
+                continue
+            pkg.resolve_existing()
+            by_name.setdefault(pkg.name, {})[name] = req
 
-    # Lets match everything up.
-    matched_packages = []
-    for req in env_repo.iter_requirements():
 
-        pkg = req.package
-        if pkg.type != 'git':
-            continue
-        pkg.resolve_existing()
+    by_name = by_name.items()
+    by_name.sort(key=lambda x: x[0].lower())
 
-        url = normalize_git_url(pkg.url)
-        dev_row = dev_by_url.pop(url, None)
-        if dev_row:
-            dev_by_name.pop(dev_row['name'])
-        else:
-            dev_row = dev_by_name.pop(pkg.name, None)
-            if dev_row:
-                dev_row['warning'] = style_warning('Matched by name instead of URL')
+    for name, everything in by_name:
 
-        matched_packages.append((pkg.name, dev_row, req, pkg))
+        dev_row = everything.get('dev')
+        work_req = everything.get('work')
+        index_req = everything.get('index')
+        head_req = everything.get('head')
 
-    for dev_row in dev_by_name.itervalues():
-        matched_packages.append((dev_row['name'], dev_row, None, None))
 
-    if not matched_packages:
-        print style_error('No packages found.')
-        return 1
+        if work_req or args.all_dev:
 
-    matched_packages.sort(key=lambda x: x[0].lower())
-
-    for name, dev_row, req, pkg in matched_packages:
-
-        if req or args.all_dev:
-            if dev_row and req:
-                print style_note('==> ' + name)
+            if dev_row and work_req:
+                print '%s %s' % (style('==> ' + name, fg='blue'), work_req)
             elif dev_row:
-                print style_note('==> ' + name, detail='(dev only)')
+                print '%s %s' % (style('==> ' + name, fg='blue'), '(dev only)')
             else:
-                print style_note('--> ' + name)
+                print '%s %s' % (style('--> ' + name, fg='blue'), work_req)
 
         if dev_row:
 
-            if not req and not args.all_dev:
+            if not work_req and not args.all_dev:
                 continue
 
             if 'warning' in dev_row:
@@ -137,36 +127,20 @@ def status(args):
                 local_name=name,
                 local_verb='is',
                 remote_name='%s/master' % dev_row['remote_name'],
-                indent='    ',
             )
 
-            if req and req.revision:
+            if work_req and work_req.revision:
 
                 # Check your local dev vs the required revision
-                pkg_revision = dev_repo.rev_parse(req.revision)
+                pkg_revision = dev_repo.rev_parse(work_req.revision)
                 pkg_local, pkg_remote = dev_repo.distance(dev_repo.head, pkg_revision)
                 summarize_rev_distance(pkg_local, pkg_remote,
                     local_name=name,
                     local_verb='is',
                     remote_name='"%s" repo' % env_repo.name,
                     ahead_action='you may `vee add %s`' % name,
-                    indent='    ',
                 )
 
-            if False:
-                print 'dev head', dev_repo.head
-                print 'dev %s head' % dev_row['remote_name'], dev_remote_head
-                if pkg:
-                    print 'pkg rev', pkg.revision
-
-        if False:
-            if dev_row:
-                print 'dev', dev_row
-            if req:
-                print 'req', req
-            if pkg:
-                print 'pkg', pkg
-                print 'pkg url', pkg.url
 
 
 

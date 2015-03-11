@@ -30,15 +30,20 @@ class EnvironmentRepo(GitRepo):
             force=force
         )
 
-    @cached_property
-    def reqs(self):
+    def reqs(self, revision=None, guess_names=True):
         reqs = RequirementSet(home=self.home)
-        if os.path.exists(self._req_path):
-            reqs.parse_file(self._req_path)
+        if revision is not None:
+            contents = self.git('show', '%s:requirements.txt' % revision, stdout=True, silent=True)
+            reqs.parse_file(contents.splitlines())
+        else:
+            if os.path.exists(self._req_path):
+                reqs.parse_file(self._req_path)
+        if guess_names:
+            reqs.guess_names()
         return reqs
 
     def iter_requirements(self):
-        for req in self.reqs.iter_requirements():
+        for req in self.reqs().iter_requirements():
             yield req
 
     def iter_git_requirements(self):

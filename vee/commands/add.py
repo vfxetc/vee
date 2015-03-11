@@ -46,7 +46,7 @@ def add(args):
                 print style_note('Baked', str(req))
                 baked_any = True
             else:
-                print pkg.installed, pkg.repo.head[:8]
+                print style_note('Unchanged', str(req))
         if baked_any:
             env_repo.dump()
         else:

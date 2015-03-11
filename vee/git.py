@@ -137,12 +137,15 @@ class GitRepo(object):
         if not fetch:
             raise ValueError('revision %r does not exist in local repo' % revision)
 
-        commit = self.fetch(remote, revision)
+        try:
+            commit = self.fetch(remote, revision)
+        except ValueError:
+            commit = None
+
         if commit:
             return commit
 
-        msg = 'revision %r does not exist in %s' % (revision, remote)
-        raise ValueError(msg)
+        raise ValueError(revision)
 
     def _rev_parse(self, reference, fallback=True):
 
@@ -150,7 +153,7 @@ class GitRepo(object):
         rev = reference
         seen = set()
 
-        while not re.match(r'^[0-9a-f]{40}', rev):
+        while not re.match(r'^[0-9a-f]{8,40}($|\s)', rev):
 
             if rev in seen:
                 raise ValueError('recursion in refs: %r' % rev)
@@ -181,11 +184,14 @@ class GitRepo(object):
 
                 # Finally, let git try.
                 if fallback:
-                    rev = self.git('rev-parse', '--verify', '--quiet', reference, silent=True, stdout=True).strip()
+                    try:
+                        rev = self.git('rev-parse', '--verify', '--quiet', reference, silent=True, stdout=True).strip()
+                    except CalledProcessError:
+                        return
                 
                 break
         
-        return rev[:40] if rev and re.match(r'^[0-9a-f]{40}', rev) else None
+        return rev[:40] if rev and re.match(r'^[0-9a-f]{8,40}($|\s)', rev) else None
 
     def _current_head(self):
         self._head = self.rev_parse('HEAD')
@@ -248,7 +254,7 @@ class GitRepo(object):
             # Fetch the new history on top of the shallow history.
             if shallow:
                 print style('Fetching shallow', 'blue', bold=True), style(remote or 'defaults', bold=True)
-                self.git('fetch', '--update-shallow', *args, silent=True)
+                self._fetch('--update-shallow', *args, silent=True)
                 if not rev_to_parse:
                     return
                 commit = self._rev_parse(rev_to_parse)
@@ -256,18 +262,28 @@ class GitRepo(object):
             # Lets get the whole history.
             if not shallow or not commit:
                 print style('Fetching unshallow', 'blue', bold=True), style(remote or 'defaults', bold=True)
-                self.git('fetch', '--unshallow', *args, silent=True)
+                self._fetch('--unshallow', *args, silent=True)
                 commit = self._rev_parse(rev_to_parse)
 
         else:
             # Normal fetch here.
             print style('Fetching', 'blue', bold=True), style(remote or 'defaults', bold=True)
-            self.git('fetch', *args, silent=True)
+            self._fetch(*args, silent=True)
             if not rev_to_parse:
                 return
             commit = self._rev_parse(rev_to_parse)
 
         return commit
+
+    def _fetch(self, *args, **kwargs):
+        try:
+            self.git('fetch', *args, **kwargs)
+        except GitError as e:
+            prefix = "Couldn't find remote ref"
+            if e.args[0].startswith(prefix):
+                raise ValueError(e.args[0][len("Couldn't find remote ref") + 1:])
+            else:
+                raise
 
     def checkout(self, revision, branch=None, force=False, fetch=False):
 

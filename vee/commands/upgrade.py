@@ -33,7 +33,7 @@ def upgrade(args):
 
         try:
             remote_head = repo.rev_parse('%s/%s' % (repo.remote_name, repo.branch_name))
-        except CalledProcessError:
+        except ValueError:
             print style_warning('tracked %s/%s does not exist in repo' % (repo.remote_name, repo.branch_name))
             remote_head = None
 

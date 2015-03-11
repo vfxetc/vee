@@ -49,10 +49,13 @@ COMMANDS TO WRITE
 
   - vee status
       - check on status of each dev tool, and where they are vs the repo
+      - check on work tree vs. index vs. head of the repo too, like git status
+          index: `git show :requirements.txt`
+          head: `git show HEAD:requirements.txt`
 
   ~ vee commit [--major,--minor,--patch] [-m MESSAGE]
 
-  - vee push [--no-packages]
+  - vee push [--no-dev]
       - push all packages that aren't already, and the repo
 
   - vee list
@@ -65,14 +68,14 @@ COMMANDS TO WRITE
 
 ---
 
-- rename Environment so there is no Environment vs os.environ conflict?
-    - Prefix
-    - Container
-    - Stack
-    - Runtime
-    - Heirarchy
-    - Stage
-    - Theatre
+- `vee status` and `vee diff` should give you an overview of what will happen
+  when you `vee commit`. Current `vee status` could be moved to `vee dev status`
+
+  - dev status, like it does now
+  - if you have changed a revision of a package
+  - if you have changed MORE of a package
+  
+- move `vee repo git` back to `vee git` ??
 
 
 - install_vee.py could take --repo-name and --repo-url

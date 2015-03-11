@@ -5,6 +5,7 @@ from vee.commands.main import command, argument, group
 from vee.environment import Environment
 from vee.environmentrepo import EnvironmentRepo
 from vee.home import PRIMARY_REPO
+from vee.utils import makedirs
 
 
 @command(
@@ -119,6 +120,10 @@ def list_(args):
 )
 def git(args, *command):
 
+    if not command:
+        print style_error('please provide a git command')
+        return 1
+    
     home = args.assert_home()
     repo = home.get_env_repo(args.repo)
 

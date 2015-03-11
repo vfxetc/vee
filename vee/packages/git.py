@@ -37,7 +37,10 @@ class GitPackage(BasePackage):
     def _set_names(self, build=False, install=False, **kwargs):
         if (build or install) and not self.build_name:
             self.repo.clone_if_not_exists()
-            commit = self.repo.rev_parse(self.revision or 'HEAD')
+            try:
+                commit = self.repo.rev_parse(self.revision or 'HEAD', fetch=True)
+            except ValueError:
+                raise ValueError('%s does not exist in %s' % (self.revision, self.repo.remote_url))
             if commit:
                 if self.name:
                     self.build_name = '%s/%s' % (self.name, commit[:8])
