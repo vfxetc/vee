@@ -37,7 +37,6 @@ def update(args):
             retcode = retcode or 1
             continue
 
-        print 'CHECKING OUT', rev
         env_repo.checkout(force=args.force)
 
     return retcode

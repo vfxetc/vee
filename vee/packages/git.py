@@ -38,7 +38,7 @@ class GitPackage(BasePackage):
         if (build or install) and not self.build_name:
             self.repo.clone_if_not_exists()
             try:
-                commit = self.repo.rev_parse(self.revision or 'HEAD', fetch=True)
+                commit = self.repo.rev_parse(self.revision or 'HEAD', fetch=bool(self.revision))
             except ValueError:
                 raise ValueError('%s does not exist in %s' % (self.revision, self.repo.remote_url))
             if commit:

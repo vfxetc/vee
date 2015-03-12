@@ -33,12 +33,6 @@ def normalize_git_url(url, prefix=False):
         scheme, the_rest = m.groups()
         return '%s%s:%s' % (prefix, scheme, the_rest)
 
-    # Direct paths. This one MUST have the git+ on the front in order to be
-    # detected by this method.
-    m = re.match(r'^git\+(/.+)$', url)
-    if m:
-        return '%s%s' % (prefix, m.group(1))
-
     # SCP-like.
     m = re.match(r'^(?:git\+)?([^:@]+@)?([^:]+):(.*)$', url)
     if m:
@@ -46,6 +40,13 @@ def normalize_git_url(url, prefix=False):
         if host == 'github.com' and path.endswith('.git'):
             path = path[:-4]
         return '%s%s%s:%s' % (prefix, userinfo or '', host, path.rstrip('/'))
+
+    # Paths are a fallback. They MUST have the prefix in order to be detected.
+    # All this essentially does is assert they are git URLs, and says nothing
+    # about them. We are okay with this.
+    m = re.match(r'^git\+(.+)$', url)
+    if m:
+        return '%s%s' % (prefix, m.group(1))
 
 
 
@@ -120,8 +121,8 @@ class GitRepo(object):
     def assert_remote_url(self, name=None):
         """Make sure our remote URL is what we think it is."""
         name = name or self.remote_name
-        self.git('config', 'remote.%s.url' % name, self.remote_url, silent=True)
-        self.git('config', 'remote.%s.fetch' % name, '+refs/heads/*:refs/remotes/%s/*' % name, silent=True)
+        self.git('config', 'remote.%s.url' % name, self.remote_url)
+        self.git('config', 'remote.%s.fetch' % name, '+refs/heads/*:refs/remotes/%s/*' % name)
         return name
 
     def rev_parse(self, revision, fetch=None, remote=None):
@@ -149,7 +150,7 @@ class GitRepo(object):
 
         try:
             commit = self.fetch(remote, revision)
-        except ValueError:
+        except ValueError as e:
             commit = None
 
         if commit:
@@ -163,7 +164,7 @@ class GitRepo(object):
         rev = reference
         seen = set()
 
-        while not re.match(r'^[0-9a-f]{7,40}($|\s)', rev):
+        while not re.match(r'^[0-9a-f]{40}($|\s)', rev):
 
             if rev in seen:
                 raise ValueError('recursion in refs: %r' % rev)
@@ -184,7 +185,7 @@ class GitRepo(object):
             else:
 
                 # Glob into the objects.
-                m = re.match(r'^[0-9a-f]{7,40}(\s|$)', rev)
+                m = re.match(r'^[0-9a-f]{40}(\s|$)', rev)
                 if m:
                     hash_ = m.group(1)
                     paths = glob.glob(os.path.join(git_dir, 'objects', hash_[:2], hash_[2:] + '*'))
@@ -195,13 +196,13 @@ class GitRepo(object):
                 # Finally, let git try.
                 if fallback:
                     try:
-                        rev = self.git('rev-parse', '--verify', '--quiet', reference, silent=True, stdout=True).strip()
-                    except GitError:
+                        rev = self.git('rev-parse', '--verify', '--quiet', reference, stdout=True).strip()
+                    except GitError as e:
                         return
                 
                 break
         
-        return rev[:40] if rev and re.match(r'^[0-9a-f]{7,40}($|\s)', rev) else None
+        return rev[:40] if rev and re.match(r'^[0-9a-f]{40}($|\s)', rev) else None
 
     def _current_head(self):
         try:
@@ -222,7 +223,7 @@ class GitRepo(object):
     def status(self):
         """Get a series of (index_status, work_tree_status, filename) tuples."""
         # We use the machine-parsable git status.
-        encoded = self.git('status', '-z', stdout=True, silent=True)
+        encoded = self.git('status', '-z', stdout=True)
         # In theory, there can be a second NULL-terminated field, but I
         # haven't seen it yet.
         parts = encoded.split('\0')
@@ -237,7 +238,7 @@ class GitRepo(object):
         return res
 
     def distance(self, left, right, strict=True):
-        out = self.git('rev-list', '--left-right', '--count', '%s...%s' % (left, right), silent=True, stdout=True)
+        out = self.git('rev-list', '--left-right', '--count', '%s...%s' % (left, right), stdout=True)
         m = re.match(r'^\s*(\d+)\s+(\d+)\s*$', out)
         if not m:
             if strict:
@@ -254,10 +255,19 @@ class GitRepo(object):
             args.append(remote)
 
         if ref:
-            args.append(ref)
-            if re.match(r'\w+', remote):
+
+            # sha1; we `fetch REMOTE`
+            # TODO: `fetch REMOTE REF:refs/vee_fetch` and parse "refs/vee_fetch"
+            if re.match(r'^[0-9a-f]{8,}$', ref): # this is an iffy test!
+                rev_to_parse = ref
+
+            # remote is a name; we `fetch REMOTE REF`
+            elif re.match(r'\w+', remote):
                 rev_to_parse = '%s/%s' % (remote, ref)
+
+            # remote is a URL; we `fetch REMOTE_URL REF` and parse "FETCH_HEAD"
             else:
+                args.append(ref)
                 rev_to_parse = 'FETCH_HEAD'
         else:
             rev_to_parse = None
@@ -268,7 +278,7 @@ class GitRepo(object):
             # Fetch the new history on top of the shallow history.
             if shallow:
                 print style('Fetching shallow', 'blue', bold=True), style(remote or 'defaults', bold=True)
-                self._fetch('--update-shallow', *args, silent=True)
+                self._fetch('--update-shallow', *args)
                 if not rev_to_parse:
                     return
                 commit = self._rev_parse(rev_to_parse)
@@ -276,13 +286,13 @@ class GitRepo(object):
             # Lets get the whole history.
             if not shallow or not commit:
                 print style('Fetching unshallow', 'blue', bold=True), style(remote or 'defaults', bold=True)
-                self._fetch('--unshallow', *args, silent=True)
+                self._fetch('--unshallow', *args)
                 commit = self._rev_parse(rev_to_parse)
 
         else:
             # Normal fetch here.
             print style('Fetching', 'blue', bold=True), style(remote or 'defaults', bold=True)
-            self._fetch(*args, silent=True)
+            self._fetch(*args)
             if not rev_to_parse:
                 return
             commit = self._rev_parse(rev_to_parse)
@@ -313,7 +323,7 @@ class GitRepo(object):
         if branch: # Make this branch if it doesn't exist.
             cmd.extend(('-B', branch))
         cmd.append(revision)
-        self.git(*cmd, silent=True)
+        self.git(*cmd)
         self.git('submodule', 'update', '--init', '--checkout', '--recursive', silent=False)
         self._head = commit
 
@@ -324,7 +334,7 @@ class GitRepo(object):
         for idx, tree, name in self.status():
             if idx or tree:
                 print style('Error:', 'red', bold=True), style('uncomitted changes:', bold=True)
-                self.git('status', silent=True)
+                self.git('status')
                 status_ok = False
                 break
 
@@ -345,8 +355,8 @@ class GitRepo(object):
 
         remotes = {}
         try:
-            lines = self.git('config', '--get-regexp', 'remote.*.url', stdout=True, silent=True).splitlines()
-        except CalledProcessError:
+            lines = self.git('config', '--get-regexp', 'remote.*.url', stdout=True).splitlines()
+        except GitError:
             pass
         else:
             for line in lines:
@@ -360,7 +370,7 @@ class GitRepo(object):
                 if v is None:
                     if k not in remotes:
                         raise KeyError(k)
-                    self.git('remote', 'rm', k, silent=True)
+                    self.git('remote', 'rm', k)
                 elif k in remotes:
                     self.git('remote', 'set-url', k, v)
                 else:
@@ -370,7 +380,7 @@ class GitRepo(object):
 
     def show(self, revision, path):
         try:
-            return self.git('show', '%s:%s' % (revision, path), stdout=True, silent=True)
+            return self.git('show', '%s:%s' % (revision, path), stdout=True)
         except GitError as e:
             pass
 

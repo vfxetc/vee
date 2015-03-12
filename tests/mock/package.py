@@ -30,6 +30,9 @@ class MockPackage(object):
 
         self._rev_count = None
 
+    def clone(self, path):
+        return MockPackage(self.name, os.path.basename(self.template), self.defaults.copy(), path)
+
     @property
     def git_url(self):
         return 'git+' + self.path
@@ -50,7 +53,7 @@ class MockPackage(object):
             self._rev_count = len(self.rev_list())
         return self._rev_count
 
-    def render_commit(self, message=None, **kwargs):
+    def render(self, **kwargs):
 
         params = self.defaults.copy()
         params.update(kwargs)
@@ -58,7 +61,7 @@ class MockPackage(object):
             REVNO=self.rev_count + 1,
         )
 
-        def render(contents):
+        def render_contents(contents):
             return re.sub(r'MOCK([A-Z0-9]+)', lambda m: str(params.get(m.group(1)) or ''), contents)
 
         ignore_path = os.path.join(self.template, 'mockignore')
@@ -75,15 +78,20 @@ class MockPackage(object):
 
                 src_path = os.path.join(dir_path, file_name)
                 rel_path = os.path.relpath(src_path, self.template)
-                dst_path = os.path.join(self.path, render(rel_path))
+                dst_path = os.path.join(self.path, render_contents(rel_path))
                 makedirs(os.path.dirname(dst_path))
 
-                contents = render(open(src_path, 'rb').read())
+                contents = render_contents(open(src_path, 'rb').read())
                 with open(dst_path, 'wb') as fh:
                     fh.write(contents)
                 shutil.copystat(src_path, dst_path)
 
+    def commit(self, message=None):
         self.repo.git('add', '--', self.path, silent=True, stdout=True)
         self.repo.git('commit', '-m', message or 'Rendered from template', silent=True, stdout=True)
-        
         self._rev_count = (self._rev_count or 0) + 1
+
+    def render_commit(self, message=None, **kwargs):
+        self.render(**kwargs)
+        self.commit(message)
+

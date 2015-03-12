@@ -11,12 +11,13 @@ levels = ['major', 'minor', 'patch']
     argument('--major', action='store_const', dest='semver_level', const=0),
     argument('--minor', action='store_const', dest='semver_level', const=1),
     argument('--patch', action='store_const', dest='semver_level', const=2),
+    argument('-r', '--repo'),
     argument('-m', '--message'),
 )
 def commit(args):
 
     home = args.assert_home()
-    env_repo = home.get_env_repo()
+    env_repo = home.get_env_repo(args.repo)
 
     if not env_repo.status():
         print style_error('Nothing to commit.')

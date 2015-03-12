@@ -23,7 +23,7 @@ def call(cmd, **kwargs):
 
     # Print out the call to the console.
     # TODO: vary this depending on global verbosity.
-    if not kwargs.pop('silent', False):
+    if not kwargs.pop('silent', True):
         VEE = os.environ.get('VEE')
         cmd_collapsed = [x.replace(VEE, '$VEE') if VEE else x for x in cmd]
         print style('$', 'blue', bold=True), style(cmd_collapsed[0], bold=True), ' '.join(cmd_collapsed[1:])

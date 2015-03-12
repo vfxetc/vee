@@ -64,7 +64,7 @@ class HomebrewPackage(GitPackage):
 
         name = name or self.package_name
         if force or name not in self._cached_brew_info:
-            self._cached_brew_info[name] = json.loads(self._brew('info', '--json=v1', name, stdout=True, silent=True))[0]
+            self._cached_brew_info[name] = json.loads(self._brew('info', '--json=v1', name, stdout=True))[0]
 
         return self._cached_brew_info[name]
 
@@ -124,7 +124,7 @@ class HomebrewPackage(GitPackage):
             self._assert_unlinked(env)
 
         # We want to link in all dependencies as well.
-        for name in self._brew('deps', '-n', self.package_name, silent=True, stdout=True).strip().split():
+        for name in self._brew('deps', '-n', self.package_name, stdout=True).strip().split():
             path = os.path.join(self.package_path, 'Cellar', self.install_name_from_info(name))
             if os.path.exists(path):
                 print style('Linking', 'blue', bold=True), style('homebrew+%s (homebrew+%s dependency)' % (name, self.package_name), bold=True)

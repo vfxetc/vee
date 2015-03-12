@@ -20,6 +20,7 @@ sandbox_dir = os.path.join(root_dir, 'sandbox')
 
 
 
+
 # Clear out the sandbox.
 if os.path.exists(sandbox_dir):
     for name in os.listdir(sandbox_dir):
@@ -57,16 +58,28 @@ setup_mock_http(sandbox_dir)
 home = Home(VEE)
 
 
-def vee(args, environ=None):
+def vee(args, environ=None, check=True, stdout=False):
     full_environ = os.environ.copy()
     full_environ.update(environ or {})
     full_environ.update(_environ_diff)
-    return _main(args, environ=full_environ)
+    print '$ vee', ' '.join(args)
+    if stdout:
+        cmd = ['vee']
+        cmd.extend(args)
+        return subprocess.check_output(cmd, env=environ)
+    res = _main(args, environ=full_environ)
+    if check and res:
+        raise ValueError('return code %d' % res)
+    return res
 
 
 
 
 class TestCase(_TestCase):
+
+    @property
+    def test_name(self):
+        return self.__class__.__name__ + '/' + self._testMethodName
 
     def class_sandbox(self, *args):
         return sandbox('homes', self.__class__.__name__, 'class', *args)

@@ -68,6 +68,8 @@ COMMANDS TO WRITE
 
 ---
 
+- test `vee add .`, `vee commit .`
+
 - s/RequirementSet/???
     - EnvironmentRequirements
     - EnvironRequirements

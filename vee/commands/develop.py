@@ -75,6 +75,7 @@ def list_(args):
 
 @develop.subcommand(
     argument('--force', action='store_true'),
+    argument('--repo'),
     argument('--path'),
     argument('name'),
     help='install a tool that is managed by the default repository'
@@ -184,7 +185,7 @@ def init(args, do_clone=False, do_install=False, do_add=False):
     elif do_install:
         # Find an existing tool.
         # TODO: put more of this into EnvironmentRepo or RequirementSet
-        env_repo = home.get_env_repo()
+        env_repo = home.get_env_repo(args.repo)
         req_path = os.path.join(env_repo.work_tree, 'requirements.txt')
         reqs = RequirementSet(req_path)
         reqs.guess_names()
@@ -195,7 +196,7 @@ def init(args, do_clone=False, do_install=False, do_add=False):
                 if url:
                     break
         else:
-            print style_error('Could not find git-based "%s" in default repo.' % name)
+            print style_error('Could not find git-based "%s" in "%s" repo.' % (name, env_repo.name))
             return 2
         print style_note('Found %s in %s' % (name, env_repo.name), str(req))
         makedirs(dev_repo.work_tree)

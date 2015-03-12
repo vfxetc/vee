@@ -9,15 +9,16 @@ from vee.requirement import Requirement
 @command(
     argument('--update', action='store_true', help='update all repos themselves'),
     argument('--bake-installed', action='store_true', help='bake all installed revisions'),
+    argument('--repo'),
     argument('package', nargs='?', default='.'),
     help='record changes to dev packages in environment repo',
 )
 def add(args):
 
     home = args.assert_home()
+    env_repo = home.get_env_repo(args.repo)
 
     if args.update:
-        env_repo = home.get_env_repo()
         baked_any = False
         req_set = env_repo.requirement_set()
         for req in req_set.iter_git_requirements():
@@ -38,7 +39,6 @@ def add(args):
         return
 
     if args.bake_installed:
-        env_repo = home.get_env_repo()
         baked_any = False
         req_set = env_repo.requirement_set()
         for req in req_set.iter_git_requirements():
@@ -67,17 +67,13 @@ def add(args):
     # Get the normalized origin.
     dev_remote_urls = set()
     for url in dev_repo.remotes().itervalues():
-        url = normalize_git_url(url)
-        if url:
-            dev_remote_urls.add(url)
-        else:
-            print style_warning('%s does not appear to be a git url' % url)
+        url = normalize_git_url(url) or url
+        dev_remote_urls.add(url)
     if not dev_remote_urls:
         print style_error('No git remotes for %s' % row['path'])
         return 1
 
-    env_repo = home.get_env_repo()
-    req_set = env_repo.requirement_set()
+    req_set = env_repo.load_requirements()
     for req in req_set.iter_git_requirements():
         req_url = normalize_git_url(req.url)
         if req_url in dev_remote_urls:
@@ -94,4 +90,4 @@ def add(args):
         )
         req_set.append(('', req, ''))
 
-    env_repo.dump(req_set)
+    env_repo.dump_requirements(req_set)

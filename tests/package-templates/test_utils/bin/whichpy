@@ -1,0 +1,19 @@
+#!/usr/bin/env python
+
+# MOCKNAME-MOCKVERSION
+
+import os
+import sys
+
+module = __import__(sys.argv[1], fromlist=['.'])
+path = module.__file__
+
+if path.endswith('.pyc'):
+    path = path[:-1]
+
+if os.path.splitext(path)[0].endswith('__init__'):
+    path = os.path.dirname(path)
+
+path = path.replace('/lib64/', '/lib/')
+
+print path

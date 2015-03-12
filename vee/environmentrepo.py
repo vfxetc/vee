@@ -30,7 +30,7 @@ class EnvironmentRepo(GitRepo):
             force=force
         )
 
-    def requirement_set(self, revision=None):
+    def load_requirements(self, revision=None):
         reqs = RequirementSet(home=self.home)
         if revision is not None:
             contents = self.show(revision, 'requirements.txt')
@@ -42,7 +42,7 @@ class EnvironmentRepo(GitRepo):
         reqs.guess_names()
         return reqs
 
-    def dump(self, req_set):
+    def dump_requirements(self, req_set):
         tmp = self._req_path + '.tmp'
         with open(tmp, 'wb') as fh:
             for line in req_set.iter_dump():
@@ -64,7 +64,7 @@ class EnvironmentRepo(GitRepo):
 
         if level is not None:
 
-            req_set = self.requirement_set()
+            req_set = self.load_requirements()
             header = req_set.headers.get('Version')
             if not header:
                 header = Header('Version', '0.0.0')
@@ -80,7 +80,7 @@ class EnvironmentRepo(GitRepo):
             version[level] = (version[level] if isinstance(version[level], int) else 0) + 1
             header.value = '.'.join(str(x) for x in version)
 
-            self.dump(req_set)
+            self.dump_requirements(req_set)
             self.git('add', self._req_path, silent=True)
 
         self.git('commit', '-m', message, silent=True)

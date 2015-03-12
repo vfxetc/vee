@@ -5,8 +5,10 @@ from vee.commands.main import command, argument
 from vee.git import GitRepo, normalize_git_url
 
 
-@command()
+@command(
+    argument('-r', '--repo'),
+)
 def push(args):
     home = args.assert_home()
-    env_repo = home.get_env_repo()
+    env_repo = home.get_env_repo(args.repo)
     env_repo.git('push')
