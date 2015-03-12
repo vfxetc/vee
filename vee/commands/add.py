@@ -4,6 +4,7 @@ from vee.cli import style, style_error, style_note, style_warning
 from vee.commands.main import command, argument
 from vee.git import GitRepo, normalize_git_url
 from vee.requirement import Requirement
+from vee.utils import guess_name
 
 
 @command(
@@ -17,10 +18,10 @@ def add(args):
 
     home = args.assert_home()
     env_repo = home.get_env_repo(args.repo)
+    req_set = env_repo.load_requirements()
 
     if args.update:
         baked_any = False
-        req_set = env_repo.requirement_set()
         for req in req_set.iter_git_requirements():
             pkg = req.package
             print style_note('Fetching', str(req))
@@ -33,25 +34,30 @@ def add(args):
                     print style_note('Updated', str(req))
                     baked_any = True
         if baked_any:
-            env_repo.dump(req_set)
+            env_repo.dump_requirements(req_set)
         else:
             print style_note('No changes.')
         return
 
     if args.bake_installed:
         baked_any = False
-        req_set = env_repo.requirement_set()
+
         for req in req_set.iter_git_requirements():
             pkg = req.package
             pkg.resolve_existing()
+
+            if req.name and req.name == guess_name(req.url):
+                req.name = None
+                baked_any = True
+                print style_note('Unset redundant name', req.name)
+
             if pkg.installed and req.revision != pkg.repo.head[:8]:
                 req.revision = pkg.repo.head[:8]
-                print style_note('Baked', str(req))
                 baked_any = True
-            else:
-                print style_note('Unchanged', str(req))
+                print style_note('Pinned', req.name, req.revision)
+
         if baked_any:
-            env_repo.dump(req_set)
+            env_repo.dump_requirements(req_set)
         else:
             print style_note('No changes.')
         return
@@ -73,7 +79,6 @@ def add(args):
         print style_error('No git remotes for %s' % row['path'])
         return 1
 
-    req_set = env_repo.load_requirements()
     for req in req_set.iter_git_requirements():
         req_url = normalize_git_url(req.url)
         if req_url in dev_remote_urls:
