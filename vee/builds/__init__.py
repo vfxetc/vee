@@ -1,5 +1,6 @@
-import pkg_resources
+from vee._vendor import pkg_resources
 
+ 
 _build_types = []
 
 def make_builder(pkg):

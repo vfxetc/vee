@@ -2,11 +2,12 @@ import datetime
 import fnmatch
 import glob
 import os
-import pkg_resources
 import re
 import shlex
 import shutil
 import sys
+
+from vee._vendor import pkg_resources
 
 from vee.builds import make_builder
 from vee.cli import style

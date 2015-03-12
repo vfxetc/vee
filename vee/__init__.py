@@ -1,5 +1,10 @@
 import os
-import pkg_resources
+import sys
+
+
+# pkg_resources vendors its own things too.
+sys.path.append(os.path.abspath(os.path.join(__file__, '..', '_vendor', 'pkg_resources', '_vendor')))
+from vee._vendor import pkg_resources
 
 
 def _bootstrap_pkg_resources():

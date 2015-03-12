@@ -3,9 +3,10 @@ import os
 import re
 import shutil
 
+from vee._vendor import virtualenv
+
 from vee.cli import style
 from vee.utils import makedirs
-import vee.vendor.virtualenv as virtualenv
 
 
 IGNORE_DIRS = frozenset(('.git', '.svn'))

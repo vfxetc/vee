@@ -1,5 +1,6 @@
 import os
-import pkg_resources
+
+from vee._vendor import pkg_resources
 
 from vee.config import Config
 from vee.database import Database

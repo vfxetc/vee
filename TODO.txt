@@ -1,6 +1,6 @@
 
-- Homebrew isn't regisering installs on first install: "ValueError: cannot record requirement that is not installed"
-- Cython
+- Homebrew isn't registering installs on first install: "ValueError: cannot record requirement that is not installed"
+
 
 ---
 
