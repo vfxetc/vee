@@ -84,7 +84,10 @@ class Requirement(object):
             if isinstance(args, basestring):
                 args = shlex.split(args)
             if isinstance(args, (list, tuple)):
-                requirement_parser.parse_args(args, namespace=self)
+                try:
+                    requirement_parser.parse_args(args, namespace=self)
+                except RequirementParseError as e:
+                    raise RequirementParseError("%s in %s" % (e.args[0], args))
             elif isinstance(args, argparse.Namespace):
                 for action in requirement_parser._actions:
                     name = action.dest

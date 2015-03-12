@@ -1,6 +1,6 @@
 import re
 
-from vee.requirement import Requirement, requirement_parser
+from vee.requirement import Requirement, requirement_parser, RequirementParseError
 from vee.utils import guess_name
 
 
@@ -91,10 +91,15 @@ class RequirementSet(list):
                 self.append((before, header, after))
                 continue
 
-            req = Requirement(spec, home=self.home)
+            try:
+                req = Requirement(spec, home=self.home)
+            except RequirementParseError as e:
+                self.append(('', '', '# RequirementParseError: %s' % e.args))
+                self.append(('', '', '# ' + line.strip()))
+                continue
+
             for k, v in self._cumulative_environ.iteritems():
                 req.environ.setdefault(k, v)
-
             self.append((before, req, after))
 
     def iter_requirements(self):
