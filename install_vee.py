@@ -173,7 +173,7 @@ def main(argv=None):
 
     # Fetch and reset.
     heading('Fetching updates from remote repo')
-    check_call(['git', '--git-dir', git_dir, '--work-tree', vee_src, 'fetch', args.url, args.branch])
+    check_call(['git', '--git-dir', git_dir, '--work-tree', vee_src, 'fetch', 'origin', args.branch])
     heading('Updating to master')
     check_call(['git', '--git-dir', git_dir, '--work-tree', vee_src, 'reset', '--hard', 'FETCH_HEAD'])
     heading('Cleaning ignored files')

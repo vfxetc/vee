@@ -1,4 +1,9 @@
 
+- Homebrew isn't regisering installs on first install: "ValueError: cannot record requirement that is not installed"
+- Cython
+
+---
+
 BEFORE FIRST DEPLOY
 -------------------
 
@@ -68,8 +73,6 @@ COMMANDS TO WRITE
 
 ---
 
-- test `vee add .`, `vee commit .`
-
 - s/RequirementSet/???
     - EnvironmentRequirements
     - EnvironRequirements
@@ -77,8 +80,6 @@ COMMANDS TO WRITE
     - BuildOrder
     - EnvironmentSpecification
     - Recipie
-
-- rename EnvironmentRepo.load_requirements() and dump_requirements()
 
 - is it possible for me to bundle libgit2, and build it?
 
