@@ -59,6 +59,7 @@ requirement_parser = _requirement_parser(add_help=False)
 requirement_parser.add_argument('-n', '--name')
 requirement_parser.add_argument('-r', '--revision')
 
+requirement_parser.add_argument('--base-environ', nargs='*', action=_EnvironmentAction, help=argparse.SUPPRESS)
 requirement_parser.add_argument('-e', '--environ', nargs='*', action=_EnvironmentAction)
 requirement_parser.add_argument('-c', '--config', nargs='*', action=_configAction, help='args to pass to `./configure`, `python setup.py`, `brew install`, etc..')
 
@@ -119,13 +120,13 @@ class Requirement(object):
     def to_json(self):
         return json.dumps(self.to_kwargs(), sort_keys=True)
 
-    def to_args(self):
+    def to_args(self, exclude=set()):
 
         argsets = []
         for action in requirement_parser._actions:
 
             name = action.dest
-            if name in ('type', 'url'):
+            if name in ('type', 'url') or name in exclude:
                 continue
 
             option_str = action.option_strings[-1]
@@ -169,4 +170,10 @@ class Requirement(object):
 
 
 
+if __name__ == '__main__':
+
+    import sys
+    args = requirement_parser.parse_args(sys.argv[1:])
+    for k, v in sorted(args.__dict__.iteritems()):
+        print '%s: %r' % (k, v)
 

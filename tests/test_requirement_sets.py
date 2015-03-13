@@ -15,6 +15,6 @@ class TestRequirementSets(TestCase):
             third
         '''.strip().splitlines())
         reqs = list(req_set.iter_requirements())
-        self.assertEqual(reqs[0].environ, {})
-        self.assertEqual(reqs[1].environ, {'KEY': 'VALUE1'})
-        self.assertEqual(reqs[2].environ, {'KEY': 'VALUE2'})
+        self.assertEqual(reqs[0].base_environ, {})
+        self.assertEqual(reqs[1].base_environ, {'KEY': 'VALUE1'})
+        self.assertEqual(reqs[2].base_environ, {'KEY': 'VALUE2'})

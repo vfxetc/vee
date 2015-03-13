@@ -58,6 +58,10 @@ _colour_codes = dict(
 )
 
 
+def strip_ansi(x):
+    return re.sub(r'%s[\d;,]+[a-zA-Z]' % re.escape(CSI), '', x)
+
+
 def _colour_to_code(c):
     if isinstance(c, tuple):
         if len(c) == 3:

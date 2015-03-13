@@ -97,9 +97,8 @@ class RequirementSet(list):
                 self.append(('', '', '# RequirementParseError: %s' % e.args))
                 self.append(('', '', '# ' + line.strip()))
                 continue
-
             for k, v in self._cumulative_environ.iteritems():
-                req.environ.setdefault(k, v)
+                req.base_environ.setdefault(k, v)
             self.append((before, req, after))
     
     def finalize(self):

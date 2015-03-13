@@ -110,8 +110,8 @@ def status(args):
             # Print a lovely coloured diff of the specific arguments that
             # are changing.
             # TODO: make this environment relative to the context.
-            head_args = head_req.to_args() if head_req else []
-            work_args = work_req.to_args() if work_req else []
+            head_args = head_req.to_args(exclude=('base_environ', )) if head_req else []
+            work_args = work_req.to_args(exclude=('base_environ', )) if work_req else []
             differ = difflib.SequenceMatcher(None, head_args, work_args)
             opcodes = differ.get_opcodes()
             if head_req is not None:

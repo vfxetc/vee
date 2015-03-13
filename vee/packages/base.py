@@ -85,9 +85,10 @@ class BasePackage(object):
             if orig:
                 return source.get(k)
 
-        for k, v in self.environ.iteritems():
-            v = re.sub(r'\$\{(\w+)\}|\$(\w+)|%(\w+)%|(@)', rep, v)
-            diff[k] = v
+        for e in (self.base_environ, self.environ):
+            for k, v in self.environ.iteritems():
+                v = re.sub(r'\$\{(\w+)\}|\$(\w+)|%(\w+)%|(@)', rep, v)
+                diff[k] = v
 
         return diff
 

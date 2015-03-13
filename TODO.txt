@@ -4,9 +4,6 @@
   next depth of links, and then recursion continues. This is tricky when you
   need to copy scripts, and link other things
 
-- split environment from RequirementSet into base_environ and environ, such that
-  it is easy to separate them back out in status?
-
 - Homebrew isn't registering installs on first install: "ValueError: cannot record requirement that is not installed"
 - Homebrew dependencies relink every time
 
@@ -20,6 +17,10 @@
 - `vee link [-r REPO] [-e ENV] [-d DIR] [--raw] REQUIREMENT`
 
 - `vee dev ff` to fastforward everything to match the given repo
+
+- use difflib to compare the old and new requirements. This will allow for us
+  to detect re-orderings. Put dev-only packages at the end. Put dev information
+  with the new destination.
 
 COMMANDS TO WRITE
 -----------------

@@ -34,13 +34,13 @@ class TestWorkflows(TestCase):
         pkg_dev = pkg_origin.clone(sandbox('vee/dev/tdep_pkg'))
         pkg_dev.render_commit()
 
-        status = vee(['status', '--repo', env_repo.name], stdout=True)
+        status = strip_ansi(vee(['status', '--repo', env_repo.name], stdout=True))
         self.assertIn('tdep_pkg is ahead of origin/master', status)
 
         vee(['add', '--repo', env_repo.name, pkg_dev.name])
         pkg_dev.repo.git('push', 'origin', 'master')
 
-        status = vee(['status', '--repo', env_repo.name], stdout=True)
+        status = strip_ansi(vee(['status', '--repo', env_repo.name], stdout=True))
         self.assertNotIn('tdep_pkg is ahead of origin/master', status)
         self.assertIn('--name=tdep_pkg --revision=%s' % pkg_dev.repo.head[:8], status)
 
