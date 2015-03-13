@@ -25,7 +25,7 @@ def add(args):
         for req in req_set.iter_git_requirements():
             pkg = req.package
             print style_note('Fetching', str(req))
-            pkg.repo.fetch('origin/master', remote='origin')
+            pkg.repo.fetch('origin', 'master') # TODO: track these another way?
             if pkg.repo.check_ff_safety('origin/master'):
                 pkg.repo.checkout('origin/master')
                 head = pkg.repo.head[:8]

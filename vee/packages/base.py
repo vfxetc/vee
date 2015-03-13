@@ -97,8 +97,13 @@ class BasePackage(object):
     def environ_diff(self):
         if self._environ_diff is None:
             self._environ_diff = self._resolve_environ()
-            for k, v in sorted(self._environ_diff.iteritems()):
-                print style('setenv', 'blue', bold=True), style('%s=' % k, bold=True) + v
+            if False: # TODO: use some verbosity control.
+                for k, v in sorted(self._environ_diff.iteritems()):
+                    old_v = os.environ.get(k)
+                    if old_v is not None:
+                        v = v.replace(old_v, '@')
+                    v = v.replace(self.home.root, '$VEE')
+                    print style('setenv', 'blue', bold=True), style('%s=' % k, bold=True) + v
         return self._environ_diff or {}
 
     def fresh_environ(self):

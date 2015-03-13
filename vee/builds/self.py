@@ -1,5 +1,9 @@
+import os
+
 from vee.builds.generic import GenericBuild
+from vee.cli import style
 from vee.utils import find_in_tree
+from vee.subproc import call_log
 
 
 class SelfBuild(GenericBuild):
