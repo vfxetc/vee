@@ -6,7 +6,7 @@ from vee.environment import Environment
 @command(
     argument('--all', action='store_true', help='update all repos'),
     argument('--force', action='store_true', help='force checkout, even if not fast-forward'),
-    argument('repos', nargs='*'),
+    argument('-r', '--repo', action='append', dest='repos'),
     help='update repos',
 )
 def update(args):

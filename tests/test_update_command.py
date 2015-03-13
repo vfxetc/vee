@@ -14,8 +14,8 @@ class TestUpdateCommand(TestCase):
         foo_pkg.render_commit()
 
 
-        vee(['update', repo.name])
-        vee(['upgrade', repo.name])
+        vee(['update', '--repo', repo.name])
+        vee(['upgrade', '--repo', repo.name])
 
         commit = repo.rev_list()[0][:8]
         self.assertExists(os.path.join(VEE, 'installs/tr_basics_foo/1.0.0/bin/tr_basics_foo'))
@@ -27,8 +27,8 @@ class TestUpdateCommand(TestCase):
 
         repo.add_requirements('packages/tr_basics_bar --install-name tr_basics_bar/1.0.0 --make-install')
 
-        vee(['update', repo.name])
-        vee(['upgrade', repo.name])
+        vee(['update', '--repo', repo.name])
+        vee(['upgrade', '--repo', repo.name])
 
         commit = repo.rev_list()[0][:8]
         self.assertExists(os.path.join(VEE, 'installs/tr_basics_foo/1.0.0/bin/tr_basics_foo'))

@@ -23,8 +23,8 @@ class TestDevelopCommand(TestCase):
         
         vee(['repo', 'clone', '--default', req_repo.path, req_repo.name])
 
-        vee(['update', req_repo.name])
-        vee(['upgrade', req_repo.name])
+        vee(['update', '--repo', req_repo.name])
+        vee(['upgrade', '--repo', req_repo.name])
 
         vee(['develop', 'install', pkg.name])
 

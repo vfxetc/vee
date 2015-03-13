@@ -9,7 +9,8 @@ from vee.utils import makedirs
 @command(
     argument('--all', action='store_true', help='upgrade all repositories'),
     argument('--dirty', action='store_true', help='build even when work tree is dirty'),
-    argument('repos', nargs='*'),
+    argument('--re-install', action='store_true'),
+    argument('-r', '--repo', action='append', dest='repos'),
     help='upgrade packages specified by repositories, and link into environments',
 )
 def upgrade(args):
@@ -49,7 +50,11 @@ def upgrade(args):
         path_by_commit = home._abs_path('environments', repo.name, 'commits', (head[:8] + ('-dirty' if dirty else '')) if head else 'nocommit')
         path_by_branch = home._abs_path('environments', repo.name, repo.branch_name)
 
-        args.main(['link', path_by_commit, repo.abspath('requirements.txt')])
+        cmd = ['link']
+        if args.re_install:
+            cmd.append('--re-install')
+        cmd.extend((path_by_commit, repo.abspath('requirements.txt')))
+        args.main(cmd)
 
         # Create a symlink by branch.
         if os.path.lexists(path_by_branch):

@@ -7,11 +7,13 @@ from vee.git import GitRepo, normalize_git_url
 from vee.subproc import call
 
 
-@command()
+@command(
+    argument('-r', '--repo', nargs='?'),
+)
 def edit(args):
 
     home = args.assert_home()
-    env_repo = home.get_env_repo()
+    env_repo = home.get_env_repo(args.repo)
 
     cmd = []
     cmd.extend(shlex.split(os.environ['EDITOR']))

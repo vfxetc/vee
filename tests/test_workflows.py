@@ -22,8 +22,8 @@ class TestWorkflows(TestCase):
         env_repo.repo.git('config', 'receive.denyCurrentBranch', 'ignore')
 
         vee(['repo', 'clone', env_repo.path, env_repo.name])
-        vee(['update', env_repo.name])
-        vee(['upgrade', env_repo.name])
+        vee(['update', '--repo', env_repo.name])
+        vee(['upgrade', '--repo', env_repo.name])
 
         path = vee(['exec', '--repo', env_repo.name, 'whichpy', pkg_origin.name], stdout=True).strip()
         self.assertEqual(path, sandbox('vee/environments/tdep_repo/master/lib/python2.7/site-packages/tdep_pkg'))
@@ -47,7 +47,7 @@ class TestWorkflows(TestCase):
         vee(['commit', '--repo', env_repo.name, '--minor', '-m', 'testing'])
         vee(['push', '--repo', env_repo.name])
 
-        vee(['update', env_repo.name])
-        vee(['upgrade', env_repo.name])
+        vee(['update', '--repo', env_repo.name])
+        vee(['upgrade', '--repo', env_repo.name])
 
 

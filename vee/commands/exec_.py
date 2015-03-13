@@ -14,7 +14,7 @@ from vee.requirementset import RequirementSet
     argument('--prefix', action='store_true', help='print the prefixes that would be linked together'),
 
     argument('-R', '--requirements', action='append', help='requirements or requirements files to include; may be comma separated'),
-    argument('-r', '--repo', action='append', help='a repo whose HEAD to include; defaults to the default repo'),
+    argument('-r', '--repo', action='append', dest='repos', help='a repo whose HEAD to include; defaults to the default repo'),
     argument('-e', '--environment', action='append', help='an environment to include'),
 
     argument('-d', '--dev', action='store_true', help='include the development environment'),
@@ -32,13 +32,13 @@ def exec_(args):
         raise ValueError('Must either --prefix, --export, or provide a command')
 
     # Default to the default repo.
-    if not (args.requirements or args.environment or args.repo):
-        args.repo = [None]
+    if not (args.requirements or args.environment or args.repos):
+        args.repos = [None]
     
     paths = []
 
     # Named (or default) repos.
-    for name in args.repo or ():
+    for name in args.repos or ():
         repo = home.get_env_repo(name or None) # Allow '' to be the default.
         args.environment = args.environment or []
         args.environment.append('%s/%s' % (repo.name, repo.branch_name))
