@@ -1,29 +1,25 @@
 
+- linking can link top-level directories. Only when another thing also tries to
+  traverse into the same directory, is the original thing broken up into the
+  next depth of links, and then recursion continues. This is tricky when you
+  need to copy scripts, and link other things
+
+- split environment from RequirementSet into base_environ and environ, such that
+  it is easy to separate them back out in status?
+
 - Homebrew isn't registering installs on first install: "ValueError: cannot record requirement that is not installed"
+- Homebrew dependencies relink every time
 
+- setting envvars in requirements.txt should allow for @ or $KEY to take in previous values that were set within that
+  file
+- % if sys.platform == 'Darwin': templates in requirements files
 
----
+- can vendor macholib and elffile (or patchelf) in order to relocate libs on
+  install (via `--relocate`)
 
-BEFORE FIRST DEPLOY
--------------------
+- `vee link [-r REPO] [-e ENV] [-d DIR] [--raw] REQUIREMENT`
 
-√ try to unify the arguments and attributes on Package and Requirement
-~ dev environment
-~ test everything?!
-- key_base
-    - entrypoints
-    - apps: can we build them in a central location, outside of the isolated
-      build environments, or is the Finder going to be able to adapt to symlinks
-      in the Dock?
-    - scrap history
-- OS X apps via symlinks in docks?
-- assert all westernx packages transition
-
-    - entrypoints.yml at top_level is built by Makefile (in sgfs and others)
-        - make a build_metatools_entrypoints distutils command
-    - sgactions.yml at top_level is built by Makefile (in sgfs and others)
-        - this becomes the user's problem
-
+- `vee dev ff` to fastforward everything to match the given repo
 
 COMMANDS TO WRITE
 -----------------

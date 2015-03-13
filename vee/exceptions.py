@@ -32,11 +32,15 @@ def cli_errno(e):
     return getattr(e, '__cli_errno__', 1)
 
 
-def print_cli_exc(e, verbose=False):
+def format_cli_exc(e, verbose=False):
+    res = ''
     if verbose and sys.exc_traceback:
         stack = traceback.format_list(traceback.extract_tb(sys.exc_traceback))
-        print style(''.join(stack).rstrip(), faint=True)
-    print cli_exc_str(e)
+        res = style(''.join(stack).rstrip(), faint=True) + '\n'
+    return res + cli_exc_str(e)
+
+def print_cli_exc(e, verbose=False):
+    print format_cli_exc(e, verbose)
 
 
 def setup_cli_error(e, title=None, format=None, detail=None, errno=1):

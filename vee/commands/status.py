@@ -1,14 +1,16 @@
+import difflib
 import re
 
 from vee.cli import style, style_error, style_note, style_warning
 from vee.commands.main import command, argument
 from vee.git import GitRepo, normalize_git_url
 from vee.utils import guess_name
+from vee.exceptions import format_cli_exc
 
 
 def summarize_rev_distance(local, remote, local_name='You', local_verb='are', remote_name='',
     fork_action='please rebase.', ahead_action='you may push.', behind_action='please pull.',
-    indent='',
+    indent='    ',
 ):
     if local and remote:
         print indent + style_warning('%s and the tool have forked%s' % (local_name, '; ' + fork_action if fork_action else '.'))
@@ -41,7 +43,9 @@ def summarize_rev_distance(local, remote, local_name='You', local_verb='are', re
 @command(
     argument('--all-dev', action='store_true', help='include all dev packages, not just those in repos'),
     argument('--fetch', action='store_true', help='fetch dev packages'),
+    argument('-v', '--verbose', action='count'),
     argument('-r', '--repo'),
+    argument('names', nargs='*'),
 )
 def status(args):
 
@@ -75,6 +79,9 @@ def status(args):
     by_name = by_name.items()
     by_name.sort(key=lambda x: x[0].lower())
 
+    if args.names:
+        by_name = [x for x in by_name if x[0] in args.names]
+
     for name, everything in by_name:
 
         dev_row = everything.get('dev')
@@ -96,12 +103,31 @@ def status(args):
 
         # Status of requirements.
         if work_req and head_req and str(work_req) == str(head_req):
-            print '=== %s' % work_req
+            if args.verbose:
+                print '=== %s' % work_req
         else:
+
+            # Print a lovely coloured diff of the specific arguments that
+            # are changing.
+            # TODO: make this environment relative to the context.
+            head_args = head_req.to_args() if head_req else []
+            work_args = work_req.to_args() if work_req else []
+            differ = difflib.SequenceMatcher(None, head_args, work_args)
+            opcodes = differ.get_opcodes()
             if head_req is not None:
-                print style('--- %s' % head_req, fg='red')
+                print style('---', fg='red', bold=True),
+                for tag, i1, i2, j1, j2 in opcodes:
+                    if tag in ('replace', 'delete'):
+                        print style(' '.join(head_args[i1:i2]), fg='red', bold=True)
+                    elif tag in ('equal', ):
+                        print ' '.join(head_args[i1:i2]),
             if work_req is not None:
-                print style('+++ %s' % work_req, fg='green')
+                print style('+++', fg='green', bold=True),
+                for tag, i1, i2, j1, j2 in opcodes:
+                    if tag in ('replace', 'insert'):
+                        print style(' '.join(work_args[j1:j2]), fg='green', bold=True)
+                    elif tag in ('equal', ):
+                        print ' '.join(work_args[j1:j2]),
 
         if dev_row:
 
@@ -114,7 +140,7 @@ def status(args):
                 remote_names = sorted(dev_row['remotes'])
                 dev_row['remote_name'] = remote_names[0]
                 if len(remote_names) != 1:
-                    print style_warning('More that one non-origin remote; picking %s' % dev_row['remote_name'])
+                    print '    ' + style_warning('More that one non-origin remote; picking %s' % dev_row['remote_name'])
 
         dev_repo = dev_row and GitRepo(dev_row['path'])
         if dev_repo and not dev_repo.exists:
@@ -137,18 +163,25 @@ def status(args):
                 local_name=name,
                 local_verb='is',
                 remote_name='%s/master' % dev_row['remote_name'],
+                behind_action='please pull or `vee dev ff %s`' % name,
             )
 
-            if work_req and work_req.revision:
+        if dev_repo and work_req and work_req.revision:
 
-                # Check your local dev vs the required revision
+            # Check your local dev vs the required revision
+            try:
                 pkg_revision = dev_repo.rev_parse(work_req.revision)
                 pkg_local, pkg_remote = dev_repo.distance(dev_repo.head, pkg_revision)
                 summarize_rev_distance(pkg_local, pkg_remote,
                     local_name=name,
                     local_verb='is',
-                    remote_name='"%s" repo' % env_repo.name,
+                    remote_name='%s repo' % env_repo.name,
                     ahead_action='you may `vee add %s`' % name,
+                    behind_action='please `vee dev checkout --repo %s %s`' % (env_repo.name, name),
                 )
 
+            except Exception as e:
+                print '    ' + format_cli_exc(e)
+
+        # TODO: Warn if you have added something to the repo, but not pushed it.
 

@@ -134,7 +134,7 @@ def rm(args):
 )
 def find(args):
     res = e = None
-    for dir_path, dir_names, file_names in os.walk(args.path):
+    for dir_path, dir_names, file_names in os.walk(os.path.abspath(args.path)):
         if '.git' in dir_names:
             dir_names[:] = []
             args.path = dir_path

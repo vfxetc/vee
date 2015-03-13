@@ -82,6 +82,7 @@ def get_parser():
     command_subparser = parser.add_subparsers(metavar='COMMAND')
 
     parser.add_argument('-v', '--verbose', action='count', default=0)
+
     parser.add_argument('--home',
         dest='home_path',
         metavar='VEE',
@@ -169,7 +170,7 @@ def main(argv=None, environ=None, as_main=__name__=="__main__"):
 
     except Exception as e:
         if as_main:
-            print_cli_exc(e, verbose=args is None or args.verbose)
+            print_cli_exc(e, verbose=True)
             res = cli_errno(e)
         else:
             raise
