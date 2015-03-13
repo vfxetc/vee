@@ -4,11 +4,14 @@ from setuptools import setup, find_packages
 
 here = os.path.abspath(os.path.join(__file__, '..'))
 
+about_path = os.path.join(here, 'vee', '__about__.py')
+about_ns = {}
+execfile(about_path, {'__file__': about_path}, about_ns)
 
 setup(
 
     name='vee',
-    version='0.1-dev',
+    version=about_ns['__version__'],
     description='Versioned Execution Environment',
     url='http://github.com/westernx/vee',
     

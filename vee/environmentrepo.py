@@ -49,7 +49,7 @@ class EnvironmentRepo(GitRepo):
                 fh.write(line)
         os.rename(tmp, self._req_path)
 
-    def commit(self, message, level=None):
+    def commit(self, message, semver_level=None):
 
         self.git('add', self._req_path, silent=True)
         
@@ -62,25 +62,28 @@ class EnvironmentRepo(GitRepo):
             if tree.strip():
                 raise RuntimeError('work-tree is dirty')
 
-        if level is not None:
+        req_set = self.load_requirements()
 
-            req_set = self.load_requirements()
-            header = req_set.headers.get('Version')
-            if not header:
-                header = Header('Version', '0.0.0')
-                req_set.insert(0, ('', header, ''))
+        version_header = req_set.headers.get('Version')
+        if not version_header:
+            version_header = req_set.add_header('Version', '0.0.0')
+
+        if semver_level is not None:
             version = []
-            for i, x in enumerate(re.split(r'[.-]', header.value)):
+            for i, x in enumerate(re.split(r'[.-]', version_header.value)):
                 try:
                     version.append(int(x))
                 except ValueError:
                     version.append(x)
-            while len(version) <= level:
+            while len(version) <= semver_level:
                 version.append(0)
-            version[level] = (version[level] if isinstance(version[level], int) else 0) + 1
-            header.value = '.'.join(str(x) for x in version)
+            version[semver_level] = version[semver_level] + 1
+            version_header.value = '.'.join(str(x) for x in version)
 
-            self.dump_requirements(req_set)
-            self.git('add', self._req_path, silent=True)
+        from vee import __about__ as about
+        req_set.set_header('Vee-Revision', about.__version__ + '+' + about.__revision__)
 
+        self.dump_requirements(req_set)
+
+        self.git('add', self._req_path, silent=True)
         self.git('commit', '-m', message, silent=True)

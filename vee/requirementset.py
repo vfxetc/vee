@@ -101,17 +101,10 @@ class RequirementSet(list):
             for k, v in self._cumulative_environ.iteritems():
                 req.environ.setdefault(k, v)
             self.append((before, req, after))
-
-    def iter_requirements(self):
-        for _, element, _ in self:
-            if isinstance(element, Requirement):
-                yield element
-
-    def iter_git_requirements(self):
-        for req in self.iter_requirements():
-            if req.package.type == 'git':
-                yield req
     
+    def finalize(self):
+        self.guess_names()
+
     def guess_names(self, strict=True):
         """Guess names for every requirement which does not already have one.
 
@@ -143,6 +136,37 @@ class RequirementSet(list):
             else:
                 names.add(name.lower())
                 req.name = name
+
+    def iter_requirements(self):
+        for _, element, _ in self:
+            if isinstance(element, Requirement):
+                yield element
+
+    def iter_git_requirements(self):
+        for req in self.iter_requirements():
+            if req.package.type == 'git':
+                yield req
+
+    def get_header(self, name):
+        for _, el, _ in self:
+            if isinstance(el, Header) and el.name.lower() == name.lower():
+                return el.value
+        raise KeyError(name)
+
+    def set_header(self, name, value):
+        for _, el, _ in self:
+            if isinstance(el, Header) and el.name.lower() == name.lower():
+                el.value = value
+                return
+        self.add_header(name, value)
+
+    def add_header(self, name, value):
+        for i, (_, el, _) in enumerate(self):
+            if not isinstance(el, Header):
+                break
+        header = Header(name, value)
+        self.insert(i, ('', header, ''))
+        return header
 
     def iter_dump(self, freeze=False):
 
