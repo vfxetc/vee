@@ -41,7 +41,7 @@ class PythonBuild(GenericBuild):
             print style('Building Python package...', 'blue', bold=True)
 
             # Need to inject setuptools for this.
-            cmd = ['python', '-c', 'import setuptools; __file__=\'setup.py\'; execfile(__file__)']
+            cmd = ['python', '-c', 'import sys, setuptools; sys.argv[0]=__file__=\'setup.py\'; execfile(__file__)']
             cmd.extend(['build',
                 '--executable', '/usr/bin/env python',
             ])
@@ -119,7 +119,7 @@ class PythonBuild(GenericBuild):
         print style('Installing Python package...', 'blue', bold=True)
 
         # Need to inject setuptools for this.
-        cmd = ['python', '-c', 'import setuptools; __file__=\'setup.py\'; execfile(__file__)']
+        cmd = ['python', '-c', 'import sys, setuptools; sys.argv[0]=__file__=\'setup.py\'; execfile(__file__)']
         cmd.extend(['install',
             '--skip-build',
             '--root', pkg.install_path, # Better than prefix
