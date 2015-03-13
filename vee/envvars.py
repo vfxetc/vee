@@ -57,7 +57,7 @@ def guess_envvars(paths, sources=None, use_current=True):
         for bits in '', '64':
             lib = os.path.join(path, 'lib' + bits)
             if os.path.exists(lib):
-                name = 'DYLD_LIBRARY_PATH' if sys.platform == 'darwin' else 'LD_LIBRARY_PATH'
+                name = 'DYLD_FALLBACK_LIBRARY_PATH' if sys.platform == 'darwin' else 'LD_LIBRARY_PATH'
                 environ[name] = join_env_path(lib, existing(name))
                 site_packages = os.path.join(lib, 'python%d.%d' % sys.version_info[:2], 'site-packages')
                 if os.path.exists(site_packages):
