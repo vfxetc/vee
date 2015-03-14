@@ -4,6 +4,7 @@ from vee._vendor import pkg_resources
 
 from vee.config import Config
 from vee.database import Database
+from vee.devpackage import DevPackage
 from vee.environmentrepo import EnvironmentRepo
 from vee.git import GitRepo
 from vee.utils import makedirs, cached_property
@@ -49,6 +50,12 @@ class Home(object):
         for name in ('builds', 'environments', 'installs', 'packages', 'repos'):
             path = self._abs_path(name)
             makedirs(path)
+
+    def iter_dev_packages(self, exists=True):
+        for row in self.db.execute('SELECT * FROM dev_packages'):
+            dev_pkg = DevPackage(row, home=self)
+            if dev_pkg.exists:
+                yield dev_pkg
 
     def iter_env_repos(self):
         for row in self.db.execute('SELECT * FROM repositories'):
