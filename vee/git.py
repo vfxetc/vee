@@ -13,7 +13,19 @@ class GitError(CliMixin, RuntimeError):
     pass
 
 
-def normalize_git_url(url, prefix=False):
+def normalize_git_url(url, prefix=False, prefer=None):
+    """Normalize differences in Git URLs.
+
+    :param bool prefix: Should the result have a "git+" prefix?
+    :param str prefer: Which scheme is prefered (for GitHub URLs)?
+        One of ``(None, "https", "scp")``.
+
+    GitHub URLs also lose their ``.git`` extension.
+
+    """
+
+    if prefer not in (None, 'https', 'scp'):
+        raise ValueError('invalid prefer: %r' % prefer)
 
     if not isinstance(prefix, basestring):
         prefix = 'git+' if prefix else ''
@@ -28,17 +40,27 @@ def normalize_git_url(url, prefix=False):
 
     # Assert prefix on ssh and http urls. Note: this accepts at least all of
     # the schemes that git does.
+    # e.g.: https://github.com/orgname/reponame.git
     m = re.match(r'^(?:git\+)?(\w+):(.+)$', url)
     if m:
         scheme, the_rest = m.groups()
+        m = re.match(r'^//github\.com/(\w+)/(\w+)(?:\.git)?$', the_rest)
+        if m:
+            org_name, repo_name = m.groups()
+            if prefer in ('scp', ):
+                return '%sgit@github.com:%s/%s' % (prefix, org_name, repo_name)
+            return '%s%s:github.com/%s/%s' % (prefix, scheme, org_name, repo_name)
         return '%s%s:%s' % (prefix, scheme, the_rest)
 
     # SCP-like.
+    # e.g.: git@github.com:orgname/reponame.git
     m = re.match(r'^(?:git\+)?([^:@]+@)?([^:]+):(.*)$', url)
     if m:
         userinfo, host, path = m.groups()
         if host == 'github.com' and path.endswith('.git'):
             path = path[:-4]
+        if host == 'github.com' and prefer in ('https', ):
+            return '%shttps://github.com/%s' % (prefix, path)
         return '%s%s%s:%s' % (prefix, userinfo or '', host, path.rstrip('/'))
 
     # Paths are a fallback. They MUST have the prefix in order to be detected.

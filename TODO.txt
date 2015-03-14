@@ -16,11 +16,38 @@
 
 - `vee link [-r REPO] [-e ENV] [-d DIR] [--raw] REQUIREMENT`
 
-- `vee dev ff` to fastforward everything to match the given repo
+- `vee dev checkout --repo REPO` to fastforward everything to match the given repo
+- `vee dev ff` to `pull --ff-only` everything to their origin/master
 
 - use difflib to compare the old and new requirements. This will allow for us
   to detect re-orderings. Put dev-only packages at the end. Put dev information
   with the new destination.
+
+- EnvRepo.iter_requirement_versions() -> yields (work, head, dev)
+
+    - Home.get_dev_repos()
+    - zip_matching(dev_repos, work_reqs, head_reqs, key=lambda x: x.name)
+    - zip_matching(home.get_dev_repos(), env_repo.iter_requirements(), env_repo.iter_requirements(revision='HEAD'), sorted=True, key=lambda x: x.name)
+
+- `vee status` summary at bottom, like `git status`
+    Your branch is up-to-date with 'origin/master'.
+    nothing to commit, working directory clean
+
+- should dev_packages track remotes (and branches), should that be in the
+  git repo itself, or do we do it ad-hoc? We could pick an ideal remote given
+  a matching requirement, such that it picks whatever remote we are installing
+  from. Everything gets a little easier once we have a DevPackage (which is
+  actually a GitRepo).
+
+    - DevPackage.pick_remote_for(Requirement)
+        - picks one that matches, and saves it
+
+- `vee push` should also push tools themselves (as long as they match up with
+  those in the requirements)
+
+- `vee status` should warn if there aren't remotes that seem related to those
+  in the requirements
+
 
 COMMANDS TO WRITE
 -----------------

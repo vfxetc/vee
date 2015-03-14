@@ -76,3 +76,13 @@ class TestGitURLs(TestCase):
             normalize_git_url('git+/path/to/repo', prefix=True),
             'git+/path/to/repo'
         )
+
+    def test_github_transforms(self):
+        self.assertEqual(
+            normalize_git_url('git@github.com:org/repo.git', prefer='https'),
+            'https://github.com/org/repo',
+        )
+        self.assertEqual(
+            normalize_git_url('https://github.com/org/repo.git', prefer='scp'),
+            'git@github.com:org/repo',
+        )

@@ -10,5 +10,8 @@ from vee.git import GitRepo, normalize_git_url
 )
 def push(args):
     home = args.assert_home()
+
+    # TODO: push all tools, or at least check them.
+
     env_repo = home.get_env_repo(args.repo)
     env_repo.git('push')
