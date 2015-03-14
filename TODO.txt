@@ -1,12 +1,17 @@
 
 - s/Home/Context
 
-- should UI settings be on the Home/context? Does everything have access to that?
-  Will a stack-based setup ever fuck up?
+- use puts/log instead of print:
 
-  - cli.puts
-  - cli.log
+    - log(category, level, message, args=None, kwargs=None)
+    - puts(*message, verbosity=0, sep=' ', end='\n', stderr=False) -> log('stdout', verbosity, message)
+    - how to set the verbosity for the CLI:
+        - log.stack.push()
+        - log.top.verbosity = 1
 
+
+- cli._config_stack for what puts does, and log._config_stack for how it is
+  logged.
 
 - linking can link top-level directories. Only when another thing also tries to
   traverse into the same directory, is the original thing broken up into the
