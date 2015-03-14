@@ -95,24 +95,26 @@ dependencies, as they are generally outside of the standard build pipeline.
 Repositories
 ------------
 
-``vee repo [--add|--set|--delete|--list] [--default] [--branch BRANCH] NAME [URL]``
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+``vee repo (init|clone|set|delete|list) [....]``
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Manipulate repositories.
 
 ::
-    
+    # Start a new repo.
+    $ vee repo init example
+
     # Add a new repo, and make it the default.
-    $ vee repo --add --default myrepo git@github.com:example/myrepo
+    $ vee repo clone --default git@github.com:example/myrepo
 
     # Change a repo's url and branch
-    $ vee repo --set --branch unstable myrepo
+    $ vee repo set --branch unstable myrepo
 
     # Delete a repo.
-    $ vee repo --delete myrepo
+    $ vee repo delete myrepo
 
     # List all repos.
-    $ vee repo --list
+    $ vee repo list
 
 
 ``vee git [-r REPO] COMMAND+``
@@ -130,8 +132,8 @@ collision!)
     nothing to commit, working directory clean
 
 
-``vee update [--all] REPOS*``
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+``vee update``
+~~~~~~~~~~~~~~
 
 Update the repositories. This will fail if your repositories are dirty, or have
 forked from the remotes.
@@ -140,14 +142,24 @@ forked from the remotes.
 Development
 -----------
 
-.. note:: These are in heavy development.
+``vee develop (init|clone|install|...)``
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+``vee add``
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+``vee status``
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+``vee commit``
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 
 Environments
 ------------
 
-``vee upgrade [--all] REPO*``
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+``vee upgrade``
+~~~~~~~~~~~~~~~
 
 Upgrade environments created from repositories.
 

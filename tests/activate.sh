@@ -14,7 +14,7 @@ export VEE="$root/demo"
 mkdir -p $VEE
 
 # Use the test's sandbox
-export VEE_HOMEBREW="$root/tests/sandbox/Homebrew"
+export VEE_HOMEBREW="$root/sandbox/Homebrew"
 
 # Use scripts from source.
 export PATH="$root/bin:$PATH"

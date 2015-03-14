@@ -1,4 +1,13 @@
 
+- s/Home/Context
+
+- should UI settings be on the Home/context? Does everything have access to that?
+  Will a stack-based setup ever fuck up?
+
+  - cli.puts
+  - cli.log
+
+
 - linking can link top-level directories. Only when another thing also tries to
   traverse into the same directory, is the original thing broken up into the
   next depth of links, and then recursion continues. This is tricky when you
@@ -7,8 +16,22 @@
 - Homebrew isn't registering installs on first install: "ValueError: cannot record requirement that is not installed"
 - Homebrew dependencies relink every time
 
-- setting envvars in requirements.txt should allow for @ or $KEY to take in previous values that were set within that
-  file
+- `--relocatable` flag for generic packages
+    - Homebrew links against the main prefix. This seems hard for us to do.
+      We can either link against the install_path(s), or $VEE/opt.
+    - If we do link against install_path, then we should store those relationships
+      in the database.
+
+- Requirement.package_build_matches() returns if the environment and subdirs
+  match between the requirement and package. If it is false, then we can
+  force a re-install.
+
+- setting envvars in requirements.txt should allow for @ or $KEY to take
+  in previous values that were set within that file.
+    -  $KEY  vs $$KEY
+    - $(KEY) vs ${KEY}
+    -  $KEY  vs  @KEY  vs %KEY
+
 - % if sys.platform == 'Darwin': templates in requirements files
 
 - can vendor macholib and elffile (or patchelf) in order to relocate libs on
@@ -48,6 +71,9 @@
 - `vee status` should warn if there aren't remotes that seem related to those
   in the requirements
 
+- server and client: start as a super simple notification server that says when there is
+  a new version of any repos
+
 
 COMMANDS TO WRITE
 -----------------
@@ -62,31 +88,6 @@ COMMANDS TO WRITE
   - vee uninstall (NAME|REQUIREMENT [ARGS])
   - vee unlink ENVIRON (NAME|REQUIREMENT [ARGS])
 
-  ~ vee develop ...
-  ~ dev [...] COMMAND [ARGS]
-      - runtime linking of dev tools over default repo
-
-  ~ vee add [NAME|PATH]
-      - add new commits to the repo requirements
-  ~ vee add --bake-installed
-      - update the repo to the current revision of everything that is
-        installed
-  ~ vee add --update
-
-  √ vee update
-  √ vee upgrade
-
-  - vee status
-      - check on status of each dev tool, and where they are vs the repo
-      - check on work tree vs. index vs. head of the repo too, like git status
-          index: `git show :requirements.txt`
-          head: `git show HEAD:requirements.txt`
-
-  ~ vee commit [--major,--minor,--patch] [-m MESSAGE]
-
-  - vee push [--no-dev]
-      - push all packages that aren't already, and the repo
-
   - vee list
       - list packages, environments, etc..
 
@@ -97,25 +98,12 @@ COMMANDS TO WRITE
 
 ---
 
-- s/RequirementSet/???
-    - EnvironmentRequirements
-    - EnvironRequirements
-    - EnvRequirements
-    - BuildOrder
-    - EnvironmentSpecification
-    - Recipie
-
 - is it possible for me to bundle libgit2, and build it?
 
 - there are a ton of times we need to guess which dev remote to use; perhaps
   we should have a remote/branch to track in the database, OR figure out how
   to interpret that from the repo itself. Git seems to store a repo per branch,
   so we could always look at the active branch
-  
-- move `vee repo git` back to `vee git` ??
-
-- normalize_git_url(prefer='https'); then you can convert GitHub's http/scp
-  back and forth (so that dev uses ssh and repos use https)
 
 - RequirementSet elements should be their own class:
     - el.path is path to file that contained it
@@ -127,13 +115,6 @@ COMMANDS TO WRITE
 
     it is nice having them be separate, and one being user specifications
     perhaps an AbstractPackage would fit the bill
-
-- preprocessing for requirement files?
-    #if VEE_PLATFORM == "darwin"
-    #elif
-    #else
-    #end
-
 
 - permissions
 
@@ -193,9 +174,6 @@ COMMANDS TO WRITE
             - out:$pid -> stdout of nth exe
             - err:$pid -> stderr of nth exe
 
-- Home.{package,build,install,develop,environment}_root attributes
-- Home.to_environ()
-
 - record stdout/stderr from build process in the database. Use a timestamped
   format: each line starts with "out" or "err" and the timestamp
 
@@ -203,8 +181,6 @@ COMMANDS TO WRITE
 
 - Http/File/Base could do checksums of files to see if they have changed
   - memoize the caches based on inode,size,mtime
-
-- cythonmagick is pulling in the "wrong" sqlite?
 
 
 LATER

@@ -4,42 +4,68 @@ import contextlib
 import re
 import sys
 
+from vee.globals import Stack
 
-INDENT_STR = '    '
 
-_settings = [{
-    'indent': 0,
-    'style': {},
-}]
+_config_stack = Stack()
+config = _config_stack.proxy()
+
+config.indent = ''
+config.style = {}
+config.verbosity = 0
+
+
+class _Dedenter(object):
+    def __enter__(self):
+        return self
+    def __exit__(self, *args):
+        _config_stack.pop()
+
+_dedenter = _Dedenter()
+
+
+def clout_ctx(indent=None, verbose=None, style=None):
+    config = _config_stack.push()
+    if indent:
+        config.indent += '  '
+    if verbose:
+        config.verbose += 1
+    if style:
+        config.style.update(style)
+    return _dedenter
+
 
 
 class StreamStyler(object):
 
-    def __init__(self, stream):
+    def __init__(self, stream, config=None):
         self._stream = stream
+        self._config = config
+        self._newline = True
 
-    def write(self, x):
-        self.writelines(re.split(r'(?<=\n)', x))
+    def write(self, to_write):
+        config = self._config or _config_stack[-1]
+        nl = self._newline
+        for chunk in to_write.splitlines(True):
+            
+            if nl:
+                chunk = config.indent + chunk
+            nl = chunk.endswith('\n')
 
-    def writelines(self, lines):
+            if config.style:
+                chunk = style(chunk, **config.style)
 
-        indent = INDENT_STR * _settings[-1]['indent']
-        style_kwargs = _settings[-1]['style']
-
-        for line in lines:
-            if line.endswith('\n'):
-                line = indent + line
-            if style_kwargs:
-                line = style(line, **style_kwargs)
-            self._stream.write(line)
+            self._stream.write(chunk)
+        
+        self._newline = nl
 
     def flush(self):
         self._stream.flush()
 
 
 # TODO: override this only in the CLI
-# sys.stdout = StreamStyler(sys.stdout)
-# sys.stderr = StreamStyler(sys.stderr)
+sys.stdout = StreamStyler(sys.stdout)
+sys.stderr = StreamStyler(sys.stderr)
 
 
 

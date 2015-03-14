@@ -2,7 +2,7 @@ import os
 import sys
 
 from vee.builds.generic import GenericBuild
-from vee.cli import style, style_note, style_warning
+from vee.cli import style, style_note, style_warning, clout_ctx
 from vee.envvars import join_env_path
 from vee.subproc import call
 from vee.utils import find_in_tree
@@ -47,7 +47,9 @@ class PythonBuild(GenericBuild):
             ])
             cmd.extend(pkg.config)
 
-            if call(cmd, cwd=os.path.dirname(self.setup_path), env=pkg.fresh_environ()):
+            with clout_ctx(indent=True, style={'faint': True}):
+                res = call(cmd, cwd=os.path.dirname(self.setup_path), env=pkg.fresh_environ())
+            if res:
                 raise RuntimeError('Could not build Python package')
 
             return
@@ -129,7 +131,10 @@ class PythonBuild(GenericBuild):
             '--single-version-externally-managed',
         ])
 
-        if call(cmd, cwd=os.path.dirname(self.setup_path), env=env):
+        
+        with clout_ctx(indent=True, style={'faint': True}):
+            res = call(cmd, cwd=os.path.dirname(self.setup_path), env=env)
+        if res:
             raise RuntimeError('Could not install Python package')
 
     def develop(self):

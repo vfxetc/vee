@@ -5,7 +5,7 @@ import subprocess
 import sys
 import threading
 
-from vee.cli import style
+from vee.cli import style, _config_stack, StreamStyler
 
 
 def _call_reader(fh, size=2**10, buffer=None, callback=None, stream=None):
@@ -37,33 +37,31 @@ def call(cmd, **kwargs):
     stderr = kwargs.pop('stderr', None)
     on_stderr = kwargs.pop('on_stderr', None)
 
-    if stdout or on_stdout:
-        kwargs['stdout'] = subprocess.PIPE
-        kwargs['bufsize'] = 0
-    if stderr or on_stderr:
-        kwargs['stderr'] = subprocess.PIPE
-        kwargs['bufsize'] = 0
+    kwargs['stdout'] = kwargs['stderr'] = subprocess.PIPE
+    kwargs['bufsize'] = 0
 
     proc = subprocess.Popen(cmd, **kwargs)
     threads = []
 
-    if stdout or on_stdout:
+    if True or stdout or on_stdout:
         stdout_buffer = []
         stdout_thread = threading.Thread(target=_call_reader, kwargs=dict(
             fh=proc.stdout,
             callback=on_stdout,
             buffer=stdout_buffer if stdout else None,
+            stream=StreamStyler(sys.__stdout__, _config_stack[-1]) if not stdout else None,
         ))
         stdout_thread.daemon = True
         stdout_thread.start()
         threads.append(stdout_thread)
 
-    if stderr or on_stderr:
+    if True or stderr or on_stderr:
         stderr_buffer = []
         stderr_thread = threading.Thread(target=_call_reader, kwargs=dict(
             fh=proc.stderr,
             callback=on_stderr,
             buffer=stderr_buffer if stderr else None,
+            stream=StreamStyler(sys.__stderr__, _config_stack[-1]) if not stderr else None,
         ))
         stderr_thread.daemon = True
         stderr_thread.start()
