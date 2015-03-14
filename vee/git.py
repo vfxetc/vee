@@ -93,7 +93,7 @@ class GitRepo(object):
     def git(self, *cmd, **kw):
 
         stderr = []
-        kw['on_stderr'] = stderr.append
+        kw['stderr'] = [kw.get('stderr'), stderr.append]
         kw['check'] = False # We will do it ourselves.
 
         e = None

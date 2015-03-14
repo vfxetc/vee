@@ -15,6 +15,7 @@ from vee.exceptions import AlreadyInstalled, AlreadyLinked
 from vee.requirement import Requirement, requirement_parser
 from vee.subproc import call, call_log
 from vee.utils import cached_property, makedirs
+from vee import log
 
 
 class BasePackage(object):
@@ -98,13 +99,14 @@ class BasePackage(object):
     def environ_diff(self):
         if self._environ_diff is None:
             self._environ_diff = self._resolve_environ()
-            if False: # TODO: use some verbosity control.
-                for k, v in sorted(self._environ_diff.iteritems()):
-                    old_v = os.environ.get(k)
-                    if old_v is not None:
-                        v = v.replace(old_v, '@')
-                    v = v.replace(self.home.root, '$VEE')
-                    print style('setenv', 'blue', bold=True), style('%s=' % k, bold=True) + v
+            for k, v in sorted(self._environ_diff.iteritems()):
+                old_v = os.environ.get(k)
+                if old_v is not None:
+                    v = v.replace(old_v, '@')
+                v = v.replace(self.home.root, '$VEE')
+                log.debug('%s %s%s' % (
+                    style('setenv', 'blue', bold=True), style('%s=' % k, bold=True), v
+                ), verbosity=1)
         return self._environ_diff or {}
 
     def fresh_environ(self):
@@ -189,7 +191,7 @@ class BasePackage(object):
         if not self.build_path:
             raise RuntimeError('need build path for default Package.extract')
 
-        print style('Extracting to', 'blue', bold=True), style(self.build_path, bold=True)
+        log.info(style('Extracting to ', 'blue', bold=True) + style(self.build_path, bold=True))
 
         # Tarballs.
         if re.search(r'(\.tgz|\.tar\.gz)$', self.package_path):
@@ -238,7 +240,7 @@ class BasePackage(object):
         # Link into $VEE/opt.
         if self.name:
             opt_link = self.home._abs_path('opt', self.name)
-            print style('Linking to opt/%s:' % self.name, 'blue', bold=True), style(opt_link, bold=True)
+            log.info(style('Linking to opt/%s: ' % self.name, 'blue', bold=True) + style(opt_link, bold=True))
             if os.path.exists(opt_link):
                 os.unlink(opt_link)
             makedirs(os.path.dirname(opt_link))
@@ -248,7 +250,7 @@ class BasePackage(object):
         self._set_names(install=True)
         if not self.installed:
             raise RuntimeError('package is not installed')
-        print style('Uninstalling', 'blue', bold=True), style(self.install_path, bold=True)
+        log.info(style('Uninstalling ', 'blue', bold=True) + style(self.install_path, bold=True))
         shutil.rmtree(self.install_path)
 
     def link(self, env, force=False):
@@ -256,7 +258,7 @@ class BasePackage(object):
         frozen = self.freeze()
         if not force:
             self._assert_unlinked(env, frozen)
-        print style('Linking', 'blue', bold=True), style(str(frozen), bold=True)
+        log.info(style('Linking ', 'blue', bold=True) + style(str(frozen), bold=True))
         env.link_directory(self.install_path)
         self._record_link(env)
 
@@ -342,8 +344,6 @@ class BasePackage(object):
 
         if not row:
             return
-
-        # print style('DEBUG: found existing install %d' % row['id'], faint=True)
 
         # Everything below either already matches or was unset.
         self._db_id = row['id']

@@ -7,35 +7,6 @@ import sys
 from vee.globals import Stack
 
 
-_config_stack = Stack()
-config = _config_stack.proxy()
-
-config.indent = ''
-config.style = {}
-config.verbosity = 0
-
-
-class _Dedenter(object):
-    def __enter__(self):
-        return self
-    def __exit__(self, *args):
-        _config_stack.pop()
-
-_dedenter = _Dedenter()
-
-
-def clout_ctx(indent=None, verbose=None, style=None):
-    config = _config_stack.push()
-    if indent:
-        config.indent += '  '
-    if verbose:
-        config.verbose += 1
-    if style:
-        config.style.update(style)
-    return _dedenter
-
-
-
 class StreamStyler(object):
 
     def __init__(self, stream, config=None):
@@ -61,11 +32,6 @@ class StreamStyler(object):
 
     def flush(self):
         self._stream.flush()
-
-
-# TODO: override this only in the CLI
-sys.stdout = StreamStyler(sys.stdout)
-sys.stderr = StreamStyler(sys.stderr)
 
 
 

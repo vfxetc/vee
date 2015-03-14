@@ -2,7 +2,8 @@ import os
 import sys
 
 from vee.builds.generic import GenericBuild
-from vee.cli import style, style_note, style_warning, clout_ctx
+from vee.cli import style, style_note, style_warning
+from vee import log
 from vee.envvars import join_env_path
 from vee.subproc import call
 from vee.utils import find_in_tree
@@ -38,7 +39,7 @@ class PythonBuild(GenericBuild):
 
         if self.setup_path:
 
-            print style('Building Python package...', 'blue', bold=True)
+            log.info(style('Building Python package...', 'blue', bold=True))
 
             # Need to inject setuptools for this.
             cmd = ['python', '-c', 'import sys, setuptools; sys.argv[0]=__file__=\'setup.py\'; execfile(__file__)']
@@ -47,7 +48,7 @@ class PythonBuild(GenericBuild):
             ])
             cmd.extend(pkg.config)
 
-            with clout_ctx(indent=True, style={'faint': True}):
+            with log.indent():
                 res = call(cmd, cwd=os.path.dirname(self.setup_path), env=pkg.fresh_environ())
             if res:
                 raise RuntimeError('Could not build Python package')
@@ -57,16 +58,16 @@ class PythonBuild(GenericBuild):
         # python setup.py bdist_egg
         if self.egg_path:
 
-            print style('Found Python Egg:', 'blue', bold=True), style(os.path.basename(self.egg_path), bold=True)
-            print style('Warning:', 'yellow', bold=True), style('Scripts and other data will not be installed.', bold=True)
+            log.info(style('Found Python Egg:', 'blue', bold=True), style(os.path.basename(self.egg_path), bold=True))
+            log.warning('Scripts and other data will not be installed.')
 
             if not pkg.package_path.endswith('.egg'):
-                print style('Warning:', 'yellow', bold=True), style('package does not appear to be an Egg', bold=True)
+                log.warning('package does not appear to be an Egg')
 
             # We must rename the egg!
             pkg_info_path = os.path.join(self.egg_path, 'PKG-INFO')
             if not os.path.exists(pkg_info_path):
-                print style('Warning:', 'yellow', bold=True), style('EGG-INFO/PKG-INFO does not exist', bold=True)
+                log.warning('EGG-INFO/PKG-INFO does not exist')
             else:
                 pkg_info = {}
                 for line in open(pkg_info_path, 'rU'):
@@ -79,7 +80,7 @@ class PythonBuild(GenericBuild):
                     pkg_name = pkg_info['name']
                     pkg_version = pkg_info['version']
                 except KeyError:
-                    print style('Warning:', 'yellow', bold=True), style('EGG-INFO/PKG-INFO is malformed', bold=True)
+                    log.warning('EGG-INFO/PKG-INFO is malformed')
                 else:
                     new_egg_path = os.path.join(os.path.dirname(self.egg_path), '%s-%s.egg-info' % (pkg_name, pkg_version))
                     shutil.move(self.egg_path, new_egg_path)
@@ -94,10 +95,10 @@ class PythonBuild(GenericBuild):
         if self.dist_path:
 
             print style('Found Python Wheel:', 'blue', bold=True), style(os.path.basename(self.dist_path), bold=True)
-            print style('Warning:', 'yellow', bold=True), style('Scripts and other data will not be installed.', bold=True)
+            log.warning('Scripts and other data will not be installed.')
 
             if not pkg.package_path.endswith('.whl'):
-                print style('Warning:', 'yellow', bold=True), style('package does not appear to be a Wheel', bold=True)
+                log.warning('package does not appear to be a Wheel')
 
             pkg.build_subdir = os.path.dirname(self.dist_path)
             pkg.install_prefix = site_packages
@@ -132,7 +133,7 @@ class PythonBuild(GenericBuild):
         ])
 
         
-        with clout_ctx(indent=True, style={'faint': True}):
+        with log.indent():
             res = call(cmd, cwd=os.path.dirname(self.setup_path), env=env)
         if res:
             raise RuntimeError('Could not install Python package')
@@ -144,7 +145,7 @@ class PythonBuild(GenericBuild):
 
         if self.setup_path:
 
-            print style_note('Building egg-info')
+            log.info(style_note('Building egg-info'))
             cmd = ['python', '-c', 'import setuptools; __file__=\'setup.py\'; execfile(__file__)']
             cmd.extend(['egg_info'])
             if call(cmd, cwd=os.path.dirname(self.setup_path)):
@@ -158,7 +159,7 @@ class PythonBuild(GenericBuild):
             for line in open(os.path.join(egg_info, 'top_level.txt')):
                 dirs_to_link.add(os.path.dirname(line.strip()))
             for name in sorted(dirs_to_link):
-                print style_note("Adding ./%s to $PYTHONPATH" % name)
+                log.info(style_note("Adding ./%s to $PYTHONPATH" % name))
                 pkg.environ['PYTHONPATH'] = join_env_path('./' + name, pkg.environ.get('PYTHONPATH', '@'))       
 
 

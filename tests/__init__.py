@@ -9,6 +9,7 @@ from vee.commands.main import main as _main
 from vee.git import GitRepo
 from vee.home import Home
 from vee.cli import strip_ansi
+from vee import log
 
 from .mock.http import setup_mock_http, mock_url
 from .mock.package import MockPackage
@@ -63,7 +64,7 @@ def vee(args, environ=None, check=True, stdout=False):
     full_environ = os.environ.copy()
     full_environ.update(environ or {})
     full_environ.update(_environ_diff)
-    print '$ vee', ' '.join(args)
+    log.debug('$ vee ' + ' '.join(args), name='vee.tests')
     if stdout:
         cmd = ['vee']
         cmd.extend(args)

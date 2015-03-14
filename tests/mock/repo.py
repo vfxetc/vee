@@ -26,7 +26,8 @@ class MockRepo(object):
 
     def rev_list(self):
         try:
-            return self.repo.git('rev-list', '--all', silent=True, stdout=True, stderr=True)[0].strip().split()
+            res = self.repo.git('rev-list', '--all', silent=True, stdout=True, stderr=True)
+            return res[0].strip().split()
         except CalledProcessError:
             return []
 

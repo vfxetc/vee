@@ -1,85 +1,103 @@
 import datetime
 import functools
+import logging
 import os
 import subprocess
 import sys
 import threading
 
-from vee.cli import style, _config_stack, StreamStyler
+from vee.cli import style
+from vee import log
 
 
-def _call_reader(fh, size=2**10, buffer=None, callback=None, stream=None):
-    while True:
-        chunk = fh.read(size)
-        if not chunk:
-            return
-        if buffer is not None:
-            buffer.append(chunk)
-        if callback is not None:
-            callback(chunk)
-        if stream is not None:
-            stream.write(chunk)
+
+class _CallOutput(object):
+
+    def __init__(self, specs, out_stream=None):
+
+        self.callbacks = []
+        self.buffer = []
+        self.return_buffer = False
+
+        if not isinstance(specs, (list, tuple)):
+            specs = [specs]
+
+        for spec in specs:
+            if callable(spec):
+                self.callbacks.append(spec)
+            elif spec is True:
+                self.return_buffer = True
+                self.callbacks.append(self.buffer.append)
+            elif spec is None:
+                self.callbacks.append(out_stream.write)
+            else:
+                raise TypeError('output spec must be True, None, or a callback')
+
+    def start(self, in_stream):
+        self.in_stream = in_stream
+        self.thread = threading.Thread(target=self._target)
+        self.thread.daemon = True
+        self.thread.start()
+
+    def _target(self):
+        in_stream = self.in_stream
+        size = 2**10
+        callbacks = self.callbacks
+        while True:
+            chunk = in_stream.read(size)
+            if not chunk:
+                return
+            for func in callbacks:
+                func(chunk)
+
+    def join(self):
+        self.thread.join()
 
 
 def call(cmd, **kwargs):
 
-    # Print out the call to the console.
-    # TODO: vary this depending on global verbosity.
-    if not kwargs.pop('silent', True):
-        VEE = os.environ.get('VEE')
-        cmd_collapsed = [x.replace(VEE, '$VEE') if VEE else x for x in cmd]
-        print style('$', 'blue', bold=True), style(cmd_collapsed[0], bold=True), ' '.join(cmd_collapsed[1:])
+    # Log the call.
+    kwargs.pop('silent', None) # B/C.
+    VEE = os.environ.get('VEE')
+    cmd_collapsed = [x.replace(VEE, '$VEE') if VEE else x for x in cmd]
+    log.debug(
+        style('$', 'blue', bold=True) + ' ' + style(cmd_collapsed[0], bold=True) + ' ' + ' '.join(cmd_collapsed[1:]),
+        verbosity=2,
+        _frame=3,
+    )
 
     check = kwargs.pop('check', True)
+    indent = kwargs.pop('indent', True)
+    if indent:
+        indent = log.indent()
+        indent.__enter__()
 
-    stdout = kwargs.pop('stdout', None)
-    on_stdout = kwargs.pop('on_stdout', None)
-    stderr = kwargs.pop('stderr', None)
-    on_stderr = kwargs.pop('on_stderr', None)
+    stdout = _CallOutput(kwargs.get('stdout'), sys.stdout)
+    stderr = _CallOutput(kwargs.get('stderr'), sys.stderr)
 
     kwargs['stdout'] = kwargs['stderr'] = subprocess.PIPE
     kwargs['bufsize'] = 0
 
     proc = subprocess.Popen(cmd, **kwargs)
-    threads = []
-
-    if True or stdout or on_stdout:
-        stdout_buffer = []
-        stdout_thread = threading.Thread(target=_call_reader, kwargs=dict(
-            fh=proc.stdout,
-            callback=on_stdout,
-            buffer=stdout_buffer if stdout else None,
-            stream=StreamStyler(sys.__stdout__, _config_stack[-1]) if not stdout else None,
-        ))
-        stdout_thread.daemon = True
-        stdout_thread.start()
-        threads.append(stdout_thread)
-
-    if True or stderr or on_stderr:
-        stderr_buffer = []
-        stderr_thread = threading.Thread(target=_call_reader, kwargs=dict(
-            fh=proc.stderr,
-            callback=on_stderr,
-            buffer=stderr_buffer if stderr else None,
-            stream=StreamStyler(sys.__stderr__, _config_stack[-1]) if not stderr else None,
-        ))
-        stderr_thread.daemon = True
-        stderr_thread.start()
-        threads.append(stderr_thread)
+    stdout.start(proc.stdout)
+    stderr.start(proc.stderr)
 
     proc.wait()
-    for thread in threads:
-        thread.join()
+    stdout.join()
+    stderr.join()
 
-    if (check or stdout or stderr) and proc.returncode:
+    if indent:
+        indent.__exit__(None, None, None)
+
+    if (check or stdout.return_buffer or stderr.return_buffer) and proc.returncode:
         raise subprocess.CalledProcessError(proc.returncode, cmd)
 
-    if stdout and stderr:
-        return ''.join(stdout_buffer), ''.join(stderr_buffer)
-    if stdout:
-        return ''.join(stdout_buffer)
-    if stderr:
-        return ''.join(stderr_buffer)
+    if stdout.return_buffer and stderr.return_buffer:
+        return ''.join(stdout.buffer), ''.join(stderr.buffer)
+    if stdout.return_buffer:
+        return ''.join(stdout.buffer)
+    if stderr.return_buffer:
+        return ''.join(stderr.buffer)
 
     return proc.returncode
 
