@@ -13,11 +13,14 @@ from vee import log
 
 class _CallOutput(object):
 
-    def __init__(self, specs, out_stream=None):
+    def __init__(self, specs, name, verbosity=0):
 
+        self.verbosity = verbosity
         self.callbacks = []
         self.buffer = []
         self.return_buffer = False
+        self.name = name
+        self.logger = None
 
         if not isinstance(specs, (list, tuple)):
             specs = [specs]
@@ -29,11 +32,18 @@ class _CallOutput(object):
                 self.return_buffer = True
                 self.callbacks.append(self.buffer.append)
             elif spec is None:
-                self.callbacks.append(out_stream.write)
+                self.callbacks.append(self.log_chunk)
             else:
                 raise TypeError('output spec must be True, None, or a callback')
 
-    def start(self, in_stream):
+    def log_chunk(self, chunk):
+        logger = self.logger
+        if logger is None:
+            logger = self.logger = logging.getLogger('vee.subproc[%d].%s' % (self.proc.pid, self.name))
+        logger.info(chunk, extra={'verbosity': self.verbosity})
+
+    def start(self, proc, in_stream):
+        self.proc = proc
         self.in_stream = in_stream
         self.thread = threading.Thread(target=self._target)
         self.thread.daemon = True
@@ -72,15 +82,16 @@ def call(cmd, **kwargs):
         indent = log.indent()
         indent.__enter__()
 
-    stdout = _CallOutput(kwargs.get('stdout'), sys.stdout)
-    stderr = _CallOutput(kwargs.get('stderr'), sys.stderr)
+    verbosity = kwargs.pop('verbosity', 1)
+    stdout = _CallOutput(kwargs.get('stdout'), 'stdout', verbosity)
+    stderr = _CallOutput(kwargs.get('stderr'), 'stderr', verbosity)
 
     kwargs['stdout'] = kwargs['stderr'] = subprocess.PIPE
     kwargs['bufsize'] = 0
 
     proc = subprocess.Popen(cmd, **kwargs)
-    stdout.start(proc.stdout)
-    stderr.start(proc.stderr)
+    stdout.start(proc, proc.stdout)
+    stderr.start(proc, proc.stderr)
 
     proc.wait()
     stdout.join()
@@ -100,28 +111,4 @@ def call(cmd, **kwargs):
         return ''.join(stderr.buffer)
 
     return proc.returncode
-
-
-def call_output(cmd, **kwargs):
-    kwargs['stdout'] = True
-    return call(cmd, **kwargs)
-
-
-def call_log(cmd, **kwargs):
-
-    indent = kwargs.pop('indent', 4)
-
-    buffer_ = []
-    def callback(name, echo_fh, echo_format, chunk):
-        for line in chunk.splitlines():
-            buffer_.append('%s %s %s' % (name, datetime.datetime.utcnow().isoformat('T'), line))
-            echo_fh.write(echo_format % line + '\n')
-
-    kwargs.update(
-        on_stdout=functools.partial(callback, 'out', sys.stdout, (indent * ' ') + style('%s', faint=True)),
-        on_stderr=functools.partial(callback, 'err', sys.stdout, (indent * ' ') + style('%s', 'red')),
-    )
-
-    call(cmd, **kwargs)
-    return '\n'.join(buffer_)
 

@@ -8,6 +8,7 @@ from vee.cli import style
 from vee.packages.git import GitPackage
 from vee.subproc import call
 from vee.utils import makedirs, cached_property
+from vee import log
 
 
 class HomebrewPackage(GitPackage):
@@ -105,7 +106,7 @@ class HomebrewPackage(GitPackage):
 
     def build(self):
         if self.installed:
-            print style('Warning:', 'yellow', bold=True), style(self.package_name + ' is already built', 'black', bold=True)
+            log.warning(self.package_name + ' is already built', 'black')
             return
         self._brew('install', self.package_name, *self.config)
 
@@ -127,6 +128,6 @@ class HomebrewPackage(GitPackage):
         for name in self._brew('deps', '-n', self.package_name, stdout=True).strip().split():
             path = os.path.join(self.package_path, 'Cellar', self.install_name_from_info(name))
             if os.path.exists(path):
-                print style('Linking', 'blue', bold=True), style('homebrew+%s (homebrew+%s dependency)' % (name, self.package_name), bold=True)
+                log.info(style('Linking ', 'blue', bold=True) + style('homebrew+%s (homebrew+%s dependency)' % (name, self.package_name), bold=True))
                 env.link_directory(path)
         env.link_directory(self.install_path)

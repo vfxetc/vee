@@ -7,6 +7,7 @@ from vee._vendor import virtualenv
 
 from vee.cli import style
 from vee.utils import makedirs
+from vee import log
 
 
 IGNORE_DIRS = frozenset(('.git', '.svn'))
@@ -81,9 +82,8 @@ class Environment(object):
                         new_bin = os.path.join(self.path, 'bin', m.group(2))
                         if os.path.exists(new_bin):
                             new_shebang = '#!%s%s' % (new_bin, old_shebang[m.end(2):])
-                            print 'Rewriting shebang of', rel_path
-                            print style('from: %s' % old_shebang.strip(), faint=True)
-                            print style('  to: %s' % new_shebang.strip(), faint=True)
+                            log.info('Rewriting shebang of %s' % new_bin, verbosity=1)
+                            log.debug('New shebang: %s' % new_shebang.strip(), verbosity=1)
                             with open(new_path, 'wb') as new_fh:
                                 new_fh.write(new_shebang)
                                 new_fh.writelines(old_fh)

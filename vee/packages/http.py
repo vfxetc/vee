@@ -8,6 +8,7 @@ import shutil
 from vee.cli import style
 from vee.packages.base import BasePackage
 from vee.utils import makedirs
+from vee import log
 
 
 class HttpPackage(BasePackage):
@@ -34,15 +35,14 @@ class HttpPackage(BasePackage):
         self._assert_paths(package=True)
 
         if os.path.exists(self.package_path):
-            print style('Already downloaded.', 'blue', bold=True)
+            log.info(style('Already downloaded.', 'blue', bold=True))
             return
 
         makedirs(os.path.dirname(self.package_path))
 
         temp = self.package_path + '.downloading'
 
-        print style('Downloading', 'blue', bold=True), style(self.url, bold=True)
-        print        '         to', style(self.package_path, bold=True)
+        log.info(style('Downloading', 'blue', bold=True), style(self.url, bold=True))
 
         src_fh = None
         dst_fh = None

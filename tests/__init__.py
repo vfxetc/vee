@@ -5,11 +5,12 @@ import sys
 import subprocess
 
 from unittest import TestCase as _TestCase
+from vee import log
+from vee.cli import strip_ansi
 from vee.commands.main import main as _main
 from vee.git import GitRepo
 from vee.home import Home
-from vee.cli import strip_ansi
-from vee import log
+from vee.subproc import call
 
 from .mock.http import setup_mock_http, mock_url
 from .mock.package import MockPackage

@@ -3,7 +3,8 @@ import os
 from vee.builds.generic import GenericBuild
 from vee.cli import style
 from vee.utils import find_in_tree
-from vee.subproc import call_log
+from vee.subproc import call
+from vee import log
 
 
 class SelfBuild(GenericBuild):
@@ -25,7 +26,7 @@ class SelfBuild(GenericBuild):
 
     def build(self):
 
-        print style('Running vee-build.sh...', 'blue', bold=True)
+        log.info(style('Running vee-build.sh...', 'blue', bold=True))
 
         pkg = self.package
 
@@ -40,7 +41,7 @@ class SelfBuild(GenericBuild):
         cwd = os.path.dirname(self.script_path)
         envfile = os.path.join(cwd, 'vee-env-' + os.urandom(8).encode('hex'))
 
-        call_log(['bash', '-c', '. %s; env | grep VEE > %s' % (os.path.basename(self.script_path), envfile)], env=env, cwd=cwd)
+        call(['bash', '-c', '. %s; env | grep VEE > %s' % (os.path.basename(self.script_path), envfile)], env=env, cwd=cwd)
 
         env = list(open(envfile))
         env = dict(line.strip().split('=', 1) for line in env)

@@ -5,7 +5,7 @@ import subprocess
 from vee.cli import style
 from vee.git import GitRepo, normalize_git_url
 from vee.packages.base import BasePackage
-from vee.subproc import call, call_output
+from vee.subproc import call
 from vee.utils import makedirs, cached_property
 
 

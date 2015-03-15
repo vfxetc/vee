@@ -4,6 +4,7 @@ from vee.environment import Environment
 from vee.exceptions import AlreadyInstalled, AlreadyLinked
 from vee.requirement import Requirement
 from vee.requirementset import RequirementSet
+from vee import log
 
 
 @command(
@@ -46,7 +47,8 @@ def link(args):
             req.package.resolve_existing(env=env)
 
         try:
-            req.auto_install(force=args.re_install)
+            with log.indent():
+                req.auto_install(force=args.re_install)
         except AlreadyInstalled:
             pass
         

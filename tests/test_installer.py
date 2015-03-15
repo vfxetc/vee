@@ -8,7 +8,7 @@ class TestInstaller(TestCase):
         root = self.sandbox()
         os.makedirs(root)
 
-        subprocess.check_call([
+        call([
             'python',
             os.path.abspath(os.path.join(__file__, '..', '..', 'install_vee.py')),
             '--prefix', root,

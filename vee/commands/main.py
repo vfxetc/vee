@@ -16,6 +16,7 @@ from vee._vendor import pkg_resources
 from vee.cli import style
 from vee.exceptions import cli_exc_str, cli_errno, print_cli_exc
 from vee.home import Home
+from vee import log
 
 
 class AliasedSubParsersAction(argparse._SubParsersAction):
@@ -158,7 +159,7 @@ def main(argv=None, environ=None, as_main=__name__=="__main__"):
         args.environ = os.environ if environ is None else environ
         args.home_path = args.home_path or args.environ.get('VEE')
         
-
+        log.config.verbosity = args.verbose or 0
         args.home = args.home_path and Home(args.home_path)
         args.main = getattr(args.home, 'main', None)
         

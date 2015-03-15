@@ -72,7 +72,10 @@ class StdoutHandler(logging.Handler):
         return record.message
 
     def emit(self, record):
-        print config.indent + self.format(record)
+        indent = config.indent
+        msg = self.format(record)
+        for line in msg.splitlines():
+            print indent + line
 
 
 root.addHandler(StdoutHandler())

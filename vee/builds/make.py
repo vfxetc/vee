@@ -4,6 +4,7 @@ from vee.builds.generic import GenericBuild
 from vee.cli import style
 from vee.subproc import call
 from vee.utils import find_in_tree
+from vee import log
 
 
 class MakeBuild(GenericBuild):
@@ -30,11 +31,9 @@ class MakeBuild(GenericBuild):
         pkg = self.package
         env = None
 
-        print (self.configure_path, self.makefile_path)
-
         if self.configure_path:
 
-            print style('Configuring...', 'blue', bold=True)
+            log.info(style('Configuring...', 'blue', bold=True))
 
             cmd = ['./configure', '--prefix', pkg.install_path]
             cmd.extend(pkg.config)
@@ -48,7 +47,7 @@ class MakeBuild(GenericBuild):
 
         if self.makefile_path:
 
-            print style('Making...', 'blue', bold=True)
+            log.info(style('Making...', 'blue', bold=True))
 
             env = env or pkg.fresh_environ()
             call(['make', '-j4'], cwd=os.path.dirname(self.makefile_path), env=env)
@@ -63,14 +62,15 @@ class MakeBuild(GenericBuild):
         pkg = self.package
 
         if not pkg.make_install:
-            print style('Warning:', 'yellow', bold=True), 'Skipping `make install` and installing full package.'
-            print 'Usually you will want to specify one of:'
-            print '    --make-install'
-            print '    --build-subdir PATH'
-            print '    --install-subdir PATH'
+            log.warning('Skipping `make install` and installing full package.\n'
+                'Usually you will want to specify one of:\n'
+                '    --make-install\n'
+                '    --build-subdir PATH\n'
+                '    --install-subdir PATH'
+            )
             return super(MakeBuild, self).install()
 
-        print style('Installing via `make install`', 'blue', bold=True)
+        log.info(style('Installing via `make install`', 'blue', bold=True))
         if call(
             ['make', 'install', '-j4'],
             cwd=os.path.dirname(self.makefile_path),

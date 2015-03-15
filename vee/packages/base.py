@@ -13,7 +13,7 @@ from vee.builds import make_builder
 from vee.cli import style
 from vee.exceptions import AlreadyInstalled, AlreadyLinked
 from vee.requirement import Requirement, requirement_parser
-from vee.subproc import call, call_log
+from vee.subproc import call
 from vee.utils import cached_property, makedirs
 from vee import log
 

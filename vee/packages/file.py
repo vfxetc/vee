@@ -8,6 +8,7 @@ import urlparse
 from vee.cli import style
 from vee.packages.base import BasePackage
 from vee.utils import makedirs
+from vee import log
 
 
 class FilePackage(BasePackage):
@@ -30,11 +31,6 @@ class FilePackage(BasePackage):
 
         self._assert_paths(package=True)
 
-        # Don't shortcut on files.
-        if False and os.path.exists(self.package_path):
-            print style('Already copied.', 'blue', bold=True)
-            return
-
         if os.path.exists(self.package_path):
             if os.path.isdir(self.package_path):
                 shutil.rmtree(self.package_path)
@@ -43,8 +39,7 @@ class FilePackage(BasePackage):
         
         makedirs(os.path.dirname(self.package_path))
 
-        print style('Copying', 'blue', bold=True), style(self._url_path, bold=True)
-        print        '         to', style(self.package_path, bold=True)
+        log.info(style('Copying', 'blue', bold=True), style(self._url_path, bold=True))
 
         source = os.path.expanduser(self._url_path)
         if os.path.isdir(source):

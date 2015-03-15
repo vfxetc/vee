@@ -48,8 +48,7 @@ class PythonBuild(GenericBuild):
             ])
             cmd.extend(pkg.config)
 
-            with log.indent():
-                res = call(cmd, cwd=os.path.dirname(self.setup_path), env=pkg.fresh_environ())
+            res = call(cmd, cwd=os.path.dirname(self.setup_path), env=pkg.fresh_environ())
             if res:
                 raise RuntimeError('Could not build Python package')
 
@@ -94,7 +93,7 @@ class PythonBuild(GenericBuild):
         # python setup.py bdist_wheel
         if self.dist_path:
 
-            print style('Found Python Wheel:', 'blue', bold=True), style(os.path.basename(self.dist_path), bold=True)
+            log.info(style('Found Python Wheel: ', 'blue', bold=True) + style(os.path.basename(self.dist_path), bold=True))
             log.warning('Scripts and other data will not be installed.')
 
             if not pkg.package_path.endswith('.whl'):
@@ -119,7 +118,7 @@ class PythonBuild(GenericBuild):
         env['PYTHONPATH'] = '%s:%s' % (install_site_packages, env.get('PYTHONPATH', ''))
         os.makedirs(install_site_packages)
 
-        print style('Installing Python package...', 'blue', bold=True)
+        log.info(style('Installing Python package...', 'blue', bold=True))
 
         # Need to inject setuptools for this.
         cmd = ['python', '-c', 'import sys, setuptools; sys.argv[0]=__file__=\'setup.py\'; execfile(__file__)']
@@ -133,8 +132,8 @@ class PythonBuild(GenericBuild):
         ])
 
         
-        with log.indent():
-            res = call(cmd, cwd=os.path.dirname(self.setup_path), env=env)
+        res = call(cmd, cwd=os.path.dirname(self.setup_path), env=env,
+                   indent=True, verbosity=1)
         if res:
             raise RuntimeError('Could not install Python package')
 
