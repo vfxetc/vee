@@ -6,9 +6,9 @@ default: build
 build: bin/MOCKNAME
 
 bin/MOCKNAME: MOCKNAME.c
-	@ mkdir bin
+	@ mkdir -p bin
 	gcc -c -o $@.o $(CFLAGS) $<
-	gcc -o $@ -lMOCKLIB $(LDFLAGS) $@.o
+	gcc -o $@ $@.o -lMOCKLIB $(LDFLAGS)
 
 install:
 	mkdir -p "{prefix}/bin"
