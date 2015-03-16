@@ -66,10 +66,10 @@ def list_(args):
         print style_note(row['name'], path)
         if args.show_environ:
             for k, v in sorted(render_envvars(json.loads(row['environ']), row['path']).iteritems()):
-                v = v.replace(home.dev_root, '$VEE_DEV')
-                v = v.replace(home.root, '$VEE')
                 if os.environ.get(k):
                     v = v.replace(os.environ[k], '$' + k)
+                v = v.replace(home.dev_root, '$VEE_DEV')
+                v = v.replace(home.root, '$VEE')
                 print style('    %s=' % k) + v
 
 
@@ -139,7 +139,7 @@ def find(args):
             dir_names[:] = []
             args.path = dir_path
             args.name = os.path.basename(dir_path)
-            res = res or init(args, do_add=True)
+            res = res or init(args, do_add=True, is_find=True)
     if e:
         raise RuntimeError('There were errors adding dev packages.')
     return res
@@ -151,7 +151,7 @@ def find(args):
     argument('name'),
     help='init a new git repository'
 )
-def init(args, do_clone=False, do_install=False, do_add=False):
+def init(args, do_clone=False, do_install=False, do_add=False, is_find=False):
 
     do_init = not (do_clone or do_install or do_add)
 
@@ -164,8 +164,12 @@ def init(args, do_clone=False, do_install=False, do_add=False):
     # which no longer exist.
     for row in con.execute('SELECT * FROM dev_packages WHERE name = ?', [name]):
         if not args.force and os.path.exists(os.path.join(row['path'], '.git')):
-            print style_error('"%s" already exists:' % name, row['path'])
-            return 1
+            if is_find:
+                print style_note('"%s" already exists:' % name, row['path'])
+                return
+            else:
+                print style_error('"%s" already exists:' % name, row['path'])
+                return 1
         else:
             con.execute('DELETE FROM dev_packages WHERE id = ?', [row['id']])
 
@@ -201,6 +205,9 @@ def init(args, do_clone=False, do_install=False, do_add=False):
         print style_note('Found %s in %s' % (name, env_repo.name), str(req))
         makedirs(dev_repo.work_tree)
         dev_repo.clone_if_not_exists(url, shallow=False)
+
+    elif do_add:
+        print style_note('Adding %s from %s' % (name, path))
 
     req = Requirement(['file:' + path], home=home)
     package = req.package
