@@ -8,7 +8,7 @@ from vee import log
 
 
 @command(
-    argument('--re-install', action='store_true'),
+    argument('--reinstall', action='store_true'),
     argument('--no-install', action='store_true'),
     argument('--force', action='store_true'),
     argument('--raw', action='store_true', help='requirements are raw directories'),
@@ -43,12 +43,12 @@ def link(args):
         if args.no_install and not req.installed:
             raise CliError('not installed: %s' % req)
 
-        if not args.re_install:
+        if not args.reinstall:
             req.package.resolve_existing(env=env)
 
         try:
             with log.indent():
-                req.auto_install(force=args.re_install)
+                req.auto_install(force=args.reinstall)
         except AlreadyInstalled:
             pass
         
