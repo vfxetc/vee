@@ -55,11 +55,19 @@ class CallbackHandler(logging.Handler):
 
 
 
+_default_verbosity = {
+    logging.DEBUG: 2
+}
+
 class StdoutHandler(logging.Handler):
     
     def filter(self, record):
-        # Make sure it isn't too verbose.
-        verbosity = getattr(record, 'verbosity', 0)
+        # Make sure it isn't too verbose. DEBUG messages default to level 2,
+        # and everything else gets through. If we introduct TRACE or BLATHER
+        # levels, we may drop DEBUG to verbosity 1.
+        verbosity = getattr(record, 'verbosity', None)
+        if verbosity is None:
+            verbosity = _default_verbosity.get(record.levelno, 0)
         return verbosity <= config.verbosity
 
     def format(self, record):
@@ -85,7 +93,7 @@ root.addHandler(StdoutHandler())
 
 
 
-def log(level, message, verbosity=0, name=None, _frame=1):
+def log(level, message, verbosity=None, name=None, _frame=1):
     if name is None:
         frame = sys._getframe(_frame)
         name = frame.f_globals['__name__']
