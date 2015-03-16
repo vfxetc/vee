@@ -1,11 +1,11 @@
 
+- Pacackage.dependencies() -> list of Homebrew dependencies, that get installed
+  and linked as top-level packages.
+
 - `vee upgrade` after a `vee add` without a push wont find the commit
 
 - `vee link REQUIREMENT` should use the environment of the default repo
 
-- don't need Qt or PyQT on Linux
-    - templating
-    
 - s/Home/Context
 
 - put `vee.__about__.__revision__` into every database row

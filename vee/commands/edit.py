@@ -18,4 +18,4 @@ def edit(args):
     cmd = []
     cmd.extend(shlex.split(os.environ['EDITOR']))
     cmd.append(os.path.join(env_repo.work_tree, 'requirements.txt'))
-    call(cmd)
+    os.execvp(cmd[0], cmd)
