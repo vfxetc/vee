@@ -87,7 +87,13 @@ class Environment(object):
                             with open(new_path, 'wb') as new_fh:
                                 new_fh.write(new_shebang)
                                 new_fh.writelines(old_fh)
-                            shutil.copystat(old_path, new_path)
+                            try:
+                                shutil.copystat(old_path, new_path)
+                            except OSError as e:
+                                # These often come up when you are not the owner
+                                # of the file.
+                                if e.errno != errno.EPERM:
+                                    raise
                             continue
 
                 # Symlink it into place.
