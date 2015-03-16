@@ -1,4 +1,20 @@
 
+- log.log(..., preserve_whitespace=True) -> use sys.stdout.write
+
+- when asserting a link doesnt exist, actually check the install path of the
+  package as well.
+      Link(row).exists
+
+- very simple automatic persistence model:
+
+    __db_column_map__ = {
+        'attrname': 'colname'
+    }
+
+    DbObject.db_insert_or_replace()
+    DbObject.db_update()
+    DbObject.db_delete()
+
 - Pacackage.dependencies() -> list of Homebrew dependencies, that get installed
   and linked as top-level packages.
 

@@ -62,7 +62,7 @@ class _CallOutput(object):
         logger = self.logger
         if logger is None:
             logger = self.logger = logging.getLogger('vee.subproc[%d].%s' % (self.proc.pid, self.name))
-        logger.info(chunk, extra={'verbosity': self.verbosity})
+        logger.info(chunk, extra={'verbosity': self.verbosity, 'from_subproc': True})
 
     def start(self, proc):
 

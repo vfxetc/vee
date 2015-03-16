@@ -16,7 +16,7 @@ def cli_exc_str(obj, use_magic=True):
     title = getattr(obj, '__cli_title__', None) or obj.__class__.__name__
     format = getattr(obj, '__cli_format__', None)
     if format is not None:
-        message = format.format(self=e)
+        message = format.format(self=obj)
     else:
         message = str(obj)
     detail = getattr(obj, '__cli_detail__', None)

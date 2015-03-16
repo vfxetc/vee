@@ -83,9 +83,20 @@ class StdoutHandler(logging.Handler):
         return record.message
 
     def emit(self, record):
+        
         indent = config.indent
+
+        # Subprocesses should not have a trailing newline added.
+        from_subproc = getattr(record, 'from_subproc', None)
+        if from_subproc:
+            msg = record.msg % record.args if record.args else record.msg
+            msg = msg.replace('\n', '\n' + indent)
+            sys.stdout.write(msg)
+            sys.stdout.flush()
+            return
+
         msg = self.format(record)
-        for line in msg.splitlines():
+        for line in msg.splitlines(True):
             print indent + line
 
 
