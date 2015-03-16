@@ -78,12 +78,13 @@ def call(cmd, **kwargs):
     )
 
     check = kwargs.pop('check', True)
-    indent = kwargs.pop('indent', True)
+    
+    verbosity = kwargs.pop('verbosity', 0)
+    indent = kwargs.pop('indent', False)
     if indent:
         indent = log.indent()
         indent.__enter__()
 
-    verbosity = kwargs.pop('verbosity', 1)
     stdout = _CallOutput(kwargs.get('stdout'), 'stdout', verbosity)
     stderr = _CallOutput(kwargs.get('stderr'), 'stderr', verbosity)
 
