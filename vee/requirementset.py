@@ -122,6 +122,7 @@ class RequirementSet(list):
             try:
                 req = Requirement(spec, home=self.home)
             except RequirementParseError as e:
+                log.warning('parse error: %s' % e)
                 self.append(('', '', '# RequirementParseError: %s' % e.args))
                 self.append(('', '', '# ' + line.strip()))
                 continue
