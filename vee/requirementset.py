@@ -1,7 +1,9 @@
 import re
+import sys
 
 from vee.requirement import Requirement, requirement_parser, RequirementParseError
 from vee.utils import guess_name
+from vee import log
 
 
 class Envvar(tuple):
@@ -29,6 +31,24 @@ class Header(object):
 
     def __str__(self):
         return '%s: %s' % (self.name, self.value)
+
+
+class Control(object):
+
+    def __init__(self, type_, expr):
+        self.type = type_
+        self.expr = expr
+
+    def __repr__(self):
+        return 'Control(%r, %r)' % (self.type, self.expr)
+
+    def __str__(self):
+        return '%% %s%s%s%s' % (
+            self.type,
+            ' ' if self.expr else '',
+            self.expr,
+            ':' if self.expr else '',
+        )
 
 
 class RequirementSet(list):
@@ -75,6 +95,14 @@ class RequirementSet(list):
 
             if not spec:
                 self.append((before, '', after))
+                continue
+
+            # Note: This will freak out with colons in comments.
+            # TODO: Pull parsing from PyHAML.
+            m = re.match(r'^%\s*(if|elif|else|endif)\s*(.*?):?\s*$', spec)
+            if m:
+                type_, expr = m.groups()
+                self.append((before, Control(type_, expr), after))
                 continue
 
             m = re.match(r'^(\w+)=(\S.*)$', spec)
@@ -136,10 +164,35 @@ class RequirementSet(list):
                 names.add(name.lower())
                 req.name = name
 
-    def iter_requirements(self):
-        for _, element, _ in self:
-            if isinstance(element, Requirement):
-                yield element
+    def iter_requirements(self, eval_control=True):
+
+        include_stack = [True]
+        control_namespace = {
+            're': re,
+            'sys': sys,
+            'OSX': sys.platform == 'darwin',
+            'MACOS': sys.platform == 'darwin',
+            'LINUX': sys.platform.startswith('linux'),
+        }
+
+        for _, el, _ in self:
+
+            if eval_control and isinstance(el, Control):
+                if el.type == 'if':
+                    include_stack.append(bool(eval(el.expr, control_namespace)))
+                elif el.type == 'elif':
+                    include_stack.pop()
+                    include_stack.append(bool(eval(el.expr, control_namespace)))
+                elif el.type == 'endif':
+                    include_stack.pop()
+                else:
+                    raise ValueError('unknown control type %r' % el.type)
+
+            if eval_control and not include_stack[-1]:
+                continue
+
+            if isinstance(el, Requirement):
+                yield el
 
     def iter_git_requirements(self):
         for req in self.iter_requirements():
@@ -184,6 +237,8 @@ class RequirementSet(list):
                     req = element = element.package.freeze(environ=False)
                 else:
                     req = element
+                if req.name and req.name == guess_name(req.url):
+                    req.name = None
                 for k, v in environ.iteritems():
                     if req.environ.get(k) == v:
                         del req.environ[k]
