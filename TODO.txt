@@ -3,6 +3,7 @@
   and linked as top-level packages.
 
 - `vee upgrade` after a `vee add` without a push wont find the commit
+    - `vee upgrade --dirty` should rewrite GIT urls to pull from dev
 
 - `vee link REQUIREMENT` should use the environment of the default repo
 
@@ -20,8 +21,6 @@
 - Homebrew isn't registering installs on first install: "ValueError: cannot record requirement that is not installed"
     - name in the database is "homebrew+x264"; perhaps this is the reason?
 
-- Homebrew dependencies relink every time
-
 - `--relocatable` flag for generic packages
     - Homebrew links against the main prefix. This seems hard for us to do.
       We can either link against the install_path(s), or $VEE/opt.
@@ -37,8 +36,6 @@
     -  $KEY  vs $$KEY
     - $(KEY) vs ${KEY}
     -  $KEY  vs  @KEY  vs %KEY
-
-- % if sys.platform == 'Darwin': templates in requirements files
 
 - can vendor macholib and elffile (or patchelf) in order to relocate libs on
   install (via `--relocate`)

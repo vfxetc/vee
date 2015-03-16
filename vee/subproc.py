@@ -138,3 +138,11 @@ def call(cmd, **kwargs):
 
     return proc.returncode
 
+
+def which(name):
+    bases = os.environ['PATH'].split(':')
+    for base in bases:
+        path = os.path.join(os.path.expanduser(base), name)
+        if os.path.exists(path):
+            return path
+

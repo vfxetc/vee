@@ -4,8 +4,6 @@ from . import *
 class TestWorkflows(TestCase):
 
     def test_dev_existing_package(self):
-        """We will start with an existing package in an existing repo, develop
-        against it, commit it, push, and redeploy."""
 
         test_utils = MockPackage('tdep_test_utils', 'test_utils')
         test_utils.render_commit()
