@@ -11,7 +11,7 @@ class EnvironmentRepo(GitRepo):
 
     def __init__(self, dbrow, home):
         super(EnvironmentRepo, self).__init__(
-            work_tree=home._abs_path('repos', dbrow['name']),
+            work_tree=dbrow['path'] or home._abs_path('repos', dbrow['name']),
             remote_name=dbrow['remote'],
             branch_name=dbrow['branch'],
         )

@@ -19,6 +19,7 @@ def _create_initial_tables(con):
         fetched_at TIMESTAMP,
 
         name TEXT UNIQUE NOT NULL,
+        path TEXT,
         remote TEXT NOT NULL DEFAULT 'origin',
         branch TEXT NOT NULL DEFAULT 'master',
 
@@ -133,6 +134,14 @@ def _create_initial_tables(con):
         value TEXT NOT NULL
 
     )''')
+
+
+@_migrations.append
+def _create_repos_path_column(con):
+    existing = set(row['name'] for row in con.execute('PRAGMA table_info(repositories)'))
+    if 'path' not in existing:
+        con.execute('''ALTER TABLE repositories ADD COLUMN path TEXT''')
+
 
 
 

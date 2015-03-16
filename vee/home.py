@@ -1,4 +1,5 @@
 import os
+import re
 
 from vee._vendor import pkg_resources
 
@@ -80,10 +81,10 @@ class Home(object):
         
         return env_repo
 
-    def create_env_repo(self, url=None, name=None, remote=None, branch=None, is_default=None):
+    def create_env_repo(self, path=None, url=None, name=None, remote=None, branch=None, is_default=None):
 
-        if url:
-            name or re.sub(r'\.git$', '', os.path.basename(url))
+        if url or path:
+            name = name or re.sub(r'\.git$', '', os.path.basename(url or path))
         else:
             name = name or self.default_repo_name or PRIMARY_REPO
 
@@ -96,14 +97,14 @@ class Home(object):
             raise ValueError('%r repo already exists' % name)
 
         con = self.db.connect()
-        cur = con.execute('INSERT OR REPLACE INTO repositories (name, remote, branch, is_default) VALUES (?, ?, ?, ?)', [
-                          name, remote or 'origin', branch or 'master', bool(is_default)])
+        cur = con.execute('INSERT OR REPLACE INTO repositories (name, path, remote, branch, is_default) VALUES (?, ?, ?, ?, ?)', [
+                          name, path, remote or 'origin', branch or 'master', bool(is_default)])
         row = con.execute('SELECT * FROM repositories WHERE id = ?', [cur.lastrowid]).fetchone()
 
         env_repo = EnvironmentRepo(row, home=self)
         if url:
             env_repo.clone_if_not_exists(url)
-        else:
+        elif not env_repo.exists:
             makedirs(env_repo.work_tree)
             env_repo.git('init')
 

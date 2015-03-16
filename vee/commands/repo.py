@@ -12,6 +12,7 @@ from vee.utils import makedirs
     help='manage environment repos',
     usage="""
        vee repo init OPTIONS NAME
+   or: vee repo add OPTIONS PATH [NAME]
    or: vee repo clone OPTIONS URL [NAME]
    or: vee repo set OPTIONS NAME
    or: vee repo delete NAME
@@ -35,6 +36,25 @@ def init(args, is_set=False):
     home.create_env_repo(
         name=args.name,
         url=None,
+        remote=args.remote,
+        branch=args.branch,
+        is_default=args.default,
+    )
+
+
+@repo.subcommand(
+    argument('--default', action='store_true', help='this repo is the default'),
+    argument('--remote', help='git remote to track', default='origin'),
+    argument('--branch', help='git branch to track', default='master'),
+    argument('path'),
+    argument('name', nargs='?'),
+    help='add an existing repository'
+)
+def add(args, is_set=False):
+    home = args.assert_home()
+    home.create_env_repo(
+        name=args.name,
+        path=args.path,
         remote=args.remote,
         branch=args.branch,
         is_default=args.default,
