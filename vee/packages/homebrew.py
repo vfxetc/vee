@@ -120,6 +120,9 @@ class HomebrewPackage(GitPackage):
 
     def link(self, env, force=None):
         
+        # Be careful with this, since it is a full replacement of the base link
+        # method.
+        
         self._assert_paths(install=True)
         frozen = self.freeze()
         if not force:
@@ -129,8 +132,9 @@ class HomebrewPackage(GitPackage):
         for name in self._brew('deps', '-n', self.package_name, stdout=True).strip().split():
             path = os.path.join(self.package_path, 'Cellar', self.install_name_from_info(name))
             if os.path.exists(path):
-                log.info(style('Linking ', 'blue', bold=True) + style('homebrew+%s (homebrew+%s dependency)' % (name, self.package_name), bold=True))
+                log.info(style('Linking ', 'blue', bold=True) + style('homebrew:%s (homebrew:%s dependency)' % (name, self.package_name), bold=True))
                 env.link_directory(path)
 
         log.info(style('Linking ', 'blue', bold=True) + style(str(frozen), bold=True))
         env.link_directory(self.install_path)
+        self._record_link(env)

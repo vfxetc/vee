@@ -275,6 +275,7 @@ class BasePackage(object):
         if self._db_id is None:
             self._set_names(package=True, build=True, install=True)
             if not self.installed:
+                log.warning('%s does not appear to be installed to %s' % (self.name, self.install_path))
                 raise ValueError('cannot record requirement that is not installed')
             cur = self.home.db.cursor()
             cur.execute('''
