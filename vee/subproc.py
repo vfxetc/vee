@@ -13,7 +13,7 @@ from vee import log
 
 class _CallOutput(object):
 
-    def __init__(self, specs, name, verbosity=0):
+    def __init__(self, specs, name, verbosity=0, pty=None):
 
         self.verbosity = verbosity
         self.callbacks = []
@@ -36,21 +36,48 @@ class _CallOutput(object):
             else:
                 raise TypeError('output spec must be True, None, or a callback')
 
+        if pty is None:
+            pty = not self.return_buffer
+
+        if pty:
+            try:
+                self.master_fd, self.slave_fd = os.openpty()
+            except OSError:
+                self.master_fd, self.slave_fd = os.pipe()
+        else:
+            self.master_fd, self.slave_fd = os.pipe()
+
+        log.debug('pipe: %d %d' % (self.master_fd, self.slave_fd))
+
+    def __del__(self):
+        self.close()
+
+    def close(self):
+        if self.master_fd is not None:
+            os.close(self.master_fd)
+            self.master_fd = None
+        if self.slave_fd is not None:
+            os.close(self.slave_fd)
+            self.slave_fd = None
+
     def log_chunk(self, chunk):
         logger = self.logger
         if logger is None:
             logger = self.logger = logging.getLogger('vee.subproc[%d].%s' % (self.proc.pid, self.name))
         logger.info(chunk, extra={'verbosity': self.verbosity})
 
-    def start(self, proc, in_stream):
+    def start(self, proc):
+
+        os.close(self.slave_fd)
+        self.slave_fd = None
+
         self.proc = proc
-        self.in_stream = in_stream
         self.thread = threading.Thread(target=self._target)
         self.thread.daemon = True
         self.thread.start()
 
     def _target(self):
-        fd = self.in_stream.fileno()
+        fd = self.master_fd
         size = 2**10
         callbacks = self.callbacks
         while True:
@@ -63,6 +90,7 @@ class _CallOutput(object):
 
     def join(self):
         self.thread.join()
+        self.close()
 
 
 def call(cmd, **kwargs):
@@ -72,7 +100,7 @@ def call(cmd, **kwargs):
     VEE = os.environ.get('VEE')
     cmd_collapsed = [x.replace(VEE, '$VEE') if VEE else x for x in cmd]
     log.debug(
-        style('$', 'blue', bold=True) + ' ' + style(cmd_collapsed[0], bold=True) + ' ' + ' '.join(cmd_collapsed[1:]),
+        '$ ' + ' '.join(cmd_collapsed),
         verbosity=2,
         _frame=3,
     )
@@ -85,15 +113,13 @@ def call(cmd, **kwargs):
         indent = log.indent()
         indent.__enter__()
 
-    stdout = _CallOutput(kwargs.get('stdout'), 'stdout', verbosity)
-    stderr = _CallOutput(kwargs.get('stderr'), 'stderr', verbosity)
+    pty = kwargs.pop('pty', None)
+    stdout = _CallOutput(kwargs.pop('stdout', None), 'stdout', verbosity, pty=pty)
+    stderr = _CallOutput(kwargs.pop('stderr', None), 'stderr', verbosity, pty=pty)
 
-    kwargs['stdout'] = kwargs['stderr'] = subprocess.PIPE
-    kwargs['bufsize'] = 0
-
-    proc = subprocess.Popen(cmd, **kwargs)
-    stdout.start(proc, proc.stdout)
-    stderr.start(proc, proc.stderr)
+    proc = subprocess.Popen(cmd, stdout=stdout.slave_fd, stderr=stderr.slave_fd, bufsize=0, **kwargs)
+    stdout.start(proc)
+    stderr.start(proc)
 
     proc.wait()
     stdout.join()
