@@ -329,25 +329,28 @@ class BasePackage(object):
 
         if env:
             values.append(env.db_id())
-            row = cur.execute('''
+            cur.execute('''
                 SELECT packages.*, links.id as link_id FROM packages
                 LEFT OUTER JOIN links ON packages.id = links.package_id
                 WHERE %s AND links.environment_id = ?
                 ORDER BY links.created_at DESC, packages.created_at DESC
-                LIMIT 1
-            ''' % clause, values).fetchone()
+            ''' % clause, values)
         else:
-            row = cur.execute('''
+            cur.execute('''
                 SELECT packages.*, NULL as link_id FROM packages
                 WHERE %s
                 ORDER BY packages.created_at DESC
-                LIMIT 1
-            ''' % clause, values).fetchone()
+            ''' % clause, values)
 
-        if not row:
+        for row in cur:
+            if not os.path.exists(row['install_path']):
+                log.warning('Found %s (%d) does not exist at %s' % (self.name or row['name'], row['id'], row['install_path']))
+                continue
+            break
+        else:
             return
 
-        log.debug('Resolved %s to %d' % (self.name or row['name'], row['id']))
+        log.debug('Found %s (%d) at %s' % (self.name or row['name'], row['id'], row['install_path']))
 
         # Everything below either already matches or was unset.
         self._db_id = row['id']
