@@ -73,7 +73,7 @@ class StdoutHandler(logging.Handler):
     def format(self, record):
         record.message = record.msg % record.args if record.args else record.msg
         if record.levelname == 'DEBUG':
-            record.message = style('Debug: %s' % record.message, faint=True)
+            record.message = style('Debug [%s:%s]: %s' % (record.name, record.lineno or '', record.message), faint=True)
         elif record.levelname != 'INFO':
             colour = {'WARNING': 'yellow'}.get(record.levelname, 'red')
             record.message = '%s %s' % (
@@ -94,10 +94,18 @@ root.addHandler(StdoutHandler())
 
 
 def log(level, message, verbosity=None, name=None, _frame=1):
-    if name is None:
-        frame = sys._getframe(_frame)
-        name = frame.f_globals['__name__']
-    logging.getLogger(name).log(level, message, extra={'verbosity': verbosity})
+
+    # We must manually construct a LogRecord, and "handle" it, since we want
+    # to set the lineno to be further up the pipe.
+    
+    frame = sys._getframe(_frame)
+    code = frame.f_code
+    name = name or frame.f_globals['__name__']
+
+    logger = logging.getLogger(name)
+    record = logger.makeRecord(name, level, code.co_filename, frame.f_lineno, message, (), None, code.co_name, {'verbosity': verbosity})
+    logger.handle(record)
+
 
 def debug(*args, **kwargs):
     kwargs.setdefault('_frame', 2)
