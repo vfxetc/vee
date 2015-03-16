@@ -187,6 +187,8 @@ class RequirementSet(list):
                 for k, v in environ.iteritems():
                     if req.environ.get(k) == v:
                         del req.environ[k]
+                    if req.base_environ.get(k) == v:
+                        del req.base_environ[k]
 
             yield '%s%s%s\n' % (before or '', element, after or '')
 

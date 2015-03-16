@@ -1,6 +1,12 @@
 
+- don't need Qt or PyQT on Linux
+    - templating
+    
 - s/Home/Context
 
+- put `vee.__about__.__revision__` into every database row
+- `vee server` and `vee client`
+  - make a super simple socket protocol. just send JSON back and forth
 
 - cli._config_stack for what puts does, and log._config_stack for how it is
   logged.

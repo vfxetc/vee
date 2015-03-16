@@ -157,7 +157,7 @@ class Requirement(object):
         return args
 
     def __str__(self):
-        return ' '.join(self.to_args())
+        return ' '.join(self.to_args(exclude=('base_environ')))
 
     def __repr__(self):
         return '%s(%r)' % (self.__class__.__name__, str(self))
