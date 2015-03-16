@@ -1,4 +1,7 @@
 
+- `vee upgrade` after a `vee add` without a push wont find the commit
+
+- `vee link REQUIREMENT` should use the environment of the default repo
 
 - don't need Qt or PyQT on Linux
     - templating
@@ -9,15 +12,14 @@
 - `vee server` and `vee client`
   - make a super simple socket protocol. just send JSON back and forth
 
-- cli._config_stack for what puts does, and log._config_stack for how it is
-  logged.
-
 - linking can link top-level directories. Only when another thing also tries to
   traverse into the same directory, is the original thing broken up into the
   next depth of links, and then recursion continues. This is tricky when you
   need to copy scripts, and link other things
 
 - Homebrew isn't registering installs on first install: "ValueError: cannot record requirement that is not installed"
+    - name in the database is "homebrew+x264"; perhaps this is the reason?
+
 - Homebrew dependencies relink every time
 
 - `--relocatable` flag for generic packages

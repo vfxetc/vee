@@ -47,8 +47,6 @@ class _CallOutput(object):
         else:
             self.master_fd, self.slave_fd = os.pipe()
 
-        log.debug('pipe: %d %d' % (self.master_fd, self.slave_fd))
-
     def __del__(self):
         self.close()
 

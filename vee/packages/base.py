@@ -353,11 +353,13 @@ class BasePackage(object):
         self.package_name = row['package_name']
         self.build_name = row['build_name']
         self.install_name = row['install_name']
-        if (self.package_path != row['package_path'] or
-            self.build_path != row['build_path'] or
-            self.install_path != row['install_path']
-        ):
-            raise RuntimeError('recorded paths dont match')
+
+        if self.package_path != row['package_path']:
+            log.warning('Package paths don\'t match:\n  old: %r\n  new: %r' % (row['package_path'], self.package_path))
+        if self.build_path != row['build_path']:
+            log.warning('Builds paths don\'t match:\n  old: %r\n  new: %r' % (row['build_path'], self.build_path))
+        if self.install_path != row['install_path']:
+            log.warning('Install paths don\'t match:\n  old: %r\n  new: %r' % (row['install_path'], self.install_path))
 
         return True
 

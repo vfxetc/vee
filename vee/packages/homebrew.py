@@ -74,6 +74,7 @@ class HomebrewPackage(GitPackage):
             self.build_name = self.install_name_from_info()
         if install and not self.install_name:
             self.install_name = self.build_name
+            log.debug('install_name for %s set to %r' % (self.name, self.install_name))
 
     def install_name_from_info(self, name=None, info=None):
         name = name or self.package_name
@@ -120,9 +121,9 @@ class HomebrewPackage(GitPackage):
     def link(self, env, force=None):
         
         self._assert_paths(install=True)
-
+        frozen = self.freeze()
         if not force:
-            self._assert_unlinked(env)
+            self._assert_unlinked(env, frozen)
 
         # We want to link in all dependencies as well.
         for name in self._brew('deps', '-n', self.package_name, stdout=True).strip().split():
@@ -130,4 +131,6 @@ class HomebrewPackage(GitPackage):
             if os.path.exists(path):
                 log.info(style('Linking ', 'blue', bold=True) + style('homebrew+%s (homebrew+%s dependency)' % (name, self.package_name), bold=True))
                 env.link_directory(path)
+
+        log.info(style('Linking ', 'blue', bold=True) + style(str(frozen), bold=True))
         env.link_directory(self.install_path)
