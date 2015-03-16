@@ -9,6 +9,9 @@ from vee.cli import style
 root = logging.getLogger('vee')
 root.setLevel(logging.DEBUG)
 
+# Generally, we don't want our logs to enter the main logging system.
+root.propagate = False
+
 
 _config_stack = Stack()
 config = _config_stack.proxy()

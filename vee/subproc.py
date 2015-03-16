@@ -50,11 +50,12 @@ class _CallOutput(object):
         self.thread.start()
 
     def _target(self):
-        in_stream = self.in_stream
+        fd = self.in_stream.fileno()
         size = 2**10
         callbacks = self.callbacks
         while True:
-            chunk = in_stream.read(size)
+            # Need to use os.read instead of fh.read so that there is no buffering at all.
+            chunk = os.read(fd, size)
             if not chunk:
                 return
             for func in callbacks:

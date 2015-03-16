@@ -15,4 +15,4 @@ def brew(args, *command):
 
     # This is such a hack.
     req = Requirement('homebrew:', home=home)
-    req.package._brew(*command)
+    req.package._brew(*command, verbosity=0, indent=False)

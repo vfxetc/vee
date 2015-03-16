@@ -25,4 +25,4 @@ def git(args, *command):
         return 1
     
     makedirs(repo.work_tree)
-    repo.git(*command, silent=True)
+    repo.git(*command, verbosity=0, indent=False)
