@@ -61,7 +61,7 @@ def guess_name(path):
     path = re.sub(r'([._-])v?\d+.*$', '', path) # Version numbers.
     path = re.sub(r'([._-])[._-]+', r'\1', path) # Collapse punctuation.
 
-    part_iter = reversed(re.split(r'[@:/]', path)) # Split!
+    part_iter = reversed(re.split(r'[@:/+]', path)) # Split!
     part_iter = (re.sub(r'(^\W+|\W+$)', '', x) for x in part_iter) # Strip outer punctuation.
     part_iter = (x for x in part_iter if x) # Skip empties.
 

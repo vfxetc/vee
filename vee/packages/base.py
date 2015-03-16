@@ -298,6 +298,7 @@ class BasePackage(object):
                  ]
             )
             self._db_id = cur.lastrowid
+            log.debug('%s added to DB as %d' % (self.name, self._db_id))
         return self._db_id
 
     def resolve_existing(self, env=None):
@@ -344,6 +345,8 @@ class BasePackage(object):
 
         if not row:
             return
+
+        log.debug('Resolved %s to %d' % (self.name or row['name'], row['id']))
 
         # Everything below either already matches or was unset.
         self._db_id = row['id']
