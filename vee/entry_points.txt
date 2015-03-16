@@ -19,6 +19,7 @@ exec = vee.commands.exec_:exec_
 # Underlying commands.
 brew = vee.commands.brew:brew
 git = vee.commands.git:git
+sqlite3 = vee.commands.sqlite3:sqlite3
 
 # Development.
 add = vee.commands.add:add
