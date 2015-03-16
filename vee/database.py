@@ -159,6 +159,11 @@ class _Connection(sqlite3.Connection):
         super(_Connection, self).__init__(*args, **kwargs)
         self.row_factory = sqlite3.Row
 
+        # We wish we could use unicode everywhere, but there are too many
+        # unknown codepaths for us to evaluate its safety. Python 3 would
+        # definitely help us here...
+        self.text_factory = str
+
     def cursor(self):
         return super(_Connection, self).cursor(_Cursor)
 
