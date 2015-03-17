@@ -9,13 +9,14 @@ import sys
 
 from vee._vendor import pkg_resources
 
+from vee import log
 from vee.builds import make_builder
 from vee.cli import style
 from vee.exceptions import AlreadyInstalled, AlreadyLinked
+from vee.libs import find_libraries, find_package_libraries
 from vee.requirement import Requirement, requirement_parser
 from vee.subproc import call
 from vee.utils import cached_property, makedirs
-from vee import log
 
 
 class BasePackage(object):
@@ -252,6 +253,12 @@ class BasePackage(object):
             raise RuntimeError('package is not installed')
         log.info(style('Uninstalling ', 'blue', bold=True) + style(self.install_path, bold=True))
         shutil.rmtree(self.install_path)
+
+    def find_libraries(self, force=False):
+        self._assert_paths(install=True)
+        if not self.installed:
+            raise RuntimeError('cannot find libraries if not installed')
+        return find_installed_libraries(self.home, self.install_path, self.db_id(), force)
 
     def link(self, env, force=False):
         self._assert_paths(install=True)

@@ -72,7 +72,9 @@ def _create_initial_tables(con):
         -- Paths for direct lookup.
         package_path TEXT,
         build_path TEXT,
-        install_path TEXT
+        install_path TEXT,
+
+        scanned_for_libraries INTEGER NOT NULL DEFAULT 0
 
     )''')
 
@@ -148,6 +150,24 @@ def _create_packages_etag_column(con):
     existing = set(row['name'] for row in con.execute('PRAGMA table_info(packages)'))
     if 'etag' not in existing:
         con.execute('''ALTER TABLE packages ADD COLUMN etag TEXT''')
+
+@_migrations.append
+def _create_installed_libraries(con):
+
+    existing = set(row['name'] for row in con.execute('PRAGMA table_info(packages)'))
+    if 'scanned_for_libraries' not in existing:
+        con.execute('''ALTER TABLE packages ADD COLUMN scanned_for_libraries INTEGER NOT NULL DEFAULT 0''')
+
+    con.execute('''CREATE TABLE installed_libraries (
+
+        id INTEGER PRIMARY KEY,
+        created_at TIMESTAMP NOT NULL DEFAULT (datetime('now')),
+
+        package_id INTEGER REFERENCES packages(id) NOT NULL,
+        name TEXT NOT NULL,
+        rel_path TEXT NOT NULL
+
+    )''')
 
 
 
