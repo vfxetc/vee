@@ -1,14 +1,20 @@
 
-- `--etag` on requirements for busting caches `--etag`
-    - this is actually the same as `--install-name`
-    - this still wont force homebrew to reinstall
+- `--etag` on requirements for busting caches
+    - this is almost the same as `--install-name`, except we can attach extra
+    - logic to is in order to force reinstalls even if it can find something
+      that exists.
 
+- HomebrewPackage should error on install-name, since we can't actually
+  change that.
 
-- log.log(..., preserve_whitespace=True) -> use sys.stdout.write
+- python-config needs to exist at install time for a bunch of stuff for most
+  cases we can have upgrade just make sure the environment exists before it
+  tries to build anything, and assume that the user has activated that
+  environment
 
-- when asserting a link doesnt exist, actually check the install path of the
-  package as well.
-      Link(row).exists
+  - perhaps, we should be running with a the python found at "real_prefix",
+    instead of the virtual one. This could end up getting really tricky at
+    some point.
 
 - very simple automatic persistence model:
 
@@ -20,7 +26,7 @@
     DbObject.db_update()
     DbObject.db_delete()
 
-- Pacackage.dependencies() -> list of Homebrew dependencies, that get installed
+- Package.dependencies() -> list of Homebrew dependencies, that get installed
   and linked as top-level packages.
 
 - `vee upgrade` after a `vee add` without a push wont find the commit
