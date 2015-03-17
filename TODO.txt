@@ -1,11 +1,16 @@
 
 - `--etag` on requirements for busting caches
     - this is almost the same as `--install-name`, except we can attach extra
-    - logic to is in order to force reinstalls even if it can find something
+      logic to is in order to force reinstalls even if it can find something
       that exists.
 
 - HomebrewPackage should error on install-name, since we can't actually
   change that.
+
+- We *could* isolate the various homebrew packages. You must make a
+  $PREFIX/bin/brew link to the origin command, and a $PREFIX/Cellar directory.
+  Then you can symlink dependencies into $PREFIX/Cellar/$NAME/$VERSIONISH and
+  do whatever you want.
 
 - python-config needs to exist at install time for a bunch of stuff for most
   cases we can have upgrade just make sure the environment exists before it
@@ -16,15 +21,30 @@
     instead of the virtual one. This could end up getting really tricky at
     some point.
 
+- reloate packages
+    - When homebrew makes bottles, it replaces its cellar and prefix in library
+      names with @@HOMEBREW_CELLAR@@ and @@HOMEBREW_PREFIX@@. 
+    - when installing, we could scan the install products for *.so and *.dylib,
+      and throw them in the database for later relinking. It takes ~5s on my
+      laptop to do a full scan for SOs, so it could be advantageous to do this
+      in advance.
+    - we should relocate against the absolute paths of packages, not those in
+      a final environment nor in $VEE/opt. This makes individual installs more
+      stable, but puts the onus on us to rebuild/relocate if we bump dependencies.
+      It also means we should likely have a package_relocations table which
+      decribes this relationship.
+    - we may also need to rewrite pkgconfig files, which could be very hairy
+
 - very simple automatic persistence model:
 
     __db_column_map__ = {
         'attrname': 'colname'
     }
 
-    DbObject.db_insert_or_replace()
-    DbObject.db_update()
-    DbObject.db_delete()
+    dbobject.rowid or dbobject.persist()
+    DBObject.persist_in_db() -> insert or update
+    DbObject.delete_from_db() -> delete from database
+
 
 - Package.dependencies() -> list of Homebrew dependencies, that get installed
   and linked as top-level packages.
@@ -38,7 +58,9 @@
 
 - put `vee.__about__.__revision__` into every database row
 - `vee server` and `vee client`
-  - make a super simple socket protocol. just send JSON back and forth
+    - make a super simple socket protocol. just send JSON back and forth
+
+- s/Requirement.package/Requirement.new_package()
 
 - linking can link top-level directories. Only when another thing also tries to
   traverse into the same directory, is the original thing broken up into the
@@ -48,24 +70,27 @@
 - Homebrew isn't registering installs on first install: "ValueError: cannot record requirement that is not installed"
     - name in the database is "homebrew+x264"; perhaps this is the reason?
 
-- `--relocatable` flag for generic packages
-    - Homebrew links against the main prefix. This seems hard for us to do.
-      We can either link against the install_path(s), or $VEE/opt.
-    - If we do link against install_path, then we should store those relationships
-      in the database.
-
 - Requirement.package_build_matches() returns if the environment and subdirs
   match between the requirement and package. If it is false, then we can
   force a re-install.
 
 - setting envvars in requirements.txt should allow for @ or $KEY to take
-  in previous values that were set within that file.
-    -  $KEY  vs $$KEY
-    - $(KEY) vs ${KEY}
-    -  $KEY  vs  @KEY  vs %KEY
+  in previous values that were set within that file. So, we need some syntax for:
+    1. Immediately resolution of variables.
+    2. Deferred resolution of variables.
+    3. Deferred resolution of previous value.
+
 
 - can vendor macholib and elffile (or patchelf) in order to relocate libs on
   install (via `--relocate`)
+    - macholib:
+      >>> h = lib.headers[0]
+      >>> for c in h.commands: print c[0].get_cmd_name()
+    - elffile might implement enough for us to patch it ourselves
+    - we can also just depend on chrpath (Linux) and install_name_tool (OSX)
+
+
+
 
 - `vee link [-r REPO] [-e ENV] [-d DIR] [--raw] REQUIREMENT`
 
