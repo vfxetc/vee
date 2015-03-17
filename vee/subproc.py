@@ -5,6 +5,7 @@ import os
 import subprocess
 import sys
 import threading
+import errno
 
 from vee.cli import style
 from vee import log
@@ -31,6 +32,8 @@ class _CallOutput(object):
             elif spec is True:
                 self.return_buffer = True
                 self.callbacks.append(self.buffer.append)
+                self.callbacks.append(self.log_chunk)
+                self.verbosity = max(3, self.verbosity or 0) # Bump it into super verbose territory.
             elif spec is None:
                 self.callbacks.append(self.log_chunk)
             else:
@@ -61,8 +64,11 @@ class _CallOutput(object):
     def log_chunk(self, chunk):
         logger = self.logger
         if logger is None:
-            logger = self.logger = logging.getLogger('vee.subproc[%d].%s' % (self.proc.pid, self.name))
-        logger.info(chunk, extra={'verbosity': self.verbosity, 'from_subproc': True})
+            logger = self.logger = logging.getLogger('vee.subproc.[%d].%s' % (self.proc.pid, self.name))
+        if self.return_buffer:
+            logger.debug(chunk, extra={'verbosity': self.verbosity, 'from_subproc': True})
+        else:
+            logger.info(chunk, extra={'verbosity': self.verbosity, 'from_subproc': True})
 
     def start(self, proc):
 
@@ -79,8 +85,15 @@ class _CallOutput(object):
         size = 2**10
         callbacks = self.callbacks
         while True:
-            # Need to use os.read instead of fh.read so that there is no buffering at all.
-            chunk = os.read(fd, size)
+            try:
+                # Need to use os.read instead of fh.read so that there is no
+                # buffering at all.
+                chunk = os.read(fd, size)
+            except OSError as e:
+                # We get tons of these on linux. Not really sure why...
+                if e.errno == errno.EIO:
+                    break
+                raise
             if not chunk:
                 return
             for func in callbacks:

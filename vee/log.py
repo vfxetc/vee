@@ -61,6 +61,10 @@ _default_verbosity = {
 
 class StdoutHandler(logging.Handler):
     
+    def __init__(self, *args, **kwargs):
+        super(StdoutHandler, self).__init__(*args, **kwargs)
+        self._last_nl = True
+
     def filter(self, record):
         # Make sure it isn't too verbose. DEBUG messages default to level 2,
         # and everything else gets through. If we introduct TRACE or BLATHER
@@ -90,14 +94,17 @@ class StdoutHandler(logging.Handler):
         from_subproc = getattr(record, 'from_subproc', None)
         if from_subproc:
             msg = record.msg % record.args if record.args else record.msg
-            msg = msg.replace('\n', '\n' + indent)
-            sys.stdout.write(msg)
+            for line in msg.splitlines(True):
+                sys.stdout.write((indent if self._last_nl else '') + line)
+                self._last_nl = line.endswith('\n')
             sys.stdout.flush()
             return
 
         msg = self.format(record)
-        for line in msg.splitlines(True):
+        for line in msg.rstrip().splitlines():
             print indent + line
+
+        self._last_nl = True
 
 
 root.addHandler(StdoutHandler())

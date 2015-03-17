@@ -10,6 +10,7 @@ import functools
 import os
 import sys
 import traceback
+import logging
 
 from vee._vendor import pkg_resources
 
@@ -83,6 +84,7 @@ def get_parser():
     command_subparser = parser.add_subparsers(metavar='COMMAND')
 
     parser.add_argument('-v', '--verbose', action='count', default=0)
+    parser.add_argument('--log', help='dump complete log to file')
 
     parser.add_argument('--home',
         dest='home_path',
@@ -142,6 +144,12 @@ def get_func(args):
             depth += 1
 
 
+class _LogFormatter(logging.Formatter):
+
+    def format(self, record):
+        msg = super(_LogFormatter, self).format(record)
+        return msg.encode('string-escape')
+
 def main(argv=None, environ=None, as_main=__name__=="__main__"):
 
     args = None
@@ -159,6 +167,14 @@ def main(argv=None, environ=None, as_main=__name__=="__main__"):
         args.environ = os.environ if environ is None else environ
         args.home_path = args.home_path or args.environ.get('VEE')
         
+        if args.log:
+            root = logging.getLogger('vee')
+            stream = sys.stdout if args.log == '-' else open(args.log, 'ab')
+            handler = logging.StreamHandler(stream)
+
+            handler.setFormatter(_LogFormatter('%(asctime)-15s %(name)s %(levelname)s: %(message)s'))
+            root.addHandler(handler)
+
         log.config.verbosity = args.verbose or 0
         args.home = args.home_path and Home(args.home_path)
         args.main = getattr(args.home, 'main', None)

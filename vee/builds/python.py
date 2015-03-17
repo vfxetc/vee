@@ -48,7 +48,7 @@ class PythonBuild(GenericBuild):
             ])
             cmd.extend(pkg.config)
 
-            res = call(cmd, cwd=os.path.dirname(self.setup_path), env=pkg.fresh_environ())
+            res = call(cmd, cwd=os.path.dirname(self.setup_path), env=pkg.fresh_environ(), indent=True, verbosity=1)
             if res:
                 raise RuntimeError('Could not build Python package')
 
