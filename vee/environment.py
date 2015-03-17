@@ -42,13 +42,15 @@ class Environment(object):
                 'python%d-config' % sys.version_info[0],
                 'python-config',
             )
+            prefix = getattr(sys, 'real_prefix', sys.prefix)
             for name in names:
-                old_path = os.path.join(sys.prefix, 'bin', name)
+                old_path = os.path.join(prefix, 'bin', name)
                 if os.path.exists(old_path):
                     for name in names:
                         new_path = os.path.join(self.path, 'bin', name)
                         self.rewrite_shebang_or_link(old_path, new_path)
                     break
+            else:
                 log.warning('Could not find python-config')
 
     def db_id(self):
