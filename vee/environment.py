@@ -14,6 +14,8 @@ from vee import log
 IGNORE_DIRS = frozenset(('.git', '.svn'))
 IGNORE_FILES = frozenset(('.DS_Store', ))
 
+TOP_LEVEL_DIRS = frozenset(('bin', 'etc', 'include', 'lib', 'lib64', 'sbin', 'share', 'opt', 'var'))
+
 
 class Environment(object):
 
@@ -108,8 +110,17 @@ class Environment(object):
         # TODO: Be like Homebrew, and be smarter about what we link, and what
         # we copy.
 
+        top_level = True
+
         for old_dir_path, dir_names, file_names in os.walk(dir_to_link):
             
+            # The top level should only have the standard directories,
+            # and no files.
+            if top_level:
+                file_names = []
+                dir_names[:] = [x for x in dir_names if x in TOP_LEVEL_DIRS]
+                top_level = False
+
             rel_dir_path = os.path.relpath(old_dir_path, dir_to_link)
             new_dir_path = os.path.abspath(os.path.join(self.path, rel_dir_path))
 

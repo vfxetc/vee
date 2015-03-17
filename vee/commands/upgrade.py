@@ -9,8 +9,8 @@ from vee.utils import makedirs
 @command(
     argument('--all', action='store_true', help='upgrade all repositories'),
     argument('--dirty', action='store_true', help='build even when work tree is dirty'),
-    argument('--force', action='store_true'),
-    argument('--reinstall', action='store_true'),
+    argument('--relink', action='store_true', help='relink packages'),
+    argument('--reinstall', action='store_true', help='reinstall packages'),
     argument('-r', '--repo', action='append', dest='repos'),
     help='upgrade packages specified by repositories, and link into environments',
 )
@@ -52,7 +52,7 @@ def upgrade(args):
         path_by_branch = home._abs_path('environments', repo.name, repo.branch_name)
 
         cmd = ['link']
-        if args.force:
+        if args.relink:
             cmd.append('--force')
         if args.reinstall:
             cmd.append('--reinstall')

@@ -1,39 +1,28 @@
 
-- `--etag` on requirements for busting caches
-    - this is almost the same as `--install-name`, except we can attach extra
-      logic to is in order to force reinstalls even if it can find something
-      that exists.
+- etag should force reinstall of Homebrew packages
 
 - it could be nice for packages to register envvars (or scripts to run at source time)
   but it certainly isn't nessesary for us to do up front
 
-- send captured stdout and stderr through the logging system, but tag it to
-  not be output (or at a super high verbosity level)
-
-- HomebrewPackage should error on install-name, since we can't actually
-  change that.
-
 - We *could* isolate the various homebrew packages. You must make a
   $PREFIX/bin/brew link to the origin command, and a $PREFIX/Cellar directory.
   Then you can symlink dependencies into $PREFIX/Cellar/$NAME/$VERSIONISH and
-  do whatever you want.
+  do whatever you want. OR, we can copy things out of the Cellar when they
+  are built, and relocate them to their new environment.
 
-- python-config needs to exist at install time for a bunch of stuff for most
-  cases we can have upgrade just make sure the environment exists before it
-  tries to build anything, and assume that the user has activated that
-  environment
+- the linker should only recurse through the standard directories:
+  bin,lib,lib64,share,???
 
-  - perhaps, we should be running with a the python found at "real_prefix",
-    instead of the virtual one. This could end up getting really tricky at
-    some point.
-
-- reloate packages
+- relocate packages
     - When homebrew makes bottles, it replaces its cellar and prefix in library
       names with @@HOMEBREW_CELLAR@@ and @@HOMEBREW_PREFIX@@. 
     - when installing, we could scan the install products for *.so and *.dylib,
       and throw them in the database for later relinking. It takes ~5s on my
       laptop to do a full scan for SOs, so it could be advantageous to do this
       in advance.
+        - installed_libraries table contains package_id, relpath, and name
+        - `vee relocate --scan DIR*` walks those directories looking for
+          libraries that weren't scanned originally
     - we should relocate against the absolute paths of packages, not those in
       a final environment nor in $VEE/opt. This makes individual installs more
       stable, but puts the onus on us to rebuild/relocate if we bump dependencies.
@@ -71,7 +60,17 @@
 - linking can link top-level directories. Only when another thing also tries to
   traverse into the same directory, is the original thing broken up into the
   next depth of links, and then recursion continues. This is tricky when you
-  need to copy scripts, and link other things
+  need to copy scripts, and link other things.
+    - walk the whole tree looking for files that need to be rewritten
+    - create a set of all directories which must exist above them
+    - do the main walk
+    - if a link exists where we need it to be a directory, the break it up by
+      turning it into a directory with linked contents
+    - OR:
+    - just link the directories into place
+    - then find everything that needs rewriting
+    - break up whatever links you need to
+    - rewrite those files
 
 - Homebrew isn't registering installs on first install: "ValueError: cannot record requirement that is not installed"
     - name in the database is "homebrew+x264"; perhaps this is the reason?
