@@ -59,6 +59,8 @@ requirement_parser = _requirement_parser(add_help=False)
 requirement_parser.add_argument('-n', '--name')
 requirement_parser.add_argument('-r', '--revision')
 
+requirement_parser.add_argument('--etag', help='identifier for busting caches')
+
 requirement_parser.add_argument('--base-environ', nargs='*', action=_EnvironmentAction, help=argparse.SUPPRESS)
 requirement_parser.add_argument('-e', '--environ', nargs='*', action=_EnvironmentAction)
 requirement_parser.add_argument('-c', '--config', nargs='*', action=_configAction, help='args to pass to `./configure`, `python setup.py`, `brew install`, etc..')

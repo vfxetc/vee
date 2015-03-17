@@ -27,6 +27,9 @@ class HomebrewPackage(GitPackage):
         self.package_name = re.sub(r'^(git\+)?homebrew[:+]', '', self.url)
         self.url = 'homebrew:' + self.package_name
 
+        if self.install_name:
+            raise ValueError("Can't set install_name on Homebrew packages")
+
     @cached_property
     def _name_for_platform(self):
         return 'linuxbrew' if sys.platform.startswith('linux') else 'homebrew'

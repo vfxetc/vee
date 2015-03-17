@@ -280,9 +280,9 @@ class BasePackage(object):
             cur = self.home.db.cursor()
             cur.execute('''
                 INSERT INTO packages (abstract_requirement, concrete_requirement,
-                                      package_type, build_type, url, name, revision, package_name, build_name,
+                                      package_type, build_type, url, name, revision, etag, package_name, build_name,
                                       install_name, package_path, build_path, install_path)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             ''', [self.abstract_requirement,
                   self.freeze().to_json(),
                   self.type,
@@ -290,6 +290,7 @@ class BasePackage(object):
                   self.url,
                   self.name,
                   self.revision,
+                  self.etag,
                   self.package_name,
                   self.build_name,
                   self.install_name,
@@ -310,19 +311,12 @@ class BasePackage(object):
 
 
         clauses = ['install_path IS NOT NULL', 'url = ?']
-        values = [self.url]
+        values  = [self.url]
 
-        for attr, column in (
-            ('name', 'name'),
-            ('revision', 'revision'),
-        ):
-            if getattr(self, attr):
-                clauses.append('%s = ?' % column)
-                values.append(getattr(self, attr))
-        for attr in ('package_name', 'build_name', 'install_name'):
-            if getattr(self, attr):
-                clauses.append('%s = ?' % attr.strip('_'))
-                values.append(getattr(self, attr))
+        for name in ('name', 'revision', 'etag', 'package_name', 'build_name', 'install_name'):
+            if getattr(self, name):
+                clauses.append('%s = ?' % name)
+                values.append(getattr(self, name))
 
         cur = self.home.db.cursor()
         clause = ' AND '.join(clauses)

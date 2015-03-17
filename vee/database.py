@@ -59,6 +59,7 @@ def _create_initial_tables(con):
         url TEXT NOT NULL,
         name TEXT,
         revision TEXT,
+        etag TEXT,
 
         package_type TEXT NOT NULL,
         build_type TEXT NOT NULL,
@@ -141,6 +142,12 @@ def _create_repos_path_column(con):
     existing = set(row['name'] for row in con.execute('PRAGMA table_info(repositories)'))
     if 'path' not in existing:
         con.execute('''ALTER TABLE repositories ADD COLUMN path TEXT''')
+
+@_migrations.append
+def _create_packages_etag_column(con):
+    existing = set(row['name'] for row in con.execute('PRAGMA table_info(packages)'))
+    if 'etag' not in existing:
+        con.execute('''ALTER TABLE packages ADD COLUMN etag TEXT''')
 
 
 

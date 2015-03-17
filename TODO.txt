@@ -4,9 +4,12 @@
       logic to is in order to force reinstalls even if it can find something
       that exists.
 
+- it could be nice for packages to register envvars (or scripts to run at source time)
+  but it certainly isn't nessesary for us to do up front
+
 - send captured stdout and stderr through the logging system, but tag it to
   not be output (or at a super high verbosity level)
-  
+
 - HomebrewPackage should error on install-name, since we can't actually
   change that.
 
