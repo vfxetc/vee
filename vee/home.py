@@ -9,6 +9,7 @@ from vee.devpackage import DevPackage
 from vee.environmentrepo import EnvironmentRepo
 from vee.git import GitRepo
 from vee.utils import makedirs, cached_property
+from vee import log
 
 
 # We shall call the default repository "primary", as it is a nice generic name
@@ -77,12 +78,18 @@ class Home(object):
         
         env_repo = EnvironmentRepo(row, home=self)
         if not env_repo.exists:
+            log.debug('Looking for env_repo: %s' % env_repo.work_tree)
             raise ValueError('%r repo does not exist' % env_repo.name)
         
         return env_repo
 
     def create_env_repo(self, path=None, url=None, name=None, remote=None, branch=None, is_default=None):
 
+        if path:
+            path = os.path.abspath(path)
+            if not os.path.exists(path):
+                raise ValueError('no repo at %s' % path)
+        
         if url or path:
             name = name or re.sub(r'\.git$', '', os.path.basename(url or path))
         else:
