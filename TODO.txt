@@ -1,4 +1,9 @@
 
+- `--etag` on requirements for busting caches `--etag`
+    - this is actually the same as `--install-name`
+    - this still wont force homebrew to reinstall
+
+
 - log.log(..., preserve_whitespace=True) -> use sys.stdout.write
 
 - when asserting a link doesnt exist, actually check the install path of the

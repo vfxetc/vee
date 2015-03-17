@@ -2,6 +2,7 @@ import errno
 import os
 import re
 import shutil
+import sys
 
 from vee._vendor import virtualenv
 
@@ -28,11 +29,27 @@ class Environment(object):
 
 
     def create_if_not_exists(self):
+
         python = os.path.join(self.path, 'bin', 'python')
         if not os.path.exists(python):
             makedirs(self.path)
             print style('Creating Python virtualenv', 'blue', bold=True), style(self.path, bold=True)
             virtualenv.create_environment(self.path, no_setuptools=True, no_pip=True)
+
+        if not os.path.exists(python + '-config'):
+            names = (
+                'python%d.%d-config' % sys.version_info[:2],
+                'python%d-config' % sys.version_info[0],
+                'python-config',
+            )
+            for name in names:
+                old_path = os.path.join(sys.prefix, 'bin', name)
+                if os.path.exists(old_path):
+                    for name in names:
+                        new_path = os.path.join(self.path, 'bin', name)
+                        self.rewrite_shebang_or_link(old_path, new_path)
+                    break
+                log.warning('Could not find python-config')
 
     def db_id(self):
         if self._db_id is None:
@@ -46,6 +63,39 @@ class Environment(object):
                 ])
                 self._db_id = cur.lastrowid
         return self._db_id
+
+    def rewrite_shebang_or_link(self, old_path, new_path):
+
+        # If it starts with a Python shebang, rewrite it.
+        with open(old_path, 'rb') as old_fh:
+            old_shebang = old_fh.readline()
+            m = re.match(r'#!(|\S+/)([^\s/]+)', old_shebang)
+            if m:
+                new_bin = os.path.join(self.path, 'bin', m.group(2))
+                if os.path.exists(new_bin):
+                    new_shebang = '#!%s%s' % (new_bin, old_shebang[m.end(2):])
+                    log.info('Rewriting shebang of %s' % new_bin, verbosity=1)
+                    log.debug('New shebang: %s' % new_shebang.strip(), verbosity=1)
+                    with open(new_path, 'wb') as new_fh:
+                        new_fh.write(new_shebang)
+                        new_fh.writelines(old_fh)
+                    try:
+                        shutil.copystat(old_path, new_path)
+                    except OSError as e:
+                        # These often come up when you are not the owner
+                        # of the file.
+                        if e.errno != errno.EPERM:
+                            raise
+                    return
+
+        # Symlink it into place.
+        try:
+            os.symlink(old_path, new_path)
+        except OSError as e:
+            # TODO: have a vee-link-history.txt in each environment
+            # so that we can quickly check what is already linked there.
+            if e.errno != errno.EEXIST:
+                raise
 
     def link_directory(self, dir_to_link):
         
@@ -72,36 +122,5 @@ class Environment(object):
 
                 old_path = os.path.join(old_dir_path, file_name)
                 new_path = os.path.join(new_dir_path, file_name)
-                rel_path = os.path.join(rel_dir_path, file_name)
-
-                # If it starts with a Python shebang, rewrite it.
-                with open(old_path, 'rb') as old_fh:
-                    old_shebang = old_fh.readline()
-                    m = re.match(r'#!(|\S+/)([^\s/]+)', old_shebang)
-                    if m:
-                        new_bin = os.path.join(self.path, 'bin', m.group(2))
-                        if os.path.exists(new_bin):
-                            new_shebang = '#!%s%s' % (new_bin, old_shebang[m.end(2):])
-                            log.info('Rewriting shebang of %s' % new_bin, verbosity=1)
-                            log.debug('New shebang: %s' % new_shebang.strip(), verbosity=1)
-                            with open(new_path, 'wb') as new_fh:
-                                new_fh.write(new_shebang)
-                                new_fh.writelines(old_fh)
-                            try:
-                                shutil.copystat(old_path, new_path)
-                            except OSError as e:
-                                # These often come up when you are not the owner
-                                # of the file.
-                                if e.errno != errno.EPERM:
-                                    raise
-                            continue
-
-                # Symlink it into place.
-                try:
-                    os.symlink(old_path, new_path)
-                except OSError as e:
-                    # TODO: have a vee-link-history.txt in each environment
-                    # so that we can quickly check what is already linked there.
-                    if e.errno != errno.EEXIST:
-                        raise
+                self.rewrite_shebang_or_link(old_path, new_path)
 

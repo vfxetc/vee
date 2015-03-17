@@ -7,6 +7,7 @@ from vee.commands.main import command, argument
 @command(
     name='self-update',
     help='update vee itself',
+    aliases=['selfupdate'],
 )
 def self_update(args):
 
