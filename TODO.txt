@@ -29,7 +29,8 @@
       It also means we should likely have a package_relocations table which
       decribes this relationship.
     - we may also need to rewrite pkgconfig files, which could be very hairy
-    - `--relocate /path/to/find,/another/path/to/find,auto`
+    - `--relocate '!/Volumes,/Applications/Autodesk/maya2014'`
+    - `--relocate '-/Volumes,+/Applications,AUTO'
 
 - very simple automatic persistence model:
 

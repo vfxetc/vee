@@ -9,11 +9,11 @@ import sys
 
 from vee._vendor import pkg_resources
 
+from vee import libs
 from vee import log
 from vee.builds import make_builder
 from vee.cli import style
 from vee.exceptions import AlreadyInstalled, AlreadyLinked
-from vee.libs import find_libraries, find_package_libraries
 from vee.requirement import Requirement, requirement_parser
 from vee.subproc import call
 from vee.utils import cached_property, makedirs
@@ -254,11 +254,15 @@ class BasePackage(object):
         log.info(style('Uninstalling ', 'blue', bold=True) + style(self.install_path, bold=True))
         shutil.rmtree(self.install_path)
 
-    def find_libraries(self, force=False):
+    def shared_libraries(self, rescan=False):
         self._assert_paths(install=True)
         if not self.installed:
             raise RuntimeError('cannot find libraries if not installed')
-        return find_installed_libraries(self.home, self.install_path, self.db_id(), force)
+        if not self._db_id:
+            # I'm not sure if this is a big deal, but I want to see when
+            # it is happening.
+            log.warning('Finding shared libraries before package is in database.')
+        return libs.get_installed_shared_libraries(self.home.db.connect(), self.db_id(), self.install_path, rescan)
 
     def link(self, env, force=False):
         self._assert_paths(install=True)

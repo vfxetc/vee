@@ -4,13 +4,15 @@ import stat
 from vee.cli import style
 from vee.commands.main import command, argument
 from vee.home import PRIMARY_REPO
-from vee.libs import find_libraries, find_package_libraries, get_dependencies
+from vee import libs
+from vee import log
 
 
 @command(
-    argument('--scan', action='store_true'),
-    argument('--rescan', action='store_true'),
-    argument('--ignore-existing', action='append'),
+    argument('-n', '--dry-run', action='store_true'),
+    argument('--scan', action='store_true', help='look for installed libraires'),
+    argument('--rescan', action='store_true', help='redo previous scans'),
+    argument('--spec', default='AUTO'),
     argument('path', nargs='?'),
     help='relocate a package',
 )
@@ -18,7 +20,7 @@ def relocate(args):
 
     home = args.assert_home()
 
-    if args.scan:
+    if args.scan or args.rescan:
         rows = list(home.db.execute(
             '''SELECT id, install_path FROM packages
             ORDER BY created_at DESC
@@ -35,47 +37,18 @@ def relocate(args):
 
             print install_path
 
-            libs = find_package_libraries(home, install_path, package_id, force=args.rescan)
-            for lib in libs:
+            found = libs.get_installed_shared_libraries(home.db.connect(), package_id, install_path, rescan=args.rescan)
+            for lib in found:
                 print '    ' + lib
 
-    targets_by_name = {}
-    con = home.db.connect()
+        return
+
 
     if args.path:
-        for lib_path in find_libraries(os.path.abspath(args.path)):
-            lib_stat = os.lstat(lib_path)
-            if stat.S_ISLNK(lib_stat.st_mode):
-                continue
-            print lib_path
-            for dep_path in get_dependencies(lib_path):
+        con = home.db.connect()
+        target_cache = {}
+        libs.relocate(os.path.abspath(args.path), con, spec=args.spec, dry_run=args.dry_run, target_cache=target_cache)
 
-                ignore_existing = args.ignore_existing and any(dep_path.startswith(x) for x in args.ignore_existing)
-                if not ignore_existing and os.path.exists(dep_path):
-                    continue
-
-                print '    ' + dep_path
-
-                dep_name = os.path.basename(dep_path)
-                if dep_name not in targets_by_name:
-                    targets = targets_by_name[dep_name] = []
-                    for row in con.execute('''SELECT
-                        packages.install_path, installed_libraries.rel_path
-                        FROM packages JOIN installed_libraries
-                        ON packages.id = installed_libraries.package_id
-                        WHERE installed_libraries.name = ?
-                        ORDER BY packages.created_at DESC
-                    ''', [dep_name]):
-                        target_path = os.path.join(row[0], row[1])
-                        targets.append(target_path)
-
-                targets = targets_by_name[dep_name]
-
-                if not targets:
-                    # print '        could not find target'
-                    continue
-
-                print '        ' + targets[0]
 
 
 

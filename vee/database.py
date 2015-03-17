@@ -2,6 +2,7 @@ import contextlib
 import datetime
 import os
 import sqlite3
+import shutil
 
 from vee.utils import makedirs
 
@@ -152,41 +153,22 @@ def _create_packages_etag_column(con):
         con.execute('''ALTER TABLE packages ADD COLUMN etag TEXT''')
 
 @_migrations.append
-def _create_installed_libraries(con):
+def _created_shared_libraries(con):
 
     existing = set(row['name'] for row in con.execute('PRAGMA table_info(packages)'))
     if 'scanned_for_libraries' not in existing:
         con.execute('''ALTER TABLE packages ADD COLUMN scanned_for_libraries INTEGER NOT NULL DEFAULT 0''')
 
-    con.execute('''CREATE TABLE installed_libraries (
+    con.execute('''CREATE TABLE shared_libraries (
 
         id INTEGER PRIMARY KEY,
         created_at TIMESTAMP NOT NULL DEFAULT (datetime('now')),
 
         package_id INTEGER REFERENCES packages(id) NOT NULL,
-        name TEXT NOT NULL,
-        rel_path TEXT NOT NULL
+        name TEXT NOT NULL, -- Mainly for searching.
+        path TEXT NOT NULL
 
     )''')
-
-
-
-
-def _migrate(con):
-    with con:
-        con.execute('''CREATE TABLE IF NOT EXISTS migrations (
-            name TEXT NOT NULL,
-            applied_at TIMESTAMP NOT NULL DEFAULT (datetime('now'))
-        )''')
-        cur = con.execute('SELECT name FROM migrations')
-        existing = set(row[0] for row in cur)
-    for f in _migrations:
-        name = f.__name__.strip('_')
-        if name not in existing:
-            with con.begin():
-                f(con)
-                con.execute('INSERT INTO migrations (name) VALUES (?)', [name])
-
 
 
 class _Connection(sqlite3.Connection):
@@ -244,7 +226,33 @@ class Database(object):
 
     def __init__(self, path):
         self.path = path
-        _migrate(self.connect())
+        self._migrate()
+
+    def _migrate(self):
+        did_backup = False
+        con = self.connect()
+        with con:
+            con.execute('''CREATE TABLE IF NOT EXISTS migrations (
+                name TEXT NOT NULL,
+                applied_at TIMESTAMP NOT NULL DEFAULT (datetime('now'))
+            )''')
+            cur = con.execute('SELECT name FROM migrations')
+            existing = set(row[0] for row in cur)
+        for f in _migrations:
+            name = f.__name__.strip('_')
+            if name not in existing:
+                if not did_backup:
+                    self._backup()
+                did_backup = True
+                with con.begin():
+                    f(con)
+                    con.execute('INSERT INTO migrations (name) VALUES (?)', [name])
+
+    def _backup(self):
+        backup_dir = os.path.join(os.path.dirname(self.path), 'backups')
+        backup_path = os.path.join(backup_dir, os.path.basename(self.path) + '.' + datetime.datetime.utcnow().isoformat('T'))
+        makedirs(backup_dir)
+        shutil.copyfile(self.path, backup_path)
 
     @property
     def exists(self):

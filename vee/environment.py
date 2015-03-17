@@ -93,6 +93,8 @@ class Environment(object):
                     return
 
         # Symlink it into place.
+        if os.path.exists(new_path):
+            os.unlink(new_path)
         try:
             os.symlink(old_path, new_path)
         except OSError as e:
@@ -103,6 +105,8 @@ class Environment(object):
 
     def link_directory(self, dir_to_link):
         
+        dir_to_link = os.path.abspath(dir_to_link)
+
         self.create_if_not_exists()
 
         python = os.path.join(self.path, 'bin', 'python')
