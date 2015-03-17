@@ -56,7 +56,7 @@ def upgrade(args):
             cmd.append('--force')
         if args.reinstall:
             cmd.append('--reinstall')
-        cmd.extend((path_by_commit, repo.abspath('requirements.txt')))
+        cmd.extend(('--directory', path_by_commit, repo.abspath('requirements.txt')))
         args.main(cmd)
 
         # Create a symlink by branch.

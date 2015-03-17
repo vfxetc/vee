@@ -11,7 +11,7 @@ class TestHomebrew(TestCase):
     def test_brew_2_link(self):
 
         home = self.class_home()
-        home.main(['link', 'test', 'homebrew+sqlite'])
+        home.main(['link', '-e', 'test', 'homebrew+sqlite'])
 
         self.assertExists(os.path.join(home.root, 'environments', 'test', 'bin', 'sqlite3'))
         

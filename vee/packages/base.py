@@ -408,4 +408,8 @@ class BasePackage(object):
         # Record it!
         self.db_id()
 
+        # Find shared libs for others.
+        self.shared_libraries()
+
+
 

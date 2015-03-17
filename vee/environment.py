@@ -93,7 +93,7 @@ class Environment(object):
                     return
 
         # Symlink it into place.
-        if os.path.exists(new_path):
+        if os.path.lexists(new_path):
             os.unlink(new_path)
         try:
             os.symlink(old_path, new_path)

@@ -1,3 +1,5 @@
+import os
+
 from vee.cli import style
 from vee.commands.main import command, argument
 from vee.environment import Environment
@@ -11,10 +13,13 @@ from vee import log
     argument('--reinstall', action='store_true'),
     argument('--no-install', action='store_true'),
     argument('--force', action='store_true'),
-    argument('--raw', action='store_true', help='requirements are raw directories'),
-    argument('--long-names', action='store_true',
-        help='automatically picks package names'),
-    argument('environment'),
+
+    argument('--raw', action='store_true', help='arguments are raw directories'),
+
+    argument('-r', '--repo'),
+    argument('-e', '--environment'),
+    argument('-d', '--directory'),
+
     argument('requirements', nargs='...'),
     help='link a package, or requirements.txt, into an environment',
     usage='vee link [--raw] ENVIRONMENT REQUIREMENTS',
@@ -25,7 +30,18 @@ def link(args):
         raise ValueError('please use only one of --no-install and --re-install')
 
     home = args.assert_home()
-    env = Environment(args.environment, home=home)
+
+    if sum(int(bool(x)) for x in (args.repo, args.environment, args.directory)) > 1:
+        raise ValueError('use only one of --repo, --environment, or --directory')
+
+    if args.environment:
+        env = Environment(args.environment, home=home)
+    elif args.directory:
+        env = Environment(os.path.abspath(args.directory), home=home)
+    else:
+        env_repo = home.get_env_repo(args.repo)
+        env = Environment('%s/%s' % (env_repo.name, env_repo.branch_name), home=home)
+
 
     if args.raw:
         for dir_ in args.requirements:
@@ -34,9 +50,7 @@ def link(args):
         return
 
     reqs = RequirementSet(args.requirements, home=home)
-
-    if not args.long_names:
-        reqs.guess_names()
+    reqs.guess_names()
 
     for req in reqs.iter_requirements():
 
