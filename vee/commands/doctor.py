@@ -1,3 +1,4 @@
+import os
 import sys
 
 from vee.cli import style, style_note, style_warning
@@ -26,8 +27,10 @@ def doctor(args):
         print about.__revision__
         return
 
-    print style_note('vee version:', about.__version__)
-    print style_note('vee revision:', about.__revision__)
+    print style_note('==> VEE')
+    print style_note('version:', about.__version__)
+    print style_note('revision:', about.__revision__)
+    print style_note('package:', os.path.abspath(os.path.join(__file__, '..', '..')))
 
     res = 0
 
@@ -42,25 +45,30 @@ def doctor(args):
                 print style_error('cannot find %s' % name)
                 return 1
 
+    print style_note('==> executables')
+    print style_note('python:', sys.executable)
     res = find_command('git') and res
     if sys.platform == 'darwin':
         res = find_command('install_name_tool') and res
     if sys.platform.startswith('linux'):
         res = find_command('chrpath', warn=True) and res
 
-
+    print style_note('==> configuration')
     home = args.assert_home()
-    print style_note('vee home:', home.root)
+    print style_note('home:', home.root)
 
     try:
         repo = home.get_env_repo()
     except ValueError:
         print style_warning('no default repo.', 'Use `vee repo add --default URL`.')
         return
-    print style_note('default repo:', repo.name, repo.remote_url)
+    print style_note('repo:', repo.name, repo.remote_url)
 
+    print style_note('==> summary')
     if not res:
         print style('Everything looks OK', 'green')
+    else:
+        print style('Something may be wrong', 'yellow')
 
     return res
 
