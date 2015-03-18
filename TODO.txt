@@ -11,26 +11,9 @@
   are built, and relocate them to their new environment.
 
 - relocate packages
-    - When homebrew makes bottles, it replaces its cellar and prefix in library
-      names with @@HOMEBREW_CELLAR@@ and @@HOMEBREW_PREFIX@@. 
-    - when installing, we could scan the install products for *.so and *.dylib,
-      and throw them in the database for later relinking. It takes ~5s on my
-      laptop to do a full scan for SOs, so it could be advantageous to do this
-      in advance.
-        - installed_libraries table contains package_id, relpath, and name
-        - `vee relocate --scan DIR*` walks those directories looking for
-          libraries that weren't scanned originally
-        - Package.find_libraries() scans install_path looking for *.so and *.dylib
-        - Package.relocate() scans itself, determines full list of dependencies,
-          and resolves those which don't exist against other scans
-    - we should relocate against the absolute paths of packages, not those in
-      a final environment nor in $VEE/opt. This makes individual installs more
-      stable, but puts the onus on us to rebuild/relocate if we bump dependencies.
-      It also means we should likely have a package_relocations table which
-      decribes this relationship.
-    - we may also need to rewrite pkgconfig files, which could be very hairy
-    - `--relocate '!/Volumes,/Applications/Autodesk/maya2014'`
-    - `--relocate '-/Volumes,+/Applications,AUTO'
+
+  - `--relocate '@/path/to/map'` gives a specific relocation map, which we need
+    for relocating PyQt against Maya's Qt since the names no longer match. 
 
 - very simple automatic persistence model:
 

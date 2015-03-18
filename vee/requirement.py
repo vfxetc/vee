@@ -71,6 +71,8 @@ requirement_parser.add_argument('--install-name')
 requirement_parser.add_argument('--build-subdir')
 requirement_parser.add_argument('--install-prefix')
 
+requirement_parser.add_argument('--relocate', help='how to relocate shared libs')
+
 requirement_parser.add_argument('url')
 
 

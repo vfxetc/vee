@@ -6,6 +6,30 @@ from vee.subproc import call
 from vee import log
 
 
+def iter_unique(xs):
+    seen = set()
+    for x in xs:
+        if x in seen:
+            continue
+        seen.add(x)
+        yield x
+
+
+def name_variants(name):
+
+    res = [name]
+    m = re.match(r'^(?:lib)?(.+?)(\.so|\.dylib)?(\..+)?$', name)
+    if m:
+        base, _, extpost = m.groups()
+        res.append(base)
+        for ext in '.dylib', '.so':
+            if extpost:
+                res.append('lib%s%s%s' % (base, ext, extpost))
+            res.append('lib%s%s' % (base, ext))
+
+    return list(iter_unique(res))
+
+
 def get_dependencies(path):
     raw = call(['otool', '-L', path], stdout=True)
     lines = raw.strip().splitlines()
@@ -19,6 +43,25 @@ def get_dependencies(path):
     return id_, deps
 
 
+def get_symbols(path):
+    
+    undefined = set()
+    defined = set()
+
+    raw = call(['nm', '-gP', path], stdout=True)
+    for line in raw.splitlines():
+        line = line.strip()
+        if not line:
+            continue
+        name, type_, _ = line.split(None, 2)
+        if type_ in 'TDBC':
+            defined.add(name)
+        elif type_ == 'U':
+            undefined.add(name)
+
+    return defined, undefined
+
+
 MACHO_TAGS = set((
     'feedface',
     'cefaefde',
@@ -30,14 +73,26 @@ MACHO_TAGS = set((
 def find_shared_libraries(path):
 
     for dir_path, dir_names, file_names in os.walk(path):
+
+        allow_blank_ext = None
+
         for file_name in file_names:
             ext = os.path.splitext(file_name)[1]
 
             # Frameworks on OSX leave out extensions much of the time,
             # so we need to manually detech MachO's magic tag.
-            if not ext and '.framework/' in dir_path:
+            if not ext:
+                
+                if allow_blank_ext is None:
+                    allow_blank_ext = bool(re.search(r'\.framework(/|$)|/MacOS(/|$)', dir_path))
+                if not allow_blank_ext:
+                    continue
+
                 path = os.path.join(dir_path, file_name)
-                tag = open(path, 'rb').read(4).encode('hex')
+                try:
+                    tag = open(path, 'rb').read(4).encode('hex')
+                except IOError:
+                    continue
                 if tag in MACHO_TAGS:
                     yield path
 
@@ -76,7 +131,39 @@ def get_installed_shared_libraries(con, package_id, install_path, rescan=False):
         return res
 
 
-def relocate(root, *args, **kwargs):
+def relocate(root, con, spec=None, dry_run=False, target_cache=None):
+
+    target_cache = {} if target_cache is None else target_cache
+
+    auto = False
+    include = []
+    exclude = []
+
+    if spec is None:
+        spec = [None]
+    if not isinstance(spec, (list, tuple)):
+        spec = [x.strip() for x in spec.split(',')]
+
+    for x in spec:
+        if x in (None, '', 'AUTO'):
+            auto = True
+        elif x in ('SELF', ):
+            include.append(root)
+        elif x.startswith('/'):
+            include.append(x)
+        elif x.startswith('-/'):
+            exclude.append(x[1:])
+        else:
+            raise ValueError('malformed relocate spec %r' % x)
+
+    if not (auto or include):
+        raise ValueError('no libraries to include')
+
+    # Find everything in include.
+    for path in include:
+        for found in find_shared_libraries(path):
+            for name in name_variants(os.path.basename(found)):
+                target_cache.setdefault(name, []).append(found)
 
     for lib_path in find_shared_libraries(root):
 
@@ -85,44 +172,17 @@ def relocate(root, *args, **kwargs):
         if stat.S_ISLNK(lib_stat.st_mode):
             continue
 
-        relocate_library(lib_path, *args, **kwargs)
+        _relocate_library(lib_path, con, auto, include, exclude, dry_run, target_cache)
 
-def relocate_library(lib_path, con, spec=None, dry_run=False, target_cache=None):
 
-    spec = spec or 'AUTO'
+def _relocate_library(lib_path, con, auto, include, exclude, dry_run, target_cache):
 
-    auto = False
-    include = []
-    exclude = []
-
-    if spec is None:
-        spec = ['AUTO']
-    if not isinstance(spec, (list, tuple)):
-        spec = [x.strip() for x in spec.split(',')]
-
-    for x in spec:
-        if x == 'AUTO':
-            auto = True
-        elif x.startswith('/'):
-            include.append(x)
-        elif x.startswith('-/'):
-            exclude.append(x[1:])
-        else:
-            raise ValueError('malformed relocate spec %r' % x)
-
-    if not auto or include:
-        raise ValueError('no libraries to include')
-
-    target_cache = {} if target_cache is None else target_cache
-
-    # Find everything in include.
-    for path in include:
-        for found in find_shared_libraries(path):
-            target_cache.setdefault(os.path.basename(found), []).append(found)
-
+    # print 
     print lib_path
 
     lib_id, lib_deps = get_dependencies(lib_path)
+
+    # print 'ID', lib_id
 
     cmd = ['install_name_tool']
 
@@ -130,30 +190,54 @@ def relocate_library(lib_path, con, spec=None, dry_run=False, target_cache=None)
         print '    -id %s' % lib_id
         cmd.extend(('-id', lib_path))
 
+    lib_def, lib_undef = get_symbols(lib_path)
+    # print 'UNDEF', ' '.join(lib_undef)
+
     for dep_path in lib_deps:
+
+        # print 'DEP', dep_path
+
+        if dep_path == lib_id:
+            log.warning('The ID is included?! %s' % lib_path)
+            continue
 
         do_exclude = any(dep_path.startswith(x) for x in exclude)
         if not do_exclude and os.path.exists(dep_path):
-            print '    # skip %s' % dep_path
+            # print '    # skip %s' % dep_path
             continue
 
         dep_name = os.path.basename(dep_path)
 
-        if dep_name not in target_cache:
+        targets = []
+
+        for variant in name_variants(dep_name):
+            if variant in target_cache:
+                targets.extend(target_cache[variant])
             if auto:
-                cur = con.execute('SELECT path FROM shared_libraries WHERE name = ? ORDER BY created_at DESC', [dep_name])
-                target_cache[dep_name] = [row[0] for row in cur]
-            else:
-                raise RuntimeError('could not find lib for %s' % dep_name)
+                cur = con.execute('SELECT path FROM shared_libraries WHERE name = ? ORDER BY created_at DESC', [variant])
+                new_targets = target_cache.setdefault(variant, [])
+                new_targets.extend([row[0] for row in cur])
+                targets.extend(new_targets)
+        
+        seen_targets = set()
+        for target in targets:
+            if target in seen_targets:
+                continue
+            seen_targets.add(target)
 
-        targets = target_cache[dep_name]
+            tar_def, tar_undef = get_symbols(target)
 
-        if not targets:
+            pros = len(tar_def.intersection(lib_undef))
+            cons = len(tar_def.intersection(lib_def)) + len(lib_undef.intersection(lib_def))
+            # print '+%d -%d %s' % (pros, cons, target)
+            if pros > cons:
+                break
+        else:
             log.warning('Could not find target for %s' % dep_path)
             continue
 
-        print '    -change %s \\\n            %s' % (dep_path, targets[0])
-        cmd.extend(('-change', dep_path, targets[0]))
+        print '    -change %s \\\n            %s' % (dep_path, target)
+        cmd.extend(('-change', dep_path, target))
 
     if len(cmd) > 1 and not dry_run:
 

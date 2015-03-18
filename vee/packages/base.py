@@ -238,6 +238,13 @@ class BasePackage(object):
 
         self.builder.install()
 
+        if self.relocate:
+            log.info(style('Relocating', 'blue'))
+            libs.relocate(self.install_path,
+                con=self.home.db.connect(),
+                spec=self.relocate + ',SELF',
+            )
+
         # Link into $VEE/opt.
         if self.name:
             opt_link = self.home._abs_path('opt', self.name)
