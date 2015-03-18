@@ -43,30 +43,43 @@ def get_dependencies(path):
     return id_, deps
 
 
+# Assuming that VEE doesn't have a very long lifetime, this isn't the
+# worst idea...
+_symbol_cache = {}
+
 def get_symbols(path):
     
-    undefined = set()
-    defined = set()
+    if path not in _symbol_cache:
 
-    raw = call(['nm', '-gP', path], stdout=True)
-    for line in raw.splitlines():
-        line = line.strip()
-        if not line:
-            continue
-        name, type_, _ = line.split(None, 2)
-        if type_ in 'TDBC':
-            defined.add(name)
-        elif type_ == 'U':
-            undefined.add(name)
+        undefined = set()
+        defined = set()
 
-    return defined, undefined
+        raw = call(['nm', '-gP', path], stdout=True)
+        for line in raw.splitlines():
+            line = line.strip()
+            if not line:
+                continue
+            name, type_, _ = line.split(None, 2)
+            if type_ in 'TDBC':
+                defined.add(name)
+            elif type_ == 'U':
+                undefined.add(name)
+
+        _symbol_cache[path] = frozenset(defined), frozenset(undefined)
+
+    return _symbol_cache[path]
 
 
 MACHO_TAGS = set((
+
     'feedface',
     'cefaefde',
     'feedfacf',
     'cffaedfe',
+
+    'cafebabe', # For FAT files?
+    'bebafeca',
+
 ))
 
 
@@ -162,6 +175,7 @@ def relocate(root, con, spec=None, dry_run=False, target_cache=None):
     # Find everything in include.
     for path in include:
         for found in find_shared_libraries(path):
+            log.debug('found %s' % found)
             for name in name_variants(os.path.basename(found)):
                 target_cache.setdefault(name, []).append(found)
 
@@ -177,12 +191,9 @@ def relocate(root, con, spec=None, dry_run=False, target_cache=None):
 
 def _relocate_library(lib_path, con, auto, include, exclude, dry_run, target_cache):
 
-    # print 
-    print lib_path
+    log.info(lib_path)
 
     lib_id, lib_deps = get_dependencies(lib_path)
-
-    # print 'ID', lib_id
 
     cmd = ['install_name_tool']
 
@@ -191,11 +202,8 @@ def _relocate_library(lib_path, con, auto, include, exclude, dry_run, target_cac
         cmd.extend(('-id', lib_path))
 
     lib_def, lib_undef = get_symbols(lib_path)
-    # print 'UNDEF', ' '.join(lib_undef)
 
     for dep_path in lib_deps:
-
-        # print 'DEP', dep_path
 
         if dep_path == lib_id:
             log.warning('The ID is included?! %s' % lib_path)
@@ -203,7 +211,7 @@ def _relocate_library(lib_path, con, auto, include, exclude, dry_run, target_cac
 
         do_exclude = any(dep_path.startswith(x) for x in exclude)
         if not do_exclude and os.path.exists(dep_path):
-            # print '    # skip %s' % dep_path
+            log.debug('skipping %s' % dep_path)
             continue
 
         dep_name = os.path.basename(dep_path)
@@ -229,14 +237,15 @@ def _relocate_library(lib_path, con, auto, include, exclude, dry_run, target_cac
 
             pros = len(tar_def.intersection(lib_undef))
             cons = len(tar_def.intersection(lib_def)) + len(lib_undef.intersection(lib_def))
-            # print '+%d -%d %s' % (pros, cons, target)
+            log.debug('+%d -%d %s' % (pros, cons, target), verbosity=2)
             if pros > cons:
                 break
         else:
-            log.warning('Could not find target for %s' % dep_path)
+            log.warning('Could not relocate %s' % dep_path)
             continue
 
-        print '    -change %s \\\n            %s' % (dep_path, target)
+        log.info('%s -> %s' % (dep_name, target), verbosity=1)
+
         cmd.extend(('-change', dep_path, target))
 
     if len(cmd) > 1 and not dry_run:

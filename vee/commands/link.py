@@ -54,6 +54,8 @@ def link(args):
 
     for req in reqs.iter_requirements():
 
+        log.info(style('==> %s' % req.name, 'blue'))
+
         if args.no_install and not req.installed:
             raise CliError('not installed: %s' % req)
 
@@ -69,7 +71,7 @@ def link(args):
         try:
             req.package.link(env, force=args.force)
         except AlreadyLinked as e:
-            print style('Already linked', 'blue', bold=True), style(str(req), bold=True)
+            log.info(style('Already linked ', 'blue') + str(req), verbosity=1)
       
 
 

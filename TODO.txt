@@ -1,4 +1,22 @@
 
+- it would be wonderful if we could have a git variant which treats it's
+  package as its install, so that we can not copy the key_base around
+  every freakin time
+
+- `vee package-brew NAME`
+    - package up the given homebrew package and all of its dependencies into
+      a set (or single, if I feel up to it) tarball.
+    - if there were multiple, it would expand into a series of packages at
+      runtime. This could be via Package.provides() ?
+
+- add for loops and string formatting to requirements files
+  
+  % for x in ...:
+  % endfor
+
+  - do not allow git-based packages to be found inside of for loops
+  - if statements are ok though
+
 - etag should force reinstall of Homebrew packages
 
 - it could be nice for packages to register envvars (or scripts to run at source time)
