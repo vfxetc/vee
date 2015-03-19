@@ -144,9 +144,13 @@ class PythonBuild(GenericBuild):
 
         if self.setup_path:
 
-            log.info(style_note('Building egg-info'))
-            cmd = ['python', '-c', 'import setuptools; __file__=\'setup.py\'; execfile(__file__)']
-            cmd.extend(['egg_info'])
+            log.info(style_note('Building egg-info and scripts'))
+            cmd = ['python', '-c', 'import sys,setuptools; __file__=sys.argv[0]=\'setup.py\'; execfile(__file__)']
+            cmd.extend([
+                'egg_info',
+                'build_scripts', '-e', '/usr/bin/env VEE=%s VEE_PYTHON=%s dev python' % (os.environ.get("VEE", ''), os.environ.get('VEE_PYTHON', )),
+                'install_scripts', '-d', 'build/scripts',
+            ])
             if call(cmd, cwd=os.path.dirname(self.setup_path)):
                 raise RuntimeError('Could not build egg-info')
 
@@ -159,7 +163,12 @@ class PythonBuild(GenericBuild):
                 dirs_to_link.add(os.path.dirname(line.strip()))
             for name in sorted(dirs_to_link):
                 log.info(style_note("Adding ./%s to $PYTHONPATH" % name))
-                pkg.environ['PYTHONPATH'] = join_env_path('./' + name, pkg.environ.get('PYTHONPATH', '@'))       
+                pkg.environ['PYTHONPATH'] = join_env_path('./' + name, pkg.environ.get('PYTHONPATH', '@'))
+
+            scripts = os.path.join(os.path.dirname(self.setup_path), 'build', 'scripts')
+            if os.path.exists(scripts):
+                log.info(style_note("Adding ./build/scripts to $PATH"))
+                pkg.environ['PATH'] = join_env_path('./build/scripts', pkg.environ.get('PATH', '@'))
 
 
 
