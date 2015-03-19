@@ -152,6 +152,102 @@ def call(cmd, **kwargs):
     return proc.returncode
 
 
+def bash_source(shell_script, callbacks=None, prologue='', epilogue='', **kwargs):
+
+    if not callbacks:
+        return call(['bash', '-c', '%s\nsource %s\n%s' % (prologue, shell_script, epilogue)], **kwargs)
+
+    prfd, cwfd = os.pipe()
+    crfd, pwfd = os.pipe()
+
+    try:
+
+        def callback_target():
+            
+            try:
+                fh = os.fdopen(prfd)
+            except:
+                os.close(prfd)
+                raise
+
+            while True:
+                arg_count = fh.readline().strip()
+                if not arg_count:
+                    break
+                arg_count = int(arg_count)
+                args = []
+                for arg_i in xrange(arg_count):
+                    arg_len = int(fh.readline())
+                    args.append(fh.read(arg_len))
+                name = args[0]
+                if name in callbacks:
+                    try:
+                        res = callbacks[name](*args[1:])
+                    except Exception as e:
+                        log.exception('exception in callback %s: %s' % (name, e))
+                        res = None
+                else:
+                    log.warning('no callback %s' % name)
+                    res = None
+                if res is None:
+                    os.write(pwfd, '0\n')
+                else:
+                    res = str(res)
+                    os.write(pwfd, '%s\n' % len(res))
+                    os.write(pwfd, res)
+
+        thread = threading.Thread(target=callback_target)
+        thread.daemon = True
+        thread.start()
+
+        funcs = '\n'.join('%s() { _vee_callback %s "$@"; }' % (name, name) for name in callbacks)
+        cmd = ['bash', '-c', '''
+            _vee_callback() {
+
+                local rfd=%d;
+                local wfd=%d;
+
+                # Write args to Python.
+                echo ${#@} >&$wfd
+                for x in "$@"; do
+                    echo ${#x} >&$wfd
+                    echo -n "$x" >&$wfd
+                done
+
+                # Read res from Python.
+                local len
+                read -u $rfd len
+                if [[ $len != 0 ]]; then
+                    local res
+                    read -u $rfd -n $len res
+                    echo "$res"
+                fi
+
+            }
+            %s
+            %s
+            source %s
+            %s
+        ''' % (crfd, cwfd, funcs, prologue, shell_script, epilogue)]
+
+        res = call(cmd, **kwargs)
+
+        os.close(cwfd); cwfd = None
+        os.close(crfd); crfd = None
+
+        thread.join()
+
+        return res
+
+    finally:
+        if cwfd: os.close(cwfd)
+        if crfd: os.close(crfd)
+        if pwfd: os.close(pwfd)
+        # Don't need to close the prfd since it will be done so implicitly by
+        # the thread.
+
+
+
 def which(name):
     bases = os.environ['PATH'].split(':')
     for base in bases:
