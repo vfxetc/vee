@@ -40,4 +40,10 @@ class TestGuessName(TestCase):
             'sqlite3',
         )
 
+    def test_guess_name_regressions(self):
+        self.assertEqual(
+            guess_name('https://pypi.python.org/packages/2.7/S/Sphinx/Sphinx-1.3.1-py2.py3-none-any.whl'),
+            'sphinx',
+        )
+
 
