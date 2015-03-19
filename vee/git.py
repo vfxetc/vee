@@ -138,9 +138,9 @@ class GitRepo(object):
             self.git('remote', 'add', 'origin', self.remote_url)
             self.git('config', '--unset', 'core.bare')
             if shallow:
-                self.git('pull', '--set-upstream', '--depth=1', 'origin', 'master')
+                self.git('pull', '--depth=1', 'origin', 'master')
             else:
-                self.git('pull', '--set-upstream', 'origin', 'master')
+                self.git('pull', 'origin', 'master')
             return
 
         if shallow:
