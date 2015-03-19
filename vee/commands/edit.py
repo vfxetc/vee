@@ -5,6 +5,7 @@ from vee.cli import style, style_error, style_note
 from vee.commands.main import command, argument
 from vee.git import GitRepo, normalize_git_url
 from vee.subproc import call
+from vee import log
 
 
 @command(
@@ -18,4 +19,7 @@ def edit(args):
     cmd = []
     cmd.extend(shlex.split(os.environ['EDITOR']))
     cmd.append(os.path.join(env_repo.work_tree, 'requirements.txt'))
+
+    log.debug(cmd, verbosity=1)
+
     os.execvp(cmd[0], cmd)

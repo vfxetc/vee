@@ -62,7 +62,8 @@ def upgrade(args):
         try:
             args.main(cmd)
         except:
-            log.exception('Linking %s failed')
+            log.exception('Linking failed')
+            raise
         else:
 
             # Create a symlink by branch.
