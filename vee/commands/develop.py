@@ -11,6 +11,7 @@ from vee.packages.git import normalize_git_url
 from vee.requirement import Requirement
 from vee.requirementset import RequirementSet
 from vee.utils import makedirs
+from vee import log
 
 
 def iter_availible_requirements(home):
@@ -32,6 +33,7 @@ def iter_availible_requirements(home):
    or: vee develop add PATH [NAME]
    or: vee develop find PATH
    or: vee develop install NAME
+   or: vee develop rescan [NAME ...]
    or: vee develop setenv NAME KEY=value [...]
    or: vee develop list [--availible] [--environ]
 """.strip(),
@@ -146,6 +148,40 @@ def find(args):
 
 
 @develop.subcommand(
+    argument('names', nargs='*'),
+    help='recursively find existing checkouts',
+)
+def rescan(args):
+
+    home = args.assert_home()
+    con = home.db.connect()
+
+    args.force = True
+
+    if args.names:
+        for name in args.names:
+            row = con.execute('SELECT path FROM dev_packages WHERE name = ?', [name]).fetchone()
+            if not row:
+                log.warning('No dev package named %s' % name)
+                continue
+            path = row[0]
+            if not os.path.exists(path):
+                log.warning('Dev package %s not longer exists at %s' % (name, path))
+                continue
+            args.name = name
+            args.path = path
+            init(args, do_add=True)
+    else:
+        for name, path in con.execute('SELECT name, path FROM dev_packages'):
+            if not os.path.exists(path):
+                log.warning('Dev package %s not longer exists at %s' % (name, path))
+                continue
+            args.name = name
+            args.path = path
+            init(args, do_add=True)
+
+
+@develop.subcommand(
     argument('--force', action='store_true'),
     argument('--path'),
     argument('name'),
@@ -173,7 +209,11 @@ def init(args, do_clone=False, do_install=False, do_add=False, is_find=False):
         else:
             con.execute('DELETE FROM dev_packages WHERE id = ?', [row['id']])
 
-    path = args.path or os.path.join(home.dev_root, name)
+    path = os.path.abspath(args.path or os.path.join(home.dev_root, name))
+    if not os.path.exists(path):
+        log.error('%s does not exist'%  path)
+        return 1
+
     dev_repo = GitRepo(path)
 
     if do_init:
@@ -212,6 +252,9 @@ def init(args, do_clone=False, do_install=False, do_add=False, is_find=False):
     req = Requirement(['file:' + path], home=home)
     package = req.package
     package.package_name = package.build_name = path
+
+    log.info('%s is a "%s" package' % (name, package.builder.type))
+
     package.builder.develop()
 
     print style_note('Linking dev package', name, path)
