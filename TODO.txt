@@ -1,11 +1,27 @@
 
+- `--link-prefix` so that it doesn't have to install it elsewhere, just link
+  it elsewhere.
+
+- use VEE_HOMEBREW=/usr/local so that most bottles just work?
+  - this is only a little scary
+
 - it would be wonderful if we could have a git variant which treats it's
-  package as its install, so that we can not copy the key_base around
-  every freakin time
+  package as its install, or perhaps skips the build, so that we can not
+  copy the key_base around every freakin time. OR, --hard-link instead of
+  copying. We could do that anyways...
+    a) --hard-link uses hard links instead of copies
+    b) --one-install 
+
+- PyQt for Maya/Nuke in Linux
+  - perhaps we should just do this with envvars?
 
 - `vee package-brew NAME`
     - package up the given homebrew package and all of its dependencies into
       a set (or single, if I feel up to it) tarball.
+        - if I made my own, dependencies should be specified as a name/url
+          pair, such that the name could be satisfied elsewhere
+        - vee-package-meta.yml inside the tarball could describe it
+        - vbott extension
     - if there were multiple, it would expand into a series of packages at
       runtime. This could be via Package.provides() ?
 
@@ -17,7 +33,9 @@
   - do not allow git-based packages to be found inside of for loops
   - if statements are ok though
 
-- etag should force reinstall of Homebrew packages
+- check config/environ against database when deciding if resolve_existing
+  matches. use this for build_subdir and install_prefix too
+
 
 - it could be nice for packages to register envvars (or scripts to run at source time)
   but it certainly isn't nessesary for us to do up front

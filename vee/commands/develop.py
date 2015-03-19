@@ -158,6 +158,8 @@ def rescan(args):
 
     args.force = True
 
+    pairs = []
+
     if args.names:
         for name in args.names:
             row = con.execute('SELECT path FROM dev_packages WHERE name = ?', [name]).fetchone()
@@ -168,17 +170,14 @@ def rescan(args):
             if not os.path.exists(path):
                 log.warning('Dev package %s not longer exists at %s' % (name, path))
                 continue
-            args.name = name
-            args.path = path
-            init(args, do_add=True)
+            pairs.append((name, path))
     else:
-        for name, path in con.execute('SELECT name, path FROM dev_packages'):
-            if not os.path.exists(path):
-                log.warning('Dev package %s not longer exists at %s' % (name, path))
-                continue
-            args.name = name
-            args.path = path
-            init(args, do_add=True)
+        pairs = list(con.execute('SELECT name, path FROM dev_packages'))
+
+    for name, path in pairs:
+        args.name = name
+        args.path = path
+        init(args, do_add=True)
 
 
 @develop.subcommand(
