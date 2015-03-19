@@ -67,11 +67,17 @@ def link(args):
                 req.auto_install(force=args.reinstall)
         except AlreadyInstalled:
             pass
+        except:
+            log.exception('Installing %s failed' % req.name)
+            continue
         
         try:
             req.package.link(env, force=args.force)
         except AlreadyLinked as e:
             log.info(style('Already linked ', 'blue') + str(req), verbosity=1)
+        except:
+            log.exception('Linking %s failed' % req.name)
+            continue
       
 
 

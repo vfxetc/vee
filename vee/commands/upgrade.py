@@ -4,6 +4,7 @@ from subprocess import CalledProcessError
 from vee.cli import style, style_warning
 from vee.commands.main import command, argument, group
 from vee.utils import makedirs
+from vee import log
 
 
 @command(
@@ -57,12 +58,17 @@ def upgrade(args):
         if args.reinstall:
             cmd.append('--reinstall')
         cmd.extend(('--directory', path_by_commit, repo.abspath('requirements.txt')))
-        args.main(cmd)
+        
+        try:
+            args.main(cmd)
+        except:
+            log.exception('Linking %s failed')
+        else:
 
-        # Create a symlink by branch.
-        if os.path.lexists(path_by_branch):
-            os.unlink(path_by_branch)
-        makedirs(os.path.dirname(path_by_branch))
-        os.symlink(path_by_commit, path_by_branch)
+            # Create a symlink by branch.
+            if os.path.lexists(path_by_branch):
+                os.unlink(path_by_branch)
+            makedirs(os.path.dirname(path_by_branch))
+            os.symlink(path_by_commit, path_by_branch)
 
 
