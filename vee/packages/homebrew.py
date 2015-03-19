@@ -43,21 +43,8 @@ class HomebrewPackage(GitPackage):
         return os.path.join(self.package_path, 'bin', 'brew')
 
     def _brew(self, *cmd, **kwargs):
-        
         self.repo.clone_if_not_exists()
-
-        package = self.package_path
-        env = os.environ.copy()
-        env.update(
-            # HOMEBREW=prefix,
-            HOMEBREW_REPOSITORY=package,
-            HOMEBREW_CACHE=os.path.join(package, 'Cache'),
-            HOMEBREW_CELLAR=os.path.join(package, 'Cellar'),
-            HOMEBREW_PREFIX=package,
-            HOMEBREW_TEMP=makedirs(package, 'tmp'),
-        )
-        env.update(self.environ_diff)
-        return call((self._brew_bin, ) + cmd, env=env, **kwargs)
+        return call((self._brew_bin, ) + cmd, env=self.fresh_environ(), **kwargs)
 
     _cached_brew_info = None
 
