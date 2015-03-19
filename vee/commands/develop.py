@@ -210,9 +210,6 @@ def init(args, do_clone=False, do_install=False, do_add=False, is_find=False):
             con.execute('DELETE FROM dev_packages WHERE id = ?', [row['id']])
 
     path = os.path.abspath(args.path or os.path.join(home.dev_root, name))
-    if not os.path.exists(path):
-        log.error('%s does not exist'%  path)
-        return 1
 
     dev_repo = GitRepo(path)
 
@@ -248,6 +245,10 @@ def init(args, do_clone=False, do_install=False, do_add=False, is_find=False):
 
     elif do_add:
         print style_note('Adding %s from %s' % (name, path))
+
+    if not os.path.exists(path):
+        log.error('%s does not exist'%  path)
+        return 1
 
     req = Requirement(['file:' + path], home=home)
     package = req.package
