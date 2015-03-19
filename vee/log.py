@@ -111,7 +111,7 @@ root.addHandler(StdoutHandler())
 
 
 
-def log(level, message, verbosity=None, name=None, _frame=1):
+def log(level, message, verbosity=None, name=None, exc_info=None, _frame=1):
 
     # We must manually construct a LogRecord, and "handle" it, since we want
     # to set the lineno to be further up the pipe.
@@ -121,7 +121,7 @@ def log(level, message, verbosity=None, name=None, _frame=1):
     name = name or frame.f_globals['__name__']
 
     logger = logging.getLogger(name)
-    record = logger.makeRecord(name, level, code.co_filename, frame.f_lineno, message, (), None, code.co_name, {'verbosity': verbosity})
+    record = logger.makeRecord(name, level, code.co_filename, frame.f_lineno, message, (), exc_info, code.co_name, {'verbosity': verbosity})
     logger.handle(record)
 
 
@@ -140,6 +140,10 @@ def error(*args, **kwargs):
 def critical(*args, **kwargs):
     kwargs.setdefault('_frame', 2)
     log(logging.CRITICAL, *args, **kwargs)
+def exception(*args, **kwargs):
+    kwargs.setdefault('_frame', 2)
+    kwargs['exc_info'] = sys.exc_info()
+    log(logging.ERROR, *args, **kwargs)
 
 
 if __name__ == '__main__':
