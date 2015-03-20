@@ -49,7 +49,7 @@ def normalize_git_url(url, prefix=False, prefer=None):
             org_name, repo_name = m.groups()
             if prefer in ('scp', ):
                 return '%sgit@github.com:%s/%s' % (prefix, org_name, repo_name)
-            return '%s%s:github.com/%s/%s' % (prefix, scheme, org_name, repo_name)
+            return '%s%s://github.com/%s/%s' % (prefix, scheme, org_name, repo_name)
         return '%s%s:%s' % (prefix, scheme, the_rest)
 
     # SCP-like.

@@ -28,7 +28,11 @@ class TestGitURLs(TestCase):
             normalize_git_url('git@github.com:example/repo.git'),
             'git@github.com:example/repo'
         )
-
+        self.assertEqual(
+            normalize_git_url('git+https://github.com/snide/sphinx_rtd_theme.git'),
+            'https://github.com/snide/sphinx_rtd_theme',
+        )
+    
     def test_http_urls(self):
         self.assertEqual(
             normalize_git_url('http://user@example.com/path/to/repo'),
