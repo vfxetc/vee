@@ -3,7 +3,7 @@ import os
 from vee.cli import style
 from vee.commands.main import command, argument
 from vee.environment import Environment
-from vee.exceptions import AlreadyInstalled, AlreadyLinked
+from vee.exceptions import AlreadyInstalled, AlreadyLinked, print_cli_exc
 from vee.requirement import Requirement
 from vee.requirementset import RequirementSet
 from vee import log
@@ -66,7 +66,8 @@ def link(args):
                 req.auto_install(force=args.reinstall)
         except AlreadyInstalled:
             pass
-        except:
+        except Exception as e:
+            print_cli_exc(e, verbose=True)
             log.exception('Installing %s failed' % req.name)
             continue
         
@@ -74,7 +75,8 @@ def link(args):
             req.package.link(env, force=args.force)
         except AlreadyLinked as e:
             log.info(style('Already linked ', 'blue') + str(req), verbosity=1)
-        except:
+        except Exception as e:
+            print_cli_exc(e, verbose=True)
             log.exception('Linking %s failed' % req.name)
             continue
       

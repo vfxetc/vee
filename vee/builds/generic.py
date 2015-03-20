@@ -4,7 +4,7 @@ import shutil
 from vee.cli import style_note, style
 from vee.envvars import join_env_path
 from vee import log
-from vee.utils import find_in_tree
+from vee.utils import find_in_tree, linktree
 from vee.subproc import call, bash_source
 
 
@@ -30,8 +30,12 @@ class GenericBuild(object):
         if pkg.make_install:
             log.warning('--make-install specified, but no Makefile found.')
 
-        log.info(style('Installing via copy ', 'blue', bold=True) + style('to ' + pkg.install_path, bold=True))
-        shutil.copytree(pkg.build_path_to_install, pkg.install_path_from_build, symlinks=True)
+        if pkg.hard_link:
+            log.info(style('Installing via hard-link ', 'blue', bold=True) + style('to ' + pkg.install_path, bold=True))
+            linktree(pkg.build_path_to_install, pkg.install_path_from_build, symlinks=True)
+        else:
+            log.info(style('Installing via copy ', 'blue', bold=True) + style('to ' + pkg.install_path, bold=True))
+            shutil.copytree(pkg.build_path_to_install, pkg.install_path_from_build, symlinks=True)
 
     def develop(self):
         pkg = self.package

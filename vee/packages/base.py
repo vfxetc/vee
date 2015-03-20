@@ -16,7 +16,7 @@ from vee.cli import style
 from vee.exceptions import AlreadyInstalled, AlreadyLinked
 from vee.requirement import Requirement, requirement_parser
 from vee.subproc import call
-from vee.utils import cached_property, makedirs
+from vee.utils import cached_property, makedirs, linktree
 
 
 class BasePackage(object):
@@ -207,9 +207,14 @@ class BasePackage(object):
         # Directories.
         elif os.path.isdir(self.package_path):
             self._clean_build_path(makedirs=False)
-            shutil.copytree(self.package_path, self.build_path, symlinks=True,
-                ignore=shutil.ignore_patterns('.git'),
-            )
+            if self.hard_link:
+                linktree(self.package_path, self.build_path, symlinks=True,
+                    ignore=shutil.ignore_patterns('.git'),
+                )
+            else:
+                shutil.copytree(self.package_path, self.build_path, symlinks=True,
+                    ignore=shutil.ignore_patterns('.git'),
+                )
 
         else:
             raise ValueError('unknown package type %r' % self.package_path)

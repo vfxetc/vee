@@ -3,6 +3,7 @@ import sys
 import traceback
 
 from vee.cli import style, style_error
+from vee import log
 
 
 def cli_exc_str(obj, use_magic=True):
@@ -40,7 +41,7 @@ def format_cli_exc(e, verbose=False):
     return res + cli_exc_str(e)
 
 def print_cli_exc(e, verbose=False):
-    print format_cli_exc(e, verbose)
+    log.info(format_cli_exc(e, verbose))
 
 
 def setup_cli_error(e, title=None, format=None, detail=None, errno=1):

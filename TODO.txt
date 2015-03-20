@@ -26,9 +26,6 @@
 - `--link-prefix` so that it doesn't have to install it elsewhere, just link
   it elsewhere.
 
-- use VEE_HOMEBREW=/usr/local so that most bottles just work?
-  - this is only a little scary
-
 - it would be wonderful if we could have a git variant which treats it's
   package as its install, or perhaps skips the build, so that we can not
   copy the key_base around every freakin time. OR, --hard-link instead of

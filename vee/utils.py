@@ -67,3 +67,39 @@ def guess_name(path):
 
     return next(part_iter).lower()
 
+
+def linktree(src, dst, symlinks=False, ignore=None):
+    if not symlinks:
+        raise NotImplementedError('symlinks')
+    src = os.path.abspath(src)
+    dst = os.path.abspath(dst)
+    for src_dir, dir_names, file_names in os.walk(src):
+        dst_dir = os.path.join(dst, os.path.relpath(src_dir, src))
+
+        if ignore is not None:
+            ignored_names = ignore(src_dir, dir_names + file_names)
+        else:
+            ignored_names = set()
+
+        for is_dir, names in ((True, dir_names), (False, file_names)):
+            dont_walk = set()
+            for name in names:
+                if name in ignored_names:
+                    continue
+                src_path = os.path.join(src_dir, name)
+                dst_path = os.path.join(dst_dir, name)
+                if os.path.islink(src_path):
+                    rel_link = os.readlink(src)
+                    abs_link = os.path.join(src_path, rel_link)
+                    os.symlinks(abs_link, dst_path)
+                    if is_dir:
+                        dont_walk.append(name)
+                elif is_dir:
+                    makedirs(dst_path)
+                else:
+                    os.link(src_path, dst_path)
+            if dont_walk:
+                names[:] = [x for x in names if x not in dont_walk]
+
+
+
