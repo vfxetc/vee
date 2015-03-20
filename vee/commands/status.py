@@ -56,7 +56,7 @@ def status(args):
     by_name = {}
 
     # Dev packages.
-    for row in home.db.execute('SELECT * FROM dev_packages'):
+    for row in home.db.execute('SELECT * FROM development_packages'):
         row = dict(row)
 
         dev_repo = GitRepo(row['path'])

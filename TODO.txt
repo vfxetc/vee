@@ -1,4 +1,27 @@
 
+- install_name for Homebrew is wrong if you have --HEAD (and maybe --devel),
+  the version is HEAD
+
+- dependency resolution might actually be a thing that we deal with...
+
+    - In python, we can get away with installing dependencies after the package
+      in most cases, but in Homebrew we can't. So we need a step between
+      extract() and build() in which we can resolve dependencies.
+
+    - inspect() is run pre-build, and may determine dependencies. In Python
+      packages this would run egg-info.
+
+    - these would need to be recorded, in order to be linked in a different
+      step from installation. package_dependencies table.
+
+    - for Python, we would need a PyPI installer
+        - packages/pypi/NAME/date.json
+        - https://pypi.python.org/pypi/NAME/json gives us JSON we can interpret
+        - would be create to have version requirements: --revision could be
+          an expression: --revision '>=1.0'
+
+    - for Homebrew, we already have homebrew.
+
 - `--link-prefix` so that it doesn't have to install it elsewhere, just link
   it elsewhere.
 
@@ -9,8 +32,11 @@
   package as its install, or perhaps skips the build, so that we can not
   copy the key_base around every freakin time. OR, --hard-link instead of
   copying. We could do that anyways...
-    a) --hard-link uses hard links instead of copies
-    b) --one-install 
+    --hard-link uses hard links instead of copies
+    --one-install 
+    --always-head
+    --git-inplace
+    --package-is-install
 
 - PyQt for Maya/Nuke in Linux
   - perhaps we should just do this with envvars?

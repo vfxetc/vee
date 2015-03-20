@@ -117,7 +117,7 @@ def _create_initial_tables(con):
 
     ''')
 
-    con.execute('''CREATE TABLE dev_packages (
+    con.execute('''CREATE TABLE development_packages (
 
         id INTEGER PRIMARY KEY,
         created_at TIMESTAMP NOT NULL DEFAULT (datetime('now')),
@@ -169,6 +169,14 @@ def _created_shared_libraries(con):
         path TEXT NOT NULL
 
     )''')
+
+
+@_migrations.append
+def _rename_dev_packages(con):
+
+    existing = set(row['name'] for row in con.execute("SELECT name FROM sqlite_master WHERE type='table'"))
+    if 'dev_packages' in existing:
+        con.execute('''ALTER TABLE dev_packages RENAME TO development_packages''')
 
 
 class _Connection(sqlite3.Connection):

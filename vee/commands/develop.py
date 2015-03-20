@@ -59,9 +59,9 @@ def list_(args):
         return
 
     if args.glob:
-        cur = home.db.execute('SELECT * FROM dev_packages WHERE name GLOB ? ORDER BY lower(name)', [args.glob])
+        cur = home.db.execute('SELECT * FROM development_packages WHERE name GLOB ? ORDER BY lower(name)', [args.glob])
     else:
-        cur = home.db.execute('SELECT * FROM dev_packages ORDER BY lower(name)')
+        cur = home.db.execute('SELECT * FROM development_packages ORDER BY lower(name)')
 
     for row in cur:
         path = row['path'].replace(home.dev_root, '$VEE_DEV').replace(home.root, '$VEE')
@@ -122,7 +122,7 @@ def rm(args):
     res = 0
     con = args.assert_home().db.connect()
     for pattern in args.patterns:
-        cur = con.execute('DELETE FROM dev_packages WHERE name GLOB ?', [pattern])
+        cur = con.execute('DELETE FROM development_packages WHERE name GLOB ?', [pattern])
         if not cur.rowcount:
             print style_warning('No dev packages matching "%s"' % pattern)
             res = 1
@@ -162,7 +162,7 @@ def rescan(args):
 
     if args.names:
         for name in args.names:
-            row = con.execute('SELECT path FROM dev_packages WHERE name = ?', [name]).fetchone()
+            row = con.execute('SELECT path FROM development_packages WHERE name = ?', [name]).fetchone()
             if not row:
                 log.warning('No dev package named %s' % name)
                 continue
@@ -172,7 +172,7 @@ def rescan(args):
                 continue
             pairs.append((name, path))
     else:
-        pairs = list(con.execute('SELECT name, path FROM dev_packages'))
+        pairs = list(con.execute('SELECT name, path FROM development_packages'))
 
     for name, path in pairs:
         args.name = name
@@ -197,7 +197,7 @@ def init(args, do_clone=False, do_install=False, do_add=False, is_find=False):
 
     # Make sure there are no other packages already, and clear out old ones
     # which no longer exist.
-    for row in con.execute('SELECT * FROM dev_packages WHERE name = ?', [name]):
+    for row in con.execute('SELECT * FROM development_packages WHERE name = ?', [name]):
         if not args.force and os.path.exists(os.path.join(row['path'], '.git')):
             if is_find:
                 print style_note('"%s" already exists:' % name, row['path'])
@@ -206,7 +206,7 @@ def init(args, do_clone=False, do_install=False, do_add=False, is_find=False):
                 print style_error('"%s" already exists:' % name, row['path'])
                 return 1
         else:
-            con.execute('DELETE FROM dev_packages WHERE id = ?', [row['id']])
+            con.execute('DELETE FROM development_packages WHERE id = ?', [row['id']])
 
     path = os.path.abspath(args.path or os.path.join(home.dev_root, name))
 
@@ -258,7 +258,7 @@ def init(args, do_clone=False, do_install=False, do_add=False, is_find=False):
     package.builder.develop()
 
     print style_note('Linking dev package', name, path)
-    con.execute('INSERT INTO dev_packages (name, path, environ) VALUES (?, ?, ?)', [name, path, json.dumps(package.environ)])
+    con.execute('INSERT INTO development_packages (name, path, environ) VALUES (?, ?, ?)', [name, path, json.dumps(package.environ)])
 
 
 @develop.subcommand(
@@ -271,7 +271,7 @@ def setenv(args):
     home = args.assert_home()
     con = home.db.connect()
     
-    row = con.execute('SELECT * FROM dev_packages WHERE name = ?', [args.name]).fetchone()
+    row = con.execute('SELECT * FROM development_packages WHERE name = ?', [args.name]).fetchone()
     if not row:
         raise ValueError('unknown dev package %r' % args.name)
 
@@ -284,5 +284,5 @@ def setenv(args):
             key, value = envvar.split('=', 1)
             environ[key] = value
 
-    con.execute('UPDATE dev_packages SET environ = ? WHERE id = ?', [json.dumps(environ), row['id']])
+    con.execute('UPDATE development_packages SET environ = ? WHERE id = ?', [json.dumps(environ), row['id']])
 

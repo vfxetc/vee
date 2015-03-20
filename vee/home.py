@@ -53,8 +53,8 @@ class Home(object):
             path = self._abs_path(name)
             makedirs(path)
 
-    def iter_dev_packages(self, exists=True):
-        for row in self.db.execute('SELECT * FROM dev_packages'):
+    def iter_development_packages(self, exists=True):
+        for row in self.db.execute('SELECT * FROM development_packages'):
             dev_pkg = DevPackage(row, home=self)
             if dev_pkg.exists:
                 yield dev_pkg
@@ -148,7 +148,7 @@ class Home(object):
         con = self.db.connect()
 
         # Look by name.
-        for row in con.execute('SELECT * FROM dev_packages WHERE name = ?', [input]):
+        for row in con.execute('SELECT * FROM development_packages WHERE name = ?', [input]):
             if os.path.exists(row['path']):
                 return row
 
@@ -156,7 +156,7 @@ class Home(object):
             return
         # Look by path.
         path = os.path.abspath(input)
-        for row in con.execute('SELECT * FROM dev_packages WHERE path = ? OR ? LIKE (path || "/%")', [path, path]):
+        for row in con.execute('SELECT * FROM development_packages WHERE path = ? OR ? LIKE (path || "/%")', [path, path]):
             if os.path.exists(row['path']):
                 return row
 
