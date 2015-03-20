@@ -50,8 +50,7 @@ def link(args):
         return
 
     reqs = RequirementSet(args.requirements, home=home)
-    reqs.guess_names()
-
+    
     for req in reqs.iter_requirements():
 
         log.info(style('==> %s' % req.name, 'blue'))

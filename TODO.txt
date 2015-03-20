@@ -12,7 +12,8 @@
       packages this would run egg-info.
 
     - these would need to be recorded, in order to be linked in a different
-      step from installation. package_dependencies table.
+      step from installation. package_dependencies table. loaded by
+      resolve_existing
 
     - for Python, we would need a PyPI installer
         - packages/pypi/NAME/date.json
@@ -34,9 +35,10 @@
   copying. We could do that anyways...
     --hard-link uses hard links instead of copies
     --one-install 
-    --always-head
-    --git-inplace
+    x --always-head
+    x --git-inplace
     --package-is-install
+    --build-in-place
 
 - PyQt for Maya/Nuke in Linux
   - perhaps we should just do this with envvars?

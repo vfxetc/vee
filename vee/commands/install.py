@@ -6,7 +6,6 @@ from vee.requirementset import RequirementSet
 
 @command(
     argument('--force', action='store_true', help='force install over old package'),
-    argument('--long-names', action='store_true', help='don\'t automatically pick names'),
     argument('requirements', nargs='...'),
     help='install a package; low-level',
     usage='vee install [--force] PACKAGE [OPTIONS]',
@@ -19,9 +18,6 @@ def install(args):
         raise ValueError('please provide requirements to install')
 
     reqs = RequirementSet(args.requirements, home=home)
-
-    if not args.long_names:
-        reqs.guess_names()
 
     for req in reqs.iter_requirements():
         if not args.force:

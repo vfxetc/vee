@@ -39,7 +39,6 @@ class EnvironmentRepo(GitRepo):
         else:
             if os.path.exists(self._req_path):
                 reqs.parse_file(self._req_path)
-        reqs.guess_names()
         return reqs
 
     def dump_requirements(self, req_set):

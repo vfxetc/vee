@@ -44,7 +44,8 @@ class MockRepo(object):
         if os.path.exists(path):
             old.parse_file(path)
 
-        new = RequirementSet(StringIO(raw))
+        new = RequirementSet(file=StringIO(raw))
+
         new_urls = set()
         new_names = set()
         for req in new.iter_requirements():

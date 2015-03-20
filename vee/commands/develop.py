@@ -227,8 +227,7 @@ def init(args, do_clone=False, do_install=False, do_add=False, is_find=False):
         # TODO: put more of this into EnvironmentRepo or RequirementSet
         env_repo = home.get_env_repo(args.repo)
         req_path = os.path.join(env_repo.work_tree, 'requirements.txt')
-        reqs = RequirementSet(req_path)
-        reqs.guess_names()
+        reqs = RequirementSet(req_path, home=home)
         for req in reqs.iter_requirements():
             if req.name.lower() == name.lower():
                 # Make sure it is a Git package.

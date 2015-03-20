@@ -53,16 +53,18 @@ class Control(object):
 
 class RequirementSet(list):
 
-    def __init__(self, source=None, home=None):
+    def __init__(self, args=None, file=None, home=None):
 
         self.home = home
         self._cumulative_environ = {}
         self.headers = {}
 
-        if isinstance(source, (list, tuple)):
-            self.parse_args(source)
-        elif source:
-            self.parse_file(source)
+        if isinstance(args, basestring):
+            args = [args]
+        if args:
+            self.parse_args(args)
+        if file:
+            self.parse_file(file)
 
     def parse_args(self, args):
 
@@ -73,6 +75,8 @@ class RequirementSet(list):
                 self.parse_file(args.url)
             else:
                 self.append(('', Requirement(args, home=self.home), ''))
+
+        self._guess_names()
 
     def parse_file(self, source):
         
@@ -129,11 +133,10 @@ class RequirementSet(list):
             for k, v in self._cumulative_environ.iteritems():
                 req.base_environ.setdefault(k, v)
             self.append((before, req, after))
-    
-    def finalize(self):
-        self.guess_names()
 
-    def guess_names(self, strict=True):
+        self._guess_names()
+
+    def _guess_names(self, strict=True):
         """Guess names for every requirement which does not already have one.
 
         This mutates the requirements as it goes; if it fails then some
@@ -256,8 +259,9 @@ if __name__ == '__main__':
 
     from vee.home import Home
 
-    reqs = RequirementSet(sys.argv[1:], home=Home('/usr/local/vee'))
-    reqs.guess_names()
+    reqs = RequirementSet(Home('/usr/local/vee'))
+    reqs.parse_args(sys.argv[1:])
+
     print ''.join(reqs.iter_dump())
 
 
