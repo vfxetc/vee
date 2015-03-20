@@ -61,7 +61,10 @@ class HomebrewPackage(GitPackage):
 
     def _set_names(self, package=False, build=False, install=False):
         if build or install and not self.build_name:
-            self.build_name = self.install_name_from_info()
+            if '--HEAD' in self.config:
+                self.build_name = '%s/HEAD' % self.name
+            else:
+                self.build_name = self.install_name_from_info()
         if install and not self.install_name:
             self.install_name = self.build_name
             log.debug('install_name for %s set to %r' % (self.name, self.install_name))
