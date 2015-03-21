@@ -40,7 +40,7 @@ class GitPackage(BasePackage):
             try:
                 commit = self.repo.rev_parse(self.revision or 'HEAD', fetch=bool(self.revision))
             except ValueError:
-                raise ValueError('%s does not exist in %s' % (self.revision, self.repo.remote_url))
+                raise ValueError('%s does not exist in %s' % (self.revision or 'HEAD', self.repo.remote_url))
             if commit:
                 if self.name:
                     self.build_name = '%s/%s' % (self.name, commit[:8])
