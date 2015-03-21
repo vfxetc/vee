@@ -30,7 +30,8 @@ setup(
         'Topic :: Software Development :: Libraries :: Python Modules',
     ],
 
-    scripts=['bin/vee'],
+    # scripts=['bin/vee'],
+    
     entry_points=open(os.path.join(here, 'vee', 'entry_points.txt')).read(),
     
     
