@@ -1,21 +1,27 @@
 
+- create timestamped commit envionrments too?
+    by_hash -> real environments
+    by_time -> links timestamped by commit time
+    $branch -> links
+
 - install_name for Homebrew is wrong if you have --HEAD (and maybe --devel),
   the version is HEAD
 
 - dependency resolution might actually be a thing that we deal with...
 
-    - In python, we can get away with installing dependencies after the package
-      in most cases, but in Homebrew we can't. So we need a step between
-      extract() and build() in which we can resolve dependencies.
+    - one is permitted to determine their dependencies at any time; between
+      each pipeline step the RequirementSet should inspect all requirements
+      for new dependencies, and re-order the set so that they are satisfied.
 
-    - inspect() is run pre-build, and may determine dependencies. In Python
-      packages this would run egg-info.
+    - inspect() is run post extract(), and may determine dependencies
+        - in python packages, run egg_info and inspect resulting "requires.txt"
 
-    - these would need to be recorded, in order to be linked in a different
-      step from installation. package_dependencies table. loaded by
-      resolve_existing
+    - deps would need to be recorded, in order to be linked in a different
+      step from installation
+        - package_dependencies simply links depender_id to dependee_id
+        - this would be (somehow) be loaded by resolve_existing
 
-    - for Python, we would need a PyPI installer
+    - PyPIPackage
         - packages/pypi/NAME/date.json
         - https://pypi.python.org/pypi/NAME/json gives us JSON we can interpret
         - would be create to have version requirements: --revision could be
@@ -26,19 +32,11 @@
 - `--link-prefix` so that it doesn't have to install it elsewhere, just link
   it elsewhere.
 
-- it would be wonderful if we could have a git variant which treats it's
-  package as its install, or perhaps skips the build, so that we can not
-  copy the key_base around every freakin time. OR, --hard-link instead of
-  copying. We could do that anyways...
-    --hard-link uses hard links instead of copies
-    --one-install 
-    x --always-head
-    x --git-inplace
-    --package-is-install
-    --build-in-place
+- need to populate environment.repo_id and repo_revision in the database
 
 - PyQt for Maya/Nuke in Linux
   - perhaps we should just do this with envvars?
+  - just package up what Mark has preppared previousely in /opt
 
 - `vee package-brew NAME`
     - package up the given homebrew package and all of its dependencies into
@@ -61,7 +59,6 @@
 - check config/environ against database when deciding if resolve_existing
   matches. use this for build_subdir and install_prefix too
 
-
 - it could be nice for packages to register envvars (or scripts to run at source time)
   but it certainly isn't nessesary for us to do up front
 
@@ -70,11 +67,6 @@
   Then you can symlink dependencies into $PREFIX/Cellar/$NAME/$VERSIONISH and
   do whatever you want. OR, we can copy things out of the Cellar when they
   are built, and relocate them to their new environment.
-
-- relocate packages
-
-  - `--relocate '@/path/to/map'` gives a specific relocation map, which we need
-    for relocating PyQt against Maya's Qt since the names no longer match. 
 
 - very simple automatic persistence model:
 
@@ -93,30 +85,11 @@
 - `vee upgrade` after a `vee add` without a push wont find the commit
     - `vee upgrade --dirty` should rewrite GIT urls to pull from dev
 
-- `vee link REQUIREMENT` should use the environment of the default repo
-
 - s/Home/Context
 
 - put `vee.__about__.__revision__` into every database row
 - `vee server` and `vee client`
     - make a super simple socket protocol. just send JSON back and forth
-
-- s/Requirement.package/Requirement.new_package()
-
-- linking can link top-level directories. Only when another thing also tries to
-  traverse into the same directory, is the original thing broken up into the
-  next depth of links, and then recursion continues. This is tricky when you
-  need to copy scripts, and link other things.
-    - walk the whole tree looking for files that need to be rewritten
-    - create a set of all directories which must exist above them
-    - do the main walk
-    - if a link exists where we need it to be a directory, the break it up by
-      turning it into a directory with linked contents
-    - OR:
-    - just link the directories into place
-    - then find everything that needs rewriting
-    - break up whatever links you need to
-    - rewrite those files
 
 - Homebrew isn't registering installs on first install: "ValueError: cannot record requirement that is not installed"
     - name in the database is "homebrew+x264"; perhaps this is the reason?

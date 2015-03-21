@@ -69,75 +69,141 @@ class Environment(object):
         return self._db_id
 
     def rewrite_shebang_or_link(self, old_path, new_path):
+        if not self.rewrite_shebang(old_path, new_path):
+            self._assert_real_dir(os.path.dirname(new_path))
+            try:
+                os.symlink(old_path, new_path)
+            except OSError as e:
+                if e.errno != errno.EEXIST:
+                    raise
+
+    def rewrite_shebang(self, old_path, new_path):
 
         # If it starts with a Python shebang, rewrite it.
         with open(old_path, 'rb') as old_fh:
             old_shebang = old_fh.readline()
             m = re.match(r'#!(|\S+/)([^\s/]+)', old_shebang)
-            if m:
-                new_bin = os.path.join(self.path, 'bin', m.group(2))
-                if os.path.exists(new_bin):
-                    new_shebang = '#!%s%s' % (new_bin, old_shebang[m.end(2):])
-                    log.info('Rewriting shebang of %s' % new_bin, verbosity=1)
-                    log.debug('New shebang: %s' % new_shebang.strip(), verbosity=1)
-                    with open(new_path, 'wb') as new_fh:
-                        new_fh.write(new_shebang)
-                        new_fh.writelines(old_fh)
-                    try:
-                        shutil.copystat(old_path, new_path)
-                    except OSError as e:
-                        # These often come up when you are not the owner
-                        # of the file.
-                        if e.errno != errno.EPERM:
-                            raise
-                    return
+            if not m:
+                return
 
-        # Symlink it into place.
-        if os.path.lexists(new_path):
-            os.unlink(new_path)
-        try:
-            os.symlink(old_path, new_path)
-        except OSError as e:
-            # TODO: have a vee-link-history.txt in each environment
-            # so that we can quickly check what is already linked there.
-            if e.errno != errno.EEXIST:
-                raise
+            new_bin = os.path.join(self.path, 'bin', m.group(2))
+            if not os.path.exists(new_bin):
+                return
+
+            new_shebang = '#!%s%s' % (new_bin, old_shebang[m.end(2):])
+            log.info('Rewriting shebang of %s' % new_bin, verbosity=1)
+            log.debug('New shebang: %s' % new_shebang.strip(), verbosity=1)
+
+            self._assert_real_dir(os.path.dirname(new_path))
+            with open(new_path, 'wb') as new_fh:
+                new_fh.write(new_shebang)
+                new_fh.writelines(old_fh)
+            try:
+                shutil.copystat(old_path, new_path)
+            except OSError as e:
+                # These often come up when you are not the owner
+                # of the file.
+                if e.errno != errno.EPERM:
+                    raise
+
+            return True
+
+    def _assert_real_dir(self, path):
+
+        if not path.startswith(self.path):
+            raise ValueError("not in environment: %s" % path)
+
+        paths = []
+        while len(path) > len(self.path):
+            paths.append(path)
+            path = os.path.dirname(path)
+
+
+        for path in reversed(paths):
+
+            if not os.path.exists(path):
+                os.makedirs(path)
+                continue
+
+            if not os.path.islink(path):
+                continue
+
+            # Create a directory, and populate it with symlinks to its contents.
+            link_dst = os.path.abspath(os.readlink(path))
+            os.unlink(path)
+            os.makedirs(path)
+            if os.path.isdir(link_dst):
+                for name in os.listdir(link_dst):
+                    os.symlink(os.path.join(link_dst, name), os.path.join(path, name))
+
 
     def link_directory(self, dir_to_link):
         
-        dir_to_link = os.path.abspath(dir_to_link)
+        src_root = os.path.abspath(dir_to_link)
+        dst_root = self.path
 
         self.create_if_not_exists()
 
-        python = os.path.join(self.path, 'bin', 'python')
-
-        # TODO: Be like Homebrew, and be smarter about what we link, and what
-        # we copy.
-
-        top_level = True
-
-        for old_dir_path, dir_names, file_names in os.walk(dir_to_link):
+        for src_dir, dir_names, file_names in os.walk(src_root):
             
+            _rel_dir = os.path.relpath(src_dir, src_root)
+            dst_dir = os.path.abspath(os.path.join(dst_root, _rel_dir))
+
             # The top level should only have the standard directories,
             # and no files.
-            if top_level:
-                file_names = []
+            if src_dir == src_root:
                 dir_names[:] = [x for x in dir_names if x in TOP_LEVEL_DIRS]
-                top_level = False
+                file_names = []
 
-            rel_dir_path = os.path.relpath(old_dir_path, dir_to_link)
-            new_dir_path = os.path.abspath(os.path.join(self.path, rel_dir_path))
+            # Determine if the currect dst directory is real, or there is a link
+            # at some point.
+            dst_dir_is_real = True
+            dst_dir_is_mine = True
+            dst_to_test = dst_dir
+            while len(dst_to_test) > len(dst_root):
+                is_link = os.path.exists and os.path.islink(dst_to_test)
+                if is_link:
+                    dst_dir_is_real = False
+                    link_path = os.readlink(dst_to_test)
+                    src_to_test = os.path.join(src_root, os.path.relpath(dst_to_test, dst_root))
+                    if link_path != src_to_test:
+                        dst_dir_is_mine = False
+                        break
+                dst_to_test = os.path.dirname(dst_to_test)
 
-            # Ignore AND skip these directories.
+            if not dst_dir_is_mine:
+                self._assert_real_dir(dst_dir)
+                dst_dir_is_real = dst_dir_is_mine = True
+
+            # Ignore and skip these directories, and remember to link the
+            # others for later
             dir_names[:] = [x for x in dir_names if x not in IGNORE_DIRS]
-            for dir_name in dir_names:
-                makedirs(os.path.join(new_dir_path, dir_name))
+            to_link = dir_names[:]
 
-            for file_name in file_names:
-                if file_name in IGNORE_FILES:
+            # Check the files first, since they will determine if we need to
+            # force this thing to be real.
+            for name in file_names:
+                if name in IGNORE_FILES:
                     continue
 
-                old_path = os.path.join(old_dir_path, file_name)
-                new_path = os.path.join(new_dir_path, file_name)
-                self.rewrite_shebang_or_link(old_path, new_path)
+                src_path = os.path.join(src_dir, name)
+                dst_path = os.path.join(dst_dir, name)
+
+                if self.rewrite_shebang(src_path, dst_path):
+                    dst_dir_is_real = True
+                else:
+                    to_link.append(name)
+
+            # I guess we better link them...
+            if dst_dir_is_real:
+                for name in to_link:
+                    src_path = os.path.join(src_dir, name)
+                    dst_path = os.path.join(dst_dir, name)
+                    try:
+                        os.symlink(src_path, dst_path)
+                    except OSError as e:
+                        if e.errno != errno.EEXIST:
+                            raise
+
+
 
