@@ -1,4 +1,24 @@
 
+- can VEE support multiple python versions at the same time?
+
+- vee dev_packages should record which user they are for
+
+- how can dev mode work on the farm, if the list of dev_packages is on your
+  local home
+
+- bash completions
+
+- vee commit --auto should recate a commit message out of all constituent commit
+    messages
+
+- vee-install.sh
+    gets VEE_INSTALL_PATH, also $1
+
+- remove write permissions from packages once installed?
+
+- `vee selfupdate` should be as close to just calling the installer as possible
+- on OS X we should bootstrap HOMEBREW with python, on linux, we don't need to
+
 - create timestamped commit envionrments too?
     by_hash -> real environments
     by_time -> links timestamped by commit time
@@ -13,13 +33,39 @@
       each pipeline step the RequirementSet should inspect all requirements
       for new dependencies, and re-order the set so that they are satisfied.
 
-    - inspect() is run post extract(), and may determine dependencies
+    - dependencies need to be able to be abstract (such that they may be
+      satisfied by the requirement set), or concrete (such that they are
+      already a Requirement object). These could either be:
+
+        a) different types, e.g. Requirement and AbstractRequirement
+        b) Requirement.type is None signals abstractedness
+        c) Package.abstract_requirements is a list of abstract ones
+
+      Ideally, abstract requirements could provide a fallback type that could
+      satisfy them. Or, you supply both an abstract or concrete type. OR,
+      return (RequirementSet.get_by_name(name) or Requirement('name', type='known_type'))
+
+          check_version_satisfaction(pkg.revision, py_dep_revision)
+          or
+          Version(py_dep_version).matches(pkg.revision)
+          Version('>=2.6').matches('2.7') -> True
+
+          --build-type and --package-type to pick one explicitly, so that
+          the dependee can specify them directly
+
+      So, are there any situations in which we cannot either resolve the
+      dependency immediately, OR provide a concrete one? Homebrew is immediate
+      since it is assumed that its dependencies are Homebrew. Python can
+      be immediate since we will make the PyPIPackage (so Requirement('sphinx', type='pypi'))
+
+    - Builder.inspect() is run post Package.extract(), and may determine dependencies
         - in python packages, run egg_info and inspect resulting "requires.txt"
+        - this could be a part of extract
 
     - deps would need to be recorded, in order to be linked in a different
       step from installation
         - package_dependencies simply links depender_id to dependee_id
-        - this would be (somehow) be loaded by resolve_existing
+        - this would be loaded by resolve_existing
 
     - PyPIPackage
         - packages/pypi/NAME/date.json
@@ -38,7 +84,7 @@
   - perhaps we should just do this with envvars?
   - just package up what Mark has preppared previousely in /opt
 
-- `vee package-brew NAME`
+- `vee bottle -d OUT_DIR PKG_NAME`
     - package up the given homebrew package and all of its dependencies into
       a set (or single, if I feel up to it) tarball.
         - if I made my own, dependencies should be specified as a name/url
@@ -91,9 +137,6 @@
 - `vee server` and `vee client`
     - make a super simple socket protocol. just send JSON back and forth
 
-- Homebrew isn't registering installs on first install: "ValueError: cannot record requirement that is not installed"
-    - name in the database is "homebrew+x264"; perhaps this is the reason?
-
 - Requirement.package_build_matches() returns if the environment and subdirs
   match between the requirement and package. If it is false, then we can
   force a re-install.
@@ -104,7 +147,6 @@
     2. Deferred resolution of variables.
     3. Deferred resolution of previous value.
 
-
 - can vendor macholib and elffile (or patchelf) in order to relocate libs on
   install (via `--relocate`)
     - macholib:
@@ -112,11 +154,6 @@
       >>> for c in h.commands: print c[0].get_cmd_name()
     - elffile might implement enough for us to patch it ourselves
     - we can also just depend on chrpath (Linux) and install_name_tool (OSX)
-
-
-
-
-- `vee link [-r REPO] [-e ENV] [-d DIR] [--raw] REQUIREMENT`
 
 - `vee dev checkout --repo REPO` to fastforward everything to match the given repo
 - `vee dev ff` to `pull --ff-only` everything to their origin/master
@@ -166,6 +203,7 @@ COMMANDS TO WRITE
 
   - vee uninstall (NAME|REQUIREMENT [ARGS])
   - vee unlink ENVIRON (NAME|REQUIREMENT [ARGS])
+      - this may not be possible, or desireable
 
   - vee list
       - list packages, environments, etc..
@@ -222,11 +260,6 @@ COMMANDS TO WRITE
 
 - install Python commands listed in egg-info
 
-- linking should check if a previous revision of the same thing was already
-  linked into an environment, and stop you
-
-    - Package.resolve_existing(any_revision=True)
-
 - does it make sense to have packages/builds/installs separate in the database,
   instead of having them all together under "packages"
 
@@ -274,8 +307,6 @@ LATER
 - pypi manager
     - PyPI JSON API -> https://pypi.python.org/pypi/%s/json
     - Need to either hit the PyPI on every `.installed` check, or cache versions.
-
-- match how Homebrew links directories, or at least be smarter about it
 
 - homebrew taps: homebrew+mikeboers/testbrew/foo
     - we would need a way to detect which tap it is
