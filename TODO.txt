@@ -1,5 +1,4 @@
 
-- can VEE support multiple python versions at the same time?
 
 - vee dev_packages should record which user they are for
 
@@ -27,6 +26,14 @@
 - install_name for Homebrew is wrong if you have --HEAD (and maybe --devel),
   the version is HEAD
 
+- I really don't like that it is so quick to create a package from a requirement.
+  I do like that it is so easy to keep pulling the same package from a given
+  requirement, however. So, perhaps another object, e.g. a PackageSet would
+  provide this sort of thing.
+
+  PackageSet.get(name_or_requirement) -> Package
+  RequirementSet.get(name_or_requirement) -> Requirement
+  
 - dependency resolution might actually be a thing that we deal with...
 
     - one is permitted to determine their dependencies at any time; between
@@ -58,6 +65,19 @@
       since it is assumed that its dependencies are Homebrew. Python can
       be immediate since we will make the PyPIPackage (so Requirement('sphinx', type='pypi'))
 
+      Seems like we either need a mechanism to defer resolution of dependencies,
+      with a fallback (so provide ('sphinx', 'pypi:sphinx')), or Packages need
+      a reference to a RequirementSet (or DependencyPool) so that they can
+      resolve them immediately.
+
+      Option 1: Dependency class
+          - .name -> for purely abstract stuff
+          - .requirement -> for concrete
+          - .default_url -> if the abstract can't be resolved
+      Option 1b: Use Requirement, and don't access the package attribute.
+      Option 2: Packages have a .set
+          - self.set.get('name') or Requirement(['url'])
+
     - Builder.inspect() is run post Package.extract(), and may determine dependencies
         - in python packages, run egg_info and inspect resulting "requires.txt"
         - this could be a part of extract
@@ -74,6 +94,13 @@
           an expression: --revision '>=1.0'
 
     - for Homebrew, we already have homebrew.
+
+
+- document somewhere that we are treating all names as existing within a global
+  namespace. This is particuarly scary given that there are python processes
+  that we have no control over, but... meh. Eventually, we could add a namespace
+  (e.g. "python_packages", "binaries", etc.)
+
 
 - `--link-prefix` so that it doesn't have to install it elsewhere, just link
   it elsewhere.
@@ -297,6 +324,8 @@ COMMANDS TO WRITE
 
 LATER
 -----
+
+- support multiple python versions at the same time, e.g. 2.6, 2.7, 3.4.
 
 - custom managers
   - e.g. `vee install PyAV.py`, where PyAV.py contains:
