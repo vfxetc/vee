@@ -31,7 +31,7 @@ class BasePackage(object):
     type = 'base'
 
 
-    def __init__(self, requirement=None, home=None):
+    def __init__(self, requirement=None, home=None, set=None):
 
         # Set from item access.
         if isinstance(requirement, dict):
@@ -56,6 +56,9 @@ class BasePackage(object):
         self._db_id = None
         self._db_link_id = None
         self.package_name = self.build_name = None
+        self.set = set
+
+        self.dependencies = []
 
     def __repr__(self):
         return '<%s for %s>' % (
@@ -194,15 +197,21 @@ class BasePackage(object):
 
         log.info(style('Extracting to ', 'blue', bold=True) + style(self.build_path, bold=True))
 
-        # Tarballs.
+        # gzip-ed Tarballs.
         if re.search(r'(\.tgz|\.tar\.gz)$', self.package_path):
             self._clean_build_path()
             call(['tar', 'xzf', self.package_path], cwd=self.build_path)
+        
+        # bzip-ed Tarballs.
+        elif re.search(r'(\.tbz|\.tar\.bz2)$', self.package_path):
+            self._clean_build_path()
+            call(['tar', 'xjf', self.package_path], cwd=self.build_path)
 
         # Zip files (and Python wheels).
         elif re.search(r'(\.zip|\.egg|\.whl)$', self.package_path):
             self._clean_build_path()
             call(['unzip', self.package_path], cwd=self.build_path)
+
 
         # Directories.
         elif os.path.isdir(self.package_path):
@@ -218,6 +227,9 @@ class BasePackage(object):
 
         else:
             raise ValueError('unknown package type %r' % self.package_path)
+
+    def inspect(self):
+        self.builder.inspect()
 
     @cached_property
     def builder(self):
@@ -281,7 +293,7 @@ class BasePackage(object):
         frozen = self.freeze()
         if not force:
             self._assert_unlinked(env, frozen)
-        log.info(style('Linking ', 'blue', bold=True) + style(str(frozen), bold=True))
+        log.info(style('Linking into %s: ' % env.name, 'blue', bold=True) + style(str(frozen), bold=True))
         env.link_directory(self.install_path)
         self._record_link(env)
 
@@ -403,25 +415,5 @@ class BasePackage(object):
                 self.uninstall()
             else:
                 raise AlreadyInstalled(str(self.freeze()))
-
-    def auto_install(self, force=False):
-
-        self._reinstall_check(force)
-
-        self.fetch()
-        self._reinstall_check(force) # We may only know once we have fetched.
-    
-        self.extract()
-        self._reinstall_check(force) # Packages may self-describe.
-
-        self.build()
-        self.install()
-
-        # Record it!
-        self.db_id()
-
-        # Find shared libs for others.
-        self.shared_libraries()
-
 
 

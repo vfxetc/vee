@@ -1,4 +1,5 @@
 
+- need to deal with recursive dependencies
 
 - vee dev_packages should record which user they are for
 
@@ -26,13 +27,32 @@
 - install_name for Homebrew is wrong if you have --HEAD (and maybe --devel),
   the version is HEAD
 
-- I really don't like that it is so quick to create a package from a requirement.
-  I do like that it is so easy to keep pulling the same package from a given
-  requirement, however. So, perhaps another object, e.g. a PackageSet would
-  provide this sort of thing.
+- Document Package vs Requirement like PackageSet vs RequirementSet
 
-  PackageSet.resolve(name_or_requirement, reinstall=False) -> Package
-  RequirementSet.get(name_or_requirement) -> Requirement
+- pkg_set.resolve_set(req_set)
+- pkg_set.auto_install()
+    - packages need to track their installed state, or the pkg_set needs to
+
+- split up Package into all of the different steps:
+
+  - Pipeline is the machinery
+  - PipelineStep is the basic piece which handles the pipeline.
+
+    make_pipeline_step(step, pkg)
+
+    Step.factory(step, pkg)
+    step.{fetch,extract,inspect,build,install,develop}()
+    step.also_provides('build') -> bool
+    step.provide_successor('extract') -> PipelineStep
+
+
+  - Transport handles fetch
+  - Unarchver handles extract
+  - Inspector handles inspect
+  - Builder handles build
+  - Installer handles install
+  - Developer handles develop
+
   
 - dependency resolution might actually be a thing that we deal with...
 

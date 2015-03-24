@@ -18,9 +18,9 @@ class HomebrewPackage(GitPackage):
     factory_priority = 1000
 
     @classmethod
-    def factory(cls, req, home):
+    def factory(cls, req, *args):
         if re.match(r'^homebrew[:+]', req.url):
-            return cls(req, home)
+            return cls(req, *args)
 
     def __init__(self, *args, **kwargs):
         super(HomebrewPackage, self).__init__(*args, **kwargs)

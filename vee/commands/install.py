@@ -24,7 +24,7 @@ def install(args):
     for req in req_set.iter_requirements():
         pkg = pkg_set.resolve(req, check_existing=not args.force)
         try:
-            pkg.auto_install(force=args.force)
+            pkg_set.auto_install(pkg.name, force=args.force)
         except AlreadyInstalled:
             print style('Already installed', 'blue', bold=True), style(str(pkg.freeze()), bold=True)
     

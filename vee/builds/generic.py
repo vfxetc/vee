@@ -21,8 +21,11 @@ class GenericBuild(object):
     def __init__(self, pkg):
         self.package = pkg
 
+    def inspect(self):
+        pass
+
     def build(self):
-        log.info(style_note('Generic package; nothing to build.'))
+        log.info(style_note('Generic package; nothing to build.'), verbosity=1)
 
     def install(self):
         pkg = self.package

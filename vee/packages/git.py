@@ -16,9 +16,9 @@ class GitPackage(BasePackage):
     factory_priority = 1000
 
     @classmethod
-    def factory(cls, req, home):
+    def factory(cls, req, *args):
         if re.match(r'^git[:+]', req.url):
-            return cls(req, home)
+            return cls(req, *args)
 
     def __init__(self, *args, **kwargs):
         super(GitPackage, self).__init__(*args, **kwargs)

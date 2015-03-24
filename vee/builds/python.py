@@ -1,4 +1,5 @@
 import os
+import re
 import sys
 
 from vee.builds.generic import GenericBuild
@@ -7,6 +8,7 @@ from vee import log
 from vee.envvars import join_env_path
 from vee.subproc import call
 from vee.utils import find_in_tree
+from vee.requirement import Requirement
 
 python_version = '%d.%d' % (sys.version_info[:2])
 site_packages = os.path.join('lib', 'python' + python_version, 'site-packages')
@@ -20,10 +22,9 @@ class PythonBuild(GenericBuild):
 
     @classmethod
     def factory(cls, pkg):
-        
 
         setup_path = find_in_tree(pkg.build_path, 'setup.py')
-        egg_path = find_in_tree(pkg.build_path, 'EGG-INFO', 'dir')
+        egg_path = find_in_tree(pkg.build_path, 'EGG-INFO', 'dir') or find_in_tree(pkg.build_path, '*.egg-info', 'dir')
         dist_path = find_in_tree(pkg.build_path, '*.dist-info', 'dir')
 
         if setup_path or egg_path or dist_path:
@@ -32,6 +33,41 @@ class PythonBuild(GenericBuild):
     def __init__(self, pkg, paths):
         super(PythonBuild, self).__init__(pkg)
         self.setup_path, self.egg_path, self.dist_path = paths
+
+    def inspect(self):
+
+        pkg = self.package
+
+        if self.setup_path and not self.egg_path:
+
+            log.info(style('Building Python Egg-Info...', 'blue', bold=True))
+
+            # Need to inject setuptools for this.
+            cmd = ['python', '-c', 'import sys, setuptools; sys.argv[0]=__file__=\'setup.py\'; execfile(__file__)']
+            cmd.extend(['egg_info'])
+            res = call(cmd, cwd=os.path.dirname(self.setup_path), env=pkg.fresh_environ(), indent=True, verbosity=1)
+            if res:
+                raise RuntimeError('Could not build Python package')
+
+            self.egg_path = find_in_tree(pkg.build_path, '*.egg-info', 'dir')
+            if not self.egg_path:
+                raise ValueError('could not find newly created egg-info')
+
+        if self.egg_path:
+            requires_path = os.path.join(self.egg_path, 'requires.txt')
+            if os.path.exists(requires_path):
+                for line in open(requires_path, 'rb'):
+                    line = line.strip()
+                    if not line:
+                        continue
+                    if line.startswith('['):
+                        break
+                    name = re.split('\W', line)[0].lower()
+                    log.debug('%s depends on %s' % (pkg.name, name))
+                    pkg.dependencies.append(Requirement(name=name, url='pypi:%s' % name))
+
+
+
 
     def build(self):
 

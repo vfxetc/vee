@@ -18,8 +18,8 @@ class FilePackage(BasePackage):
     factory_priority = 0
 
     @classmethod
-    def factory(cls, req, home):
-        return cls(req, home)
+    def factory(cls, req, *args):
+        return cls(req, *args)
 
     def __init__(self, *args, **kwargs):
         super(FilePackage, self).__init__(*args, **kwargs)

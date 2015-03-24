@@ -64,22 +64,14 @@ def link(args):
 
         try:
             with log.indent():
-                pkg.auto_install(force=args.reinstall)
+                pkg_set.auto_install(pkg.name, force=args.reinstall, link_env=env, force_link=args.force)
         except AlreadyInstalled:
             pass
-        except Exception as e:
-            print_cli_exc(e, verbose=True)
-            log.exception('Installing %s failed' % req.name)
-            continue
-        
-        try:
-            pkg.link(env, force=args.force)
         except AlreadyLinked as e:
             log.info(style('Already linked ', 'blue') + str(req), verbosity=1)
         except Exception as e:
             print_cli_exc(e, verbose=True)
             log.exception('Linking %s failed' % req.name)
             continue
-      
-
+        
 
