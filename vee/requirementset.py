@@ -198,11 +198,6 @@ class RequirementSet(list):
             if isinstance(el, Requirement):
                 yield el
 
-    def iter_git_requirements(self):
-        for req in self.iter_requirements():
-            if req.package.type == 'git':
-                yield req
-
     def get_header(self, name):
         for _, el, _ in self:
             if isinstance(el, Header) and el.name.lower() == name.lower():

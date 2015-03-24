@@ -3,6 +3,7 @@ import re
 from vee.cli import style, style_error, style_note, style_warning
 from vee.commands.main import command, argument
 from vee.git import GitRepo, normalize_git_url
+from vee.packageset import PackageSet
 from vee.requirement import Requirement
 from vee.utils import guess_name
 
@@ -19,11 +20,14 @@ def add(args):
     home = args.assert_home()
     env_repo = home.get_env_repo(args.repo)
     req_set = env_repo.load_requirements()
+    pkg_set = PackageSet(home=home)
 
     if args.update:
         baked_any = False
-        for req in req_set.iter_git_requirements():
-            pkg = req.package
+        for req in req_set.iter_requirements():
+            pkg = pkg_set.resolve(req, check_existing=False)
+            if pkg.type != 'git':
+                continue
             print style_note('Fetching', str(req))
             pkg.repo.fetch('origin', 'master') # TODO: track these another way?
             if pkg.repo.check_ff_safety('origin/master'):
@@ -42,9 +46,11 @@ def add(args):
     if args.bake_installed:
         baked_any = False
 
-        for req in req_set.iter_git_requirements():
-            pkg = req.package
-            pkg.resolve_existing()
+        for req in req_set.iter_requirements():
+
+            pkg = pkg_set.resolve(req)
+            if pkg.type != 'git':
+                continue
 
             if req.name and req.name == guess_name(req.url):
                 req.name = None
@@ -79,7 +85,11 @@ def add(args):
         print style_error('No git remotes for %s' % row['path'])
         return 1
 
-    for req in req_set.iter_git_requirements():
+    for req in req_set.iter_requirements():
+        pkg = pkg_set.resolve(req, check_existing=False)
+        if pkg.type != 'git':
+            continue
+        
         req_url = normalize_git_url(req.url)
         if req_url in dev_remote_urls:
             if req.revision == dev_repo.head[:8]:

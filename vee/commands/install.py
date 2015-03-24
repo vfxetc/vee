@@ -1,6 +1,7 @@
 from vee.cli import style
 from vee.commands.main import command, argument
 from vee.exceptions import AlreadyInstalled
+from vee.packageset import PackageSet
 from vee.requirementset import RequirementSet
 
 
@@ -17,13 +18,13 @@ def install(args):
     if not args.requirements:
         raise ValueError('please provide requirements to install')
 
-    reqs = RequirementSet(args.requirements, home=home)
+    req_set = RequirementSet(args.requirements, home=home)
+    pkg_set = PackageSet(home=home)
 
-    for req in reqs.iter_requirements():
-        if not args.force:
-            req.package.resolve_existing()
+    for req in req_set.iter_requirements():
+        pkg = pkg_set.resolve(req, check_existing=not args.force)
         try:
-            req.auto_install(force=args.force)
+            pkg.auto_install(force=args.force)
         except AlreadyInstalled:
-            print style('Already installed', 'blue', bold=True), style(str(req.package.freeze()), bold=True)
+            print style('Already installed', 'blue', bold=True), style(str(pkg.freeze()), bold=True)
     

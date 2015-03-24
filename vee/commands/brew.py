@@ -1,5 +1,6 @@
 from vee.commands.main import command, argument
 from vee.requirement import Requirement
+from vee.packageset import PackageSet
 
 
 @command(
@@ -15,4 +16,5 @@ def brew(args, *command):
 
     # This is such a hack.
     req = Requirement('homebrew:', home=home)
-    req.package._brew(*command, verbosity=0, indent=False)
+    pkg = PackageSet(home=home).resolve(req)
+    pkg._brew(*command, verbosity=0, indent=False)

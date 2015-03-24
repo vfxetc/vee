@@ -3,9 +3,10 @@ import re
 
 from vee.cli import style, style_error, style_note, style_warning
 from vee.commands.main import command, argument
-from vee.git import GitRepo, normalize_git_url
-from vee.utils import guess_name
 from vee.exceptions import format_cli_exc
+from vee.git import GitRepo, normalize_git_url
+from vee.packageset import PackageSet
+from vee.utils import guess_name
 
 
 def summarize_rev_distance(local, remote, local_name='You', local_verb='are', remote_name='',
@@ -52,6 +53,7 @@ def status(args):
     home = args.assert_home()
 
     env_repo = home.get_env_repo(args.repo)
+    pkg_set = PackageSet(home=home)
 
     by_name = {}
 
@@ -69,10 +71,9 @@ def status(args):
         ('HEAD', 'head'),
     ]:
         for req in env_repo.load_requirements(revision=revision).iter_requirements():
-            pkg = req.package
+            pkg = pkg_set.resolve(req, check_existing=False)
             if pkg.type != 'git':
                 continue
-            pkg.resolve_existing()
             by_name.setdefault(pkg.name, {})[name] = req
 
 

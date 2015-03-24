@@ -7,7 +7,6 @@ import shlex
 
 from vee.cli import style
 from vee.exceptions import AlreadyInstalled, CliMixin
-from vee.packages import make_package
 from vee.utils import cached_property
 
 
@@ -109,10 +108,6 @@ class Requirement(object):
         # Manual args.
         self.home = home
 
-    @cached_property
-    def package(self):
-        return make_package(self, self.home)
-
     def to_kwargs(self):
         kwargs = {}
         for action in requirement_parser._actions:
@@ -166,12 +161,6 @@ class Requirement(object):
 
     def __repr__(self):
         return '%s(%r)' % (self.__class__.__name__, str(self))
-
-
-    def auto_install(self, **kwargs):
-        self.package.auto_install(**kwargs)
-
-
 
 
 

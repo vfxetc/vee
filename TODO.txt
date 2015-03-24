@@ -31,7 +31,7 @@
   requirement, however. So, perhaps another object, e.g. a PackageSet would
   provide this sort of thing.
 
-  PackageSet.get(name_or_requirement) -> Package
+  PackageSet.resolve(name_or_requirement, reinstall=False) -> Package
   RequirementSet.get(name_or_requirement) -> Requirement
   
 - dependency resolution might actually be a thing that we deal with...

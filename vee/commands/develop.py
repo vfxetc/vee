@@ -2,26 +2,28 @@ import json
 import os
 import re
 
+from vee import log
 from vee.cli import style, style_error, style_note, style_warning
 from vee.commands.main import command, argument, group
 from vee.envvars import render_envvars
 from vee.exceptions import AlreadyInstalled
 from vee.git import GitRepo
 from vee.packages.git import normalize_git_url
+from vee.packages import make_package
 from vee.requirement import Requirement
 from vee.requirementset import RequirementSet
 from vee.utils import makedirs
-from vee import log
 
 
 def iter_availible_requirements(home):
     env_repo = home.get_env_repo()
-    reqs = env_repo.requirement_set()
-    for req in reqs.iter_git_requirements():
-        # Make sure it is a Git package.
-        url = normalize_git_url(req.url, prefix=False)
-        if url:
-            yield req, url
+    req_set = env_repo.requirement_set()
+    pkg_set = PackageSet(home=home)
+    for req in req_set.iter_requirements():
+        pkg = pkg_set.resolve(req, check_existing=False)
+        if pkg.type != 'git':
+            return
+        yield req, normalize_git_url(req.url, prefix=False)
 
 
 @command(
@@ -249,7 +251,7 @@ def init(args, do_clone=False, do_install=False, do_add=False, is_find=False):
         return 1
 
     req = Requirement(['file:' + path], home=home)
-    package = req.package
+    package = make_package(req)
     package.package_name = package.build_name = path
 
     log.info('%s is a "%s" package' % (name, package.builder.type))

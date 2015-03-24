@@ -1,12 +1,13 @@
 import os
 
+from vee import log
 from vee.cli import style
 from vee.commands.main import command, argument
 from vee.environment import Environment
 from vee.exceptions import AlreadyInstalled, AlreadyLinked, print_cli_exc
+from vee.packageset import PackageSet
 from vee.requirement import Requirement
 from vee.requirementset import RequirementSet
-from vee import log
 
 
 @command(
@@ -49,21 +50,21 @@ def link(args):
             env.link_directory(dir_)
         return
 
-    reqs = RequirementSet(args.requirements, home=home)
-    
-    for req in reqs.iter_requirements():
+    req_set = RequirementSet(args.requirements, home=home)
+    pkg_set = PackageSet(env=env, home=home)
+
+    for req in req_set.iter_requirements():
 
         log.info(style('==> %s' % req.name, 'blue'))
 
-        if args.no_install and not req.installed:
-            raise CliError('not installed: %s' % req)
+        pkg = pkg_set.resolve(req, check_existing=not args.reinstall)
 
-        if not args.reinstall:
-            req.package.resolve_existing(env=env)
+        if args.no_install and not pkg.installed:
+            raise CliError('not installed: %s' % req)
 
         try:
             with log.indent():
-                req.auto_install(force=args.reinstall)
+                pkg.auto_install(force=args.reinstall)
         except AlreadyInstalled:
             pass
         except Exception as e:
@@ -72,7 +73,7 @@ def link(args):
             continue
         
         try:
-            req.package.link(env, force=args.force)
+            pkg.link(env, force=args.force)
         except AlreadyLinked as e:
             log.info(style('Already linked ', 'blue') + str(req), verbosity=1)
         except Exception as e:

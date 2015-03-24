@@ -6,6 +6,7 @@ from vee.commands.main import command, argument, group
 from vee.environment import Environment
 from vee.envvars import guess_envvars, render_envvars
 from vee.exceptions import NotInstalled
+from vee.packageset import PackageSet
 from vee.requirementset import RequirementSet
 
 
@@ -47,14 +48,15 @@ def exec_(args):
     req_args = []
     for arg in args.requirements or ():
         req_args.extend(arg.split(','))
-    reqs = RequirementSet(home=home)
-    reqs.parse_args(req_args)
-    for req in reqs.iter_requirements():
-        req.package.resolve_existing()
-        req.package._assert_paths(install=True)
-        if not req.package.installed:
+    req_set = RequirementSet(home=home)
+    req_set.parse_args(req_args)
+    pkg_set = PackageSet(home=home)
+    for req in req_set.iter_requirements():
+        pkg = pkg_set.resolve(req)
+        pkg._assert_paths(install=True)
+        if not pkg.installed:
             raise NotInstalled(str(req))
-        paths.append(req.package.install_path)
+        paths.append(pkg.install_path)
 
     # Named environments.
     for name in args.environment or ():
