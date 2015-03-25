@@ -51,7 +51,7 @@ class PythonBuild(GenericBuild):
 
             self.egg_path = find_in_tree(pkg.build_path, '*.egg-info', 'dir')
             if not self.egg_path:
-                raise ValueError('could not find newly created egg-info')
+                log.warning('Could not find newly created *.egg-info')
 
         if self.egg_path:
             requires_path = os.path.join(self.egg_path, 'requires.txt')
