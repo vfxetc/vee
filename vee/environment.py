@@ -9,6 +9,7 @@ from vee._vendor import virtualenv
 from vee.cli import style
 from vee.utils import makedirs
 from vee import log
+from vee.database import DBObject, Column
 
 
 IGNORE_DIRS = frozenset(('.git', '.svn'))
@@ -17,9 +18,15 @@ IGNORE_FILES = frozenset(('.DS_Store', ))
 TOP_LEVEL_DIRS = frozenset(('bin', 'etc', 'include', 'lib', 'lib64', 'sbin', 'share', 'opt', 'var'))
 
 
-class Environment(object):
+class Environment(DBObject):
+
+    __tablename__ = 'environments'
+
+    name = Column()
+    path = Column()
 
     def __init__(self, name, home):
+        super(Environment, self).__init__()
         self.home = home
         if name.startswith('/'):
             self.path = name
@@ -27,8 +34,6 @@ class Environment(object):
         else:
             self.name = name
             self.path = home._abs_path('environments', name)
-        self._db_id = None
-
 
     def create_if_not_exists(self):
 
@@ -55,18 +60,20 @@ class Environment(object):
             else:
                 log.warning('Could not find python-config')
 
-    def db_id(self):
-        if self._db_id is None:
-            cur = self.home.db.cursor()
-            row = cur.execute('SELECT * FROM environments WHERE path = ?', [self.path]).fetchone()
-            if row:
-                self._db_id = row['id']
-            else:
-                cur.execute('INSERT INTO environments (name, path) VALUES (?, ?)', [
-                    self.name, self.path,
-                ])
-                self._db_id = cur.lastrowid
-        return self._db_id
+    def resolve_existing(self):
+        if self.id is not None:
+            return self.id
+        cur = self.home.db.cursor()
+        row = cur.execute('SELECT * FROM environments WHERE path = ?', [self.path]).fetchone()
+        if row:
+            self.id = row['id']
+            self.name = row['name']
+            return self.id
+
+    def persist_in_db(self):
+        if self.id is None:
+            self.resolve_existing()
+        return super(Environment, self).persist_in_db()
 
     def rewrite_shebang_or_link(self, old_path, new_path):
         if not self.rewrite_shebang(old_path, new_path):

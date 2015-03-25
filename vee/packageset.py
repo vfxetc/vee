@@ -70,7 +70,7 @@ class PackageSet(collections.OrderedDict):
             if name not in self._installed:
                 pkg.build()
                 pkg.install()
-                pkg.db_id()
+                pkg.persist_in_db()
                 pkg.shared_libraries()
                 self._installed.add(name)
 

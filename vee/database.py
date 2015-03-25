@@ -293,17 +293,17 @@ class Column(object):
 
     def __init__(self, name=None):
         self.name = name
-        self._fget = self._fset = self._fdel = None
+        self._getter = self._setter = self._deleter = None
         self._persist = None
 
     def copy(self):
         copy = Column(self.name)
-        copy._fget = self._fget
+        copy._getter = self._getter
         copy._persist = self._persist
         return copy
 
     def getter(self, func):
-        self._fget = func
+        self._getter = func
         return self
 
     def persist(self, func):
@@ -311,8 +311,8 @@ class Column(object):
         return self
 
     def __get__(self, obj, cls):
-        if self._fget:
-            return self._fget(obj)
+        if self._getter:
+            return self._getter(obj)
         try:
             return obj.__dict__[self.name]
         except KeyError:
@@ -331,22 +331,26 @@ class DBMetaclass(type):
 
     def __new__(cls, name, bases, attrs):
 
-        columns = {}
-
         table_name = attrs.get('__tablename__')
-        for base in bases:
+
+        # Collect existing columns from bases.
+        columns = {}
+        for base in reversed(bases):
             table_name = table_name or getattr(base, '__tablename__', None)
             for col in getattr(base, '__columns__', []):
-                columns[col.name] = col
+                columns[col.name] = col.copy()
 
+        # Collect new columns.
         for k, v in attrs.iteritems():
+
+            # If this is now a property, but it was once a column, upgrade it
+            # to a column.
             if isinstance(v, property):
                 col = columns.get(k)
                 if col:
-                    col = col.copy()
-                    col._fget = v.fget
+                    col._getter = v.fget
                     if v.fset or v.fdel:
-                        raise ValueError('cannot wrap properties with setters')
+                        raise ValueError('cannot wrap properties with setters or deleters')
                     attrs[k] = col
                     v = col
 
@@ -354,7 +358,7 @@ class DBMetaclass(type):
                 v.name = v.name or k
                 columns[v.name] = v
 
-        attrs['__columns__'] = columns.values()
+        attrs['__columns__'] = [v for _, v in sorted(columns.iteritems())]
 
         return super(DBMetaclass, cls).__new__(cls, name, bases, attrs)
 
@@ -380,8 +384,8 @@ class DBObject(object):
             try:
                 if col._persist:
                     data[col.name] = col._persist(self)
-                elif col._fget:
-                    data[col.name] = col._fget(self)
+                elif col._getter:
+                    data[col.name] = col._getter(self)
                 else:
                     data[col.name] = self.__dict__[col.name]
             except KeyError:

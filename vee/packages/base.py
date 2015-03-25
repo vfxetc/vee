@@ -32,7 +32,7 @@ class BasePackage(DBObject):
     __tablename__ = 'packages'
 
     abstract_requirement = Column()
-    
+
     concrete_requirement = Column()
     @concrete_requirement.persist
     def concrete_requirement(self):
@@ -86,7 +86,7 @@ class BasePackage(DBObject):
         self.environ = self.environ.copy() if self.environ else {}
         self.config = self.config[:] if self.config else []
 
-        self._db_link_id = None
+        self._link_id = None
         self.package_name = self.build_name = None
         self.set = set
 
@@ -318,7 +318,7 @@ class BasePackage(DBObject):
             # I'm not sure if this is a big deal, but I want to see when
             # it is happening.
             log.warning('Finding shared libraries before package is in database.')
-        return libs.get_installed_shared_libraries(self.home.db.connect(), self.db_id(), self.install_path, rescan)
+        return libs.get_installed_shared_libraries(self.home.db.connect(), self.id or self.persist_in_db(), self.install_path, rescan)
 
     def link(self, env, force=False):
         self._assert_paths(install=True)
@@ -330,16 +330,13 @@ class BasePackage(DBObject):
         self._record_link(env)
 
     def _assert_unlinked(self, env, frozen=None):
-        if not self._db_link_id:
+        if not self._link_id:
             row = self.home.db.execute(
                 'SELECT id FROM links WHERE package_id = ? AND environment_id = ?',
-                [self.db_id(), env.db_id()]
+                [self.id or self.persist_in_db(), env.id or env.persist_in_db()]
             ).fetchone()
-        if self._db_link_id or row:
-            raise AlreadyLinked(str(frozen or self.freeze()), self._db_link_id or row[0])
-
-    def db_id(self):
-        return self.persist_in_db()
+        if self._link_id or row:
+            raise AlreadyLinked(str(frozen or self.freeze()), self._link_id or row[0])
 
     def persist_in_db(self):
         self._set_names(package=True, build=True, install=True)
@@ -367,7 +364,7 @@ class BasePackage(DBObject):
         clause = ' AND '.join(clauses)
 
         if env:
-            values.append(env.db_id())
+            values.append(env.id or env.persist_in_db())
             cur.execute('''
                 SELECT packages.*, links.id as link_id FROM packages
                 LEFT OUTER JOIN links ON packages.id = links.package_id
@@ -393,7 +390,7 @@ class BasePackage(DBObject):
 
         # Everything below either already matches or was unset.
         self.id = row['id']
-        self._db_link_id = row['link_id']
+        self._link_id = row['link_id']
         self.name = row['name']
         self.revision = row['revision']
         self.package_name = row['package_name']
@@ -412,11 +409,11 @@ class BasePackage(DBObject):
     def _record_link(self, env):
         cur = self.home.db.cursor()
         cur.execute('''INSERT INTO links (package_id, environment_id, abstract_requirement) VALUES (?, ?, ?)''', [
-            self.db_id(),
-            env.db_id(),
+            self.id or self.persist_in_db(),
+            env.id  or  env.persist_in_db(),
             self.abstract_requirement,
         ])
-        self._db_link_id = cur.lastrowid
+        self._link_id = cur.lastrowid
 
 
     def _reinstall_check(self, force):

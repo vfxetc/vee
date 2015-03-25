@@ -112,16 +112,7 @@
   do whatever you want. OR, we can copy things out of the Cellar when they
   are built, and relocate them to their new environment.
 
-- very simple automatic persistence model:
-
-    rowid is the main id
-
-    blah = Column('name')
-    
-
-    dbobject.rowid or dbobject.persist()
-    DBObject.persist_in_db() -> insert or update
-    DbObject.delete_from_db() -> delete from database
+- move save/delete/whatever to the Database or a Session?
 
 
 - Package.dependencies() -> list of Homebrew dependencies, that get installed
