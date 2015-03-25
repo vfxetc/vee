@@ -294,12 +294,13 @@ class Column(object):
     def __init__(self, name=None):
         self.name = name
         self._getter = self._setter = self._deleter = None
-        self._persist = None
+        self._persist = self._restore = None
 
     def copy(self):
         copy = Column(self.name)
-        copy._getter = self._getter
+        copy._getter  = self._getter
         copy._persist = self._persist
+        copy._restore = self._restore
         return copy
 
     def getter(self, func):
@@ -308,6 +309,10 @@ class Column(object):
 
     def persist(self, func):
         self._persist = func
+        return self
+
+    def restore(self, func):
+        self._restore = func
         return self
 
     def __get__(self, obj, cls):
@@ -374,6 +379,9 @@ class DBObject(object):
     def _cursor(self):
         return self.home.db.cursor()
 
+    def id_or_persist(self, *args, **kwargs):
+        return self.id or self.persist_in_db(*args, **kwargs)
+
     def persist_in_db(self, cursor=None, force=False):
 
         if not self.is_dirty and not force:
@@ -400,6 +408,29 @@ class DBObject(object):
         self.is_dirty = False
 
         return self.id
+
+    def restore_from_row(self, row, ignore=None):
+        
+        if 'id' in row:
+            if self.id and self.id != row['id']:
+                log.warning('Restoring from a mismatched ID; %s %d != %d' % (self.__tablename__, self.id, row['id']))
+            self.id = row['id']
+
+        for col in self.__columns__:
+
+            try:
+                val = row[col.name]
+            except KeyError:
+                continue
+
+            if ignore and col.name in ignore:
+                continue
+
+            if col._restore:
+                col._restore(self, val)
+            else:
+                self.__dict__[col.name] = val
+
 
 
 
