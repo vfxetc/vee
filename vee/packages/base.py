@@ -17,9 +17,10 @@ from vee.exceptions import AlreadyInstalled, AlreadyLinked
 from vee.requirement import Requirement, requirement_parser
 from vee.subproc import call
 from vee.utils import cached_property, makedirs, linktree
+from vee.database import DBObject, Column
 
 
-class BasePackage(object):
+class BasePackage(DBObject):
 
     """Abstraction of a package manager.
 
@@ -28,10 +29,42 @@ class BasePackage(object):
 
     """
 
+    __tablename__ = 'packages'
+
+    abstract_requirement = Column()
+    
+    concrete_requirement = Column()
+    @concrete_requirement.persist
+    def concrete_requirement(self):
+        return self.freeze().to_json()
+
+    package_type = Column()
+    @package_type.persist
+    def package_type(self):
+        return self.type
+
+    build_type = Column()
+    @build_type.persist
+    def build_type(self):
+        return self.builder.type
+
+    url = Column()
+    name = Column()
+    revision = Column()
+    etag = Column()
+    package_name = Column()
+    build_name = Column()
+    install_name = Column()
+    package_path = Column()
+    build_path = Column()
+    install_path = Column()
+
+
     type = 'base'
 
-
     def __init__(self, requirement=None, home=None, set=None):
+
+        super(BasePackage, self).__init__()
 
         # Set from item access.
         if isinstance(requirement, dict):
@@ -53,7 +86,6 @@ class BasePackage(object):
         self.environ = self.environ.copy() if self.environ else {}
         self.config = self.config[:] if self.config else []
 
-        self._db_id = None
         self._db_link_id = None
         self.package_name = self.build_name = None
         self.set = set
@@ -153,17 +185,17 @@ class BasePackage(object):
             if value and not getattr(self, '%s_path' % attr):
                 raise RuntimeError('%s path required' % attr)
 
-    @property
+    @package_path.getter
     def package_path(self):
         """Where the package is cached."""
         return self.package_name and self.home._abs_path('packages', self.package_name)
 
-    @property
+    @build_path.getter
     def build_path(self):
         """Where the package will be built."""
         return self.build_name and self.home._abs_path('builds', self.build_name)
 
-    @property
+    @install_path.getter
     def install_path(self):
         """The final location of the built package."""
         return self.install_name and self.home._abs_path('installs', self.install_name)
@@ -282,7 +314,7 @@ class BasePackage(object):
         self._assert_paths(install=True)
         if not self.installed:
             raise RuntimeError('cannot find libraries if not installed')
-        if not self._db_id:
+        if not self.id:
             # I'm not sure if this is a big deal, but I want to see when
             # it is happening.
             log.warning('Finding shared libraries before package is in database.')
@@ -307,41 +339,19 @@ class BasePackage(object):
             raise AlreadyLinked(str(frozen or self.freeze()), self._db_link_id or row[0])
 
     def db_id(self):
-        if self._db_id is None:
-            self._set_names(package=True, build=True, install=True)
-            if not self.installed:
-                log.warning('%s does not appear to be installed to %s' % (self.name, self.install_path))
-                raise ValueError('cannot record requirement that is not installed')
-            cur = self.home.db.cursor()
-            cur.execute('''
-                INSERT INTO packages (abstract_requirement, concrete_requirement,
-                                      package_type, build_type, url, name, revision, etag, package_name, build_name,
-                                      install_name, package_path, build_path, install_path)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-            ''', [self.abstract_requirement,
-                  self.freeze().to_json(),
-                  self.type,
-                  self.builder.type,
-                  self.url,
-                  self.name,
-                  self.revision,
-                  self.etag,
-                  self.package_name,
-                  self.build_name,
-                  self.install_name,
-                  self.package_path,
-                  self.build_path,
-                  self.install_path,
-                 ]
-            )
-            self._db_id = cur.lastrowid
-            log.debug('%s added to DB as %d' % (self.name, self._db_id))
-        return self._db_id
+        return self.persist_in_db()
+
+    def persist_in_db(self):
+        self._set_names(package=True, build=True, install=True)
+        if not self.installed:
+            log.warning('%s does not appear to be installed to %s' % (self.name, self.install_path))
+            raise ValueError('cannot record requirement that is not installed')
+        return super(BasePackage, self).persist_in_db()
 
     def resolve_existing(self, env=None):
         """Check against the database to see if this was already installed."""
 
-        if self._db_id is not None:
+        if self.id is not None:
             raise ValueError('requirement already in database')
 
 
@@ -382,7 +392,7 @@ class BasePackage(object):
         log.debug('Found %s (%d) at %s' % (self.name or row['name'], row['id'], row['install_path']))
 
         # Everything below either already matches or was unset.
-        self._db_id = row['id']
+        self.id = row['id']
         self._db_link_id = row['link_id']
         self.name = row['name']
         self.revision = row['revision']

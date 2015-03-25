@@ -9,15 +9,22 @@ class TestBuildTypes(TestCase):
         vee(['install', sandbox('packages/scheme_static'), '--install-name', 'scheme_static/1.0.0'])
         self.assertExists(sandbox('vee/installs/scheme_static/1.0.0/etc/scheme_static'))
 
-    def assert_echo(self, type, call=True):
+    def assert_echo(self, type, do_call=True):
         name = 'scheme_' + type
         pkg = MockPackage(name, type)
         pkg.render_commit()
         vee(['install', pkg.path, '--install-name', '%s/1.0.0' % name])
         exe = sandbox('vee/installs/%s/1.0.0/bin/%s' % (name, name))
         self.assertTrue(os.path.exists(exe))
-        if call:
-            self.assertEqual(subprocess.check_output(['vee', 'exec', '-R', pkg.path, name]).strip(), '%s:1' % name)
+        if do_call:
+            # Jumping through a bit of a hoop here to see the output.
+            out = []
+            try:
+                call(['vee', 'exec', '-R', pkg.path, name], stdout=out.append)
+            except:
+                print ''.join(out)
+                raise
+            self.assertEqual(''.join(out).strip(), '%s:1' % name)
 
     def test_make(self):
         self.assert_echo('c_make')

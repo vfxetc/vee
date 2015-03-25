@@ -5,6 +5,7 @@ import sqlite3
 import shutil
 
 from vee.utils import makedirs
+from vee import log
 
 
 _migrations = []
@@ -206,13 +207,16 @@ class _Cursor(sqlite3.Cursor):
     
     def insert(self, table, data, on_conflict=None):
         pairs = sorted(data.iteritems())
-        self.execute('INSERT %s INTO %s (%s) VALUES (%s)' % (
+        query = 'INSERT %s INTO %s (%s) VALUES (%s)' % (
             'OR ' + on_conflict if on_conflict else '',
             escape_identifier(table),
             ','.join(escape_identifier(k) for k, v in pairs),
             ','.join('?' for _ in pairs),
 
-        ), [v for k, v in pairs])
+        )
+        params = [v for k, v in pairs]
+        log.debug('%s %r' % (query, params))
+        self.execute(query, params)
         return self.lastrowid
 
     def update(self, table, data, where=None):
@@ -281,6 +285,119 @@ class Database(object):
 
     def update(self, *args, **kwargs):
         return self.cursor().update(*args, **kwargs)
+
+
+
+
+class Column(object):
+
+    def __init__(self, name=None):
+        self.name = name
+        self._fget = self._fset = self._fdel = None
+        self._persist = None
+
+    def copy(self):
+        copy = Column(self.name)
+        copy._fget = self._fget
+        copy._persist = self._persist
+        return copy
+
+    def getter(self, func):
+        self._fget = func
+        return self
+
+    def persist(self, func):
+        self._persist = func
+        return self
+
+    def __get__(self, obj, cls):
+        if self._fget:
+            return self._fget(obj)
+        try:
+            return obj.__dict__[self.name]
+        except KeyError:
+            raise AttributeError(self.name)
+
+    def __set__(self, obj, value):
+        obj.__dict__[self.name] = value
+        obj.is_dirty = True
+
+    def __delete__(self, obj):
+        raise RuntimeError("cannot delete DB columns")
+
+
+
+class DBMetaclass(type):
+
+    def __new__(cls, name, bases, attrs):
+
+        columns = {}
+
+        table_name = attrs.get('__tablename__')
+        for base in bases:
+            table_name = table_name or getattr(base, '__tablename__', None)
+            for col in getattr(base, '__columns__', []):
+                columns[col.name] = col
+
+        for k, v in attrs.iteritems():
+            if isinstance(v, property):
+                col = columns.get(k)
+                if col:
+                    col = col.copy()
+                    col._fget = v.fget
+                    if v.fset or v.fdel:
+                        raise ValueError('cannot wrap properties with setters')
+                    attrs[k] = col
+                    v = col
+
+            if isinstance(v, Column):
+                v.name = v.name or k
+                columns[v.name] = v
+
+        attrs['__columns__'] = columns.values()
+
+        return super(DBMetaclass, cls).__new__(cls, name, bases, attrs)
+
+
+class DBObject(object):
+
+    __metaclass__ = DBMetaclass
+
+    def __init__(self, *args, **kwargs):
+        self.id = None
+        self.is_dirty = True
+
+    def _cursor(self):
+        return self.home.db.cursor()
+
+    def persist_in_db(self, cursor=None, force=False):
+
+        if not self.is_dirty and not force:
+            return self.id
+
+        data = {}
+        for col in self.__columns__:
+            try:
+                if col._persist:
+                    data[col.name] = col._persist(self)
+                elif col._fget:
+                    data[col.name] = col._fget(self)
+                else:
+                    data[col.name] = self.__dict__[col.name]
+            except KeyError:
+                pass
+
+        cursor = cursor or self._cursor()
+        if self.id:
+            cursor.update(self.__tablename__, data, {'id': self.id})
+        else:
+            self.id = cursor.insert(self.__tablename__, data)
+            log.debug('%s added to %s with ID %d' % (self.__class__.__name__, self.__tablename__, self.id))
+        self.is_dirty = False
+
+        return self.id
+
+
 
 
 

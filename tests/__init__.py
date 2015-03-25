@@ -23,6 +23,9 @@ from .mock.package import MockPackage
 from .mock.repo import MockRepo
 
 
+log.root.propagate = True
+
+
 tests_dir = os.path.abspath(os.path.join(__file__, '..'))
 root_dir = os.path.dirname(tests_dir)
 sandbox_dir = os.path.join(root_dir, 'sandbox')
