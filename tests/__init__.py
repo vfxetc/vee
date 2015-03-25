@@ -4,7 +4,13 @@ import shutil
 import sys
 import subprocess
 
+try:
+    from unittest.case import SkipTest as _Skip
+except ImportError:
+    _Skip = None
+
 from unittest import TestCase as _TestCase
+
 from vee import log
 from vee.cli import strip_ansi
 from vee.commands.main import main as _main
@@ -21,7 +27,7 @@ tests_dir = os.path.abspath(os.path.join(__file__, '..'))
 root_dir = os.path.dirname(tests_dir)
 sandbox_dir = os.path.join(root_dir, 'sandbox')
 
-
+is_travis = bool(os.environ.get('TRAVIS'))
 
 
 # Clear out the sandbox.
@@ -76,6 +82,11 @@ def vee(args, environ=None, check=True, stdout=False):
     return res
 
 
+def skip():
+    if _Skip:
+        raise _Skip()
+    else:
+        return
 
 
 class TestCase(_TestCase):
