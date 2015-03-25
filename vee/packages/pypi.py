@@ -10,6 +10,7 @@ from vee.cli import style, style_note
 from vee.packages.base import BasePackage
 from vee.utils import makedirs
 from vee import log
+from vee.semver import Version
 
 
 class PyPiPackage(BasePackage):
@@ -51,10 +52,17 @@ class PyPiPackage(BasePackage):
 
         meta = self._meta()
 
-        self.revision, releases = sorted(meta['releases'].items())[-1]
-        release = next((r for r in releases if r['packagetype'] == 'sdist'), None)
-        if not release:
+        all_releases = [(Version(v), rs) for v, rs in meta['releases'].iteritems()]
+        all_releases.sort(reverse=True)
+
+        for version, releases in all_releases:
+            release = next((r for r in releases if r['packagetype'] == 'sdist'), None)
+            if release:
+                break
+        else:
             raise ValueError('no sdist %s on the PyPI' % self.name)
+
+        self.revision = str(version)
 
         self.package_name = os.path.join(self.name, os.path.basename(release['url']))
 
