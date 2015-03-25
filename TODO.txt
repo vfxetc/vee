@@ -10,8 +10,6 @@
        where the same ones on a Package are interpreted as results.
     2. Pulling from the database.
 
-- need to deal with recursive dependencies
-
 - development_packages should record which user they are for. Perhaps a
   "dev_set" or "namespace", which defaults to the user, would be better.
 
@@ -65,6 +63,11 @@
 
     - vee-inspect.sh or vee-requirements.txt to specify requirements, we can
       then immediately create our own "bottles" from Homebrew
+
+        - `vee package-installed name`
+            - if there are dependencies, then package those too
+            - this requires there to be dependency links for homebrew
+              packages
 
 
 - document somewhere that we are treating all names as existing within a global
