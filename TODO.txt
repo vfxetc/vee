@@ -1,7 +1,19 @@
 
+- if I can merge Package and Requirememt (by making a BuildPipeline), then
+  RequirementSet -> RequirementsFile, and PackageSet can remain.
+
+  Package.pipeline.link(relink=False, reinstall=False)
+  Package.pipeline.install(reinstall=False)
+
+  There are two issues:
+    1. Attributes on a Requirement are interpreted as requests from the user,
+       where the same ones on a Package are interpreted as results.
+    2. Pulling from the database.
+
 - need to deal with recursive dependencies
 
-- vee dev_packages should record which user they are for
+- development_packages should record which user they are for. Perhaps a
+  "dev_set" or "namespace", which defaults to the user, would be better.
 
 - how can dev mode work on the farm, if the list of dev_packages is on your
   local home
@@ -24,14 +36,11 @@
     by_time -> links timestamped by commit time
     $branch -> links
 
-- install_name for Homebrew is wrong if you have --HEAD (and maybe --devel),
-  the version is HEAD
-
 - Document Package vs Requirement like PackageSet vs RequirementSet
 
-- pkg_set.resolve_set(req_set)
-- pkg_set.auto_install()
-    - packages need to track their installed state, or the pkg_set needs to
+- PackageSet.auto_install should be named better. Perhaps install and link,
+  which are quick wrappers around process(install=True, link=True)
+
 
 - split up Package into all of the different steps:
 
@@ -45,75 +54,17 @@
     step.also_provides('build') -> bool
     step.provide_successor('extract') -> PipelineStep
 
-
-  - Transport handles fetch
-  - Unarchver handles extract
-  - Inspector handles inspect
-  - Builder handles build
-  - Installer handles install
-  - Developer handles develop
-
   
-- dependency resolution might actually be a thing that we deal with...
+- dependencies
 
-    - one is permitted to determine their dependencies at any time; between
-      each pipeline step the RequirementSet should inspect all requirements
-      for new dependencies, and re-order the set so that they are satisfied.
+    - instrument revision with VersionExpr to implement Python packages'
+      requirements.
 
-    - dependencies need to be able to be abstract (such that they may be
-      satisfied by the requirement set), or concrete (such that they are
-      already a Requirement object). These could either be:
+    - record these dependencies in the database: package_dependencies
+        - this gets loaded by resolve_existing?
 
-        a) different types, e.g. Requirement and AbstractRequirement
-        b) Requirement.type is None signals abstractedness
-        c) Package.abstract_requirements is a list of abstract ones
-
-      Ideally, abstract requirements could provide a fallback type that could
-      satisfy them. Or, you supply both an abstract or concrete type. OR,
-      return (RequirementSet.get_by_name(name) or Requirement('name', type='known_type'))
-
-          check_version_satisfaction(pkg.revision, py_dep_revision)
-          or
-          Version(py_dep_version).matches(pkg.revision)
-          Version('>=2.6').matches('2.7') -> True
-
-          --build-type and --package-type to pick one explicitly, so that
-          the dependee can specify them directly
-
-      So, are there any situations in which we cannot either resolve the
-      dependency immediately, OR provide a concrete one? Homebrew is immediate
-      since it is assumed that its dependencies are Homebrew. Python can
-      be immediate since we will make the PyPIPackage (so Requirement('sphinx', type='pypi'))
-
-      Seems like we either need a mechanism to defer resolution of dependencies,
-      with a fallback (so provide ('sphinx', 'pypi:sphinx')), or Packages need
-      a reference to a RequirementSet (or DependencyPool) so that they can
-      resolve them immediately.
-
-      Option 1: Dependency class
-          - .name -> for purely abstract stuff
-          - .requirement -> for concrete
-          - .default_url -> if the abstract can't be resolved
-      Option 1b: Use Requirement, and don't access the package attribute.
-      Option 2: Packages have a .set
-          - self.set.get('name') or Requirement(['url'])
-
-    - Builder.inspect() is run post Package.extract(), and may determine dependencies
-        - in python packages, run egg_info and inspect resulting "requires.txt"
-        - this could be a part of extract
-
-    - deps would need to be recorded, in order to be linked in a different
-      step from installation
-        - package_dependencies simply links depender_id to dependee_id
-        - this would be loaded by resolve_existing
-
-    - PyPIPackage
-        - packages/pypi/NAME/date.json
-        - https://pypi.python.org/pypi/NAME/json gives us JSON we can interpret
-        - would be create to have version requirements: --revision could be
-          an expression: --revision '>=1.0'
-
-    - for Homebrew, we already have homebrew.
+    - vee-inspect.sh or vee-requirements.txt to specify requirements, we can
+      then immediately create our own "bottles" from Homebrew
 
 
 - document somewhere that we are treating all names as existing within a global
@@ -163,9 +114,10 @@
 
 - very simple automatic persistence model:
 
-    __db_column_map__ = {
-        'attrname': 'colname'
-    }
+    rowid is the main id
+
+    blah = Column('name')
+    
 
     dbobject.rowid or dbobject.persist()
     DBObject.persist_in_db() -> insert or update

@@ -20,6 +20,10 @@ Those methods are, in order:
     The package's contents ("source") are placed into :attr:`Package.build_path`
     (which is usually a temporary directory).
 
+.. method:: Package.inspect()
+
+    An opportunity to check meta-data and determine self-described dependencies.
+
 .. method:: Package.build()
 
     The source is built into a build "artifact".
@@ -32,28 +36,6 @@ Those methods are, in order:
 
     The build artifact is linked into a final environment.
 
-
-
-Definitions
------------
-
-Home:
-    Where VEE installs and links environments.
-
-Environment:
-    A single "prefix", linked from installed packages. Contains ``bin``, ``etc``, ``lib``,
-    ``include``, ``share``, ``var``, etc..
-
-Requirement:
-    A specification of a package that we would like to have installed in an environment.
-
-.. _package:
-
-Package:
-    A bundle provided by a remote source which contains source code, or
-    prepared build artifacts. E.g. a tarball, zipfile, or git repository.
-    The :class:`Package` class is slightly more abstract, encapsulating the
-    build pipeline for an individual package.
 
 
 
@@ -187,6 +169,10 @@ the build path are copied to the install path, like::
         os.path.join(pkg.install_path, pkg.install_prefix))
     )
 
+An optional ``--hard-link`` flag indicates that the build and install should
+be hard-linked, instead of copied. This results in massive time and space
+savings, but requires the packages to be well behaved.
+
 
 Caveats
 -------
@@ -197,6 +183,8 @@ Caveats
 Since we cannot trust that the standard ``make; make install`` pattern will
 actually install into a prefix provided to
 ``./configure``, we do not run ``make install``.
+
+An optional ``--make-install`` flag signals that it is safe to do so.
 
 
 ``python setup.py install``
