@@ -15,6 +15,7 @@ class PackageSet(collections.OrderedDict):
 
         self._extracted = set()
         self._installed = set()
+        self._deferred_by_deps = set()
         self._linked = set()
 
     def resolve(self, req, check_existing=True, env=None):
@@ -55,14 +56,23 @@ class PackageSet(collections.OrderedDict):
                 finally:
                     self._extracted.add(name)
 
-            # Loop around for dependencies.
+            # Loop around for dependencies. We insert dependencies, and the
+            # package itself, back into the names to check. If we get back to
+            # a name that we have already deferred in this manner, we continue
+            # anyways, since that means there is a dependency cycle. We assume
+            # that dependency order is resolved in the requirements file.
             waiting_for_deps = 0
             for dep_req in pkg.dependencies:
                 dep_pkg = self.resolve(dep_req)
                 if dep_pkg.name not in self._installed:
-                    log.debug('%s needs %s, which is not yet checked' % (name, dep_pkg.name))
-                    names.insert(waiting_for_deps, dep_pkg.name)
-                    waiting_for_deps += 1
+                    if name in self._deferred_by_deps:
+                        log.debug('%s needs %s, but was already deferred' % (name, dep_pkg.name))
+                    else:
+                        log.debug('%s needs %s, which is not yet checked' % (name, dep_pkg.name))
+                        names.insert(waiting_for_deps, dep_pkg.name)
+                        waiting_for_deps += 1
+                        self._deferred_by_deps.add(name)
+
             if waiting_for_deps:
                 names.insert(waiting_for_deps, name)
                 continue

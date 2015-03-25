@@ -297,7 +297,7 @@ class BasePackage(DBObject):
         if self.name:
             opt_link = self.home._abs_path('opt', self.name)
             log.info(style('Linking to opt/%s: ' % self.name, 'blue', bold=True) + style(opt_link, bold=True))
-            if os.path.exists(opt_link):
+            if os.path.lexists(opt_link):
                 os.unlink(opt_link)
             makedirs(os.path.dirname(opt_link))
             os.symlink(self.install_path, opt_link)
@@ -387,7 +387,8 @@ class BasePackage(DBObject):
 
         log.debug('Found %s (%d) at %s' % (self.name or row['name'], row['id'], row['install_path']))
 
-        self.restore_from_row(row, ignore=set(('abstract_requirements', 'package_path', 'build_path', 'install_path')))
+        self.restore_from_row(row, ignore=set(('abstract_requirements', 'concrete_requirement',
+            'package_path', 'build_path', 'install_path')))
         self.link_id = row['link_id']
 
         if self.package_path != row['package_path']:
