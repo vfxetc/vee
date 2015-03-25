@@ -71,7 +71,7 @@ def link(args):
             log.info(style('Already linked ', 'blue') + str(req), verbosity=1)
         except Exception as e:
             print_cli_exc(e, verbose=True)
-            log.exception('Linking %s failed' % req.name)
+            log.exception('Failed to link %s' % req)
             continue
         
 

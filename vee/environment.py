@@ -128,7 +128,7 @@ class Environment(DBObject):
 
         for path in reversed(paths):
 
-            if not os.path.exists(path):
+            if not os.path.lexists(path):
                 os.makedirs(path)
                 continue
 
@@ -168,7 +168,7 @@ class Environment(DBObject):
             dst_dir_is_mine = True
             dst_to_test = dst_dir
             while len(dst_to_test) > len(dst_root):
-                is_link = os.path.exists and os.path.islink(dst_to_test)
+                is_link = os.path.lexists and os.path.islink(dst_to_test)
                 if is_link:
                     dst_dir_is_real = False
                     link_path = os.readlink(dst_to_test)
