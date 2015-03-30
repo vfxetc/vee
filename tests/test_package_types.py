@@ -20,3 +20,25 @@ class TestPackageTypes(TestCase):
     def test_git(self):
         self.assert_echo_installs('type_git', 'git+' + sandbox('packages/type_git'))
 
+    def test_pypi(self):
+
+        pkg = MockPackage('tpt_pypi', 'python_sdist')
+        pkg.render_commit()
+
+        vee(['install', 'pypi:tpt_pypi', '--revision', '1.0.0'])
+        self.assertExists(sandbox('vee/installs/tpt_pypi/1.0.0/lib/python2.7/site-packages/tpt_pypi/__init__.py'))
+
+
+
+    def test_pypi_deps(self):
+
+        pkg = MockPackage('tpt_pypi_depa', 'python_source')
+        pkg.render_commit()
+
+        pkg = MockPackage('tpt_pypi_depb', 'python_source', {'REQUIRES': 'tpt_pypi_depa'})
+        pkg.render_commit()
+
+        vee(['link', '-e', 'tpt_pypi_env', 'pypi:tpt_pypi_depb', '--revision', '1.0.0'])
+        self.assertExists(sandbox('vee/environments/tpt_pypi_env/lib/python2.7/site-packages/tpt_pypi_depb/__init__.py'))
+        self.assertExists(sandbox('vee/environments/tpt_pypi_env/lib/python2.7/site-packages/tpt_pypi_depa/__init__.py'))
+

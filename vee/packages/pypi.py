@@ -13,6 +13,9 @@ from vee import log
 from vee.semver import Version
 
 
+PYPI_URL_PATTERN = 'https://pypi.python.org/pypi/%s/json'
+
+
 class PyPiPackage(BasePackage):
 
     type = 'pypi'
@@ -41,7 +44,7 @@ class PyPiPackage(BasePackage):
         path = self.home._abs_path('packages', 'pypi', self.name.lower(), 'meta.json')
         if not os.path.exists(path):
             log.info(style_note('Looking up %s on PyPI' % self.name))
-            url = 'https://pypi.python.org/pypi/%s/json' % self.name.lower()
+            url = PYPI_URL_PATTERN % self.name.lower()
             res = urllib2.urlopen(url)
             makedirs(os.path.dirname(path))
             with open(path, 'wb') as fh:
@@ -69,14 +72,14 @@ class PyPiPackage(BasePackage):
         self._assert_paths(package=True)
 
         if os.path.exists(self.package_path):
-            log.info(style('Already downloaded.', 'blue', bold=True))
+            log.info(style_note('Already downloaded', release['url']))
             return
 
         makedirs(os.path.dirname(self.package_path))
 
         temp = self.package_path + '.downloading'
 
-        log.info(style('Downloading', 'blue', bold=True), style(self.url, bold=True))
+        log.info(style_note('Downloading', release['url']))
 
         src_fh = None
         dst_fh = None

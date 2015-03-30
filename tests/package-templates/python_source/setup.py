@@ -13,6 +13,8 @@ setup(
         'console_scripts': '''
             MOCKNAME-ep = MOCKNAME.core:main
         '''
-    }
+    },
+
+    install_requires='''MOCKREQUIRES''' or [],
     
 )

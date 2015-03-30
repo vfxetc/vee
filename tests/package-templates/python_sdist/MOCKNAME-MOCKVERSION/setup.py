@@ -13,6 +13,10 @@ setup(
         'console_scripts': '''
             MOCKNAME-ep = MOCKNAME.core:main
         '''
-    }
+    },
+
+    # This is generally useless, since this info
+    # would already be baked into the requires.txt file.
+    install_requires='''MOCKREQUIRES''' or [],
     
 )

@@ -1,4 +1,11 @@
 
+- record dependencies in the database, for both pypi and homebrew
+- `vee repackage NAME` creates tarballs with vee-dependencies.txt
+  - if there are .so or .dylib or executables that dont start in "#!", then
+    they need a platform identifier
+
+- install dependencies during `vee install` as well
+
 - if I can merge Package and Requirememt (by making a BuildPipeline), then
   RequirementSet -> RequirementsFile, and PackageSet can remain.
 

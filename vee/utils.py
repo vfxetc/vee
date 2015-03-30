@@ -40,15 +40,22 @@ def makedirs(*args):
     return path
 
 
+_FIND_SKIP_DIRS = frozenset(('.git', '.svn'))
 
 def find_in_tree(root, name, type='file'):
     pattern = fnmatch.translate(name)
     for dir_path, dir_names, file_names in os.walk(root):
+
         # Look for the file/directory.
         candidates = dict(file=file_names, dir=dir_names)[type]
         found = next((x for x in candidates if re.match(pattern, x)), None)
         if found:
             return os.path.join(dir_path, found)
+
+        # We need to skip .git directories, just in case they are in our
+        # tarballs.
+        dir_names[:] = [x for x in dir_names if x not in _FIND_SKIP_DIRS]
+
         # Bail when we hit a fork in the directory tree.
         if len(dir_names) > 1 or file_names:
             return
