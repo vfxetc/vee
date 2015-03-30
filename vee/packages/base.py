@@ -12,7 +12,7 @@ from vee._vendor import pkg_resources
 from vee import libs
 from vee import log
 from vee.builds import make_builder
-from vee.cli import style
+from vee.cli import style, style_note
 from vee.exceptions import AlreadyInstalled, AlreadyLinked
 from vee.requirement import Requirement, requirement_parser
 from vee.subproc import call
@@ -139,8 +139,8 @@ class BasePackage(DBObject):
                 if old_v is not None:
                     v = v.replace(old_v, '@')
                 v = v.replace(self.home.root, '$VEE')
-                log.debug('%s %s%s' % (
-                    style('setenv', 'blue', bold=True), style('%s=' % k, bold=True), v
+                log.debug('%s %s=%s' % (
+                    style('setenv', 'blue'), k, v
                 ), verbosity=1)
         return self._environ_diff or {}
 
@@ -226,7 +226,7 @@ class BasePackage(DBObject):
         if not self.build_path:
             raise RuntimeError('need build path for default Package.extract')
 
-        log.info(style('Extracting to ', 'blue', bold=True) + style(self.build_path, bold=True))
+        log.info(style_note('Extracting to', self.build_path))
 
         # gzip-ed Tarballs.
         if re.search(r'(\.tgz|\.tar\.gz)$', self.package_path):
@@ -287,7 +287,7 @@ class BasePackage(DBObject):
         self.builder.install()
 
         if self.relocate:
-            log.info(style('Relocating', 'blue'))
+            log.info(style_note('Relocating'))
             libs.relocate(self.install_path,
                 con=self.home.db.connect(),
                 spec=self.relocate + ',SELF',
@@ -296,7 +296,7 @@ class BasePackage(DBObject):
         # Link into $VEE/opt.
         if self.name:
             opt_link = self.home._abs_path('opt', self.name)
-            log.info(style('Linking to opt/%s: ' % self.name, 'blue', bold=True) + style(opt_link, bold=True))
+            log.info(style_note('Linking to opt/%s' % self.name))
             if os.path.lexists(opt_link):
                 os.unlink(opt_link)
             makedirs(os.path.dirname(opt_link))
@@ -306,7 +306,7 @@ class BasePackage(DBObject):
         self._set_names(install=True)
         if not self.installed:
             raise RuntimeError('package is not installed')
-        log.info(style('Uninstalling ', 'blue', bold=True) + style(self.install_path, bold=True))
+        log.info(style_note('Uninstalling ', self.install_path))
         shutil.rmtree(self.install_path)
 
     def shared_libraries(self, rescan=False):
@@ -324,7 +324,7 @@ class BasePackage(DBObject):
         frozen = self.freeze()
         if not force:
             self._assert_unlinked(env, frozen)
-        log.info(style('Linking into %s: ' % env.name, 'blue', bold=True) + style(str(frozen), bold=True))
+        log.info(style_note('Linking into %s: ' % env.name, str(frozen)))
         env.link_directory(self.install_path)
         self._record_link(env)
 
