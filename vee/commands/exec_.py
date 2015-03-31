@@ -7,7 +7,7 @@ from vee.environment import Environment
 from vee.envvars import guess_envvars, render_envvars
 from vee.exceptions import NotInstalled
 from vee.packageset import PackageSet
-from vee.requirementset import RequirementSet
+from vee.requirements import Requirements
 
 
 @command(
@@ -48,10 +48,10 @@ def exec_(args):
     req_args = []
     for arg in args.requirements or ():
         req_args.extend(arg.split(','))
-    req_set = RequirementSet(home=home)
+    req_set = Requirements(home=home)
     req_set.parse_args(req_args)
     pkg_set = PackageSet(home=home)
-    for req in req_set.iter_requirements():
+    for req in req_set.iter_packages():
         pkg = pkg_set.resolve(req)
         pkg._assert_paths(install=True)
         if not pkg.installed:

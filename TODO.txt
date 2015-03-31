@@ -1,7 +1,4 @@
 
-- create a Homebrew object in vee.homebrew, so that the brew command can
-  use it freely
-
 - switch to click (after vendoring it?)
 
 - record dependencies in the database, for both pypi and homebrew
@@ -14,9 +11,6 @@
 - make "link" part of the standard pipeline, and be able to shortcut the
   install phases
     - perhaps there should be a install_pipeline, link_pipeline, and develop_pipeline??
-
-- merge Package and Requirememt
-- then RequirementSet -> RequirementsFile, and PackageSet can remain.
 
 - s/PipelineStep.type/PipelineStep.name
   - also set it automatically in the loader

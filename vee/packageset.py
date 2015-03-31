@@ -25,7 +25,7 @@ class PackageSet(collections.OrderedDict):
         return self[req.name]
     
     def resolve_set(self, req_set, **kwargs):
-        for req in req_set.iter_requirements():
+        for req in req_set.iter_packages():
             self.resolve(req, **kwargs)
 
     def auto_install(self, names=None, force=False, link_env=None, force_link=False):

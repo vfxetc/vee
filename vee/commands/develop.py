@@ -10,7 +10,7 @@ from vee.exceptions import AlreadyInstalled
 from vee.git import GitRepo, normalize_git_url
 from vee.package import Package
 from vee.packageset import PackageSet
-from vee.requirementset import RequirementSet
+from vee.requirements import Requirements
 from vee.utils import makedirs
 
 
@@ -18,7 +18,7 @@ def iter_availible_requirements(home):
     env_repo = home.get_env_repo()
     req_set = env_repo.requirement_set()
     pkg_set = PackageSet(home=home)
-    for req in req_set.iter_requirements():
+    for req in req_set.iter_packages():
         pkg = pkg_set.resolve(req, check_existing=False)
         if pkg.type != 'git':
             return
@@ -225,11 +225,11 @@ def init(args, do_clone=False, do_install=False, do_add=False, is_find=False):
 
     elif do_install:
         # Find an existing tool.
-        # TODO: put more of this into EnvironmentRepo or RequirementSet
+        # TODO: put more of this into EnvironmentRepo or Requirements
         env_repo = home.get_env_repo(args.repo)
         req_path = os.path.join(env_repo.work_tree, 'requirements.txt')
-        reqs = RequirementSet(req_path, home=home)
-        for req in reqs.iter_requirements():
+        reqs = Requirements(req_path, home=home)
+        for req in reqs.iter_packages():
             if req.name.lower() == name.lower():
                 # Make sure it is a Git package.
                 url = normalize_git_url(req.url, prefix=False)

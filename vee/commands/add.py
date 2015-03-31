@@ -24,7 +24,7 @@ def add(args):
 
     if args.update:
         baked_any = False
-        for req in req_set.iter_requirements():
+        for req in req_set.iter_packages():
             pkg = pkg_set.resolve(req, check_existing=False)
             if pkg.type != 'git':
                 continue
@@ -46,7 +46,7 @@ def add(args):
     if args.bake_installed:
         baked_any = False
 
-        for req in req_set.iter_requirements():
+        for req in req_set.iter_packages():
 
             pkg = pkg_set.resolve(req)
             if pkg.type != 'git':
@@ -85,7 +85,7 @@ def add(args):
         print style_error('No git remotes for %s' % row['path'])
         return 1
 
-    for req in req_set.iter_requirements():
+    for req in req_set.iter_packages():
         pkg = pkg_set.resolve(req, check_existing=False)
         if pkg.fetch_type != 'git':
             continue

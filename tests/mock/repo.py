@@ -1,14 +1,14 @@
+from cStringIO import StringIO
+from subprocess import CalledProcessError
 import fnmatch
 import os
 import re
-from subprocess import CalledProcessError
 import shutil
-from cStringIO import StringIO
 
 from vee.git import GitRepo
-from vee.utils import makedirs, guess_name
-from vee.requirementset import RequirementSet
 from vee.package import Package
+from vee.requirements import Requirements
+from vee.utils import makedirs, guess_name
 
 
 class MockRepo(object):
@@ -43,16 +43,16 @@ class MockRepo(object):
 
     def add_requirements(self, raw, insert=False, commit=True):
 
-        old = RequirementSet(home=self.home)
+        old = Requirements(home=self.home)
         path = os.path.join(self.path, 'requirements.txt')
         if os.path.exists(path):
             old.parse_file(path)
 
-        new = RequirementSet(home=self.home, file=StringIO(raw))
+        new = Requirements(home=self.home, file=StringIO(raw))
 
         new_urls = set()
         new_names = set()
-        for req in new.iter_requirements():
+        for req in new.iter_packages():
             new_names.add(req.name or guess_name(req.url))
             new_urls.add(req.url)
 

@@ -62,7 +62,7 @@ class Control(object):
         )
 
 
-class RequirementSet(list):
+class Requirements(list):
 
     def __init__(self, args=None, file=None, home=None):
 
@@ -159,7 +159,7 @@ class RequirementSet(list):
         to_guess = []
 
         # First pass: the explicitly named.
-        for req in self.iter_requirements():
+        for req in self.iter_packages():
 
             if not req.name:
                 to_guess.append(req)
@@ -179,7 +179,7 @@ class RequirementSet(list):
                 names.add(name.lower())
                 req.name = name
 
-    def iter_requirements(self, eval_control=True):
+    def iter_packages(self, eval_control=True):
 
         include_stack = [True]
         control_namespace = {
@@ -265,7 +265,7 @@ if __name__ == '__main__':
 
     from vee.home import Home
 
-    reqs = RequirementSet(Home('/usr/local/vee'))
+    reqs = Requirements(Home('/usr/local/vee'))
     reqs.parse_args(sys.argv[1:])
 
     print ''.join(reqs.iter_dump())

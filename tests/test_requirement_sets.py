@@ -1,12 +1,12 @@
 from . import *
 
-from vee.requirementset import RequirementSet
+from vee.requirements import Requirements
 
 
-class TestRequirementSets(TestCase):
+class TestRequirementss(TestCase):
 
     def test_global_envvars(self):
-        req_set = RequirementSet()
+        req_set = Requirements()
         req_set.parse_file('''
             first
             KEY=VALUE1
@@ -14,14 +14,14 @@ class TestRequirementSets(TestCase):
             KEY=VALUE2
             third
         '''.strip().splitlines())
-        reqs = list(req_set.iter_requirements())
+        reqs = list(req_set.iter_packages())
         self.assertEqual(reqs[0].base_environ, {})
         self.assertEqual(reqs[1].base_environ, {'KEY': 'VALUE1'})
         self.assertEqual(reqs[2].base_environ, {'KEY': 'VALUE2'})
 
 
     def test_platforms(self):
-        req_set = RequirementSet()
+        req_set = Requirements()
         req_set.parse_file('''
 
             before
@@ -36,7 +36,7 @@ class TestRequirementSets(TestCase):
 
         print req_set
 
-        reqs = list(req_set.iter_requirements())
+        reqs = list(req_set.iter_packages())
         self.assertEqual(reqs[0].name, 'before')
         if sys.platform == 'darwin':
             self.assertEqual(reqs[1].name, 'macos')

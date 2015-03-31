@@ -70,7 +70,7 @@ def status(args):
         (None, 'work'),
         ('HEAD', 'head'),
     ]:
-        for req in env_repo.load_requirements(revision=revision).iter_requirements():
+        for req in env_repo.load_requirements(revision=revision).iter_packages():
             pkg = pkg_set.resolve(req, check_existing=False)
             if pkg.fetch_type != 'git':
                 continue

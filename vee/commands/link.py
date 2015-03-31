@@ -7,7 +7,7 @@ from vee.environment import Environment
 from vee.exceptions import AlreadyInstalled, AlreadyLinked, print_cli_exc
 from vee.package import Package
 from vee.packageset import PackageSet
-from vee.requirementset import RequirementSet
+from vee.requirements import Requirements
 
 
 @command(
@@ -50,10 +50,10 @@ def link(args):
             env.link_directory(dir_)
         return
 
-    req_set = RequirementSet(args.requirements, home=home)
+    req_set = Requirements(args.requirements, home=home)
     pkg_set = PackageSet(env=env, home=home)
 
-    for req in req_set.iter_requirements():
+    for req in req_set.iter_packages():
 
         log.info(style('==> %s' % req.name, 'blue'))
 
