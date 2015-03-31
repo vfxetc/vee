@@ -4,7 +4,7 @@ from vee.cli import style, style_error, style_note, style_warning
 from vee.commands.main import command, argument
 from vee.git import GitRepo, normalize_git_url
 from vee.packageset import PackageSet
-from vee.requirement import Requirement
+from vee.package import Package
 from vee.utils import guess_name
 
 

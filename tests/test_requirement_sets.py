@@ -37,9 +37,9 @@ class TestRequirementSets(TestCase):
         print req_set
 
         reqs = list(req_set.iter_requirements())
-        self.assertEqual(reqs[0].url, 'before')
+        self.assertEqual(reqs[0].name, 'before')
         if sys.platform == 'darwin':
-            self.assertEqual(reqs[1].url, 'macos')
+            self.assertEqual(reqs[1].name, 'macos')
         elif sys.platform == 'linux2':
-            self.assertEqual(reqs[1].url, 'linux')
-        self.assertEqual(reqs[2].url, 'after')
+            self.assertEqual(reqs[1].name, 'linux')
+        self.assertEqual(reqs[2].name, 'after')

@@ -1,9 +1,20 @@
+import argparse
+import datetime
+import json
+import os
 import re
+import re
+import shlex
 import sys
 
-from vee.requirement import Requirement, requirement_parser, RequirementParseError
-from vee.utils import guess_name
 from vee import log
+from vee.cli import style
+from vee.exceptions import AlreadyInstalled, CliMixin
+from vee.package import Package, requirement_parser, RequirementParseError
+from vee.utils import cached_property, guess_name
+
+
+
 
 
 class Envvar(tuple):
@@ -74,7 +85,7 @@ class RequirementSet(list):
             if args.url.endswith('.txt'):
                 self.parse_file(args.url)
             else:
-                self.append(('', Requirement(args, home=self.home), ''))
+                self.append(('', Package(args, home=self.home), ''))
 
         self._guess_names()
 
@@ -124,15 +135,15 @@ class RequirementSet(list):
                 continue
 
             try:
-                req = Requirement(spec, home=self.home)
+                pkg = Package(spec, home=self.home)
             except RequirementParseError as e:
                 log.warning('parse error: %s' % e)
                 self.append(('', '', '# RequirementParseError: %s' % e.args))
                 self.append(('', '', '# ' + line.strip()))
                 continue
             for k, v in self._cumulative_environ.iteritems():
-                req.base_environ.setdefault(k, v)
-            self.append((before, req, after))
+                pkg.base_environ.setdefault(k, v)
+            self.append((before, pkg, after))
 
         self._guess_names()
 
@@ -195,7 +206,7 @@ class RequirementSet(list):
             if eval_control and not include_stack[-1]:
                 continue
 
-            if isinstance(el, Requirement):
+            if isinstance(el, Package):
                 yield el
 
     def get_header(self, name):
@@ -231,7 +242,7 @@ class RequirementSet(list):
             if isinstance(element, Envvar):
                 environ[element.name] = element.value
 
-            if isinstance(element, Requirement):
+            if isinstance(element, Package):
                 if freeze:
                     req = element = element.package.freeze(environ=False)
                 else:

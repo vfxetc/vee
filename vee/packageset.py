@@ -1,6 +1,5 @@
 import collections
 
-from vee.requirement import Requirement
 from vee.package import Package
 from vee.exceptions import AlreadyInstalled, AlreadyLinked
 from vee import log

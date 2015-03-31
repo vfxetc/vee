@@ -5,8 +5,8 @@ from vee.cli import style
 from vee.commands.main import command, argument
 from vee.environment import Environment
 from vee.exceptions import AlreadyInstalled, AlreadyLinked, print_cli_exc
+from vee.package import Package
 from vee.packageset import PackageSet
-from vee.requirement import Requirement
 from vee.requirementset import RequirementSet
 
 

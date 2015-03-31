@@ -10,7 +10,6 @@ from vee.exceptions import AlreadyInstalled
 from vee.git import GitRepo, normalize_git_url
 from vee.package import Package
 from vee.packageset import PackageSet
-from vee.requirement import Requirement
 from vee.requirementset import RequirementSet
 from vee.utils import makedirs
 
@@ -250,8 +249,7 @@ def init(args, do_clone=False, do_install=False, do_add=False, is_find=False):
         log.error('%s does not exist'%  path)
         return 1
 
-    req = Requirement([path], home=home)
-    package = Package(req, dev=True)
+    package = Package([path], home=home, dev=True)
     package.develop()
 
     print style_note('Linking dev package', name, path)

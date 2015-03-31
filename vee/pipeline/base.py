@@ -7,9 +7,9 @@ _step_classes = []
 
 class Pipeline(object):
     
-    def __init__(self, package, step_names=None):
+    def __init__(self, package, step_names):
         self._package = package
-        self._step_names = list(step_names) if step_names else ['fetch', 'extract', 'inspect', 'build', 'install']
+        self._step_names = list(step_names)
         self._step_index = dict((name, i) for i, name in enumerate(self._step_names))
         self.steps = {}
 

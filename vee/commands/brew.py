@@ -1,7 +1,7 @@
 from vee.commands.main import command, argument
-from vee.requirement import Requirement
+from vee.package import Package
 from vee.packageset import PackageSet
-
+from vee.homebrew import Homebrew
 
 @command(
     help='run a homebrew command',
@@ -13,9 +13,5 @@ def brew(args, *command):
         raise ValueError('please specify a homebrew command')
 
     home = args.assert_home()
-
-    # This is such a hack.
-    req = Requirement('homebrew:', home=home)
-    pkg = PackageSet(home=home).resolve(req)
-    step = pkg.pipeline.load('fetch')
-    step._brew(*command, verbosity=0, indent=False)
+    brew = Homebrew(home=home)
+    brew(*command, verbosity=0, indent=False)

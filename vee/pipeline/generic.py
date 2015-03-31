@@ -17,9 +17,12 @@ class GenericBuilder(PipelineStep):
 
     @classmethod
     def factory(cls, step, pkg):
-        if step in ('inspect', 'build', 'install', 'develop'):
+        if step in ('init', 'inspect', 'build', 'install', 'develop'):
             return cls(pkg)
 
+    def init(self):
+        pass
+    
     def inspect(self):
         pass
 

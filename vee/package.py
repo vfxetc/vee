@@ -1,6 +1,8 @@
+import argparse
 import datetime
 import fnmatch
 import glob
+import json
 import os
 import re
 import shlex
@@ -12,12 +14,78 @@ from vee._vendor import pkg_resources
 from vee import libs
 from vee import log
 from vee.cli import style, style_note
-from vee.exceptions import AlreadyInstalled, AlreadyLinked
-from vee.requirement import Requirement, requirement_parser
+from vee.database import DBObject, Column
+from vee.exceptions import AlreadyInstalled, AlreadyLinked, CliMixin
+from vee.pipeline.base import Pipeline
 from vee.subproc import call
 from vee.utils import cached_property, makedirs, linktree
-from vee.database import DBObject, Column
-from vee.pipeline.base import Pipeline
+
+
+class RequirementParseError(CliMixin, ValueError):
+    pass
+
+
+class _RequirementParser(argparse.ArgumentParser):
+    def error(self, message):
+        raise RequirementParseError(message)
+
+
+class _ConfigAction(argparse.Action):
+
+    @property
+    def default(self):
+        return []
+
+    @default.setter
+    def default(self, v):
+        pass
+
+    def __call__(self, requirement_parser, namespace, values, option_string=None):
+        res = getattr(namespace, self.dest)
+        for value in values:
+            res.extend(value.split(','))
+
+
+class _EnvironmentAction(argparse.Action):
+
+    @property
+    def default(self):
+        return {}
+
+    @default.setter
+    def default(self, v):
+        pass
+
+    def __call__(self, requirement_parser, namespace, values, option_string=None):
+        res = getattr(namespace, self.dest)
+        for value in values:
+            parts = re.split(r'(?:^|,)(\w+)=', value)
+            for i in xrange(1, len(parts), 2):
+                res[parts[i]] = parts[i + 1]
+
+
+
+requirement_parser = _RequirementParser(add_help=False)
+
+requirement_parser.add_argument('-n', '--name')
+requirement_parser.add_argument('-r', '--revision')
+
+requirement_parser.add_argument('--etag', help='identifier for busting caches')
+
+requirement_parser.add_argument('--base-environ', nargs='*', action=_EnvironmentAction, help=argparse.SUPPRESS)
+requirement_parser.add_argument('-e', '--environ', nargs='*', action=_EnvironmentAction)
+requirement_parser.add_argument('-c', '--config', nargs='*', action=_ConfigAction, help='args to pass to `./configure`, `python setup.py`, `brew install`, etc..')
+
+requirement_parser.add_argument('--make-install', action='store_true', help='do `make install`')
+
+requirement_parser.add_argument('--install-name')
+requirement_parser.add_argument('--build-subdir')
+requirement_parser.add_argument('--install-prefix')
+
+requirement_parser.add_argument('--relocate', help='how to relocate shared libs')
+requirement_parser.add_argument('--hard-link', action='store_true', help='use hard links instead of copies')
+
+requirement_parser.add_argument('url')
 
 
 class Package(DBObject):
@@ -59,60 +127,125 @@ class Package(DBObject):
     build_path = Column()
     install_path = Column()
 
-    def __init__(self, requirement=None, home=None, set=None, dev=False):
+    def __init__(self, args=None, home=None, set=None, dev=False, **kwargs):
 
         super(Package, self).__init__()
 
-        # Set from item access.
-        if isinstance(requirement, dict):
-            self.abstract_requirement = json.dumps(requirement, sort_keys=True)
-            self.home = home
-            for action in requirement_parser._actions:
-                name = action.dest
-                setattr(self, name, requirement.get(name, action.default))
-        
-        # Set from attr access.
-        else:
-            self.abstract_requirement = requirement and requirement.to_json()
-            self.home = home or requirement.home
-            for action in requirement_parser._actions:
-                name = action.dest
-                setattr(self, name, requirement and getattr(requirement, name))
+        if args and kwargs:
+            raise ValueError('specify either args OR kwargs')
 
-        # A few need special handling
+        if isinstance(args, self.__class__):
+            kwargs = args.to_kwargs()
+            args = None
+        elif isinstance(args, dict):
+            kwargs = args
+            args = None
+
+        if args:
+            if isinstance(args, basestring):
+                args = shlex.split(args)
+            if isinstance(args, (list, tuple)):
+                try:
+                    requirement_parser.parse_args(args, namespace=self)
+                except RequirementParseError as e:
+                    raise RequirementParseError("%s in %s" % (e.args[0], args))
+            elif isinstance(args, argparse.Namespace):
+                for action in requirement_parser._actions:
+                    name = action.dest
+                    setattr(self, name, getattr(args, name))
+            else:
+                raise TypeError('args must be in (str, list, tuple); got %s' % args.__class__)
+
+        else:
+            for action in requirement_parser._actions:
+                name = action.dest
+                setattr(self, name, kwargs.get(name, action.default))
+
+        # Manual args.
+        self.home = home # Must be first.
+        self.abstract_requirement = self.to_json()
+        self.dependencies = []
+        self.set = set
+
+        # Make sure to make copies of anything that is mutable.
+        self.base_environ = self.base_environ.copy() if self.base_environ else {}
         self.environ = self.environ.copy() if self.environ else {}
         self.config = self.config[:] if self.config else []
 
+        # Initialize other state not covered by the argument parser.
         self.link_id = None
         self.package_name = self.build_name = None
         self.package_path = self.build_path = self.install_path = None
-        self.set = set
 
-        self.dependencies = []
-
+        # Create the pipeline object.
         if dev:
             self.package_name = self.build_name = self.url
             self.package_path = self.build_path = self.url
-            self.pipeline = Pipeline(self, step_names=['inspect', 'develop'])
+            self.pipeline = Pipeline(self, ['inspect', 'develop'])
         else:
+            self.pipeline = Pipeline(self, ['fetch', 'extract', 'inspect', 'build', 'install'])
             # Give the fetch pipeline step a chance to normalize the URL.
-            self.pipeline = Pipeline(self)
             self.pipeline.load('fetch')
 
-    def __repr__(self):
-        return '<%s for %s>' % (
-            self.__class__.__name__,
-            self.abstract_requirement,
-        )
-
-    def freeze(self, environ=True):
+    def to_kwargs(self):
         kwargs = {}
         for action in requirement_parser._actions:
             name = action.dest
-            kwargs[name] = getattr(self, name)
+            value = getattr(self, name)
+            if value != action.default: # This is easily wrong.
+                kwargs[name] = value
+        return kwargs
+
+    def to_json(self):
+        return json.dumps(self.to_kwargs(), sort_keys=True)
+
+    def to_args(self, exclude=set()):
+
+        argsets = []
+        for action in requirement_parser._actions:
+
+            name = action.dest
+            if name in ('type', 'url') or name in exclude:
+                continue
+
+            option_str = action.option_strings[-1]
+
+            value = getattr(self, name)
+            if not value:
+                continue
+
+            if action.__class__.__name__ == '_StoreTrueAction': # Gross.
+                if value:
+                    argsets.append([option_str])
+                continue
+
+            if isinstance(value, dict):
+                value = ','.join('%s=%s' % (k, v) for k, v in sorted(value.iteritems()))
+            if isinstance(value, (list, tuple)):
+                value = ','.join(value)
+
+            # Shell escape!
+            if re.search(r'\s', value):
+                value = "'%s'" % value.replace("'", "''")
+
+            argsets.append(['%s=%s' % (option_str, str(value))])
+
+        args = [self.url]
+        for argset in sorted(argsets):
+            args.extend(argset)
+        return args
+
+    def __str__(self):
+        return ' '.join(self.to_args(exclude=('base_environ')))
+
+    def __repr__(self):
+        return '%s(%r)' % (self.__class__.__name__, str(self))
+
+    def freeze(self, environ=True):
+        kwargs = self.to_kwargs()
         if environ:
             kwargs['environ'] = self.environ_diff
-        return Requirement(home=self.home, **kwargs)
+        return self.__class__(kwargs, home=self.home)
 
     def _resolve_environ(self, source=None):
 

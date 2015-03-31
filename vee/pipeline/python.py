@@ -2,13 +2,14 @@ import os
 import re
 import sys
 
-from vee.pipeline.generic import GenericBuilder
-from vee.cli import style, style_note, style_warning
 from vee import log
+from vee.cli import style, style_note, style_warning
 from vee.envvars import join_env_path
+from vee.package import Package
+from vee.pipeline.generic import GenericBuilder
 from vee.subproc import call
 from vee.utils import find_in_tree
-from vee.requirement import Requirement
+
 
 python_version = '%d.%d' % (sys.version_info[:2])
 site_packages = os.path.join('lib', 'python' + python_version, 'site-packages')
@@ -71,7 +72,7 @@ class PythonBuilder(GenericBuilder):
                         break
                     name = re.split('\W', line)[0].lower()
                     log.debug('%s depends on %s' % (pkg.name, name))
-                    pkg.dependencies.append(Requirement(name=name, url='pypi:%s' % name))
+                    pkg.dependencies.append(Package(name=name, url='pypi:%s' % name))
 
 
 

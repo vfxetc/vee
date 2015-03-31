@@ -37,7 +37,7 @@ upgrade = vee.commands.upgrade:upgrade
 [vee_pipeline_steps]
 
 # External package managers.
-homebrew = vee.pipeline.homebrew:Homebrew
+homebrew = vee.pipeline.homebrew:HomebrewManager
 
 # Transports.
 file = vee.pipeline.file:FileTransport

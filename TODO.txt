@@ -1,4 +1,9 @@
 
+- create a Homebrew object in vee.homebrew, so that the brew command can
+  use it freely
+
+- switch to click (after vendoring it?)
+
 - record dependencies in the database, for both pypi and homebrew
 - `vee repackage NAME` creates tarballs with vee-dependencies.txt
   - if there are .so or .dylib or executables that dont start in "#!", then
@@ -6,24 +11,15 @@
 
 - install dependencies during `vee install` as well
 
-- if I can merge Package and Requirememt (by making a BuildPipeline), then
-  RequirementSet -> RequirementsFile, and PackageSet can remain.
+- make "link" part of the standard pipeline, and be able to shortcut the
+  install phases
+    - perhaps there should be a install_pipeline, link_pipeline, and develop_pipeline??
 
-  Package.pipeline.link(relink=False, reinstall=False)
-  Package.pipeline.install(reinstall=False)
+- merge Package and Requirememt
+- then RequirementSet -> RequirementsFile, and PackageSet can remain.
 
-
-  There are a few issues:
-    1. Attributes on a Requirement are interpreted as requests from the user,
-       where the same ones on a Package are interpreted as results.
-    2. Pulling from the database.
-    3. Where do names get set?
-        - Homebrew adds version or "HEAD"
-        - Git adds commit to build_name and install_name
-            - can set build_name itself if it wants
-            - can set install_name itself if it wants
-        - Python.inspect() could set revision
-        ??? How to deal with uninstall wanting to set the install name?!
+- s/PipelineStep.type/PipelineStep.name
+  - also set it automatically in the loader
 
 - development_packages should record which user they are for. Perhaps a
   "dev_set" or "namespace", which defaults to the user, would be better.
@@ -49,11 +45,8 @@
     by_time -> links timestamped by commit time
     $branch -> links
 
-- Document Package vs Requirement like PackageSet vs RequirementSet
-
 - PackageSet.auto_install should be named better. Perhaps install and link,
   which are quick wrappers around process(install=True, link=True)
-
 
 - split up Package into all of the different steps:
 

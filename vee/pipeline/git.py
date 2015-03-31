@@ -17,25 +17,24 @@ class GitTransport(PipelineStep):
 
     @classmethod
     def factory(cls, step, pkg, *args):
-        if step not in ('fetch', ):
+        if step != 'fetch':
             return
         if re.match(r'^git[:+]', pkg.url):
             return cls(pkg, *args)
 
     def __init__(self, *args, **kwargs):
+
+        self.repo = kwargs.pop('_repo', None)
+
         super(GitTransport, self).__init__(*args, **kwargs)
         pkg = self.package
 
-        # We need to allow this to fail because the homebrew URLs, and others,
-        # will likely fail.
-        pkg.url = normalize_git_url(pkg.url, prefix=True) or pkg.url
-
-        pkg._assert_paths(package=True)
-        self.repo = GitRepo(work_tree=pkg.package_path, remote_url=self._git_remote_url)
-
-    @cached_property
-    def _git_remote_url(self):
-        return re.sub(r'^git\+', '', self.package.url)
+        if not self.repo:
+            # Normalize the URL if a repo wasn't handed to us.
+            pkg.url = normalize_git_url(pkg.url, prefix=True) or pkg.url
+            pkg._assert_paths(package=True)
+            self.repo = GitRepo(work_tree=pkg.package_path, remote_url=re.sub(r'^git\+', '', pkg.url))
+        
 
     def fetch(self):
         pkg = self.package
