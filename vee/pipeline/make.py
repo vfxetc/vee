@@ -1,21 +1,25 @@
 import os
 
-from vee.builds.generic import GenericBuild
-from vee.cli import style
+from vee.pipeline.generic import GenericBuilder
+from vee.cli import style_note
 from vee.subproc import call
 from vee.utils import find_in_tree
 from vee import log
 
 
-class MakeBuild(GenericBuild):
+class MakeBuilder(GenericBuilder):
 
     type = 'make'
 
     factory_priority = 1000
 
     @classmethod
-    def factory(cls, pkg):
+    def factory(cls, step, pkg):
         
+        # We provide 'install' via get_successor.
+        if step != 'build':
+            return
+
         configure = find_in_tree(pkg.build_path, 'configure')
         makefile = find_in_tree(pkg.build_path, 'Makefile')
 
@@ -23,7 +27,7 @@ class MakeBuild(GenericBuild):
             return cls(pkg, (configure, makefile))
 
     def __init__(self, pkg, paths):
-        super(MakeBuild, self).__init__(pkg)
+        super(MakeBuilder, self).__init__(pkg)
         self.configure_path, self.makefile_path = paths
 
     def build(self):
@@ -33,7 +37,8 @@ class MakeBuild(GenericBuild):
 
         if self.configure_path:
 
-            log.info(style('Configuring...', 'blue', bold=True))
+            log.info(style_note('./configure'))
+            pkg._assert_paths(install=True)
 
             cmd = ['./configure', '--prefix', pkg.install_path]
             cmd.extend(pkg.config)
@@ -47,30 +52,31 @@ class MakeBuild(GenericBuild):
 
         if self.makefile_path:
 
-            log.info(style('Making...', 'blue', bold=True))
+            log.info(style_note('make'))
 
             env = env or pkg.fresh_environ()
             call(['make', '-j4'], cwd=os.path.dirname(self.makefile_path), env=env)
 
             pkg.build_subdir = os.path.dirname(self.makefile_path)
 
+    def get_successor(self, step):
+        if step != 'install':
+            return
+        if self.makefile_path:
+            if self.package.make_install:
+                return self
+            else:
+                log.warning('Skipping `make install` and installing full package.\n'
+                    'Usually you will want to specify one of:\n'
+                    '    --make-install\n'
+                    '    --build-subdir PATH\n'
+                    '    --install-subdir PATH'
+                )
+    
     def install(self):
-
-        if not self.makefile_path:
-            return super(MakeBuild, self).install()
-
         pkg = self.package
-
-        if not pkg.make_install:
-            log.warning('Skipping `make install` and installing full package.\n'
-                'Usually you will want to specify one of:\n'
-                '    --make-install\n'
-                '    --build-subdir PATH\n'
-                '    --install-subdir PATH'
-            )
-            return super(MakeBuild, self).install()
-
-        log.info(style('Installing via `make install`', 'blue', bold=True))
+        pkg._assert_paths(install=True)
+        log.info(style_note('make install'))
         if call(
             ['make', 'install', '-j4'],
             cwd=os.path.dirname(self.makefile_path),

@@ -55,7 +55,7 @@ def exec_(args):
         pkg = pkg_set.resolve(req)
         pkg._assert_paths(install=True)
         if not pkg.installed:
-            raise NotInstalled(str(req))
+            raise NotInstalled(pkg.install_path)
         paths.append(pkg.install_path)
 
     # Named environments.

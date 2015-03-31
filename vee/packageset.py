@@ -1,7 +1,7 @@
 import collections
 
 from vee.requirement import Requirement
-from vee.packages import make_package
+from vee.package import Package
 from vee.exceptions import AlreadyInstalled, AlreadyLinked
 from vee import log
 
@@ -20,7 +20,7 @@ class PackageSet(collections.OrderedDict):
 
     def resolve(self, req, check_existing=True, env=None):
         if req.name not in self:
-            self[req.name] = pkg = make_package(req, home=self.home)
+            self[req.name] = pkg = Package(req, home=self.home)
             if check_existing:
                 pkg.resolve_existing(env=env or self.env)
         return self[req.name]
@@ -79,7 +79,10 @@ class PackageSet(collections.OrderedDict):
 
             if name not in self._installed:
                 pkg.build()
-                pkg.install()
+                try:
+                    pkg.install()
+                except AlreadyInstalled:
+                    pass
                 pkg.persist_in_db()
                 pkg.shared_libraries()
                 self._installed.add(name)

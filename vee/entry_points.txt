@@ -34,18 +34,22 @@ update = vee.commands.update:update
 upgrade = vee.commands.upgrade:upgrade
 
 
-[vee_package_types]
+[vee_pipeline_steps]
 
-file = vee.packages.file:FilePackage
-git = vee.packages.git:GitPackage
-homebrew = vee.packages.homebrew:HomebrewPackage
-http = vee.packages.http:HttpPackage
-pypi = vee.packages.pypi:PyPiPackage
+# External package managers.
+homebrew = vee.pipeline.homebrew:Homebrew
 
+# Transports.
+file = vee.pipeline.file:FileTransport
+git = vee.pipeline.git:GitTransport
+http = vee.pipeline.http:HttpTransport
+pypi = vee.pipeline.pypi:PyPiTransport
 
-[vee_build_types]
+# Extractors.
+archive = vee.pipeline.archive:ArchiveExtractor
 
-generic = vee.builds.generic:GenericBuild
-make = vee.builds.make:MakeBuild
-python = vee.builds.python:PythonBuild
-self = vee.builds.self:SelfBuild
+# Builds.
+generic = vee.pipeline.generic:GenericBuilder
+make = vee.pipeline.make:MakeBuilder
+python = vee.pipeline.python:PythonBuilder
+self = vee.pipeline.self:SelfBuilder

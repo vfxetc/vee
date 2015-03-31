@@ -7,9 +7,9 @@ from vee.cli import style, style_error, style_note, style_warning
 from vee.commands.main import command, argument, group
 from vee.envvars import render_envvars
 from vee.exceptions import AlreadyInstalled
-from vee.git import GitRepo
-from vee.packages.git import normalize_git_url
-from vee.packages import make_package
+from vee.git import GitRepo, normalize_git_url
+from vee.package import Package
+from vee.packageset import PackageSet
 from vee.requirement import Requirement
 from vee.requirementset import RequirementSet
 from vee.utils import makedirs
@@ -250,13 +250,9 @@ def init(args, do_clone=False, do_install=False, do_add=False, is_find=False):
         log.error('%s does not exist'%  path)
         return 1
 
-    req = Requirement(['file:' + path], home=home)
-    package = make_package(req)
-    package.package_name = package.build_name = path
-
-    log.info('%s is a "%s" package' % (name, package.builder.type))
-
-    package.builder.develop()
+    req = Requirement([path], home=home)
+    package = Package(req, dev=True)
+    package.develop()
 
     print style_note('Linking dev package', name, path)
     con.execute('INSERT INTO development_packages (name, path, environ) VALUES (?, ?, ?)', [name, path, json.dumps(package.environ)])

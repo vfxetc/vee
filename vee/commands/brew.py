@@ -17,4 +17,5 @@ def brew(args, *command):
     # This is such a hack.
     req = Requirement('homebrew:', home=home)
     pkg = PackageSet(home=home).resolve(req)
-    pkg._brew(*command, verbosity=0, indent=False)
+    step = pkg.pipeline.load('fetch')
+    step._brew(*command, verbosity=0, indent=False)

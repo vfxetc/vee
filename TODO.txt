@@ -12,10 +12,18 @@
   Package.pipeline.link(relink=False, reinstall=False)
   Package.pipeline.install(reinstall=False)
 
-  There are two issues:
+
+  There are a few issues:
     1. Attributes on a Requirement are interpreted as requests from the user,
        where the same ones on a Package are interpreted as results.
     2. Pulling from the database.
+    3. Where do names get set?
+        - Homebrew adds version or "HEAD"
+        - Git adds commit to build_name and install_name
+            - can set build_name itself if it wants
+            - can set install_name itself if it wants
+        - Python.inspect() could set revision
+        ??? How to deal with uninstall wanting to set the install name?!
 
 - development_packages should record which user they are for. Perhaps a
   "dev_set" or "namespace", which defaults to the user, would be better.
@@ -53,6 +61,8 @@
   - PipelineStep is the basic piece which handles the pipeline.
 
     make_pipeline_step(step, pkg)
+
+    pipe.load_step(name)
 
     Step.factory(step, pkg)
     step.{fetch,extract,inspect,build,install,develop}()

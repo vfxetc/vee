@@ -11,16 +11,16 @@ from vee._vendor import pkg_resources
 
 from vee import libs
 from vee import log
-from vee.builds import make_builder
 from vee.cli import style, style_note
 from vee.exceptions import AlreadyInstalled, AlreadyLinked
 from vee.requirement import Requirement, requirement_parser
 from vee.subproc import call
 from vee.utils import cached_property, makedirs, linktree
 from vee.database import DBObject, Column
+from vee.pipeline.base import Pipeline
 
 
-class BasePackage(DBObject):
+class Package(DBObject):
 
     """Abstraction of a package manager.
 
@@ -41,12 +41,12 @@ class BasePackage(DBObject):
     package_type = Column()
     @package_type.persist
     def package_type(self):
-        return self.type
+        return self.pipeline.load('fetch').type
 
     build_type = Column()
     @build_type.persist
     def build_type(self):
-        return self.builder.type
+        return self.pipeline.load('build').type
 
     url = Column()
     name = Column()
@@ -59,11 +59,9 @@ class BasePackage(DBObject):
     build_path = Column()
     install_path = Column()
 
-    type = 'base'
+    def __init__(self, requirement=None, home=None, set=None, dev=False):
 
-    def __init__(self, requirement=None, home=None, set=None):
-
-        super(BasePackage, self).__init__()
+        super(Package, self).__init__()
 
         # Set from item access.
         if isinstance(requirement, dict):
@@ -87,9 +85,19 @@ class BasePackage(DBObject):
 
         self.link_id = None
         self.package_name = self.build_name = None
+        self.package_path = self.build_path = self.install_path = None
         self.set = set
 
         self.dependencies = []
+
+        if dev:
+            self.package_name = self.build_name = self.url
+            self.package_path = self.build_path = self.url
+            self.pipeline = Pipeline(self, step_names=['inspect', 'develop'])
+        else:
+            # Give the fetch pipeline step a chance to normalize the URL.
+            self.pipeline = Pipeline(self)
+            self.pipeline.load('fetch')
 
     def __repr__(self):
         return '<%s for %s>' % (
@@ -149,14 +157,14 @@ class BasePackage(DBObject):
         environ.update(self.environ_diff)
         return environ
 
-    def _set_default_names(self, package=False, build=False, install=False):
+    def _set_names(self, package=False, build=False, install=False):
         if (package or build or install) and self.package_name is None:
             if self.url:
                 # Strip out the scheme.
                 name = re.sub(r'^[\w._+-]+:', '', self.url)
                 name = re.sub(r':?/+:?', '/', name)
                 name = name.strip('/')
-                self.package_name = os.path.join(self.type, name)
+                self.package_name = name
         if (install or build) and self.install_name is None:
             if self.name and self.revision:
                 self.install_name = '%s/%s' % (self.name, self.revision)
@@ -169,38 +177,26 @@ class BasePackage(DBObject):
                 os.urandom(4).encode('hex'),
             ))
 
-    def _set_names(self, **kwargs):
-        self._set_default_names(**kwargs)
-
     def _assert_names(self, **kwargs):
         self._set_names(**kwargs)
         for attr, value in kwargs.iteritems():
             if value and not getattr(self, '_%s_name' % attr):
                 raise RuntimeError('%s name required' % attr)
 
+    def _set_paths(self, package=False, build=False, install=False):
+        self._set_names(package, build, install)
+        if package:
+            self.package_path = self.package_path or (self.package_name and self.home._abs_path('packages', self.package_name))
+        if build:
+            self.build_path   = self.build_path   or (self.build_name   and self.home._abs_path('builds',   self.build_name  ))
+        if install:
+            self.install_path = self.install_path or (self.install_name and self.home._abs_path('installs', self.install_name))
+
     def _assert_paths(self, **kwargs):
-        self._set_names(**kwargs)
+        self._set_paths(**kwargs)
         for attr, value in kwargs.iteritems():
             if value and not getattr(self, '%s_path' % attr):
                 raise RuntimeError('%s path required' % attr)
-
-    @package_path.getter
-    def package_path(self):
-        """Where the package is cached."""
-        return self.package_name and self.home._abs_path('packages', self.package_name)
-
-    @build_path.getter
-    def build_path(self):
-        """Where the package will be built."""
-        return self.build_name and self.home._abs_path('builds', self.build_name)
-
-    @install_path.getter
-    def install_path(self):
-        """The final location of the built package."""
-        return self.install_name and self.home._abs_path('installs', self.install_name)
-
-    def fetch(self):
-        """Cache package from remote source; return something representing the package."""
 
     @property
     def build_path_to_install(self):
@@ -210,6 +206,13 @@ class BasePackage(DBObject):
     def install_path_from_build(self):
         return os.path.join(self.install_path, self.install_prefix or '').rstrip('/')
 
+    @property
+    def fetch_type(self):
+        return self.pipeline.load('fetch').type
+
+    def fetch(self):
+        self.pipeline.run('fetch')
+
     def _clean_build_path(self, makedirs=True):
         if self.build_path and os.path.exists(self.build_path):
             shutil.rmtree(self.build_path)
@@ -217,74 +220,36 @@ class BasePackage(DBObject):
             os.makedirs(self.build_path)
 
     def extract(self):
-        """Extract the package into the (cleaned) build directory."""
-
-        self._set_names(package=True, build=True)
-
-        if not self.package_path:
-            return
-        if not self.build_path:
-            raise RuntimeError('need build path for default Package.extract')
-
-        log.info(style_note('Extracting to', self.build_path))
-
-        # gzip-ed Tarballs.
-        if re.search(r'(\.tgz|\.tar\.gz)$', self.package_path):
-            self._clean_build_path()
-            call(['tar', 'xzf', self.package_path], cwd=self.build_path)
-        
-        # bzip-ed Tarballs.
-        elif re.search(r'(\.tbz|\.tar\.bz2)$', self.package_path):
-            self._clean_build_path()
-            call(['tar', 'xjf', self.package_path], cwd=self.build_path)
-
-        # Zip files (and Python wheels).
-        elif re.search(r'(\.zip|\.egg|\.whl)$', self.package_path):
-            self._clean_build_path()
-            call(['unzip', self.package_path], cwd=self.build_path)
-
-
-        # Directories.
-        elif os.path.isdir(self.package_path):
-            self._clean_build_path(makedirs=False)
-            if self.hard_link:
-                linktree(self.package_path, self.build_path, symlinks=True,
-                    ignore=shutil.ignore_patterns('.git'),
-                )
-            else:
-                shutil.copytree(self.package_path, self.build_path, symlinks=True,
-                    ignore=shutil.ignore_patterns('.git'),
-                )
-
-        else:
-            raise ValueError('unknown package type %r' % self.package_path)
+        self.pipeline.run('extract')
 
     def inspect(self):
-        self.builder.inspect()
-
-    @cached_property
-    def builder(self):
-        return make_builder(self)
+        self.pipeline.run('inspect')
 
     def build(self):
-        """Build the package in the build directory."""
-        self._assert_paths(build=True)
-        self.builder.build()
+        self.pipeline.run('build')
+
+    def develop(self):
+        self.pipeline.run('inspect')
+        self.pipeline.run('develop')
 
     @property
     def installed(self):
-        self._assert_paths(install=True)
-        return self.install_path and os.path.exists(self.install_path)
+        # self._assert_paths(install=True)
+        return bool(
+            self.install_path and # The path is set,
+            os.path.isdir(self.install_path) and # it exists as a directory,
+            os.listdir(self.install_path) # and it has contents.
+        )
 
     def install(self):
         """Install the build artifact into a final location."""
 
-        self._assert_paths(build=True, install=True)
+        # self._assert_paths(build=True, install=True)
 
         if self.installed:
             raise AlreadyInstalled('was already installed at %s' % self.install_path)
 
-        self.builder.install()
+        self.pipeline.run('install')
 
         if self.relocate:
             log.info(style_note('Relocating'))
@@ -303,7 +268,7 @@ class BasePackage(DBObject):
             os.symlink(self.install_path, opt_link)
 
     def uninstall(self):
-        self._set_names(install=True)
+        # self._set_names(install=True)
         if not self.installed:
             raise RuntimeError('package is not installed')
         log.info(style_note('Uninstalling ', self.install_path))
@@ -342,7 +307,7 @@ class BasePackage(DBObject):
         if not self.installed:
             log.warning('%s does not appear to be installed to %s' % (self.name, self.install_path))
             raise ValueError('cannot record requirement that is not installed')
-        return super(BasePackage, self).persist_in_db()
+        return super(Package, self).persist_in_db()
 
     def resolve_existing(self, env=None):
         """Check against the database to see if this was already installed."""
@@ -391,12 +356,16 @@ class BasePackage(DBObject):
             'package_path', 'build_path', 'install_path')))
         self.link_id = row['link_id']
 
+        # TODO: Do these warnings still make sense?
         if self.package_path != row['package_path']:
-            log.warning('Package paths don\'t match:\n  old: %r\n  new: %r' % (row['package_path'], self.package_path))
+            pass # log.warning('Package paths don\'t match:\n  old: %r\n  new: %r' % (row['package_path'], self.package_path))
         if self.build_path != row['build_path']:
-            log.warning('Builds paths don\'t match:\n  old: %r\n  new: %r' % (row['build_path'], self.build_path))
+            pass # log.warning('Builds paths don\'t match:\n  old: %r\n  new: %r' % (row['build_path'], self.build_path))
         if self.install_path != row['install_path']:
-            log.warning('Install paths don\'t match:\n  old: %r\n  new: %r' % (row['install_path'], self.install_path))
+            pass # log.warning('Install paths don\'t match:\n  old: %r\n  new: %r' % (row['install_path'], self.install_path))
+
+        for name in 'package_path', 'build_path', 'install_path':
+            setattr(self, name, row[name])
 
         return True
 

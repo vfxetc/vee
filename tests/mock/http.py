@@ -6,7 +6,7 @@ import tarfile
 import urllib2
 import json
 
-from vee.packages import pypi
+from vee.pipeline import pypi
 
 
 # Global state is gross.

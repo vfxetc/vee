@@ -72,7 +72,7 @@ def status(args):
     ]:
         for req in env_repo.load_requirements(revision=revision).iter_requirements():
             pkg = pkg_set.resolve(req, check_existing=False)
-            if pkg.type != 'git':
+            if pkg.fetch_type != 'git':
                 continue
             by_name.setdefault(pkg.name, {})[name] = req
 

@@ -2,7 +2,7 @@ import os
 import re
 import sys
 
-from vee.builds.generic import GenericBuild
+from vee.pipeline.generic import GenericBuilder
 from vee.cli import style, style_note, style_warning
 from vee import log
 from vee.envvars import join_env_path
@@ -14,14 +14,17 @@ python_version = '%d.%d' % (sys.version_info[:2])
 site_packages = os.path.join('lib', 'python' + python_version, 'site-packages')
 
 
-class PythonBuild(GenericBuild):
+class PythonBuilder(GenericBuilder):
 
     type = 'python'
 
     factory_priority = 5000
 
     @classmethod
-    def factory(cls, pkg):
+    def factory(cls, step, pkg):
+
+        if step not in ('inspect', 'build', 'install', 'develop'):
+            return
 
         setup_path = find_in_tree(pkg.build_path, 'setup.py')
         egg_path = find_in_tree(pkg.build_path, 'EGG-INFO', 'dir') or find_in_tree(pkg.build_path, '*.egg-info', 'dir')
@@ -31,16 +34,20 @@ class PythonBuild(GenericBuild):
             return cls(pkg, (setup_path, egg_path, dist_path))
 
     def __init__(self, pkg, paths):
-        super(PythonBuild, self).__init__(pkg)
+        super(PythonBuilder, self).__init__(pkg)
         self.setup_path, self.egg_path, self.dist_path = paths
 
+    def get_successor(self, name):
+        if name in ('build', 'install'):
+            return self
+    
     def inspect(self):
 
         pkg = self.package
 
         if self.setup_path and not self.egg_path:
 
-            log.info(style('Building Python Egg-Info...', 'blue', bold=True))
+            log.info(style_note('Building Python Egg-Info'))
 
             # Need to inject setuptools for this.
             cmd = ['python', '-c', 'import sys, setuptools; sys.argv[0]=__file__=\'setup.py\'; execfile(__file__)']
@@ -75,7 +82,7 @@ class PythonBuild(GenericBuild):
 
         if self.setup_path:
 
-            log.info(style('Building Python package...', 'blue', bold=True))
+            log.info(style_note('Building Python package...'))
 
             # Need to inject setuptools for this.
             cmd = ['python', '-c', 'import sys, setuptools; sys.argv[0]=__file__=\'setup.py\'; execfile(__file__)']
@@ -93,7 +100,7 @@ class PythonBuild(GenericBuild):
         # python setup.py bdist_egg
         if self.egg_path:
 
-            log.info(style('Found Python Egg:', 'blue', bold=True), style(os.path.basename(self.egg_path), bold=True))
+            log.info(style_note('Found Python Egg', os.path.basename(self.egg_path)))
             log.warning('Scripts and other data will not be installed.')
 
             if not pkg.package_path.endswith('.egg'):
@@ -129,7 +136,7 @@ class PythonBuild(GenericBuild):
         # python setup.py bdist_wheel
         if self.dist_path:
 
-            log.info(style('Found Python Wheel: ', 'blue', bold=True) + style(os.path.basename(self.dist_path), bold=True))
+            log.info(style_note('Found Python Wheel', os.path.basename(self.dist_path)))
             log.warning('Scripts and other data will not be installed.')
 
             if not pkg.package_path.endswith('.whl'):
@@ -143,9 +150,10 @@ class PythonBuild(GenericBuild):
     def install(self):
 
         if not self.setup_path:
-            return super(PythonBuild, self).install()
+            return super(PythonBuilder, self).install()
         
         pkg = self.package
+        pkg._assert_paths(install=True)
 
         install_site_packages = os.path.join(pkg.install_path, site_packages)
 
@@ -154,7 +162,7 @@ class PythonBuild(GenericBuild):
         env['PYTHONPATH'] = '%s:%s' % (install_site_packages, env.get('PYTHONPATH', ''))
         os.makedirs(install_site_packages)
 
-        log.info(style('Installing Python package...', 'blue', bold=True))
+        log.info(style_note('Installing Python package'))
 
         # Need to inject setuptools for this.
         cmd = ['python', '-c', 'import sys, setuptools; sys.argv[0]=__file__=\'setup.py\'; execfile(__file__)']
@@ -176,35 +184,30 @@ class PythonBuild(GenericBuild):
     def develop(self):
         pkg = self.package
 
-        super(PythonBuild, self).develop()
+        log.info(style_note('Building scripts'))
+        cmd = ['python', '-c', 'import sys,setuptools; __file__=sys.argv[0]=\'setup.py\'; execfile(__file__)']
+        cmd.extend([
+            'build_scripts', '-e', '/usr/bin/env VEE=%s VEE_PYTHON=%s dev python' % (os.environ.get("VEE", ''), os.environ.get('VEE_PYTHON', )),
+            'install_scripts', '-d', 'build/scripts',
+        ])
+        if call(cmd, cwd=os.path.dirname(self.setup_path)):
+            raise RuntimeError('Could not build scripts')
 
-        if self.setup_path:
+        egg_info = find_in_tree(os.path.dirname(self.setup_path), '*.egg-info', 'dir')
+        if not egg_info:
+            raise RuntimeError('Could not find built egg-info')
 
-            log.info(style_note('Building egg-info and scripts'))
-            cmd = ['python', '-c', 'import sys,setuptools; __file__=sys.argv[0]=\'setup.py\'; execfile(__file__)']
-            cmd.extend([
-                'egg_info',
-                'build_scripts', '-e', '/usr/bin/env VEE=%s VEE_PYTHON=%s dev python' % (os.environ.get("VEE", ''), os.environ.get('VEE_PYTHON', )),
-                'install_scripts', '-d', 'build/scripts',
-            ])
-            if call(cmd, cwd=os.path.dirname(self.setup_path)):
-                raise RuntimeError('Could not build egg-info')
+        dirs_to_link = set()
+        for line in open(os.path.join(egg_info, 'top_level.txt')):
+            dirs_to_link.add(os.path.dirname(line.strip()))
+        for name in sorted(dirs_to_link):
+            log.info(style_note("Adding ./%s to $PYTHONPATH" % name))
+            pkg.environ['PYTHONPATH'] = join_env_path('./' + name, pkg.environ.get('PYTHONPATH', '@'))
 
-            egg_info = find_in_tree(os.path.dirname(self.setup_path), '*.egg-info', 'dir')
-            if not egg_info:
-                raise RuntimeError('Could not find built egg-info')
-
-            dirs_to_link = set()
-            for line in open(os.path.join(egg_info, 'top_level.txt')):
-                dirs_to_link.add(os.path.dirname(line.strip()))
-            for name in sorted(dirs_to_link):
-                log.info(style_note("Adding ./%s to $PYTHONPATH" % name))
-                pkg.environ['PYTHONPATH'] = join_env_path('./' + name, pkg.environ.get('PYTHONPATH', '@'))
-
-            scripts = os.path.join(os.path.dirname(self.setup_path), 'build', 'scripts')
-            if os.path.exists(scripts):
-                log.info(style_note("Adding ./build/scripts to $PATH"))
-                pkg.environ['PATH'] = join_env_path('./build/scripts', pkg.environ.get('PATH', '@'))
+        scripts = os.path.join(os.path.dirname(self.setup_path), 'build', 'scripts')
+        if os.path.exists(scripts):
+            log.info(style_note("Adding ./build/scripts to $PATH"))
+            pkg.environ['PATH'] = join_env_path('./build/scripts', pkg.environ.get('PATH', '@'))
 
 
 

@@ -5,30 +5,39 @@ import shlex
 import sys
 
 from vee.cli import style
-from vee.packages.git import GitPackage
+from vee.pipeline.git import GitTransport
 from vee.subproc import call
 from vee.utils import makedirs, cached_property
 from vee import log
 
 
-class HomebrewPackage(GitPackage):
+class Homebrew(GitTransport):
 
     type = 'homebrew'
 
     factory_priority = 1000
 
     @classmethod
-    def factory(cls, req, *args):
-        if re.match(r'^homebrew[:+]', req.url):
-            return cls(req, *args)
+    def factory(cls, step, pkg, *args):
+        if re.match(r'^homebrew[:+]', pkg.url):
+            return cls(pkg, *args)
 
-    def __init__(self, *args, **kwargs):
-        super(HomebrewPackage, self).__init__(*args, **kwargs)
-        self.package_name = re.sub(r'^(git\+)?homebrew[:+]', '', self.url)
-        self.url = 'homebrew:' + self.package_name
+    def get_successor(self, step):
+        return self
 
-        if self.install_name:
+    def __init__(self, pkg, *args, **kwargs):
+
+        pkg.package_name = re.sub(r'^(git\+)?homebrew[:+]', '', pkg.url)
+        pkg.url = 'homebrew:' + pkg.package_name
+
+        pkg.package_path = os.environ.get('VEE_HOMEBREW') or pkg.home._abs_path('packages', self._name_for_platform)
+
+        if pkg.install_name:
             raise ValueError("Can't set install_name on Homebrew packages")
+
+        # We run the super init after since it will create a GitRepo object
+        # using the package_path.
+        super(Homebrew, self).__init__(pkg, *args, **kwargs)
 
     @cached_property
     def _name_for_platform(self):
@@ -40,11 +49,11 @@ class HomebrewPackage(GitPackage):
 
     @cached_property
     def _brew_bin(self):
-        return os.path.join(self.package_path, 'bin', 'brew')
+        return os.path.join(self.package.package_path, 'bin', 'brew')
 
     def _brew(self, *cmd, **kwargs):
         self.repo.clone_if_not_exists()
-        return call((self._brew_bin, ) + cmd, env=self.fresh_environ(), **kwargs)
+        return call((self._brew_bin, ) + cmd, env=self.package.fresh_environ(), **kwargs)
 
     _cached_brew_info = None
 
@@ -53,24 +62,25 @@ class HomebrewPackage(GitPackage):
         if self._cached_brew_info is None:
             self._cached_brew_info = {}
 
-        name = name or self.package_name
+        name = name or self.package.package_name
         if force or name not in self._cached_brew_info:
             self._cached_brew_info[name] = json.loads(self._brew('info', '--json=v1', name, stdout=True))[0]
 
         return self._cached_brew_info[name]
 
+    # TODO: look this back up.
     def _set_names(self, package=False, build=False, install=False):
-        if build or install and not self.build_name:
-            if '--HEAD' in self.config:
-                self.build_name = '%s/HEAD' % self.name
-            else:
-                self.build_name = self.install_name_from_info()
-        if install and not self.install_name:
-            self.install_name = self.build_name
-            log.debug('install_name for %s set to %r' % (self.name, self.install_name))
+        pkg = self.package
+
+        if '--HEAD' in pkg.config:
+            pkg.build_name = pkg.install_name = '%s/HEAD' % pkg.name
+        else:
+            pkg.build_name = pkg.install_name = self.install_name_from_info()
+
+        pkg.build_path = pkg.install_path = os.path.join(pkg.package_path, 'Cellar', pkg.install_name)
 
     def install_name_from_info(self, name=None, info=None):
-        name = name or self.package_name
+        name = name or self.package.package_name
         info = info or self._brew_info(name)
         if not info:
             raise ValueError('no homebrew package %s' % name)
@@ -80,35 +90,27 @@ class HomebrewPackage(GitPackage):
             else info['versions']['stable']
         ))
 
-    @property
-    def package_path(self):
-        override = os.environ.get('VEE_HOMEBREW')
-        if override:
-            return override
-        else:
-            return self.home._abs_path('packages', self._name_for_platform)
-
-    @property
-    def build_path(self):
-        return self.install_name and os.path.join(self.package_path, 'Cellar', self.install_name)
-
-    install_path = build_path
+    def inspect(self):
+        # Do nothing.
+        pass
 
     def extract(self):
-        # Disable BasePackage.extract().
+        # Do nothing.
         pass
 
     def build(self):
-        if self.installed:
-            log.warning(self.package_name + ' is already built', 'black')
+        pkg = self.package
+        if pkg.installed:
+            log.warning(pkg.package_name + ' is already built', 'black')
             return
-        self._brew('install', self.package_name, *self.config)
+        self._brew('install', pkg.package_name, *pkg.config)
 
         # Need to force a new installed version number.
         self._brew_info(force=True)
+        self._set_names()
 
     def install(self):
-        # Disable BasePackage.install().
+        # Do nothing.
         pass
 
     def link(self, env, force=None):

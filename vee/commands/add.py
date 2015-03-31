@@ -87,7 +87,7 @@ def add(args):
 
     for req in req_set.iter_requirements():
         pkg = pkg_set.resolve(req, check_existing=False)
-        if pkg.type != 'git':
+        if pkg.fetch_type != 'git':
             continue
         
         req_url = normalize_git_url(req.url)

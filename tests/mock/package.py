@@ -28,7 +28,7 @@ class MockPackage(object):
         self.defaults.setdefault('NAME', self.name)
         self.defaults.setdefault('VERSION', '1.0.0')
 
-        self._rev_count = None
+        self.rev_count = 0
 
     def clone(self, path):
         return MockPackage(self.name, os.path.basename(self.template), self.defaults.copy(), path)
@@ -47,18 +47,14 @@ class MockPackage(object):
         except GitError:
             return []
 
-    @property
-    def rev_count(self):
-        if self._rev_count is None:
-            self._rev_count = len(self.rev_list())
-        return self._rev_count
-
     def render(self, **kwargs):
 
+        self.rev_count += 1
+        
         params = self.defaults.copy()
         params.update(kwargs)
         params.update(
-            REVNO=self.rev_count + 1,
+            REVNO=self.rev_count,
         )
 
         def render_contents(contents):
@@ -89,7 +85,7 @@ class MockPackage(object):
     def commit(self, message=None):
         self.repo.git('add', '--', self.path, silent=True, stdout=True)
         self.repo.git('commit', '-m', message or 'Rendered from template', silent=True, stdout=True)
-        self._rev_count = (self._rev_count or 0) + 1
+        self.rev_count = (self.rev_count or 0) + 1
 
     def render_commit(self, message=None, **kwargs):
         self.render(**kwargs)
