@@ -10,8 +10,6 @@ from vee.pipeline.base import PipelineStep
 
 
 class GenericBuilder(PipelineStep):
-
-    type = 'generic'
     
     factory_priority = 0
 

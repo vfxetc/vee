@@ -17,8 +17,6 @@ site_packages = os.path.join('lib', 'python' + python_version, 'site-packages')
 
 class PythonBuilder(GenericBuilder):
 
-    type = 'python'
-
     factory_priority = 5000
 
     @classmethod

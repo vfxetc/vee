@@ -12,8 +12,6 @@ from vee import log
 
 
 class FileTransport(PipelineStep):
-
-    type = 'file'
     
     factory_priority = 0
 

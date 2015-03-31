@@ -17,8 +17,6 @@ PYPI_URL_PATTERN = 'https://pypi.python.org/pypi/%s/json'
 
 
 class PyPiTransport(PipelineStep):
-
-    type = 'pypi'
     
     factory_priority = 1000
 

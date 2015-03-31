@@ -12,8 +12,6 @@ from vee import log
 
 
 class HttpTransport(PipelineStep):
-
-    type = 'http'
     
     factory_priority = 1000
 

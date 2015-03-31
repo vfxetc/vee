@@ -8,8 +8,6 @@ from vee import log
 
 class ArchiveExtractor(PipelineStep):
 
-    type = 'archive'
-
     factory_priority = 2000
 
     @classmethod

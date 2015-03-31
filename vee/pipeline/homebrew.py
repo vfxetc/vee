@@ -14,8 +14,6 @@ from vee.homebrew import Homebrew
 
 class HomebrewManager(GitTransport):
 
-    type = 'homebrew'
-
     factory_priority = 1000
 
     @classmethod

@@ -32,19 +32,24 @@ class Pipeline(object):
             step = prev_step.get_successor(step_name)
             if step:
                 log.debug('%s (%s) provided sucessor %s (%s)' % (
-                    prev_step.type, prev_name, step.type, step_name
+                    prev_step.name, prev_name, step.name, step_name
                 ))
                 self.steps[step_name] = step
                 return step
 
-        # Find something that self-identifies it provides this step.
+        # Load the step classes.
         if not _step_classes:
-            _step_classes[:] = [ep.load() for ep in pkg_resources.iter_entry_points('vee_pipeline_steps')]
-            _step_classes.sort(key=lambda cls: cls.factory_priority, reverse=True)
+            for ep in pkg_resources.iter_entry_points('vee_pipeline_steps'):
+                cls = ep.load()
+                cls.name = ep.name
+                _step_classes.append(cls)
+            _step_classes.sort(key=lambda cls: getattr(cls, 'factory_priority', 1), reverse=True)
+        
+        # Find something that self-identifies it provides this step.
         for cls in _step_classes:
             step = cls.factory(step_name, self._package)
             if step:
-                log.debug('%s factory built %s' % (step.type, step_name))
+                log.debug('%s factory built %s' % (step.name, step_name))
                 self.steps[step_name] = step
                 return step
 

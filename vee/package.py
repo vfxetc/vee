@@ -109,12 +109,12 @@ class Package(DBObject):
     package_type = Column()
     @package_type.persist
     def package_type(self):
-        return self.pipeline.load('fetch').type
+        return self.pipeline.load('fetch').name
 
     build_type = Column()
     @build_type.persist
     def build_type(self):
-        return self.pipeline.load('build').type
+        return self.pipeline.load('build').name
 
     url = Column()
     name = Column()
@@ -341,7 +341,7 @@ class Package(DBObject):
 
     @property
     def fetch_type(self):
-        return self.pipeline.load('fetch').type
+        return self.pipeline.load('fetch').name
 
     def fetch(self):
         self.pipeline.run('fetch')

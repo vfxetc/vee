@@ -9,8 +9,6 @@ from vee import log
 
 class MakeBuilder(GenericBuilder):
 
-    type = 'make'
-
     factory_priority = 1000
 
     @classmethod

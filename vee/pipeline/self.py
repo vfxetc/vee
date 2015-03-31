@@ -9,8 +9,6 @@ from vee import log
 
 class SelfBuilder(GenericBuilder):
 
-    type = 'self'
-
     factory_priority = 9999
 
     @classmethod

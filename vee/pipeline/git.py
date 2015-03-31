@@ -11,8 +11,6 @@ from vee.utils import makedirs, cached_property
 
 class GitTransport(PipelineStep):
 
-    type = 'git'
-
     factory_priority = 1000
 
     @classmethod
