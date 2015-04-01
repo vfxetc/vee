@@ -16,11 +16,11 @@ class FileTransport(PipelineStep):
     factory_priority = 100
 
     @classmethod
-    def factory(cls, step, pkg, *args):
+    def factory(cls, step, pkg):
         if step == 'init':
-            return cls(pkg, *args)
+            return cls(pkg)
         if step == 'extract' and pkg.package_path and os.path.isdir(pkg.package_path):
-            return cls(pkg, *args)
+            return cls(pkg)
 
     def get_next(self, step):
         if step in ('fetch', 'extract'):

@@ -16,9 +16,9 @@ class HttpTransport(PipelineStep):
     factory_priority = 1000
 
     @classmethod
-    def factory(cls, step, pkg, *args):
+    def factory(cls, step, pkg):
         if step == 'init' and re.match(r'^https?://', pkg.url):
-            return cls(pkg, *args)
+            return cls(pkg)
 
     def get_next(self, step):
         if step in ('fetch', ):

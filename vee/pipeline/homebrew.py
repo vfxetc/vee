@@ -17,9 +17,9 @@ class HomebrewManager(PipelineStep):
     factory_priority = 1000
 
     @classmethod
-    def factory(cls, step, pkg, *args):
+    def factory(cls, step, pkg):
         if step == 'init' and re.match(r'^homebrew[:+]', pkg.url):
-            return cls(pkg, *args)
+            return cls(pkg)
 
     def get_next(self, step):
         return self
@@ -32,7 +32,7 @@ class HomebrewManager(PipelineStep):
 
         self.brew = Homebrew(home=pkg.home)
         pkg.package_path = self.brew.cellar
-        
+
         self.repo = self.brew.repo
 
     def fetch(self):
