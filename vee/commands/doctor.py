@@ -1,6 +1,9 @@
 import os
 import sys
 
+import setuptools
+import virtualenv
+
 from vee.cli import style, style_note, style_warning
 from vee.commands.main import command, argument
 from vee.subproc import call, which
@@ -45,13 +48,22 @@ def doctor(args):
                 print style_error('cannot find %s' % name)
                 return 1
 
+    print style_note('==> dependencies (vendored)')
+    for name, expected_version in [('setuptools', '14.3.1'), ('virtualenv', '12.0.7')]:
+        actual_version = globals()[name].__version__
+        if expected_version == actual_version:
+            print style_note(name + ':', expected_version)
+        else:
+            print style('%s: %s (expected %s)' % (name, actual_version, expected_version), 'yellow')
+            res = 2
+
     print style_note('==> executables')
     print style_note('python:', sys.executable)
-    res = find_command('git') and res
+    res = find_command('git') or res
     if sys.platform == 'darwin':
-        res = find_command('install_name_tool') and res
+        res = find_command('install_name_tool') or res
     if sys.platform.startswith('linux'):
-        res = find_command('chrpath', warn=True) and res
+        res = find_command('chrpath', warn=True) or res
 
     print style_note('==> configuration')
     home = args.assert_home()
