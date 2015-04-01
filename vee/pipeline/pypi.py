@@ -31,8 +31,7 @@ class PyPiTransport(PipelineStep):
 
     def init(self):
         pkg = self.package
-        pkg.package_name = re.sub(r'^pypi[:+]', '', pkg.url)
-        pkg.url = 'pypi:' + pkg.package_name
+        pkg.url = 'pypi:' + re.sub(r'^pypi[:+]', '', pkg.url)
 
     def _meta(self):
         pkg = self.package
