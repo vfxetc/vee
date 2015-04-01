@@ -64,14 +64,14 @@ class PackageSet(collections.OrderedDict):
             for dep_req in pkg.dependencies:
                 dep_pkg = self.resolve(dep_req)
                 if dep_pkg.name not in self._installed:
-                    if name in self._deferred_by_deps:
+                    key = (name, dep_pkg.name)
+                    if key in self._deferred_by_deps:
                         log.debug('%s needs %s, but was already deferred' % (name, dep_pkg.name))
                     else:
                         log.debug('%s needs %s, which is not yet checked' % (name, dep_pkg.name))
                         names.insert(waiting_for_deps, dep_pkg.name)
                         waiting_for_deps += 1
-                        self._deferred_by_deps.add(name)
-
+                        self._deferred_by_deps.add(key)
             if waiting_for_deps:
                 names.insert(waiting_for_deps, name)
                 continue
