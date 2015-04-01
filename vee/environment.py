@@ -98,10 +98,19 @@ class Environment(DBObject):
                 return
 
             new_shebang = '#!%s%s' % (new_bin, old_shebang[m.end(2):])
-            log.info('Rewriting shebang of %s' % new_bin, verbosity=1)
+            log.info('Rewriting shebang of %s' % old_path, verbosity=1)
             log.debug('New shebang: %s' % new_shebang.strip(), verbosity=1)
 
             self._assert_real_dir(os.path.dirname(new_path))
+
+            # Due to the way the _assert_real_dir works, we may have already
+            # created a symlink in the location of the new_path which points to
+            # the old_path. If we don't delete it first, then we will be
+            # reading and writing to the same time, and will only get the
+            # shebang + 1024 bytes (the buffer size on my machine).
+            if os.path.lexists(new_path):
+                os.unlink(new_path)
+
             with open(new_path, 'wb') as new_fh:
                 new_fh.write(new_shebang)
                 new_fh.writelines(old_fh)
