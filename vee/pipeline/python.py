@@ -23,7 +23,7 @@ class PythonBuilder(GenericBuilder):
     @classmethod
     def factory(cls, step, pkg):
 
-        if step not in ('inspect', 'build', 'install', 'develop'):
+        if step != 'inspect':
             return
 
         setup_path = find_in_tree(pkg.build_path, 'setup.py')
@@ -33,13 +33,14 @@ class PythonBuilder(GenericBuilder):
         if setup_path or egg_path or dist_path:
             return cls(pkg, (setup_path, egg_path, dist_path))
 
+    def get_next(self, name):
+        if name in ('build', 'install', 'develop'):
+            return self
+    
     def __init__(self, pkg, paths):
         super(PythonBuilder, self).__init__(pkg)
         self.setup_path, self.egg_path, self.dist_path = paths
 
-    def get_successor(self, name):
-        if name in ('build', 'install'):
-            return self
     
     def inspect(self):
 

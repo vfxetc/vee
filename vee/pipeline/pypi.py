@@ -22,13 +22,14 @@ class PyPiTransport(PipelineStep):
 
     @classmethod
     def factory(cls, step, pkg, *args):
-        if step not in ('fetch', ):
-            return
-        if re.match(r'^pypi[:+]', pkg.url):
+        if step == 'init' and re.match(r'^pypi[:+]', pkg.url):
             return cls(pkg, *args)
 
-    def __init__(self, *args, **kwargs):
-        super(PyPiTransport, self).__init__(*args, **kwargs)
+    def get_next(self, step):
+        if step in ('fetch', ):
+            return self
+
+    def init(self):
         pkg = self.package
         pkg.package_name = re.sub(r'^pypi[:+]', '', pkg.url)
         pkg.url = 'pypi:' + pkg.package_name

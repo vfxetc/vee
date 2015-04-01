@@ -3,6 +3,7 @@ from vee import log
 
 
 _step_classes = []
+_step_classes_by_name = {}
 
 
 class Pipeline(object):
@@ -11,11 +12,21 @@ class Pipeline(object):
         self._package = package
         self._step_names = list(step_names)
         self._step_index = dict((name, i) for i, name in enumerate(self._step_names))
+        self._have_run = set()
         self.steps = {}
 
-    def run(self, step_name, *args, **kwargs):
-        self.load(step_name)
-        self.steps[step_name].run(step_name, *args, **kwargs)
+    def run_to(self, name, *args, **kwargs):
+
+        if name in self._have_run:
+            raise RuntimeError('already run %s' % name)
+
+        # Run everything up to here.
+        index = self._step_index[name]
+        for name in self._step_names[:index + 1]:
+            if name not in self._have_run:
+                step = self.load(name)
+                step.run(name, *args, **kwargs)
+                self._have_run.add(name)
 
     def load(self, step_name):
 
@@ -29,7 +40,7 @@ class Pipeline(object):
         for i in xrange(step_i - 1, -1, -1):
             prev_name = self._step_names[i]
             prev_step = self.steps[prev_name]
-            step = prev_step.get_successor(step_name)
+            step = prev_step.get_next(step_name)
             if step:
                 log.debug('%s (%s) provided sucessor %s (%s) for %s' % (
                     prev_step.name, prev_name, step.name, step_name, self._package
@@ -43,6 +54,7 @@ class Pipeline(object):
                 cls = ep.load()
                 cls.name = ep.name
                 _step_classes.append(cls)
+                _step_classes_by_name[ep.name] = cls
             _step_classes.sort(key=lambda cls: getattr(cls, 'factory_priority', 1), reverse=True)
         
         # Find something that self-identifies it provides this step.
@@ -65,7 +77,7 @@ class PipelineStep(object):
     def __init__(self, pkg):
         self.package = pkg
 
-    def get_successor(self, next_step):
+    def get_next(self, next_step):
         return None
 
     def run(self, name, *args, **kwargs):

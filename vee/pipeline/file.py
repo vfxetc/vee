@@ -13,12 +13,18 @@ from vee import log
 
 class FileTransport(PipelineStep):
     
-    factory_priority = 0
+    factory_priority = 100
 
     @classmethod
     def factory(cls, step, pkg, *args):
-        if step in ('init', 'fetch', 'extract'):
+        if step == 'init':
             return cls(pkg, *args)
+        if step == 'extract' and pkg.package_path and os.path.isdir(pkg.package_path):
+            return cls(pkg, *args)
+
+    def get_next(self, step):
+        if step in ('fetch', 'extract'):
+            return self
 
     def init(self):
         pkg = self.package

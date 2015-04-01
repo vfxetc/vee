@@ -5,40 +5,41 @@ import shlex
 import sys
 
 from vee.cli import style
-from vee.pipeline.git import GitTransport
+from vee.pipeline.base import PipelineStep
 from vee.subproc import call
 from vee.utils import makedirs, cached_property
 from vee import log
 from vee.homebrew import Homebrew
 
 
-class HomebrewManager(GitTransport):
+class HomebrewManager(PipelineStep):
 
     factory_priority = 1000
 
     @classmethod
     def factory(cls, step, pkg, *args):
-        if re.match(r'^homebrew[:+]', pkg.url):
+        if step == 'init' and re.match(r'^homebrew[:+]', pkg.url):
             return cls(pkg, *args)
 
-    def get_successor(self, step):
+    def get_next(self, step):
         return self
 
-    def __init__(self, pkg, *args, **kwargs):
+    def init(self):
 
+        pkg = self.package
         pkg.package_name = re.sub(r'^(git\+)?homebrew[:+]', '', pkg.url)
         pkg.url = 'homebrew:' + pkg.package_name
 
         self.brew = Homebrew(home=pkg.home)
         pkg.package_path = self.brew.cellar
+        
+        self.repo = self.brew.repo
 
-        # We run the super init after since we want to pass it a repo.
-        kwargs['_repo'] = self.brew.repo
-        super(HomebrewManager, self).__init__(pkg, *args, **kwargs)
-
-    def init(self):
-        # Do nothing.
-        pass
+    def fetch(self):
+        pkg = self.package
+        self.repo.clone_if_not_exists()
+        self.repo.checkout(pkg.revision or 'HEAD', fetch=True)
+        pkg.revision = self.repo.head[:8]
 
     def set_pkg_names(self, package=False, build=False, install=False):
         pkg = self.package

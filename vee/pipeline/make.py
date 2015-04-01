@@ -14,7 +14,7 @@ class MakeBuilder(GenericBuilder):
     @classmethod
     def factory(cls, step, pkg):
         
-        # We provide 'install' via get_successor.
+        # We provide 'install' via get_next.
         if step != 'build':
             return
 
@@ -57,7 +57,7 @@ class MakeBuilder(GenericBuilder):
 
             pkg.build_subdir = os.path.dirname(self.makefile_path)
 
-    def get_successor(self, step):
+    def get_next(self, step):
         if step != 'install':
             return
         if self.makefile_path:

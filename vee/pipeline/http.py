@@ -17,18 +17,21 @@ class HttpTransport(PipelineStep):
 
     @classmethod
     def factory(cls, step, pkg, *args):
-        if step != 'fetch':
-            return
-        if re.match(r'^https?://', pkg.url):
+        if step == 'init' and re.match(r'^https?://', pkg.url):
             return cls(pkg, *args)
+
+    def get_next(self, step):
+        if step in ('fetch', ):
+            return self
+
+    def init(self):
+        pkg = self.package
+        split = urlparse.urlsplit(pkg.url)
+        pkg.package_name = os.path.join(split.netloc, split.path.strip('/'))
 
     def fetch(self):
         pkg = self.package
-
-        split = urlparse.urlsplit(pkg.url)
-        pkg.package_name = os.path.join(split.netloc, split.path.strip('/'))
         pkg._assert_paths(package=True)
-
         if os.path.exists(pkg.package_path):
             log.info(style_note('Already downloaded', pkg.url))
             return

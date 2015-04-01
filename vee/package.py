@@ -186,7 +186,7 @@ class Package(DBObject):
             self.pipeline = Pipeline(self, ['init', 'fetch', 'extract', 'inspect', 'build', 'install'])
 
         # Give the fetch pipeline step a chance to normalize the URL.
-        self.pipeline.load('init')
+        self.pipeline.run_to('init')
 
     def to_kwargs(self):
         kwargs = {}
@@ -344,27 +344,12 @@ class Package(DBObject):
     def fetch_type(self):
         return self.pipeline.load('fetch').name
 
-    def fetch(self):
-        self.pipeline.run('fetch')
-
     def _clean_build_path(self, makedirs=True):
         if self.build_path and os.path.exists(self.build_path):
             shutil.rmtree(self.build_path)
         if makedirs:
             os.makedirs(self.build_path)
 
-    def extract(self):
-        self.pipeline.run('extract')
-
-    def inspect(self):
-        self.pipeline.run('inspect')
-
-    def build(self):
-        self.pipeline.run('build')
-
-    def develop(self):
-        self.pipeline.run('inspect')
-        self.pipeline.run('develop')
 
     @property
     def installed(self):
@@ -376,6 +361,22 @@ class Package(DBObject):
             os.listdir(self.install_path) # and it has contents.
         )
 
+    def fetch(self):
+        self.pipeline.run_to('fetch')
+
+    def extract(self):
+        self.pipeline.run_to('extract')
+
+    def inspect(self):
+        self.pipeline.run_to('inspect')
+
+    def build(self):
+        self.pipeline.run_to('build')
+
+    def develop(self):
+        self.pipeline.run_to('inspect')
+        self.pipeline.run_to('develop')
+    
     def install(self):
         """Install the build artifact into a final location."""
 
@@ -384,7 +385,7 @@ class Package(DBObject):
         if self.installed:
             raise AlreadyInstalled('was already installed at %s' % self.install_path)
 
-        self.pipeline.run('install')
+        self.pipeline.run_to('install')
 
         if self.relocate:
             log.info(style_note('Relocating'))
