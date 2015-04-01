@@ -30,13 +30,14 @@ class SelfBuilder(GenericBuilder):
         log.info(style_note('source vee-build.sh'))
 
         pkg = self.package
-
+        pkg._assert_paths(build=True, install=True)
+        
         env = pkg.fresh_environ()
         env.update(
             VEE=pkg.home.root,
-            VEE_BUILD_PATH=pkg.build_path or '',
-            VEE_INSTALL_NAME=pkg.install_name or '',
-            VEE_INSTALL_PATH=pkg.install_path or '',
+            VEE_BUILD_PATH=pkg.build_path,
+            VEE_INSTALL_NAME=pkg.install_name,
+            VEE_INSTALL_PATH=pkg.install_path,
         )
 
         cwd = os.path.dirname(self.build_sh)
