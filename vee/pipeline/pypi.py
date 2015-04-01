@@ -10,7 +10,7 @@ from vee.cli import style, style_note
 from vee.pipeline.base import PipelineStep
 from vee.utils import makedirs
 from vee import log
-from vee.semver import Version
+from vee.semver import Version, VersionExpr
 from vee.pipeline.http import download
 
 PYPI_URL_PATTERN = 'https://pypi.python.org/pypi/%s/json'
@@ -53,12 +53,19 @@ class PyPiTransport(PipelineStep):
         all_releases = [(Version(v), rs) for v, rs in meta['releases'].iteritems()]
         all_releases.sort(reverse=True)
 
-        for version, releases in all_releases:
+        if pkg.revision:
+            expr = VersionExpr(pkg.revision)
+            matching_releases = [(v, rs) for v, rs in all_releases if expr.eval(v)]
+            log.debug('%s matched %s' % (expr, ','.join(str(v) for v, _ in matching_releases) or 'none'))
+        else:
+            matching_releases = all_releases
+
+        for version, releases in matching_releases:
             release = next((r for r in releases if r['packagetype'] == 'sdist'), None)
             if release:
                 break
         else:
-            raise ValueError('no sdist %s on the PyPI' % self.name)
+            raise ValueError('no sdist %s %s on the PyPI;' % (self.name, expr if pkg.revision else '(any)'))
 
         pkg.revision = str(version)
 

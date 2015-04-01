@@ -1,5 +1,12 @@
 
-- switch to click (after vendoring it?)
+- Python package revisions may be expressions, and that should be taken into
+  account in Package.resolve_existing
+
+
+
+
+
+
 
 - record dependencies in the database, for both pypi and homebrew
 - `vee repackage NAME` creates tarballs with vee-dependencies.txt
@@ -247,6 +254,8 @@ COMMANDS TO WRITE
 
 LATER
 -----
+
+- switch to click (after vendoring it?)
 
 - support multiple python versions at the same time, e.g. 2.6, 2.7, 3.4.
 

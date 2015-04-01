@@ -182,6 +182,12 @@ class TestVersions(TestCase):
             2.1.1
         '''.strip().split(), '\n'.join(vs))
 
+    def test_noop_expr(self):
+        expr = VersionExpr('1.0.0')
+        self.assertTrue(expr.eval('1.0.0'))
+        self.assertFalse(expr.eval('1.0.0a1'))
+        self.assertFalse(expr.eval('2'))
+
     def test_eq_expr(self):
         expr = VersionExpr('== 1.0.0')
         self.assertTrue(expr.eval('1.0.0'))

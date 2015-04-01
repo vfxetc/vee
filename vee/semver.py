@@ -164,6 +164,7 @@ def _op(name):
     return decorator
 
 
+@_op('')
 @_op('==')
 def _op_eq(a, b):
     return a == b
@@ -224,11 +225,13 @@ class VersionExpr(object):
             version = Version(raw_version)
             self.clauses.append((op, version))
 
+    def __str__(self):
+        return ','.join('%s%s' % x for x in self.clauses)
+    
     def eval(self, v):
         if not isinstance(v, Version):
             v = Version(v)
         for op, op_v in self.clauses:
-            print '%s %s %s' % (v, op, op_v)
             op_func = _expr_ops[op]
             if not op_func(v, op_v):
                 return False
