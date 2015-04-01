@@ -410,11 +410,13 @@ class DBObject(object):
 
     def restore_from_row(self, row, ignore=None):
         
-        if 'id' in row:
+        try:
             if self.id and self.id != row['id']:
                 log.warning('Restoring from a mismatched ID; %s %d != %d' % (self.__tablename__, self.id, row['id']))
             self.id = row['id']
-
+        except KeyError:
+            pass
+        
         for col in self.__columns__:
 
             try:
