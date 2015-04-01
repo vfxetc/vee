@@ -161,11 +161,12 @@ class PythonBuilder(GenericBuilder):
         env = pkg.fresh_environ()
         env['PYTHONPATH'] = '%s:%s' % (install_site_packages, env.get('PYTHONPATH', ''))
         
-        if os.path.exists(install_site_packages):
-            shutil.rmtree(install_site_packages)
+        if os.path.exists(pkg.install_path):
+            log.warning('Removing existing install', pkg.install_path)
+            shutil.rmtree(pkg.install_path)
         os.makedirs(install_site_packages)
 
-        log.info(style_note('Installing Python package'))
+        log.info(style_note('Installing Python package', 'to ' + install_site_packages))
 
         # Need to inject setuptools for this.
         cmd = ['python', '-c', 'import sys, setuptools; sys.argv[0]=__file__=\'setup.py\'; execfile(__file__)']

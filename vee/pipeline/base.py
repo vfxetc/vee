@@ -31,8 +31,8 @@ class Pipeline(object):
             prev_step = self.steps[prev_name]
             step = prev_step.get_successor(step_name)
             if step:
-                log.debug('%s (%s) provided sucessor %s (%s)' % (
-                    prev_step.name, prev_name, step.name, step_name
+                log.debug('%s (%s) provided sucessor %s (%s) for %s' % (
+                    prev_step.name, prev_name, step.name, step_name, self._package
                 ))
                 self.steps[step_name] = step
                 return step
@@ -49,7 +49,7 @@ class Pipeline(object):
         for cls in _step_classes:
             step = cls.factory(step_name, self._package)
             if step:
-                log.debug('%s factory built %s' % (step.name, step_name))
+                log.debug('%s factory built %s for %s' % (step.name, step_name, self._package))
                 self.steps[step_name] = step
                 return step
 

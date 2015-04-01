@@ -36,7 +36,7 @@ class GenericBuilder(PipelineStep):
             log.warning('--make-install specified, but no Makefile found.')
 
         if os.path.exists(pkg.install_path):
-            log.warning('Removing existing install')
+            log.warning('Removing existing install', pkg.install_path)
             shutil.rmtree(pkg.install_path)
 
         if pkg.hard_link:
