@@ -1,3 +1,4 @@
+import argparse
 import os
 
 from vee import log
@@ -20,6 +21,8 @@ from vee.requirements import Requirements
     argument('-r', '--repo'),
     argument('-e', '--environment'),
     argument('-d', '--directory'),
+
+    argument('--subset', action='append', help=argparse.SUPPRESS),
 
     argument('requirements', nargs='...'),
     help='link a package, or requirements.txt, into an environment',
@@ -54,6 +57,10 @@ def link(args):
     pkg_set = PackageSet(env=env, home=home)
 
     for req in req_set.iter_packages():
+
+        # Skip if it wasn't requested.
+        if args.subset and req.name not in args.subset:
+            continue
 
         log.info(style('==> %s' % req.name, 'blue'))
 

@@ -19,7 +19,7 @@ from vee.exceptions import AlreadyInstalled, AlreadyLinked, CliMixin
 from vee.pipeline.base import Pipeline
 from vee.subproc import call
 from vee.utils import cached_property, makedirs, linktree
-
+from vee.semver import Version, VersionExpr
 
 class RequirementParseError(CliMixin, ValueError):
     pass
@@ -455,7 +455,7 @@ class Package(DBObject):
         clauses = ['install_path IS NOT NULL', 'url = ?']
         values  = [self.url]
 
-        for name in ('name', 'revision', 'etag', 'package_name', 'build_name', 'install_name'):
+        for name in ('name', 'etag', 'install_name'):
             if getattr(self, name):
                 clauses.append('%s = ?' % name)
                 values.append(getattr(self, name))
@@ -463,8 +463,10 @@ class Package(DBObject):
         cur = self.home.db.cursor()
         clause = ' AND '.join(clauses)
 
+        log.debug('SELECT FROM packages WHERE %s' % ' AND '.join('%s = %r' % (c.replace(' = ?', ''), v) for c, v in zip(clauses[1:], values)), verbosity=2)
+
         # print clause, values
-        
+
         if env:
             values.append(env.id_or_persist())
             cur.execute('''
@@ -480,7 +482,16 @@ class Package(DBObject):
                 ORDER BY packages.created_at DESC
             ''' % clause, values)
 
+        rev_expr = VersionExpr(self.revision) if self.revision else None
         for row in cur:
+            if rev_expr and row['revision'] and not rev_expr.eval(Version(row['revision'])):
+                log.debug('Found %s (%d) whose revision %s does not satisfy %s' % (
+                    self.name or row['name'],
+                    row['id'],
+                    row['revision'],
+                    rev_expr,
+                ), verbosity=2)
+                continue
             if not os.path.exists(row['install_path']):
                 log.warning('Found %s (%d) does not exist at %s' % (self.name or row['name'], row['id'], row['install_path']))
                 continue
@@ -490,20 +501,8 @@ class Package(DBObject):
 
         log.debug('Found %s (%d) at %s' % (self.name or row['name'], row['id'], row['install_path']))
 
-        self.restore_from_row(row, ignore=set(('abstract_requirements', 'concrete_requirement',
-            'package_path', 'build_path', 'install_path')))
+        self.restore_from_row(row, ignore=set(('abstract_requirements', 'concrete_requirement')))
         self.link_id = row['link_id']
-
-        # TODO: Do these warnings still make sense?
-        if self.package_path != row['package_path']:
-            pass # log.warning('Package paths don\'t match:\n  old: %r\n  new: %r' % (row['package_path'], self.package_path))
-        if self.build_path != row['build_path']:
-            pass # log.warning('Builds paths don\'t match:\n  old: %r\n  new: %r' % (row['build_path'], self.build_path))
-        if self.install_path != row['install_path']:
-            pass # log.warning('Install paths don\'t match:\n  old: %r\n  new: %r' % (row['install_path'], self.install_path))
-
-        for name in 'package_path', 'build_path', 'install_path':
-            setattr(self, name, row[name])
 
         return True
 

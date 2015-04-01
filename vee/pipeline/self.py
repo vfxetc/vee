@@ -3,7 +3,7 @@ import os
 from vee.pipeline.generic import GenericBuilder
 from vee.cli import style_note
 from vee.utils import find_in_tree
-from vee.subproc import call
+from vee.subproc import call, bash_source
 from vee import log
 
 
@@ -54,6 +54,8 @@ class SelfBuilder(GenericBuilder):
 
     def develop(self):
 
+        pkg = self.package
+        
         log.info(style_note('source vee-develop.sh'))
 
         def setenv(name, value):

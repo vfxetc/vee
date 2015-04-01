@@ -6,7 +6,7 @@ from vee import log
 from vee.cli import style, style_error, style_note, style_warning
 from vee.commands.main import command, argument, group
 from vee.envvars import render_envvars
-from vee.exceptions import AlreadyInstalled
+from vee.exceptions import AlreadyInstalled, print_cli_exc
 from vee.git import GitRepo, normalize_git_url
 from vee.package import Package
 from vee.packageset import PackageSet
@@ -142,7 +142,7 @@ def find(args):
             dir_names[:] = []
             args.path = dir_path
             args.name = os.path.basename(dir_path)
-            res = res or init(args, do_add=True, is_find=True)
+            res = init(args, do_add=True, is_find=True) or res
     if e:
         raise RuntimeError('There were errors adding dev packages.')
     return res
@@ -250,7 +250,11 @@ def init(args, do_clone=False, do_install=False, do_add=False, is_find=False):
         return 1
 
     package = Package([path], home=home, dev=True)
-    package.develop()
+    try:
+        package.develop()
+    except Exception as e:
+        print_cli_exc(e)
+        return 1
 
     print style_note('Linking dev package', name, path)
     con.execute('INSERT INTO development_packages (name, path, environ) VALUES (?, ?, ?)', [name, path, json.dumps(package.environ)])

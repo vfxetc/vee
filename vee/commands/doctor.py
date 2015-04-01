@@ -48,7 +48,7 @@ def doctor(args):
                 print style_error('cannot find %s' % name)
                 return 1
 
-    print style_note('==> dependencies (vendored)')
+    print style_note('==> dependencies')
     for name, expected_version in [('setuptools', '14.3.1'), ('virtualenv', '12.0.7')]:
         actual_version = globals()[name].__version__
         if expected_version == actual_version:

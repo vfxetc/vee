@@ -21,7 +21,7 @@ class PackageSet(collections.OrderedDict):
         if req.name not in self:
             self[req.name] = pkg = Package(req, home=self.home)
             if check_existing:
-                pkg.resolve_existing(env=env or self.env)
+                pkg.resolve_existing(env=env or self.env) or pkg.resolve_existing()
         return self[req.name]
     
     def resolve_set(self, req_set, **kwargs):

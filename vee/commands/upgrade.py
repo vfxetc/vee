@@ -13,6 +13,7 @@ from vee import log
     argument('--relink', action='store_true', help='relink packages'),
     argument('--reinstall', action='store_true', help='reinstall packages'),
     argument('-r', '--repo', action='append', dest='repos'),
+    argument('subset', nargs='*'),
     help='upgrade packages specified by repositories, and link into environments',
 )
 def upgrade(args):
@@ -57,6 +58,8 @@ def upgrade(args):
             cmd.append('--force')
         if args.reinstall:
             cmd.append('--reinstall')
+        for x in args.subset:
+            cmd.extend(('--subset', x))
         cmd.extend(('--directory', path_by_commit, repo.abspath('requirements.txt')))
         
         try:
