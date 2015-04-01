@@ -12,9 +12,6 @@
   install phases
     - perhaps there should be a install_pipeline, link_pipeline, and develop_pipeline??
 
-- s/PipelineStep.type/PipelineStep.name
-  - also set it automatically in the loader
-
 - development_packages should record which user they are for. Perhaps a
   "dev_set" or "namespace", which defaults to the user, would be better.
 
@@ -41,21 +38,6 @@
 
 - PackageSet.auto_install should be named better. Perhaps install and link,
   which are quick wrappers around process(install=True, link=True)
-
-- split up Package into all of the different steps:
-
-  - Pipeline is the machinery
-  - PipelineStep is the basic piece which handles the pipeline.
-
-    make_pipeline_step(step, pkg)
-
-    pipe.load_step(name)
-
-    Step.factory(step, pkg)
-    step.{fetch,extract,inspect,build,install,develop}()
-    step.also_provides('build') -> bool
-    step.provide_successor('extract') -> PipelineStep
-
   
 - dependencies
 
@@ -89,7 +71,7 @@
   - perhaps we should just do this with envvars?
   - just package up what Mark has preppared previousely in /opt
 
-- `vee bottle -d OUT_DIR PKG_NAME`
+- `vee repackage -d OUT_DIR PKG_NAME`
     - package up the given homebrew package and all of its dependencies into
       a set (or single, if I feel up to it) tarball.
         - if I made my own, dependencies should be specified as a name/url
@@ -121,10 +103,6 @@
 
 - move save/delete/whatever to the Database or a Session?
 
-
-- Package.dependencies() -> list of Homebrew dependencies, that get installed
-  and linked as top-level packages.
-
 - `vee upgrade` after a `vee add` without a push wont find the commit
     - `vee upgrade --dirty` should rewrite GIT urls to pull from dev
 
@@ -134,23 +112,11 @@
 - `vee server` and `vee client`
     - make a super simple socket protocol. just send JSON back and forth
 
-- Requirement.package_build_matches() returns if the environment and subdirs
-  match between the requirement and package. If it is false, then we can
-  force a re-install.
-
 - setting envvars in requirements.txt should allow for @ or $KEY to take
   in previous values that were set within that file. So, we need some syntax for:
     1. Immediately resolution of variables.
     2. Deferred resolution of variables.
     3. Deferred resolution of previous value.
-
-- can vendor macholib and elffile (or patchelf) in order to relocate libs on
-  install (via `--relocate`)
-    - macholib:
-      >>> h = lib.headers[0]
-      >>> for c in h.commands: print c[0].get_cmd_name()
-    - elffile might implement enough for us to patch it ourselves
-    - we can also just depend on chrpath (Linux) and install_name_tool (OSX)
 
 - `vee dev checkout --repo REPO` to fastforward everything to match the given repo
 - `vee dev ff` to `pull --ff-only` everything to their origin/master
@@ -212,8 +178,6 @@ COMMANDS TO WRITE
 
 ---
 
-- is it possible for me to bundle libgit2, and build it?
-
 - there are a ton of times we need to guess which dev remote to use; perhaps
   we should have a remote/branch to track in the database, OR figure out how
   to interpret that from the repo itself. Git seems to store a repo per branch,
@@ -221,14 +185,6 @@ COMMANDS TO WRITE
 
 - RequirementSet elements should be their own class:
     - el.path is path to file that contained it
-
-- merge Requirement into Package
-
-    Package.factory(args)
-    make_package(args)
-
-    it is nice having them be separate, and one being user specifications
-    perhaps an AbstractPackage would fit the bill
 
 - permissions
 
@@ -256,9 +212,6 @@ COMMANDS TO WRITE
   $NAME-$VERSION.data dir at top-level, beside $NAME-$VERSION.dist-info
 
 - install Python commands listed in egg-info
-
-- does it make sense to have packages/builds/installs separate in the database,
-  instead of having them all together under "packages"
 
 - build-subdir and install-prefix should be used to invalidate matches in the
   resolve_existing

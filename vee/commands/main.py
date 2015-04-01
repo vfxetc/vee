@@ -175,7 +175,10 @@ def main(argv=None, environ=None, as_main=__name__=="__main__"):
             handler.setFormatter(_LogFormatter('%(asctime)-15s %(name)s %(levelname)s: %(message)s'))
             root.addHandler(handler)
 
-        log.config.verbosity = args.verbose or 0
+        # When called recursively, we want to maintain at least the previous
+        # level of verbosity.
+        log.config.verbosity = max(log.config.verbosity, args.verbose or 0)
+
         args.home = args.home_path and Home(args.home_path)
         args.main = getattr(args.home, 'main', None)
         
