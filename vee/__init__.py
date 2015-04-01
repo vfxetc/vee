@@ -2,9 +2,17 @@ import os
 import sys
 
 
-# pkg_resources vendors its own things too.
-sys.path.append(os.path.abspath(os.path.join(__file__, '..', '_vendor', 'pkg_resources', '_vendor')))
-from vee._vendor import pkg_resources
+# Add our vendor-ed packages to the path.
+vendor_path = os.path.abspath(os.path.join(__file__, '..', '_vendor'))
+if vendor_path not in sys.path:
+    sys.path.append(vendor_path)
+
+import pkg_resources
+
+# Make sure our vendor-ed packages are added to the working_set (for)
+# entry points, etc..
+if vendor_path not in pkg_resources.working_set.entries:
+    pkg_resources.working_set.add_entry(vendor_path)
 
 
 def _bootstrap_pkg_resources():
