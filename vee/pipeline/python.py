@@ -12,8 +12,25 @@ from vee.subproc import call
 from vee.utils import find_in_tree
 
 
+vendor_path = os.path.abspath(os.path.join(__file__, '..', '..', '_vendor'))
 python_version = '%d.%d' % (sys.version_info[:2])
 site_packages = os.path.join('lib', 'python' + python_version, 'site-packages')
+
+
+def call_setup_py(setup_py, args, **kwargs):
+
+    kwargs['cwd'] = os.path.dirname(setup_py)
+
+    kwargs['env'] = env = kwargs.get('env') or os.environ.copy()
+    if 'PYTHONPATH' in env:
+        env['PYTHONPATH'] = env['PYTHONPATH'] + ':' + vendor_path
+    else:
+        env['PYTHONPATH'] = vendor_path
+
+    cmd = ['python', '-c', 'import sys, setuptools; sys.argv[0]=__file__=%r; execfile(__file__)' % os.path.basename(setup_py)]
+    cmd.extend(args)
+
+    return call(cmd, **kwargs)
 
 
 class PythonBuilder(GenericBuilder):
@@ -49,11 +66,7 @@ class PythonBuilder(GenericBuilder):
         if self.setup_path and not self.egg_path:
 
             log.info(style_note('Building Python egg-info'))
-
-            # Need to inject setuptools for this.
-            cmd = ['python', '-c', 'import sys, setuptools; sys.argv[0]=__file__=\'setup.py\'; execfile(__file__)']
-            cmd.extend(['egg_info'])
-            res = call(cmd, cwd=os.path.dirname(self.setup_path), env=pkg.fresh_environ(), indent=True, verbosity=1)
+            res = call_setup_py(self.setup_path, ['egg_info'], env=pkg.fresh_environ(), indent=True, verbosity=1)
             if res:
                 raise RuntimeError('Could not build Python package')
 
@@ -85,14 +98,10 @@ class PythonBuilder(GenericBuilder):
 
             log.info(style_note('Building Python package'))
 
-            # Need to inject setuptools for this.
-            cmd = ['python', '-c', 'import sys, setuptools; sys.argv[0]=__file__=\'setup.py\'; execfile(__file__)']
-            cmd.extend(['build',
-                '--executable', '/usr/bin/env python',
-            ])
+            cmd = ['build', '--executable', '/usr/bin/env python']
             cmd.extend(pkg.config)
 
-            res = call(cmd, cwd=os.path.dirname(self.setup_path), env=pkg.fresh_environ(), indent=True, verbosity=1)
+            res = call_setup_py(self.setup_path, cmd, env=pkg.fresh_environ(), indent=True, verbosity=1)
             if res:
                 raise RuntimeError('Could not build Python package')
 
@@ -169,20 +178,16 @@ class PythonBuilder(GenericBuilder):
 
         log.info(style_note('Installing Python package', 'to ' + install_site_packages))
 
-        # Need to inject setuptools for this.
-        cmd = ['python', '-c', 'import sys, setuptools; sys.argv[0]=__file__=\'setup.py\'; execfile(__file__)']
-        cmd.extend(['install',
+        cmd = ['install',
             '--skip-build',
             '--root', pkg.install_path, # Better than prefix
             '--prefix', '.',
             '--install-lib', site_packages, # So that we don't get lib64; virtualenv symlinks them together anyways.
             # '--no-compile',
             '--single-version-externally-managed',
-        ])
-
+        ]
         
-        res = call(cmd, cwd=os.path.dirname(self.setup_path), env=env,
-                   indent=True, verbosity=1)
+        res = call_setup_py(self.setup_path, cmd, env=env, indent=True, verbosity=1)
         if res:
             raise RuntimeError('Could not install Python package')
 
@@ -190,12 +195,11 @@ class PythonBuilder(GenericBuilder):
         pkg = self.package
 
         log.info(style_note('Building scripts'))
-        cmd = ['python', '-c', 'import sys,setuptools; __file__=sys.argv[0]=\'setup.py\'; execfile(__file__)']
-        cmd.extend([
+        cmd = [
             'build_scripts', '-e', '/usr/bin/env VEE=%s VEE_PYTHON=%s dev python' % (os.environ.get("VEE", ''), os.environ.get('VEE_PYTHON', )),
             'install_scripts', '-d', 'build/scripts',
-        ])
-        if call(cmd, cwd=os.path.dirname(self.setup_path)):
+        ]
+        if call_setup_py(self.setup_path, cmd):
             raise RuntimeError('Could not build scripts')
 
         egg_info = find_in_tree(os.path.dirname(self.setup_path), '*.egg-info', 'dir')

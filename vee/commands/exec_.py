@@ -10,6 +10,9 @@ from vee.packageset import PackageSet
 from vee.requirements import Requirements
 
 
+vendor_path = os.path.abspath(os.path.join(__file__, '..', '..', '_vendor'))
+
+
 @command(
     argument('--export', action='store_true', help='export the environment instead of executing in it'),
     argument('--prefix', action='store_true', help='print the prefixes that would be linked together'),
@@ -88,6 +91,9 @@ def exec_(args):
     while command and re.match(r'^\w+=', command[0]):
         k, v = command.pop(0).split('=', 1)
         environ_diff[k] = v
+
+    # Add vendor-ed packages.
+    environ_diff['PYTHONPATH'] = '%s:%s' % (environ_diff.get('PYTHONPATH', ''), vendor_path)
 
     # Print it out instead of running it.
     if args.export:
