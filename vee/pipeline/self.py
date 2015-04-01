@@ -34,9 +34,9 @@ class SelfBuilder(GenericBuilder):
         env = pkg.fresh_environ()
         env.update(
             VEE=pkg.home.root,
-            VEE_BUILD_PATH=pkg.build_path,
-            VEE_INSTALL_NAME=pkg.install_name,
-            VEE_INSTALL_PATH=pkg.install_path,
+            VEE_BUILD_PATH=pkg.build_path or '',
+            VEE_INSTALL_NAME=pkg.install_name or '',
+            VEE_INSTALL_PATH=pkg.install_path or '',
         )
 
         cwd = os.path.dirname(self.build_sh)

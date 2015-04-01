@@ -36,6 +36,10 @@ class HomebrewManager(GitTransport):
         kwargs['_repo'] = self.brew.repo
         super(HomebrewManager, self).__init__(pkg, *args, **kwargs)
 
+    def init(self):
+        # Do nothing.
+        pass
+
     def set_pkg_names(self, package=False, build=False, install=False):
         pkg = self.package
         if '--HEAD' in pkg.config:

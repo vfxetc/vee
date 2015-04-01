@@ -7,7 +7,7 @@ import urlparse
 
 from vee.cli import style
 from vee.pipeline.base import PipelineStep
-from vee.utils import makedirs
+from vee.utils import makedirs, linktree
 from vee import log
 
 
@@ -17,16 +17,15 @@ class FileTransport(PipelineStep):
 
     @classmethod
     def factory(cls, step, pkg, *args):
-        if step in ('fetch', 'extract'):
+        if step in ('init', 'fetch', 'extract'):
             return cls(pkg, *args)
 
-    def __init__(self, *args, **kwargs):
-        super(FileTransport, self).__init__(*args, **kwargs)
+    def init(self):
         pkg = self.package
         self._path = re.sub(r'^file:|#.*$', '', pkg.url)
         pkg.url = 'file:' + self._path
         pkg.package_name = os.path.expanduser(self._path).strip('/')
-    
+
     def fetch(self):
 
         pkg = self.package

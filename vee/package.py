@@ -181,11 +181,12 @@ class Package(DBObject):
         if dev:
             self.package_name = self.build_name = self.url
             self.package_path = self.build_path = self.url
-            self.pipeline = Pipeline(self, ['inspect', 'develop'])
+            self.pipeline = Pipeline(self, ['init', 'inspect', 'develop'])
         else:
-            self.pipeline = Pipeline(self, ['fetch', 'extract', 'inspect', 'build', 'install'])
-            # Give the fetch pipeline step a chance to normalize the URL.
-            self.pipeline.load('fetch')
+            self.pipeline = Pipeline(self, ['init', 'fetch', 'extract', 'inspect', 'build', 'install'])
+
+        # Give the fetch pipeline step a chance to normalize the URL.
+        self.pipeline.load('init')
 
     def to_kwargs(self):
         kwargs = {}
@@ -368,6 +369,7 @@ class Package(DBObject):
     @property
     def installed(self):
         # self._assert_paths(install=True)
+        # print 'installed', (self.id, self.install_name, self.install_path)
         return bool(
             self.install_path and # The path is set,
             os.path.isdir(self.install_path) and # it exists as a directory,
@@ -422,7 +424,7 @@ class Package(DBObject):
         frozen = self.freeze()
         if not force:
             self._assert_unlinked(env, frozen)
-        log.info(style_note('Linking into %s: ' % env.name, str(frozen)))
+        log.info(style_note('Linking into %s' % env.name))
         env.link_directory(self.install_path)
         self._record_link(env)
 
@@ -460,6 +462,8 @@ class Package(DBObject):
         cur = self.home.db.cursor()
         clause = ' AND '.join(clauses)
 
+        # print clause, values
+        
         if env:
             values.append(env.id_or_persist())
             cur.execute('''

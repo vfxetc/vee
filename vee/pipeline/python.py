@@ -1,5 +1,6 @@
 import os
 import re
+import shutil
 import sys
 
 from vee import log
@@ -46,7 +47,7 @@ class PythonBuilder(GenericBuilder):
 
         if self.setup_path and not self.egg_path:
 
-            log.info(style_note('Building Python Egg-Info'))
+            log.info(style_note('Building Python egg-info'))
 
             # Need to inject setuptools for this.
             cmd = ['python', '-c', 'import sys, setuptools; sys.argv[0]=__file__=\'setup.py\'; execfile(__file__)']
@@ -81,7 +82,7 @@ class PythonBuilder(GenericBuilder):
 
         if self.setup_path:
 
-            log.info(style_note('Building Python package...'))
+            log.info(style_note('Building Python package'))
 
             # Need to inject setuptools for this.
             cmd = ['python', '-c', 'import sys, setuptools; sys.argv[0]=__file__=\'setup.py\'; execfile(__file__)']
@@ -159,6 +160,9 @@ class PythonBuilder(GenericBuilder):
         # Setup the PYTHONPATH to point to the "install" directory.
         env = pkg.fresh_environ()
         env['PYTHONPATH'] = '%s:%s' % (install_site_packages, env.get('PYTHONPATH', ''))
+        
+        if os.path.exists(install_site_packages):
+            shutil.rmtree(install_site_packages)
         os.makedirs(install_site_packages)
 
         log.info(style_note('Installing Python package'))
