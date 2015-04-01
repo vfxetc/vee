@@ -4,7 +4,7 @@ import re
 import shutil
 import sys
 
-from vee._vendor import virtualenv
+import virtualenv
 
 from vee.cli import style
 from vee.utils import makedirs

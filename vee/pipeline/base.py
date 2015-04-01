@@ -1,4 +1,5 @@
-from vee._vendor import pkg_resources
+import pkg_resources
+
 from vee import log
 
 

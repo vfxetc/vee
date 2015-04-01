@@ -11,8 +11,7 @@ import os
 import sys
 import traceback
 import logging
-
-from vee._vendor import pkg_resources
+import pkg_resources
 
 from vee.cli import style
 from vee.exceptions import cli_exc_str, cli_errno, print_cli_exc
