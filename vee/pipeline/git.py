@@ -25,11 +25,11 @@ class GitTransport(PipelineStep):
     def init(self):
         pkg = self.package
         pkg.url = normalize_git_url(pkg.url, prefix=True) or pkg.url
+        pkg._assert_paths(package=True)
+        self.repo = GitRepo(work_tree=pkg.package_path, remote_url=re.sub(r'^git[:\+]', '', pkg.url))
     
     def fetch(self):
         pkg = self.package
-        pkg._assert_paths(package=True)
-        self.repo = GitRepo(work_tree=pkg.package_path, remote_url=re.sub(r'^git[:\+]', '', pkg.url))
         self.repo.clone_if_not_exists()
         self.repo.checkout(pkg.revision or 'HEAD', fetch=True)
         pkg.revision = self.repo.head[:8]
