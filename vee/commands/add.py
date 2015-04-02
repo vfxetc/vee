@@ -26,7 +26,7 @@ def add(args):
         baked_any = False
         for req in req_set.iter_packages():
             pkg = pkg_set.resolve(req, check_existing=False)
-            if pkg.type != 'git':
+            if pkg.fetch_type != 'git':
                 continue
             print style_note('Fetching', str(req))
             pkg.repo.fetch('origin', 'master') # TODO: track these another way?
@@ -49,16 +49,17 @@ def add(args):
         for req in req_set.iter_packages():
 
             pkg = pkg_set.resolve(req)
-            if pkg.type != 'git':
+            if pkg.fetch_type != 'git':
                 continue
-
+            repo = pkg.pipeline.steps['fetch'].repo
+            
             if req.name and req.name == guess_name(req.url):
                 req.name = None
                 baked_any = True
                 print style_note('Unset redundant name', req.name)
 
-            if pkg.installed and req.revision != pkg.repo.head[:8]:
-                req.revision = pkg.repo.head[:8]
+            if pkg.installed and req.revision != repo.head[:8]:
+                req.revision = repo.head[:8]
                 baked_any = True
                 print style_note('Pinned', req.name, req.revision)
 
@@ -99,7 +100,7 @@ def add(args):
                 print style_note('Updated', str(req))
             break
     else:
-        req = Requirement(
+        req = Package(
             url=normalize_git_url(dev_repo.remotes()['origin'], prefix=True),
             revision=dev_repo.head[:8],
         )
