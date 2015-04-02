@@ -13,11 +13,11 @@ class SelfBuilder(GenericBuilder):
 
     @classmethod
     def factory(cls, step, pkg):
-        if step not in ('build', 'develop'):
+        if step not in ('inspect', 'build', 'develop'):
             return
         build_sh = find_in_tree(pkg.build_path, 'vee-build.sh')
         develop_sh = find_in_tree(pkg.build_path, 'vee-develop.sh')
-        if (step == 'build' and build_sh) or (step == 'develop' and develop_sh):
+        if (step in ('inspect', 'build') and build_sh) or (step == 'develop' and develop_sh):
             return cls(pkg, build_sh, develop_sh)
 
     def __init__(self, pkg, build_sh, develop_sh):
