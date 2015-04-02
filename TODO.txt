@@ -1,4 +1,13 @@
 
+- `vee upgrade --dev` uses dev repos in their current state instead of having
+  to push them out; this is a way of testing dev-install.sh (when it exists)
+
+- `vee dev build` runs the build command in the pipeline
+- translate https to scp git URLs for dev purposes
+  - a DevPackage could expose a bunch of this stuff
+- Requirements.iter_scm_packages()
+- Requirements.iter_dev_packages()
+
 - record dependencies in the database, for both pypi and homebrew
 - `vee repackage NAME` creates tarballs with vee-dependencies.txt
   - if there are .so or .dylib or executables that dont start in "#!", then

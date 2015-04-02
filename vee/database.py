@@ -2,6 +2,7 @@ import datetime
 import os
 import sqlite3
 import shutil
+import re
 
 from vee.utils import makedirs
 from vee import log
@@ -61,9 +62,6 @@ def _create_initial_tables(con):
         name TEXT,
         revision TEXT,
         etag TEXT,
-
-        package_type TEXT NOT NULL,
-        build_type TEXT NOT NULL,
 
         -- Names, either from the user or discovered.
         package_name TEXT,
@@ -142,21 +140,18 @@ def _create_initial_tables(con):
 
 @_migrations.append
 def _create_repos_path_column(con):
-    existing = set(row['name'] for row in con.execute('PRAGMA table_info(repositories)'))
-    if 'path' not in existing:
+    if 'path' not in con.columns('repositories'):
         con.execute('''ALTER TABLE repositories ADD COLUMN path TEXT''')
 
 @_migrations.append
 def _create_packages_etag_column(con):
-    existing = set(row['name'] for row in con.execute('PRAGMA table_info(packages)'))
-    if 'etag' not in existing:
+    if 'etag' not in con.columns('packages'):
         con.execute('''ALTER TABLE packages ADD COLUMN etag TEXT''')
 
 @_migrations.append
 def _created_shared_libraries(con):
 
-    existing = set(row['name'] for row in con.execute('PRAGMA table_info(packages)'))
-    if 'scanned_for_libraries' not in existing:
+    if 'scanned_for_libraries' not in con.columns('packages'):
         con.execute('''ALTER TABLE packages ADD COLUMN scanned_for_libraries INTEGER NOT NULL DEFAULT 0''')
 
     con.execute('''CREATE TABLE shared_libraries (
@@ -173,10 +168,16 @@ def _created_shared_libraries(con):
 
 @_migrations.append
 def _rename_dev_packages(con):
-
-    existing = set(row['name'] for row in con.execute("SELECT name FROM sqlite_master WHERE type='table'"))
-    if 'dev_packages' in existing:
+    if 'dev_packages' in con.tables():
         con.execute('''ALTER TABLE dev_packages RENAME TO development_packages''')
+
+
+@_migrations.append
+def _drop_type_columns(con):
+    if 'package_type' in con.columns('packages'):
+        con.drop_column('packages', 'package_type')
+    if 'build_type' in con.columns('packages'):
+        con.drop_column('packages', 'build_type')
 
 
 class _Connection(sqlite3.Connection):
@@ -196,6 +197,40 @@ class _Connection(sqlite3.Connection):
     def begin(self):
         self.execute("BEGIN")
         return self
+
+    def tables(self):
+        return [row['name'] for row in self.execute("SELECT name FROM sqlite_master WHERE type='table'")]
+
+    def schema(self, table_name):
+        return self.execute('SELECT sql FROM sqlite_master WHERE name = ?', [table_name]).fetchone()['sql']
+
+    def columns(self, table_name):
+        return [row['name'] for row in self.execute('PRAGMA table_info(%s)' % table_name)]
+
+    def drop_column(self, table_name, column_name):
+
+        old_columns = self.columns(table_name)
+        new_columns = [x for x in old_columns if x != column_name]
+        if new_columns == old_columns:
+            raise ValueError(column_name)
+
+        old_schema = self.schema(table_name)
+        new_schema = re.sub(r'\)\s*$', ',', old_schema)
+        new_schema = re.sub('%s[^,]+,' % column_name, '', new_schema)
+        new_schema = re.sub(r',$', ')', new_schema)
+        if new_schema == old_schema:
+            raise ValueError('no change in schema: %s' % new_schema)
+
+        self.execute('ALTER TABLE %s RENAME TO old_%s' % (table_name, table_name))
+        self.execute(new_schema)
+        self.execute('INSERT INTO %s (%s) SELECT %s FROM old_%s' % (
+            table_name, ','.join(new_columns), ','.join(new_columns), table_name
+        ))
+        self.execute('DROP TABLE old_%s' % table_name)
+
+
+
+
 
 
 def escape_identifier(x):

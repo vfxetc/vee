@@ -106,16 +106,6 @@ class Package(DBObject):
     def concrete_requirement(self):
         return self.freeze().to_json()
 
-    package_type = Column()
-    @package_type.persist
-    def package_type(self):
-        return self.pipeline.load('fetch').name
-
-    build_type = Column()
-    @build_type.persist
-    def build_type(self):
-        return self.pipeline.load('build').name
-
     url = Column()
     name = Column()
     revision = Column()
@@ -206,7 +196,7 @@ class Package(DBObject):
         for action in requirement_parser._actions:
 
             name = action.dest
-            if name in ('type', 'url') or name in exclude:
+            if name in ('url', ) or name in exclude:
                 continue
 
             option_str = action.option_strings[-1]
