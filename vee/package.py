@@ -385,12 +385,28 @@ class Package(DBObject):
         if self.link_id or row:
             raise AlreadyLinked(str(frozen or self.freeze()), self.link_id or row[0])
 
-    def persist_in_db(self):
+    def persist_in_db(self, con=None):
         self._set_names(package=True, build=True, install=True)
         if not self.installed:
             log.warning('%s does not appear to be installed to %s' % (self.name, self.install_path))
             raise ValueError('cannot record requirement that is not installed')
-        return super(Package, self).persist_in_db()
+        con = con or self.home.db.connect()
+        with con:
+            exists = self.id is not None
+            res = super(Package, self).persist_in_db(con=con)
+            if exists:
+                con.execute('DELETE FROM package_dependencies WHERE depender_id = ?', [self.id])
+            for dep in self.dependencies:
+                dep_id = dep.id_or_persist(con=con)
+                log.debug('Recorded %s -> %s dependency as %d' % (
+                    self.name, dep.name, dep_id
+                ))
+                con.execute('INSERT INTO package_dependencies (depender_id, dependee_id) VALUES (?, ?)', [
+                    self.id, dep_id
+                ])
+            return res
+
+
 
     def resolve_existing(self, env=None):
         """Check against the database to see if this was already installed."""

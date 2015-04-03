@@ -137,7 +137,6 @@ def _create_initial_tables(con):
 
     )''')
 
-
 @_migrations.append
 def _create_repos_path_column(con):
     if 'path' not in con.columns('repositories'):
@@ -165,12 +164,10 @@ def _created_shared_libraries(con):
 
     )''')
 
-
 @_migrations.append
 def _rename_dev_packages(con):
     if 'dev_packages' in con.tables():
         con.execute('''ALTER TABLE dev_packages RENAME TO development_packages''')
-
 
 @_migrations.append
 def _drop_type_columns(con):
@@ -178,6 +175,19 @@ def _drop_type_columns(con):
         con.drop_column('packages', 'package_type')
     if 'build_type' in con.columns('packages'):
         con.drop_column('packages', 'build_type')
+
+@_migrations.append
+def _create_dependency_table(con):
+    con.execute('''CREATE TABLE package_dependencies (
+
+        id INTEGER PRIMARY KEY,
+        created_at TIMESTAMP NOT NULL DEFAULT (datetime('now')),
+
+        depender_id INTEGER REFERENCES packages(id) NOT NULL,
+        dependee_id INTEGER REFERENCES packages(id) NOT NULL
+
+    )''')
+
 
 
 class _Connection(sqlite3.Connection):
@@ -191,12 +201,38 @@ class _Connection(sqlite3.Connection):
         # definitely help us here...
         self.text_factory = str
 
+        self.isolation_level = None
+        self._context_depth = 0
+
+    def __enter__(self):
+        if not self._context_depth:
+            self.execute('BEGIN')
+        else:
+            self.execute('SAVEPOINT pycontext%d' % self._context_depth)
+        self._context_depth += 1
+        return self
+
+    def __exit__(self, type_, value, tb):
+        self._context_depth -= 1
+        if type_:
+            if not self._context_depth:
+                self.execute('ROLLBACK')
+            else:
+                self.execute('ROLLBACK TO pycontext%d' % self._context_depth)
+        else:
+            if not self._context_depth:
+                self.execute('COMMIT')
+            else:
+                self.execute('RELEASE pycontext%d' % self._context_depth)
+
     def cursor(self):
         return super(_Connection, self).cursor(_Cursor)
 
-    def begin(self):
-        self.execute("BEGIN")
-        return self
+    def insert(self, *args, **kwargs):
+        return self.cursor().insert(*args, **kwargs)
+        
+    def update(self, *args, **kwargs):
+        return self.cursor().update(*args, **kwargs)
 
     def tables(self):
         return [row['name'] for row in self.execute("SELECT name FROM sqlite_master WHERE type='table'")]
@@ -290,7 +326,7 @@ class Database(object):
                 if not did_backup:
                     self._backup()
                 did_backup = True
-                with con.begin():
+                with con:
                     f(con)
                     con.execute('INSERT INTO migrations (name) VALUES (?)', [name])
 
@@ -306,7 +342,7 @@ class Database(object):
 
     def connect(self):
         makedirs(os.path.dirname(self.path))
-        return sqlite3.connect(self.path, factory=_Connection, isolation_level=None)
+        return sqlite3.connect(self.path, factory=_Connection)
 
     def cursor(self):
         return self.connect().cursor()
@@ -410,13 +446,13 @@ class DBObject(object):
         self.id = None
         self.is_dirty = True
 
-    def _cursor(self):
-        return self.home.db.cursor()
+    def _connect(self):
+        return self.home.db.connect()
 
     def id_or_persist(self, *args, **kwargs):
         return self.id or self.persist_in_db(*args, **kwargs)
 
-    def persist_in_db(self, cursor=None, force=False):
+    def persist_in_db(self, con=None, force=False):
 
         if not self.is_dirty and not force:
             return self.id
@@ -433,11 +469,11 @@ class DBObject(object):
             except KeyError:
                 pass
 
-        cursor = cursor or self._cursor()
+        con = con or self._connect()
         if self.id:
-            cursor.update(self.__tablename__, data, {'id': self.id})
+            con.update(self.__tablename__, data, {'id': self.id})
         else:
-            self.id = cursor.insert(self.__tablename__, data)
+            self.id = con.insert(self.__tablename__, data)
             log.debug('%s added to %s with ID %d' % (self.__class__.__name__, self.__tablename__, self.id))
         self.is_dirty = False
 

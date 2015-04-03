@@ -14,11 +14,15 @@ class PackageSet(collections.OrderedDict):
 
         self._extracted = set()
         self._installed = set()
-        self._deferred_by_deps = set()
+        self._deferred = set()
+        self._persisted = set()
         self._linked = set()
 
     def resolve(self, req, check_existing=True, env=None):
         if req.name not in self:
+            # We don't want to mutate the incoming package, even though we could,
+            # because we want to allow others to keep the abstract and concrete
+            # packages isolated if they want to.
             self[req.name] = pkg = Package(req, home=self.home)
             if check_existing:
                 pkg.resolve_existing(env=env or self.env) or pkg.resolve_existing()
@@ -33,7 +37,7 @@ class PackageSet(collections.OrderedDict):
         # I'd love to split this method into an "install" and "link" step, but
         # then we'd need to reimplement the dependency resolution. That would
         # be a good idea to do anyways, but... meh.
-        
+
         if isinstance(names, basestring):
             names = [names]
         names = list(names) if names else self.keys()
@@ -67,20 +71,33 @@ class PackageSet(collections.OrderedDict):
             # a name that we have already deferred in this manner, we continue
             # anyways, since that means there is a dependency cycle. We assume
             # that dependency order is resolved in the requirements file.
-            waiting_for_deps = 0
-            for dep_req in pkg.dependencies:
-                dep_pkg = self.resolve(dep_req)
-                if dep_pkg.name not in self._installed:
-                    key = (name, dep_pkg.name)
-                    if key in self._deferred_by_deps:
-                        log.debug('%s needs %s, but was already deferred' % (name, dep_pkg.name))
+            deferred = False
+            deps_installed = True
+            insert_i = 0
+            for i, dep in enumerate(pkg.dependencies):
+
+                # Since resolution is rather loose in here (only by name, not URL)
+                # we want to replace dependencies with their concrete variant to
+                # ease recording that into the database. 
+                dep = self.resolve(dep)
+                pkg.dependencies[i] = dep
+
+                if dep.name not in self._installed:
+                    key = (name, dep.name)
+
+                    if key not in self._deferred:
+                        log.debug('%s needs %s; deferring install' % (name, dep.name))
+                        self._deferred.add(key)
+                        deferred = True
                     else:
-                        log.debug('%s needs %s, which is not yet checked' % (name, dep_pkg.name))
-                        names.insert(waiting_for_deps, dep_pkg.name)
-                        waiting_for_deps += 1
-                        self._deferred_by_deps.add(key)
-            if waiting_for_deps:
-                names.insert(waiting_for_deps, name)
+                        log.debug('%s needs %s, but install was already deferred' % (name, dep.name))
+
+                    deps_installed = False
+                    names.insert(insert_i, dep.name)
+                    insert_i += 1
+
+            if deferred:
+                names.insert(insert_i, name)
                 continue
 
             if name not in self._installed:
@@ -90,9 +107,20 @@ class PackageSet(collections.OrderedDict):
                 except AlreadyInstalled:
                     pass
                 pkg.pipeline.run_to('relocate')
-                pkg.persist_in_db()
-                pkg.shared_libraries()
                 self._installed.add(name)
+
+            if name not in self._persisted:
+
+                # We need to wait to persist until all dependencies are
+                # installed.
+                if not deps_installed:
+                    log.debug('%s cannot persist without all dependencies' % (name, ))
+                    names.insert(insert_i, name)
+                    continue
+
+                pkg.persist_in_db()
+                pkg.shared_libraries() # TODO: Move this earlier?
+                self._persisted.add(name)
 
             if link_env and name not in self._linked:
                 try:

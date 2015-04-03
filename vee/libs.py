@@ -116,7 +116,7 @@ def find_shared_libraries(path):
 
 def get_installed_shared_libraries(con, package_id, install_path, rescan=False):
 
-    with con.begin():
+    with con:
 
         # Determine if we should scan.
         do_scan = rescan
