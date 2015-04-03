@@ -18,13 +18,12 @@ def install(args):
     if not args.requirements:
         raise ValueError('please provide requirements to install')
 
-    req_set = Requirements(args.requirements, home=home)
-    pkg_set = PackageSet(home=home)
+    reqs = Requirements(args.requirements, home=home)
+    pkgs = PackageSet(home=home)
 
-    for req in req_set.iter_packages():
-        pkg = pkg_set.resolve(req, check_existing=not args.force)
+    for req in reqs.iter_packages():
+        pkg = pkgs.resolve(req, check_existing=not args.force)
         try:
-            pkg_set.auto_install(pkg.name, force=args.force)
+            pkgs.install(pkg.name, reinstall=args.force)
         except AlreadyInstalled:
             print style('Already installed', 'blue', bold=True), style(str(pkg.freeze()), bold=True)
-    

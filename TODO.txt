@@ -1,8 +1,9 @@
 
 - dependencies into database
-- relocate as part of the main chain
-- link is NOT part of the main chain
 - uninstall after "init" in chain
+  - this only makes sense if things can immediately tell if they are installed,
+    which they can only do if the URL is the same and revision is provided...
+    which seems sane.
 - rewrite docs to talk about the progression of names
 
 - `vee upgrade --dev` uses dev repos in their current state instead of having

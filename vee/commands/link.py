@@ -71,7 +71,7 @@ def link(args):
 
         try:
             with log.indent():
-                pkg_set.auto_install(pkg.name, force=args.reinstall, link_env=env, force_link=args.force)
+                pkg_set.install(pkg.name, link_env=env, reinstall=args.reinstall, relink=args.force)
         except AlreadyInstalled:
             pass
         except AlreadyLinked as e:
