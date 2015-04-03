@@ -1,6 +1,10 @@
 
+- `vee list` to list packages
+
 - dependencies should also use weak resolution, so that they can resolve
   by name alone
+
+- load dependencies in resolve_existing, perhaps with a special URL `database:$ID`
 
 - uninstall after "init" in chain
   - this only makes sense if things can immediately tell if they are installed,
@@ -23,16 +27,17 @@
     they need a platform identifier
 
 - install dependencies during `vee install` as well
-
-- make "link" part of the standard pipeline, and be able to shortcut the
-  install phases
-    - perhaps there should be a install_pipeline, link_pipeline, and develop_pipeline??
+  - pull in default (or specified repos) to resolve them
+  - --no-deps stops this, and uses PackageSet.install(ignore_deps=True)
 
 - development_packages should record which user they are for. Perhaps a
   "dev_set" or "namespace", which defaults to the user, would be better.
 
 - how can dev mode work on the farm, if the list of dev_packages is on your
-  local home
+  local home?
+    - All of the data needed to include a dev package are within a file (or
+      database) with the dev package in the file system. Then the main repo
+      simply points to them for convenience, but it isn't nessesary at all.
 
 - bash completions
 
@@ -47,21 +52,13 @@
 - `vee selfupdate` should be as close to just calling the installer as possible
 - on OS X we should bootstrap HOMEBREW with python, on linux, we don't need to
 
-- create timestamped commit envionrments too?
+- create timestamped commit environments too?
     by_hash -> real environments
     by_time -> links timestamped by commit time
     $branch -> links
 
-- PackageSet.auto_install should be named better. Perhaps install and link,
-  which are quick wrappers around process(install=True, link=True)
   
 - dependencies
-
-    - instrument revision with VersionExpr to implement Python packages'
-      requirements.
-
-    - record these dependencies in the database: package_dependencies
-        - this gets loaded by resolve_existing?
 
     - vee-inspect.sh or vee-requirements.txt to specify requirements, we can
       then immediately create our own "bottles" from Homebrew

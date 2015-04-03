@@ -31,7 +31,7 @@ def gc(args):
         real_id = install_paths_to_id.get(install_path)
         if real_id:
             print '%s %d is a duplicate of %s; deleting' % (name, id_, real_id)
-            # TODO: update any links to point to this.
+            # TODO: update any links or package_dependencies which to point to this.
             if not args.dry_run:
                 con.execute('DELETE FROM packages WHERE id = ?', [id_])
             continue
