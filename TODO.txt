@@ -1,4 +1,10 @@
 
+- dependencies into database
+- relocate as part of the main chain
+- link is NOT part of the main chain
+- uninstall after "init" in chain
+- rewrite docs to talk about the progression of names
+
 - `vee upgrade --dev` uses dev repos in their current state instead of having
   to push them out; this is a way of testing dev-install.sh (when it exists)
 

@@ -251,7 +251,7 @@ def init(args, do_clone=False, do_install=False, do_add=False, is_find=False):
 
     package = Package([path], home=home, dev=True)
     try:
-        package.develop()
+        package.pipeline.run_to('develop')
     except Exception as e:
         print_cli_exc(e)
         return 1

@@ -173,7 +173,10 @@ class Package(DBObject):
             self.package_path = self.build_path = self.url
             self.pipeline = Pipeline(self, ['init', 'inspect', 'develop'])
         else:
-            self.pipeline = Pipeline(self, ['init', 'fetch', 'extract', 'inspect', 'build', 'install'])
+            self.pipeline = Pipeline(self, [
+                'init', 'fetch', 'extract', 'inspect', 'build', 'install',
+                'relocate', 'optlink',
+            ])
 
         # Give the fetch pipeline step a chance to normalize the URL.
         self.pipeline.run_to('init')
@@ -340,61 +343,15 @@ class Package(DBObject):
         if makedirs:
             os.makedirs(self.build_path)
 
-
     @property
     def installed(self):
-        # self._assert_paths(install=True)
-        # print 'installed', (self.id, self.install_name, self.install_path)
         return bool(
             self.install_path and # The path is set,
             os.path.isdir(self.install_path) and # it exists as a directory,
             os.listdir(self.install_path) # and it has contents.
         )
 
-    def fetch(self):
-        self.pipeline.run_to('fetch')
-
-    def extract(self):
-        self.pipeline.run_to('extract')
-
-    def inspect(self):
-        self.pipeline.run_to('inspect')
-
-    def build(self):
-        self.pipeline.run_to('build')
-
-    def develop(self):
-        self.pipeline.run_to('inspect')
-        self.pipeline.run_to('develop')
-    
-    def install(self):
-        """Install the build artifact into a final location."""
-
-        # self._assert_paths(build=True, install=True)
-
-        if self.installed:
-            raise AlreadyInstalled('was already installed at %s' % self.install_path)
-
-        self.pipeline.run_to('install')
-
-        if self.relocate:
-            log.info(style_note('Relocating'))
-            libs.relocate(self.install_path,
-                con=self.home.db.connect(),
-                spec=self.relocate + ',SELF',
-            )
-
-        # Link into $VEE/opt.
-        if self.name:
-            opt_link = self.home._abs_path('opt', self.name)
-            log.info(style_note('Linking to opt/%s' % self.name))
-            if os.path.lexists(opt_link):
-                os.unlink(opt_link)
-            makedirs(os.path.dirname(opt_link))
-            os.symlink(self.install_path, opt_link)
-
     def uninstall(self):
-        # self._set_names(install=True)
         if not self.installed:
             raise RuntimeError('package is not installed')
         log.info(style_note('Uninstalling ', self.install_path))
@@ -506,9 +463,9 @@ class Package(DBObject):
         self.link_id = cur.lastrowid
 
 
-    def _reinstall_check(self, force):
+    def assert_uninstalled(self, uninstall=False):
         if self.installed:
-            if force:
+            if uninstall:
                 self.uninstall()
             else:
                 raise AlreadyInstalled(str(self.freeze()))

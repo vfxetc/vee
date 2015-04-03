@@ -22,7 +22,8 @@ class HomebrewManager(PipelineStep):
             return cls(pkg)
 
     def get_next(self, step):
-        return self
+        if step != 'optlink':
+            return self
 
     def init(self):
 
@@ -67,6 +68,10 @@ class HomebrewManager(PipelineStep):
         self.set_pkg_names()
 
     def install(self):
+        # Do nothing.
+        pass
+
+    def relocate(self):
         # Do nothing.
         pass
 

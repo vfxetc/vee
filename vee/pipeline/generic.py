@@ -1,12 +1,13 @@
 import os
 import shutil
 
+from vee import libs
+from vee import log
 from vee.cli import style_note
 from vee.envvars import join_env_path
-from vee import log
-from vee.utils import find_in_tree, linktree
-from vee.subproc import call, bash_source
 from vee.pipeline.base import PipelineStep
+from vee.subproc import call, bash_source
+from vee.utils import find_in_tree, linktree, makedirs
 
 
 class GenericBuilder(PipelineStep):
@@ -15,8 +16,7 @@ class GenericBuilder(PipelineStep):
 
     @classmethod
     def factory(cls, step, pkg):
-        if step in ('init', 'inspect', 'build', 'install', 'develop'):
-            return cls(pkg)
+        return cls(pkg)
 
     def init(self):
         pass
@@ -45,6 +45,25 @@ class GenericBuilder(PipelineStep):
         else:
             log.info(style_note('Installing via copy', 'to ' + pkg.install_path))
             shutil.copytree(pkg.build_path_to_install, pkg.install_path_from_build, symlinks=True)
+
+    def relocate(self):
+        pkg = self.package
+        if pkg.relocate:
+            log.info(style_note('Relocating'))
+            libs.relocate(pkg.install_path,
+                con=pkg.home.db.connect(),
+                spec=pkg.relocate + ',SELF',
+            )
+
+    def optlink(self):
+        pkg = self.package
+        if pkg.name:
+            opt_link = pkg.home._abs_path('opt', pkg.name)
+            log.info(style_note('Linking to opt/%s' % pkg.name))
+            if os.path.lexists(opt_link):
+                os.unlink(opt_link)
+            makedirs(os.path.dirname(opt_link))
+            os.symlink(pkg.install_path, opt_link)
 
     def develop(self):
         pkg = self.package

@@ -44,12 +44,12 @@ class PackageSet(collections.OrderedDict):
 
             if name not in self._extracted:
                 try:
-                    pkg._reinstall_check(force)
-                    pkg.fetch()
-                    pkg._reinstall_check(force)
-                    pkg.extract()
-                    pkg.inspect()
-                    pkg._reinstall_check(force)
+                    pkg.assert_uninstalled(uninstall=force)
+                    pkg.pipeline.run_to('fetch')
+                    pkg.assert_uninstalled(uninstall=force)
+                    pkg.pipeline.run_to('extract')
+                    pkg.pipeline.run_to('inspect')
+                    pkg.assert_uninstalled(uninstall=force)
                 except AlreadyInstalled:
                     self._installed.add(name)
                 finally:
@@ -77,11 +77,12 @@ class PackageSet(collections.OrderedDict):
                 continue
 
             if name not in self._installed:
-                pkg.build()
+                pkg.pipeline.run_to('build')
                 try:
-                    pkg.install()
+                    pkg.pipeline.run_to('install')
                 except AlreadyInstalled:
                     pass
+                pkg.pipeline.run_to('relocate')
                 pkg.persist_in_db()
                 pkg.shared_libraries()
                 self._installed.add(name)
