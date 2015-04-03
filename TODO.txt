@@ -1,5 +1,7 @@
 
-- dependencies into database
+- dependencies should also use weak resolution, so that they can resolve
+  by name alone
+
 - uninstall after "init" in chain
   - this only makes sense if things can immediately tell if they are installed,
     which they can only do if the URL is the same and revision is provided...

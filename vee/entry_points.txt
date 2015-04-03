@@ -8,6 +8,7 @@ init = vee.commands.init:init
 config = vee.commands.config:config
 doctor = vee.commands.doctor:doctor
 self-update = vee.commands.self_update:self_update
+gc = vee.commands.gc:gc
 
 # Requirements.
 install = vee.commands.install:install
