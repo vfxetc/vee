@@ -9,6 +9,7 @@ config = vee.commands.config:config
 doctor = vee.commands.doctor:doctor
 self-update = vee.commands.self_update:self_update
 gc = vee.commands.gc:gc
+list = vee.commands.list:list_
 
 # Requirements.
 install = vee.commands.install:install
@@ -54,3 +55,7 @@ generic = vee.pipeline.generic:GenericBuilder
 make = vee.pipeline.make:MakeBuilder
 python = vee.pipeline.python:PythonBuilder
 self = vee.pipeline.self:SelfBuilder
+
+# Internal
+deferred = vee.pipeline.deferred:DeferredStep
+

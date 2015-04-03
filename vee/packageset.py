@@ -19,14 +19,27 @@ class PackageSet(collections.OrderedDict):
         self._linked = set()
 
     def resolve(self, req, check_existing=True, env=None):
-        if req.name not in self:
-            # We don't want to mutate the incoming package, even though we could,
-            # because we want to allow others to keep the abstract and concrete
-            # packages isolated if they want to.
-            self[req.name] = pkg = Package(req, home=self.home)
-            if check_existing:
-                pkg.resolve_existing(env=env or self.env) or pkg.resolve_existing()
-        return self[req.name]
+
+        try:
+            return self[req.name]
+        except KeyError:
+            pass
+
+        # We don't want to mutate the incoming package, even though we could,
+        # because we want to allow others to keep the abstract and concrete
+        # packages isolated if they want to.
+        pkg = Package(req, home=self.home)
+        if check_existing:
+            (
+                pkg.resolve_existing(env=env or self.env) or
+                pkg.resolve_existing() or
+                pkg.resolve_existing(weak=True)
+            )
+
+        # Store it under the package name since deferred dependencies will not
+        # have a name set (in order to load the specific package they were before).
+        self[pkg.name] = pkg
+        return pkg
     
     def resolve_set(self, req_set, **kwargs):
         for req in req_set.iter_packages():
@@ -48,7 +61,12 @@ class PackageSet(collections.OrderedDict):
         while names:
 
             name = names.pop(0)
-            pkg = self[name]
+            try:
+                pkg = self[name]
+            except KeyError:
+                print self.keys()
+                print self[None]
+                raise
 
             if name not in self._extracted:
                 try:

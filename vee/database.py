@@ -190,11 +190,36 @@ def _create_dependency_table(con):
 
 
 
+class _Row(sqlite3.Row):
+
+    def get(self, key, default=None):
+        try:
+            return self[key]
+        except KeyError:
+            return default
+
+    def __getitem__(self, key):
+        try:
+            return super(_Row, self).__getitem__(key)
+        except IndexError:
+            if isinstance(key, basestring):
+                raise KeyError(key)
+            else:
+                raise
+
+    def __contains__(self, key):
+        try:
+            self[key]
+            return True
+        except (IndexError, KeyError):
+            return False
+
+
 class _Connection(sqlite3.Connection):
     
     def __init__(self, *args, **kwargs):
         super(_Connection, self).__init__(*args, **kwargs)
-        self.row_factory = sqlite3.Row
+        self.row_factory = _Row
 
         # We wish we could use unicode everywhere, but there are too many
         # unknown codepaths for us to evaluate its safety. Python 3 would

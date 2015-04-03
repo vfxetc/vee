@@ -167,6 +167,11 @@ class Package(DBObject):
         self.package_name = self.build_name = None
         self.package_path = self.build_path = self.install_path = None
 
+        self._init_pipeline(dev=dev)
+
+
+    def _init_pipeline(self, dev=False):
+
         # Create the pipeline object.
         if dev:
             self.package_name = self.build_name = self.url
@@ -408,42 +413,49 @@ class Package(DBObject):
 
 
 
-    def resolve_existing(self, env=None):
+    def resolve_existing(self, env=None, weak=False):
         """Check against the database to see if this was already installed."""
 
         if self.id is not None:
             raise ValueError('requirement already in database')
 
-
-        clauses = ['install_path IS NOT NULL', 'url = ?']
-        values  = [self.url]
-
-        for name in ('name', 'etag', 'install_name'):
-            if getattr(self, name):
-                clauses.append('%s = ?' % name)
-                values.append(getattr(self, name))
-
         cur = self.home.db.cursor()
-        clause = ' AND '.join(clauses)
 
-        log.debug('SELECT FROM packages WHERE %s' % ' AND '.join('%s = %r' % (c.replace(' = ?', ''), v) for c, v in zip(clauses[1:], values)), verbosity=2)
-
-        # print clause, values
-
-        if env:
-            values.append(env.id_or_persist())
-            cur.execute('''
-                SELECT packages.*, links.id as link_id FROM packages
-                LEFT OUTER JOIN links ON packages.id = links.package_id
-                WHERE %s AND links.environment_id = ?
-                ORDER BY links.created_at DESC, packages.created_at DESC
-            ''' % clause, values)
+        # Dependencies are deferred.
+        deferred = self.url.startswith('deferred:')
+        if deferred:
+            id_ = int(self.url.split(':')[1])
+            cur.execute('SELECT * from packages WHERE id = ?', [id_])
+        
         else:
-            cur.execute('''
-                SELECT packages.*, NULL as link_id FROM packages
-                WHERE %s
-                ORDER BY packages.created_at DESC
-            ''' % clause, values)
+
+            clauses = ['install_path IS NOT NULL']
+            values = []
+            if not weak and self.url:
+                clauses.append('url = ?')
+                values.append(self.url)
+            for name in ('name', 'etag', 'install_name'):
+                if getattr(self, name):
+                    clauses.append('%s = ?' % name)
+                    values.append(getattr(self, name))
+            clause = ' AND '.join(clauses)
+
+            # log.debug('SELECT FROM packages WHERE %s' % ' AND '.join('%s = %r' % (c.replace(' = ?', ''), v) for c, v in zip(clauses[1:], values)), verbosity=2)
+
+            if env:
+                values.append(env.id_or_persist())
+                cur.execute('''
+                    SELECT packages.*, links.id as link_id FROM packages
+                    LEFT OUTER JOIN links ON packages.id = links.package_id
+                    WHERE %s AND links.environment_id = ?
+                    ORDER BY links.created_at DESC, packages.created_at DESC
+                ''' % clause, values)
+            else:
+                cur.execute('''
+                    SELECT * FROM packages
+                    WHERE %s
+                    ORDER BY packages.created_at DESC
+                ''' % clause, values)
 
         rev_expr = VersionExpr(self.revision) if self.revision else None
         for row in cur:
@@ -465,9 +477,29 @@ class Package(DBObject):
         log.debug('Found %s (%d) at %s' % (self.name or row['name'], row['id'], row['install_path']))
 
         self.restore_from_row(row, ignore=set(('abstract_requirements', 'concrete_requirement')))
-        self.link_id = row['link_id']
+        self.link_id = row.get('link_id')
+
+        if deferred:
+            self._init_pipeline()
+
+        self._load_dependencies(cur)
 
         return True
+
+    def _load_dependencies(self, cursor=None):
+
+        if self.dependencies:
+            raise ValueError('dependencies already loaded')
+
+        cur = cursor or self.home.db.cursor()
+
+        # Set up weak references to dependencies. 
+        cur.execute('SELECT dependee_id from package_dependencies WHERE depender_id = ?', [self.id])
+        for row in cur:
+            self.dependencies.append(Package(
+                url='deferred:%d' % row['dependee_id'],
+                home=self.home,
+            ))
 
     def _record_link(self, env):
         cur = self.home.db.cursor()
