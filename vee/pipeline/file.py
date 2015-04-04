@@ -5,7 +5,7 @@ import shutil
 import urllib2
 import urlparse
 
-from vee.cli import style
+from vee.cli import style, style_note
 from vee.pipeline.base import PipelineStep
 from vee.utils import makedirs, linktree
 from vee import log
@@ -23,7 +23,7 @@ class FileTransport(PipelineStep):
             return cls(pkg)
 
     def get_next(self, step):
-        if step in ('fetch', 'extract'):
+        if step in ('fetch', ):
             return self
 
     def init(self):
@@ -45,7 +45,7 @@ class FileTransport(PipelineStep):
         
         makedirs(os.path.dirname(pkg.package_path))
 
-        log.info(style('Copying', 'blue', bold=True), style(self._path, bold=True))
+        log.info(style_note('Copying', 'to ' + pkg.package_path))
 
         source = os.path.expanduser(self._path)
         if os.path.isdir(source):

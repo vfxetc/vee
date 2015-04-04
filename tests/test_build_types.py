@@ -15,7 +15,7 @@ class TestBuildTypes(TestCase):
         pkg.render_commit()
         vee(['install', pkg.path, '--install-name', '%s/1.0.0' % name])
         exe = sandbox('vee/installs/%s/1.0.0/bin/%s' % (name, name))
-        self.assertTrue(os.path.exists(exe))
+        self.assertExists(exe)
         if do_call:
             # Jumping through a bit of a hoop here to see the output.
             out = []
@@ -31,6 +31,9 @@ class TestBuildTypes(TestCase):
 
     def test_configure_make_install(self):
         self.assert_echo('c_configure_make_install')
+
+    def test_self(self):
+        self.assert_echo('self')
 
     def test_python_source(self):
         self.assert_echo('python_source')

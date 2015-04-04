@@ -1,10 +1,11 @@
 import os
 
-from vee.pipeline.generic import GenericBuilder
-from vee.cli import style_note
-from vee.utils import find_in_tree
-from vee.subproc import call, bash_source
 from vee import log
+from vee.cli import style_note
+from vee.package import Package
+from vee.pipeline.generic import GenericBuilder
+from vee.subproc import call, bash_source
+from vee.utils import find_in_tree
 
 
 class SelfBuilder(GenericBuilder):
@@ -13,17 +14,31 @@ class SelfBuilder(GenericBuilder):
 
     @classmethod
     def factory(cls, step, pkg):
-        if step not in ('inspect', 'build', 'develop'):
-            return
-        build_sh = find_in_tree(pkg.build_path, 'vee-build.sh')
-        develop_sh = find_in_tree(pkg.build_path, 'vee-develop.sh')
-        if (step in ('inspect', 'build') and build_sh) or (step == 'develop' and develop_sh):
-            return cls(pkg, build_sh, develop_sh)
 
-    def __init__(self, pkg, build_sh, develop_sh):
+        for file_step, file_name, attr_name in [
+            ('inspect', 'vee-requirements.txt', 'requirements_txt'),
+            ('build'  , 'vee-build.sh'        , 'build_sh'),
+            ('install', 'vee-install.sh'      , 'install_sh'),
+            ('develop', 'vee-develop.sh'      , 'develop_sh'),
+        ]:
+            if step == file_step:
+                path = find_in_tree(pkg.build_path, file_name)
+                if path:
+                    self = cls(pkg)
+                    setattr(self, attr_name, path)
+                    return self
+
+    def __init__(self, pkg):
         super(SelfBuilder, self).__init__(pkg)
-        self.build_sh = build_sh
-        self.develop_sh = develop_sh
+        self.requirements_txt = self.build_sh = self.develop_sh = None
+
+    def inspect(self):
+        pkg = self.package
+        for line in open(self.requirements_txt):
+            line = line.strip()
+            if not line or line[0] == '#':
+                continue
+            pkg.dependencies.append(Package(line, home=pkg.home))
 
     def build(self):
 
@@ -52,11 +67,30 @@ class SelfBuilder(GenericBuilder):
         pkg.build_subdir = env.get('VEE_BUILD_SUBDIR') or ''
         pkg.install_prefix = env.get('VEE_INSTALL_PREFIX') or ''
 
-    def develop(self):
+    def install(self):
+
+        log.info(style_note('source vee-install.sh'))
 
         pkg = self.package
+        pkg._assert_paths(build=True, install=True)
+
+        env = pkg.fresh_environ()
+        env.update(
+            VEE=pkg.home.root,
+            VEE_BUILD_PATH=pkg.build_path,
+            VEE_INSTALL_NAME=pkg.install_name,
+            VEE_INSTALL_PATH=pkg.install_path,
+        )
+        cwd = os.path.dirname(self.install_sh)
+
+        with log.indent():
+            call(['bash', '-c', 'source "%s" "%s"' % (self.install_sh, pkg.install_path)], env=env, cwd=cwd)
+
+    def develop(self):
         
         log.info(style_note('source vee-develop.sh'))
+
+        pkg = self.package
 
         def setenv(name, value):
             log.info('vee develop setenv %s "%s"' % (name, value))

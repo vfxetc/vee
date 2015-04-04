@@ -11,7 +11,7 @@ class ArchiveExtractor(PipelineStep):
     factory_priority = 2000
 
     @classmethod
-    def factory(cls, step, pkg, *args):
+    def factory(cls, step, pkg):
 
         if step != 'extract':
             return
@@ -19,16 +19,16 @@ class ArchiveExtractor(PipelineStep):
         pkg._assert_paths(package=True)
 
         if re.search(r'(\.tgz|\.tar\.gz)$', pkg.package_path):
-            return cls(pkg, 'tar+gzip', *args)
+            return cls(pkg, 'tar+gzip')
 
         if re.search(r'(\.tbz|\.tar\.bz2)$', pkg.package_path):
-            return cls(pkg, 'tar+bzip', *args)
+            return cls(pkg, 'tar+bzip')
 
         if re.search(r'(\.zip|\.egg|\.whl)$', pkg.package_path):
-            return cls(pkg, 'zip', *args)
+            return cls(pkg, 'zip')
 
-    def __init__(self, pkg, archive_type, *args):
-        super(ArchiveExtractor, self).__init__(pkg, *args)
+    def __init__(self, pkg, archive_type):
+        super(ArchiveExtractor, self).__init__(pkg)
         self.archive_type = archive_type
     
     def extract(self):
