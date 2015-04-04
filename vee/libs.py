@@ -164,7 +164,7 @@ def relocate(root, con, spec=None, dry_run=False, target_cache=None):
             include.append(root)
         elif x.startswith('/'):
             include.append(x)
-        elif x.startswith('-/'):
+        elif x.startswith('-/') or x.startswith('!/'):
             exclude.append(x[1:])
         else:
             raise ValueError('malformed relocate spec %r' % x)

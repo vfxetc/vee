@@ -50,6 +50,7 @@ Relocation
 - should deferred dependencies include the name, such that they can resolve
   against other things in the PackageSet?
 
+- we aren't relocating against packages that are in the same packageset??
 
 Pipeline
 --------

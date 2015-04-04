@@ -9,31 +9,31 @@ from vee.environment import Environment
 from vee.cli import style, style_note
 from vee import log
 from vee.package import Package
-from vee.utils import makedirs
+from vee.utils import makedirs, guess_name
 
 
 PLATFORM_DEPENDENT_EXTS = set(('.so', '.exe', '.dylib', '.a'))
+PLATFORM_TAG = sys.platform.strip('2')
 
 
 @command(
-    argument('-r', '--deps', action='store_true'),
-    argument('-f', '--force', action='store_true'),
+    argument('--no-deps', action='store_true', help='skip dependencies'),
+    argument('-f', '--force', action='store_true', help='overwrite existing?'),
     argument('-v', '--verbose', action='store_true'),
-    argument('-o', '--output'),
-    argument('packages', nargs='+'),
+    argument('-u', '--url', help='base of URL to output for requirements.txt'),
+    argument('-d', '--dir', required=True, help='output directory'),
+    argument('packages', nargs='+', help='names or URLs'),
 )
 def repackage(args):
 
     home = args.assert_home()
     con = home.db.connect()
 
-    if not args.output:
-        log.error('--output is required')
-        return 1
-    makedirs(args.output)
+    makedirs(args.dir)
 
     todo = args.packages
     seen = set()
+    in_order = []
 
     while todo:
 
@@ -41,6 +41,7 @@ def repackage(args):
 
         if isinstance(desc, Package):
             pkg = desc
+            pkg.id or pkg.resolve_existing()
         else:
             pkg = Package(name=desc, url='weak', home=home)
             if not pkg.resolve_existing(weak=True):
@@ -53,7 +54,9 @@ def repackage(args):
             continue
         seen.add(pkg.name)
 
-        if args.deps:
+        print style_note(str(pkg))
+
+        if not args.no_deps:
             todo.extend(pkg.dependencies)
 
         platform_dependent = False
@@ -66,8 +69,10 @@ def repackage(args):
             if platform_dependent:
                 break
 
-        name = '%s-%s-%s.tgz' % (pkg.name, pkg.revision, sys.platform if platform_dependent else 'any')
-        path = os.path.join(args.output, name)
+        name = '%s-%s-%s.tgz' % (pkg.name, pkg.revision, PLATFORM_TAG if platform_dependent else 'any')
+        path = os.path.join(args.dir, name)
+
+        in_order.append((pkg, path))
 
         if os.path.exists(path):
             if args.force:
@@ -100,5 +105,16 @@ def repackage(args):
             archive.addfile(info, buf)
 
         archive.close()
+
+    print
+    print 'Add as requirements in (roughly) the following order:'
+    print
+    for pkg, path in reversed(in_order):
+        url = (
+            args.url.rstrip('/') + '/' + os.path.basename(path)
+            if args.url
+            else os.path.abspath(path)
+        )
+        print '%s --name %s --revision %s' % (url, pkg.name, pkg.revision or '""')
 
 
