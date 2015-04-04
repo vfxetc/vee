@@ -10,6 +10,7 @@ doctor = vee.commands.doctor:doctor
 self-update = vee.commands.self_update:self_update
 gc = vee.commands.gc:gc
 list = vee.commands.list:list_
+repackage = vee.commands.repackage:repackage
 
 # Requirements.
 install = vee.commands.install:install

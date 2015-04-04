@@ -1,10 +1,16 @@
 
-- `vee list` to list packages
+- Homebrew should set absolute set of used dependencies after it was installed
+  because we can't quite tell up front.
+    - take the largest list of dependencies, and record the ones which exist
+      (in opt)
 
-- dependencies should also use weak resolution, so that they can resolve
-  by name alone
+- Homebrew should still get dependencies even if the package was installed
+  outside of VEE
 
-- load dependencies in resolve_existing, perhaps with a special URL `database:$ID`
+- Homebrew revision should be VERSION+GIT_REVISION
+
+- should deferred dependencies include the name, such that they can resolve
+  against other things in the PackageSet?
 
 - uninstall after "init" in chain
   - this only makes sense if things can immediately tell if they are installed,
