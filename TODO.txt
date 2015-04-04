@@ -2,6 +2,9 @@
 Homebrew
 --------
 
+- `--relocate` signals that we only want to use Homebrew to build, but we
+  immediately copy the artifact out and relocate it to use pinned dependencies.
+
 - document how cavalier we are towards it
   - when you ask for a version, we don't even try to get it, but just warn when
     it isn't the one that you wanted.
@@ -61,6 +64,11 @@ Pipeline
 - Package(pipeline='develop') to select the pipeline. Each pipeline is supposed
   to start with init, which is indempodent.
 
+- should pipelines not be a property of the Package at all, and instead you
+  make a pipeline when you want do perform an operation?
+
+- 'resolve' pipeline so that Homebrew has a chance to be a jerk?
+
 
 Dev
 ---
@@ -86,6 +94,9 @@ Repackaging
 
 
 ---
+
+- Package.assert_unique_install() makes sure there isn't anything else
+  that uses the same install path.
 
 - remove `vee init`, as it is largely unnessesary?
 

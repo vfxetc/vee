@@ -41,15 +41,3 @@ class Homebrew(object):
         if force or name not in self._info:
             self._info[name] = json.loads(self('info', '--json=v1', name, stdout=True))[0]
         return self._info[name]
-
-    def install_name_from_info(self, name, info=None):
-        # TODO: This should return "HEAD" if built with `--head`.
-        # TODO: Move this to the Homebrew pipeline step.
-        info = info or self.info(name)
-        if not info:
-            raise ValueError('no homebrew package %s' % name)
-        return '%s/%s' % (info['name'], info['linked_keg'] or (
-            info['installed'][-1]['version']
-            if info['installed']
-            else info['versions']['stable']
-        ))
