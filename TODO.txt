@@ -4,10 +4,19 @@
     - take the largest list of dependencies, and record the ones which exist
       (in opt)
 
+- should we have different classes of dependencies, mimicking those of homebrew
+  (e.g. "build", "required", "optional"), or do we only store those which are
+  not for "build"?
+    - we can write some ruby code of our own to do all of this nonsense
+
 - Homebrew should still get dependencies even if the package was installed
   outside of VEE
 
 - Homebrew revision should be VERSION+GIT_REVISION
+
+- relocate spec "DEPS" pulls in dependencies, and "@" is the default of "DEPS,SELF"
+    - should be able to introduce a mapping, where it searches in one prefix
+      and then rewrites it to be in the second (e.g. "BUILD:INSTALL").
 
 - should deferred dependencies include the name, such that they can resolve
   against other things in the PackageSet?

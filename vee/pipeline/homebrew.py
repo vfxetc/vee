@@ -42,6 +42,11 @@ class HomebrewManager(PipelineStep):
         self.repo.checkout(pkg.revision or 'HEAD', fetch=True)
         pkg.revision = self.repo.head[:8]
 
+    def inspect(self):
+        # Do nothing.
+        # TODO: Determine deps here.
+        pass
+    
     def set_pkg_names(self, package=False, build=False, install=False):
         pkg = self.package
         if '--HEAD' in pkg.config:
@@ -50,10 +55,6 @@ class HomebrewManager(PipelineStep):
             pkg.build_name = pkg.install_name = self.brew.install_name_from_info(pkg.name)
         pkg.build_path = pkg.install_path = os.path.join(self.brew.cellar, pkg.install_name)
 
-    def inspect(self):
-        # Do nothing.
-        # TODO: Determine deps here.
-        pass
 
     def extract(self):
         # Do nothing.
