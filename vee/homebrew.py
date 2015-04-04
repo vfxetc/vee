@@ -44,6 +44,7 @@ class Homebrew(object):
 
     def install_name_from_info(self, name, info=None):
         # TODO: This should return "HEAD" if built with `--head`.
+        # TODO: Move this to the Homebrew pipeline step.
         info = info or self.info(name)
         if not info:
             raise ValueError('no homebrew package %s' % name)

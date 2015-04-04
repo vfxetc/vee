@@ -1,41 +1,144 @@
+Pipelines
+=========
 
-Build Pipeline
-==============
+The package processing pipelines consist of a series of steps, the handlers of
+which are determined as the pipeline is processed. This enables us to defer
+the build type of a package (e.g. a Python distribution) until after it has
+been downloaded and extracted.
 
-The build pipeline consists of a series of methods, between each the derived
-metadata may be re-evaluated allowing for the determination of install paths
-later in the pipeline (and so a determination that a package is already
-installed may be deferred).
+There are to main pipelines currently in VEE: the :ref:`install_pipeline` and
+:ref:`develop_pipeline`.
 
-Those methods are, in order:
+All pipelines must start with an "init" step, which must be indempodent, and
+may normalize user-specified data on the package (e.g. normalize the URL).
 
-.. method:: Package.fetch()
 
-    The :ref:`package <package>` is retrieved and placed at :attr:`Package.package_path`.
-    This step is idempotent (and so is assumed to be called multiple times and
-    cache its result).
+.. _install_pipeline:
 
-.. method:: Package.extract()
+Install Pipeline
+----------------
 
-    The package's contents ("source") are placed into :attr:`Package.build_path`
-    (which is usually a temporary directory).
+The install pipeline is the primary pipeline of VEE, and is reponsible for
+installing the packages that are used in the default runtime. It's steps are:
 
-.. method:: Package.inspect()
+"init"
+~~~~~~
 
-    An opportunity to check meta-data and determine self-described dependencies.
+Normalizes user-specified data. This step **MUST** be indempodent, as it may run
+more than once in common usage. It may also set the package name/path.
 
-.. method:: Package.build()
+"fetch"
+~~~~~~~
 
-    The source is built into a build "artifact".
+The package is retrieved and placed at :attr:`Package.package_path`.
+This step should be idempotent (and so is assumed to cache its results and
+may freely be called multiple times).
 
-.. method:: Package.install()
+"extract"
+~~~~~~~~~
 
-    The build artifact is installed into :attr:`Package.install_path`.
+The package's contents ("source") are placed into :attr:`Package.build_path`
+(which is usually a temporary directory).
 
-.. method:: Environment.link(requirement)
+"inspect"
+~~~~~~~~~
 
-    The build artifact is linked into a final environment.
+An opportunity to check meta-data and determine self-described dependencies.
+This step may also set build and install names/paths.
 
+"build"
+~~~~~~~
+
+The source is built into a build "artifact".
+
+"install"
+~~~~~~~~~
+
+The build artifact is installed into :attr:`Package.install_path`.
+
+"relocate"
+~~~~~~~~~~
+
+Shared libraries are relocated to link against existant libraries (in case
+they are not already relocatable, and their dependencies are not in the same
+location in all environments).
+
+"optlink"
+~~~~~~~~~
+
+The :attr:`Package.install_path` is linked into ``$VEE/opt``, for user
+convenience. 
+
+
+The built-in pipeline looks like:
+
+.. graphviz::
+
+   digraph install_pipeline {
+
+      "git.init" -> "git.fetch";
+      "git.fetch" -> "file.extract";
+
+      "generic.init" -> "file.fetch";
+
+      "file.fetch" -> "file.extract";
+      "file.fetch" -> "archive.extract";
+
+      "http.init" -> "http.fetch";
+      "http.fetch" -> "archive.extract";
+
+      "file.extract" -> "generic.inspect"
+      "file.extract" -> "python.inspect"
+      "archive.extract" -> "generic.inspect"
+      "archive.extract" -> "python.inspect"
+
+      "python.inspect" -> "python.build" -> "python.install"
+      "generic.inspect" -> "generic.build" -> "generic.install"
+      "generic.inspect" -> "self.build" -> "generic.install"
+      "generic.build" -> "self.install"
+      "self.build" -> "self.install"
+
+      "generic.inspect" -> "make.build" -> "generic.install"
+      "make.build" -> "make.install"
+
+      "python.install" -> "generic.relocate"
+      "generic.install" -> "generic.relocate"
+      "self.install" -> "generic.relocate"
+      "make.install" -> "generic.relocate"
+
+      "homebrew.init" -> "homebrew.fetch" -> "homebrew.extract" -> "homebrew.inspect" -> "homebrew.build" -> "homebrew.install" -> "generic.relocate"
+
+      "generic.inspect" [style=dashed]
+      "generic.build" [style=dashed]
+      "homebrew.extract" [style=dashed]
+      "homebrew.install" [style=dashed]
+
+      "generic.relocate" -> "generic.optlink"
+
+
+
+
+
+   }
+
+
+
+.. _develop_pipeline:
+
+Develop Pipeline
+----------------
+
+"init"
+~~~~~~
+
+Same as above.
+
+"develop"
+~~~~~~~~~
+
+Prepare the package for running in the development environment. Prepare any
+generated scripts, perhaps perform a build, and identify any environment
+variables to set in order to include this package in the runtime environment.
 
 
 

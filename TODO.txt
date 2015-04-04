@@ -1,8 +1,22 @@
 
+Homebrew
+--------
+
+- document how cavalier we are towards it
+  - when you ask for a version, we don't even try to get it, but just warn when
+    it isn't the one that you wanted.
+  - Homebrew is generally for small installs, or for you to build your own
+    packages with repackage
+
+- install without linking
+  - may not be possible
+  - could install then unlink
+
 - Homebrew should set absolute set of used dependencies after it was installed
   because we can't quite tell up front.
-    - take the largest list of dependencies, and record the ones which exist
-      (in opt)
+    - ignore build dependencies
+    - only top-level
+    - only record those which are installed (in opt)
 
 - should we have different classes of dependencies, mimicking those of homebrew
   (e.g. "build", "required", "optional"), or do we only store those which are
@@ -12,20 +26,45 @@
 - Homebrew should still get dependencies even if the package was installed
   outside of VEE
 
-- Homebrew revision should be VERSION+GIT_REVISION
+- Homebrew revision should be VERSION+GIT_REVISION, but is largely ignored
+
+- how to always identify the cellar path of something, even when devel or head?
+- how to always identify the version that is currently linked, even when devel or head?
+    - linked_keg in info is "HEAD", or a version number
+    - versions in info tells you what version is the "devel" version (although
+      we don't install these)
+
+
+
+Relocation
+----------
 
 - relocate spec "DEPS" pulls in dependencies, and "@" is the default of "DEPS,SELF"
-    - should be able to introduce a mapping, where it searches in one prefix
-      and then rewrites it to be in the second (e.g. "BUILD:INSTALL").
+
+- "SELF" adapts to "BUILD:INSTALL", which is a mapping, where it searches in one prefix
+  and then rewrites it to be in the second (e.g. "BUILD:INSTALL").
 
 - should deferred dependencies include the name, such that they can resolve
   against other things in the PackageSet?
+
+
+Pipeline
+--------
 
 - uninstall after "init" in chain
   - this only makes sense if things can immediately tell if they are installed,
     which they can only do if the URL is the same and revision is provided...
     which seems sane.
+
 - rewrite docs to talk about the progression of names
+
+- Package(pipeline='develop') to select the pipeline. Each pipeline is supposed
+  to start with init, which is indempodent.
+
+
+Dev
+---
+
 
 - `vee upgrade --dev` uses dev repos in their current state instead of having
   to push them out; this is a way of testing dev-install.sh (when it exists)
@@ -36,10 +75,19 @@
 - Requirements.iter_scm_packages()
 - Requirements.iter_dev_packages()
 
+
+Repackaging
+------------
+
 - record dependencies in the database, for both pypi and homebrew
 - `vee repackage NAME` creates tarballs with vee-dependencies.txt
   - if there are .so or .dylib or executables that dont start in "#!", then
     they need a platform identifier
+
+
+---
+
+- remove `vee init`, as it is largely unnessesary?
 
 - install dependencies during `vee install` as well
   - pull in default (or specified repos) to resolve them
@@ -56,7 +104,7 @@
 
 - bash completions
 
-- vee commit --auto should recate a commit message out of all constituent commit
+- `vee commit --auto` should recate a commit message out of all constituent commit
     messages
 
 - vee-install.sh
@@ -65,7 +113,6 @@
 - remove write permissions from packages once installed?
 
 - `vee selfupdate` should be as close to just calling the installer as possible
-- on OS X we should bootstrap HOMEBREW with python, on linux, we don't need to
 
 - create timestamped commit environments too?
     by_hash -> real environments
@@ -83,13 +130,6 @@
             - this requires there to be dependency links for homebrew
               packages
 
-
-- document somewhere that we are treating all names as existing within a global
-  namespace. This is particuarly scary given that there are python processes
-  that we have no control over, but... meh. Eventually, we could add a namespace
-  (e.g. "python_packages", "binaries", etc.)
-
-
 - `--link-prefix` so that it doesn't have to install it elsewhere, just link
   it elsewhere.
 
@@ -98,16 +138,6 @@
 - PyQt for Maya/Nuke in Linux
   - perhaps we should just do this with envvars?
   - just package up what Mark has preppared previousely in /opt
-
-- `vee repackage -d OUT_DIR PKG_NAME`
-    - package up the given homebrew package and all of its dependencies into
-      a set (or single, if I feel up to it) tarball.
-        - if I made my own, dependencies should be specified as a name/url
-          pair, such that the name could be satisfied elsewhere
-        - vee-package-meta.yml inside the tarball could describe it
-        - vbott extension
-    - if there were multiple, it would expand into a series of packages at
-      runtime. This could be via Package.provides() ?
 
 - add for loops and string formatting to requirements files
   

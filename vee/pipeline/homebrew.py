@@ -36,15 +36,37 @@ class HomebrewManager(PipelineStep):
 
         self.repo = self.brew.repo
 
+        # Parse the requested reversion into a package version, and repo revision.
+        self.version = self.revision = None
+        if pkg.revision:
+
+            m = re.match(r'^(.+?)(?:\+([0-9a-f]{8,}))?$', pkg.revision)
+            if m:
+                self.version, self.revision = m.groups()
+
+            # If it looks like only a sha1, then it is the repo revision.
+            if self.version and not self.revision and re.match(r'^[0-9a-f]{8,}$', self.version):
+                self.revision = self.version
+                self.version = None
+
+        # TODO: immediately check info to see if we can satisfy the revision
+        # with what is installed, and set install_path accordingly.
+
     def fetch(self):
+        # TODO: skip this if installed
         pkg = self.package
         self.repo.clone_if_not_exists()
-        self.repo.checkout(pkg.revision or 'HEAD', fetch=True)
-        pkg.revision = self.repo.head[:8]
+
+        self.repo.checkout(self.revision or 'HEAD', fetch=True)
+        self.revision = self.repo.head[:8]
+
+        # TODO: defer this
+        pkg.revision = self.revision
+
 
     def inspect(self):
-        # Do nothing.
-        # TODO: Determine deps here.
+        # TODO: Determine dependencies here. Only provide "required" ones, or
+        # optional ones that are already installed.
         pass
     
     def set_pkg_names(self, package=False, build=False, install=False):
@@ -61,23 +83,36 @@ class HomebrewManager(PipelineStep):
         pass
 
     def build(self):
+
+        # TODO: `brew unlink` before installing if already installed?
+
         pkg = self.package
         if pkg.installed:
-            log.warning(pkg.package_name + ' is already built', 'black')
+            log.warning(pkg.package_name + ' is already built')
             return
         self.brew('install', pkg.package_name, *pkg.config)
         self.set_pkg_names()
 
+        # TODO: Re-check dependencies here. Now we will include "optional" ones
+        # if they are freshly installed. This will require the PackageSet to
+        # re-check dependencies after a build.
+
     def install(self):
-        # Do nothing.
+        # TODO: actually copy this elsewhere?
         pass
 
     def relocate(self):
         # Do nothing.
+        # TODO: relocate against absolute dependencies, instead of the linked
+        # versions?
         pass
 
     def link(self, env, force=None):
         
+        # TODO: Delete this once dependencies are properly checked above. This
+        # code is currently dead, as it used to be called when this class
+        # extended Package.
+
         # Be careful with this, since it is a full replacement of the base link
         # method.
         
