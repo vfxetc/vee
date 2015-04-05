@@ -16,3 +16,4 @@ class TestSelf(TestCase):
 
         self.assertExists(sandbox('vee/installs/%s/1.0.0/bin/%s' % (a.name, a.name)))
         self.assertExists(sandbox('vee/installs/%s/1.0.0/bin/%s' % (b.name, b.name)))
+

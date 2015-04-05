@@ -28,16 +28,7 @@ Homebrew
 
 - Homebrew should still get dependencies even if the package was installed
   outside of VEE
-
-- Homebrew revision should be VERSION+GIT_REVISION, but is largely ignored
-
-- how to always identify the cellar path of something, even when devel or head?
-- how to always identify the version that is currently linked, even when devel or head?
-    - linked_keg in info is "HEAD", or a version number
-    - versions in info tells you what version is the "devel" version (although
-      we don't install these)
-
-
+  
 
 Relocation
 ----------
@@ -68,7 +59,6 @@ Pipeline
 - should pipelines not be a property of the Package at all, and instead you
   make a pipeline when you want do perform an operation?
 
-- 'resolve' pipeline so that Homebrew has a chance to be a jerk?
 
 
 Dev
@@ -94,7 +84,23 @@ Repackaging
     they need a platform identifier
 
 
+Server
+------
+
+- IMAP-like protocol, in that one can send several packets related to a single
+  request. Can also send unsolicited ones.
+- no end is specifically the server, they just use different tags to identify
+  themselves
+
+
+
+
+
 ---
+
+- should build and install names be tons simpler, given that they all
+  exist in the same namespace anyways?
+- package names should still be huge and gross
 
 - Package.assert_unique_install() makes sure there isn't anything else
   that uses the same install path.
