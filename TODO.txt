@@ -1,9 +1,13 @@
 
-- docs build fails the first time since sphinx-build isn't on the path yet
-  -e PATH=$VEE/opt/sphinx/bin
-
 - shell setup fails really badly if kscore isn't installed
 
+- PackageSet should be the one that prints out what package it is currently
+  working on, since `vee link` is not identifying dependencies.
+
+- local PyPI mirror would be a good idea
+
+- jpeg dependency of ffmpeg in vee-requirements.txt does not get covered
+  by the jpeg package
 
 
 Homebrew
@@ -18,24 +22,6 @@ Homebrew
   - Homebrew is generally for small installs, or for you to build your own
     packages with repackage
 
-- install without linking
-  - may not be possible
-  - could install then unlink
-
-- Homebrew should set absolute set of used dependencies after it was installed
-  because we can't quite tell up front.
-    - ignore build dependencies
-    - only top-level
-    - only record those which are installed (in opt)
-
-- should we have different classes of dependencies, mimicking those of homebrew
-  (e.g. "build", "required", "optional"), or do we only store those which are
-  not for "build"?
-    - we can write some ruby code of our own to do all of this nonsense
-
-- Homebrew should still get dependencies even if the package was installed
-  outside of VEE
-  
 
 Relocation
 ----------
@@ -50,13 +36,15 @@ Relocation
 
 - we aren't relocating against packages that are in the same packageset??
 
+
 Pipeline
 --------
 
 - uninstall after "init" in chain
-  - this only makes sense if things can immediately tell if they are installed,
-    which they can only do if the URL is the same and revision is provided...
-    which seems sane.
+    - this only makes sense if things can immediately tell if they are installed,
+      which they can only do if the URL is the same and revision is provided...
+      which seems sane.
+    - putting it after "inspect" seems like a better fallback
 
 - rewrite docs to talk about the progression of names
 
@@ -80,15 +68,6 @@ Dev
   - a DevPackage could expose a bunch of this stuff
 - Requirements.iter_scm_packages()
 - Requirements.iter_dev_packages()
-
-
-Repackaging
-------------
-
-- record dependencies in the database, for both pypi and homebrew
-- `vee repackage NAME` creates tarballs with vee-dependencies.txt
-  - if there are .so or .dylib or executables that dont start in "#!", then
-    they need a platform identifier
 
 
 Server

@@ -198,6 +198,9 @@ class Requirements(list):
                 elif el.type == 'elif':
                     include_stack.pop()
                     include_stack.append(bool(eval(el.expr, control_namespace)))
+                elif el.type == 'else':
+                    prev = include_stack.pop()
+                    include_stack.append(not prev)
                 elif el.type == 'endif':
                     include_stack.pop()
                 else:

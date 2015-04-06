@@ -55,6 +55,10 @@ def link(args):
 
     req_set = Requirements(args.requirements, home=home)
     pkg_set = PackageSet(env=env, home=home)
+    
+    # Register the whole set, so that dependencies are pulled from here instead
+    # of weakly resolved from installed packages.
+    pkg_set.resolve_set(req_set)
 
     for req in req_set.iter_packages():
 

@@ -474,7 +474,13 @@ class Package(DBObject):
         else:
             return
 
-        log.debug('Found %s (%d) at %s' % (self.name or row['name'], row['id'], row['install_path']))
+        log.debug('Found %s (%d%s%s) at %s' % (
+            self.name or row['name'],
+            row['id'],
+            ' weakly' if weak else '',
+            ' in env %d' % env.id if env else '',
+            row['install_path'],
+        ))
 
         self.restore_from_row(row, ignore=set(('abstract_requirements', 'concrete_requirement')))
         self.link_id = row.get('link_id')

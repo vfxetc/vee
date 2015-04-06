@@ -18,7 +18,7 @@ class PackageSet(collections.OrderedDict):
         self._persisted = set()
         self._linked = set()
 
-    def resolve(self, req, check_existing=True, env=None):
+    def resolve(self, req, check_existing=True, weak=False, env=None):
 
         try:
             return self[req.name]
@@ -33,7 +33,7 @@ class PackageSet(collections.OrderedDict):
             (
                 pkg.resolve_existing(env=env or self.env) or
                 pkg.resolve_existing() or
-                pkg.resolve_existing(weak=True)
+                (weak and pkg.resolve_existing(weak=True))
             )
 
         # Store it under the package name since deferred dependencies will not
@@ -97,7 +97,7 @@ class PackageSet(collections.OrderedDict):
                 # Since resolution is rather loose in here (only by name, not URL)
                 # we want to replace dependencies with their concrete variant to
                 # ease recording that into the database. 
-                dep = self.resolve(dep)
+                dep = self.resolve(dep, weak=True)
                 pkg.dependencies[i] = dep
 
                 if dep.name not in self._installed:
@@ -121,12 +121,13 @@ class PackageSet(collections.OrderedDict):
             pre_build_deps = pkg.dependencies[:]
 
             if name not in self._installed:
-                pkg.pipeline.run_to('build')
                 try:
+                    pkg.pipeline.run_to('build')
                     pkg.pipeline.run_to('install')
+                    pkg.pipeline.run_to('relocate')
                 except AlreadyInstalled:
                     pass
-                pkg.pipeline.run_to('relocate')
+                pkg.pipeline.run_to('optlink')
                 self._installed.add(name)
 
             # We need to build/install Homebrew packages before we can decide

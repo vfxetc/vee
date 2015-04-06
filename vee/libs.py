@@ -233,6 +233,9 @@ def _relocate_library(lib_path, con, auto, include, exclude, dry_run, target_cac
                 continue
             seen_targets.add(target)
 
+            if not os.path.exists(target):
+                continue
+            
             tar_def, tar_undef = get_symbols(target)
 
             pros = len(tar_def.intersection(lib_undef))
