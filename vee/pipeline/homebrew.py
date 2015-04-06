@@ -73,6 +73,10 @@ class HomebrewManager(PipelineStep):
         # is already installed.
         self._set_names()
 
+        # Lets fully embrace that.
+        if not self.package.id:
+            self.package.resolve_existing()
+
         # If, due to the above, we appear to be installed, then we want to
         # check for all dependencies (like we would after the install process).
         # But since we are very likely to get shortcut due to seemingly being
@@ -82,7 +86,7 @@ class HomebrewManager(PipelineStep):
         else:
             self._update_dependencies(optional=False, must_exist=False)
 
-    def _update_dependencies(self, optional=True, must_exist=False):
+    def _update_dependencies(self, optional, must_exist):
         pkg = self.package
         existing = {}
         for dep in pkg.dependencies:
@@ -123,10 +127,16 @@ class HomebrewManager(PipelineStep):
             info['installed'][-1]['version'] if info['installed'] else info['versions']['stable']
         )
 
-        pkg.build_name = pkg.install_name = os.path.join(pkg.package_name,
+        pkg.build_name = os.path.join(pkg.package_name,
+            'HEAD' if '--HEAD' in pkg.config else self.version
+        )
+        pkg.build_path = pkg.install_path = os.path.join(self.brew.cellar, pkg.build_name)
+
+        # We set the install_name that we want set for repackaged packages; this
+        # should have no effect on actual Homebrew installs.
+        pkg.install_name = os.path.join(pkg.package_name,
             'HEAD+%s' % self.revision if '--HEAD' in pkg.config else self.version
         )
-        pkg.build_path = pkg.install_path = os.path.join(self.brew.cellar, pkg.install_name)
 
         pkg.revision = '%s+%s' % (
             self.version,
@@ -144,7 +154,6 @@ class HomebrewManager(PipelineStep):
             self.brew('install', pkg.package_name, *pkg.config)
             self._set_names()
 
-        # Pull in the optional dependencies if they actually exist.
         self._update_dependencies(optional=True, must_exist=True)
 
     def install(self):

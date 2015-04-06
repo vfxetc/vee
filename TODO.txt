@@ -1,4 +1,11 @@
 
+- docs build fails the first time since sphinx-build isn't on the path yet
+  -e PATH=$VEE/opt/sphinx/bin
+
+- shell setup fails really badly if kscore isn't installed
+
+
+
 Homebrew
 --------
 
