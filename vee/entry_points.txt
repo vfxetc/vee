@@ -36,6 +36,10 @@ status = vee.commands.status:status
 update = vee.commands.update:update
 upgrade = vee.commands.upgrade:upgrade
 
+# Remote Management
+client = vee.commands.client:client
+server = vee.commands.server:server
+
 
 [vee_pipeline_steps]
 
@@ -44,7 +48,7 @@ homebrew = vee.pipeline.homebrew:HomebrewManager
 
 # Transports.
 file = vee.pipeline.file:FileTransport
-git = vee.pipeline.git:GitTransport
+git  = vee.pipeline.git:GitTransport
 http = vee.pipeline.http:HttpTransport
 pypi = vee.pipeline.pypi:PyPiTransport
 
@@ -53,9 +57,9 @@ archive = vee.pipeline.archive:ArchiveExtractor
 
 # Builds.
 generic = vee.pipeline.generic:GenericBuilder
-make = vee.pipeline.make:MakeBuilder
-python = vee.pipeline.python:PythonBuilder
-self = vee.pipeline.self:SelfBuilder
+make    = vee.pipeline.make:MakeBuilder
+python  = vee.pipeline.python:PythonBuilder
+self    = vee.pipeline.self:SelfBuilder
 
 # Internal
 deferred = vee.pipeline.deferred:DeferredStep
