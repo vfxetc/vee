@@ -118,6 +118,8 @@ class PackageSet(collections.OrderedDict):
                 names.insert(insert_i, name)
                 continue
 
+            pre_build_deps = pkg.dependencies[:]
+
             if name not in self._installed:
                 pkg.pipeline.run_to('build')
                 try:
@@ -126,6 +128,15 @@ class PackageSet(collections.OrderedDict):
                     pass
                 pkg.pipeline.run_to('relocate')
                 self._installed.add(name)
+
+            # We need to build/install Homebrew packages before we can decide
+            # which of their optional dependencies will be used. The relocation
+            # process can also determine other dependencies. We need to run
+            # these new ones through the pipe too.
+            if pkg.dependencies != pre_build_deps:
+                log.debug('%s has changed dependencies after build/install')
+                names.insert(insert_i, name)
+                continue
 
             if name not in self._persisted:
 

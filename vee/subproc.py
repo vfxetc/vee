@@ -113,7 +113,7 @@ def call(cmd, **kwargs):
     log.debug(
         '$ ' + ' '.join(cmd_collapsed),
         verbosity=2,
-        _frame=3,
+        _frame=kwargs.pop('_frame', 0) + 3
     )
 
     check = kwargs.pop('check', True)

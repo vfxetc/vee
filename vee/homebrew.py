@@ -30,7 +30,7 @@ class Homebrew(object):
     def __call__(self, cmd, *args, **kwargs):
         self.repo.clone_if_not_exists()
         bin = os.path.join(self.repo.work_tree, 'bin', 'brew')
-        res = call((bin, cmd) + args, **kwargs)
+        res = call((bin, cmd) + args, _frame=1, **kwargs)
         if cmd in ('install', 'uninstall'):
             self._info.pop(args[0], None)
         return res

@@ -66,9 +66,21 @@ class HomebrewManager(PipelineStep):
         self.repo.checkout(self.revision or 'HEAD', fetch=True)
         self.revision = self.repo.head[:8]
 
-
     def inspect(self):
-        self._update_dependencies(optional=False)
+
+        # At this point we accept that if there is already something installed
+        # in homebrew, we take it. So, we will set our names to that which
+        # is already installed.
+        self._set_names()
+
+        # If, due to the above, we appear to be installed, then we want to
+        # check for all dependencies (like we would after the install process).
+        # But since we are very likely to get shortcut due to seemingly being
+        # installed, we must check them all now.
+        if self.package.installed:
+            self._update_dependencies(optional=True, must_exist=True)
+        else:
+            self._update_dependencies(optional=False, must_exist=False)
 
     def _update_dependencies(self, optional=True, must_exist=False):
         pkg = self.package
@@ -90,7 +102,6 @@ class HomebrewManager(PipelineStep):
             pkg.dependencies.append(dep)
             existing[name] = dep
     
-
     def install_name_from_info(self, name, info=None):
         # TODO: This should return "HEAD" if built with `--head`.
         # TODO: Move this to the Homebrew pipeline step.
@@ -113,29 +124,25 @@ class HomebrewManager(PipelineStep):
         )
 
         pkg.build_name = pkg.install_name = os.path.join(pkg.package_name,
-            'HEAD' if '--HEAD' in pkg.config else self.version
+            'HEAD+%s' % self.revision if '--HEAD' in pkg.config else self.version
         )
         pkg.build_path = pkg.install_path = os.path.join(self.brew.cellar, pkg.install_name)
 
-        pkg.revision = '%s%s+%s' % (
+        pkg.revision = '%s+%s' % (
             self.version,
-            '-HEAD' if '--HEAD' in pkg.config else '',
             self.revision
         )
-
 
     def extract(self):
         pass
 
     def build(self):
 
-        # TODO: `brew unlink` before installing if already installed?
-
         pkg = self.package
 
-        # This may throw warnings that it is already installed. Oops.
-        self.brew('install', pkg.package_name, *pkg.config)
-        self._set_names()
+        if not pkg.installed:
+            self.brew('install', pkg.package_name, *pkg.config)
+            self._set_names()
 
         # Pull in the optional dependencies if they actually exist.
         self._update_dependencies(optional=True, must_exist=True)
