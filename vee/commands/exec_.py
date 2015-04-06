@@ -2,15 +2,13 @@ import json
 import os
 import re
 
+from vee._vendor import vendor_path, bootstrap_environ
 from vee.commands.main import command, argument, group
 from vee.environment import Environment
 from vee.envvars import guess_envvars, render_envvars
 from vee.exceptions import NotInstalled
 from vee.packageset import PackageSet
 from vee.requirements import Requirements
-
-
-vendor_path = os.path.abspath(os.path.join(__file__, '..', '..', '_vendor'))
 
 
 @command(
@@ -92,13 +90,20 @@ def exec_(args):
         k, v = command.pop(0).split('=', 1)
         environ_diff[k] = v
 
-    # Add vendor-ed packages.
-    environ_diff['PYTHONPATH'] = '%s:%s' % (environ_diff.get('PYTHONPATH', ''), vendor_path)
+    # Make sure setuptools is bootstrapped.
+    bootstrap_environ(environ_diff)
 
     # Print it out instead of running it.
     if args.export:
         for k, v in sorted(environ_diff.iteritems()):
             existing = os.environ.get(k)
+
+            # Since we modify os.environ in __init__ to bootstrap the vendored
+            # packages, swaping out the original values will not include the
+            # bootstrap. So we are tricking the code so that it still includes it.
+            if k == 'PYTHONPATH' and existing.endswith(vendor_path):
+                existing += (':' if existing else '') + vendor_path
+
             if existing is not None:
                 v = v.replace(existing, '$' + k)
             print 'export %s="%s"' % (k, v)

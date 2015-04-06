@@ -1,4 +1,6 @@
 
+- `vee upgrade --clean` deletes the environment
+
 - shell setup fails really badly if kscore isn't installed
 
 - PackageSet should be the one that prints out what package it is currently
@@ -7,7 +9,24 @@
 - local PyPI mirror would be a good idea
 
 - jpeg dependency of ffmpeg in vee-requirements.txt does not get covered
-  by the jpeg package
+  by the jpeg package. I think the name is actually 'jpeg-8'
+
+- parse `make -pn` to determine if there is even an 'install' target or not.
+
+- not providing bootstrapped setuptools and others to make, etc., which is
+  why building the docs is failing. Could set PYTHONPATH in os.environ so
+  that everything inherits it
+
+
+WesternX
+--------
+
+- Linux clean build issues:
+    - key_base did not see metatools in vee-build.sh (for entryponts, I think)
+    - docs could not find sphinx-build, likely since the "make" step doesn't
+      include the python bootstrap
+    - cythonmagick returned exit status 1 during egg-info, without saying what
+    - pyav failed due to corrupt gitvee
 
 
 Homebrew

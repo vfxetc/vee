@@ -1,20 +1,12 @@
 import os
 import sys
 
-
-# Force our vendored packages to the front of the path.
-vendor_path = os.path.abspath(os.path.join(__file__, '..', '_vendor'))
-if vendor_path not in sys.path:
-    sys.path.append(vendor_path)
+from vee import _vendor
 
 import pkg_resources
 
-# Make our vendored packages availible to provide entry_points, etc..
-if vendor_path not in pkg_resources.working_set.entries:
-    pkg_resources.working_set.add_entry(vendor_path)
 
-
-def _bootstrap_pkg_resources():
+def _bootstrap_entrypoints():
 
     # See if we are already registered.
     req = pkg_resources.Requirement.parse('vee')
@@ -35,4 +27,4 @@ def _bootstrap_pkg_resources():
     pkg_resources.working_set.add(dummy)
 
 
-_bootstrap_pkg_resources()
+_bootstrap_entrypoints()
