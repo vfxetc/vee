@@ -262,7 +262,7 @@ class Package(DBObject):
                 return source.get(k)
 
         for e in (self.base_environ, self.environ):
-            for k, v in self.environ.iteritems():
+            for k, v in e.iteritems():
                 v = re.sub(r'\$\{(\w+)\}|\$(\w+)|%(\w+)%|(@)', rep, v)
                 diff[k] = v
 
@@ -281,7 +281,7 @@ class Package(DBObject):
                 v = v.replace(self.home.root, '$VEE')
                 log.debug('%s %s=%s' % (
                     style('setenv', 'blue'), k, v
-                ), verbosity=1)
+                ), verbosity=2)
         return self._environ_diff or {}
 
     def fresh_environ(self):

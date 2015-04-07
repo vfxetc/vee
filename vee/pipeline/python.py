@@ -88,7 +88,7 @@ class PythonBuilder(GenericBuilder):
 
             log.info(style_note('Building Python package'))
 
-            cmd = ['build', '--executable', '/usr/bin/env python']
+            cmd = ['build']
             cmd.extend(pkg.config)
 
             res = call_setup_py(self.setup_path, cmd, env=pkg.fresh_environ(), indent=True, verbosity=1)
@@ -168,13 +168,13 @@ class PythonBuilder(GenericBuilder):
 
         log.info(style_note('Installing Python package', 'to ' + install_site_packages))
 
-        cmd = ['install',
-            '--skip-build',
-            '--root', pkg.install_path, # Better than prefix
-            '--prefix', '.',
-            '--install-lib', site_packages, # So that we don't get lib64; virtualenv symlinks them together anyways.
-            # '--no-compile',
-            '--single-version-externally-managed',
+        cmd = [
+            'install',
+                '--skip-build',
+                '--root', pkg.install_path, # Better than prefix
+                '--prefix', '.',
+                '--install-lib', site_packages, # So that we don't get lib64; virtualenv symlinks them together anyways.
+                '--single-version-externally-managed',
         ]
         
         res = call_setup_py(self.setup_path, cmd, env=env, indent=True, verbosity=1)

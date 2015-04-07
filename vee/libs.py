@@ -2,6 +2,7 @@ import os
 import re
 import stat
 import itertools
+import sys
 
 from vee.subproc import call
 from vee import log
@@ -176,9 +177,7 @@ def get_installed_shared_libraries(con, package_id, install_path, rescan=False):
         return res
 
 
-def relocate(root, con, spec=None, dry_run=False, target_cache=None):
-
-    target_cache = {} if target_cache is None else target_cache
+def _parse_spec(spec, root):
 
     auto = False
     include = []
@@ -215,26 +214,42 @@ def relocate(root, con, spec=None, dry_run=False, target_cache=None):
         else:
             raise ValueError('malformed relocate spec %r' % x)
 
+    return auto, include, exclude
+
+
+def relocate(root, con, spec=None, dry_run=False, target_cache=None):
+
+    target_cache = {} if target_cache is None else target_cache
+
+    auto, include, exclude = _parse_spec(spec, root)
+
     if not (auto or include):
         raise ValueError('no libraries to include')
 
-    # Find everything in include.
-    for path in include:
-        for found in find_shared_libraries(path):
-            log.debug('found %s' % found)
-            for name in name_variants(os.path.basename(found)):
-                target_cache.setdefault(name, []).append(found)
+    if sys.platform == 'darwin':
 
-    for lib_path in find_shared_libraries(root):
+        # Find everything in include.
+        for path in include:
+            for found in find_shared_libraries(path):
+                log.debug('found %s' % found)
+                for name in name_variants(os.path.basename(found)):
+                    target_cache.setdefault(name, []).append(found)
 
-        # Skip symlinks.
-        lib_stat = os.lstat(lib_path)
-        if stat.S_ISLNK(lib_stat.st_mode):
-            continue
+        for lib_path in find_shared_libraries(root):
 
-        log.info(lib_path)
-        with log.indent():
-            _relocate_library(lib_path, con, auto, include, exclude, dry_run, target_cache)
+            # Skip symlinks.
+            lib_stat = os.lstat(lib_path)
+            if stat.S_ISLNK(lib_stat.st_mode):
+                continue
+
+            log.info(lib_path)
+            with log.indent():
+                _relocate_library(lib_path, con, auto, include, exclude, dry_run, target_cache)
+
+    relocate_pkgconfig(root)
+
+
+def relocate_pkgconfig(root):
 
     # Do trivial rewrites of pkgconfig files.
     pkg_config = os.path.join(root, 'lib', 'pkgconfig')
@@ -242,8 +257,8 @@ def relocate(root, con, spec=None, dry_run=False, target_cache=None):
         for name in os.listdir(pkg_config):
             if not name.endswith('.pc'):
                 continue
-            log.info(path)
             path = os.path.join(pkg_config, name)
+            log.info(path)
             lines = list(open(path))
             for i, line in enumerate(lines):
                 if re.match(r'^prefix=([^\$]+)\s*$', line):

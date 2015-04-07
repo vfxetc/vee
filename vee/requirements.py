@@ -166,7 +166,7 @@ class Requirements(list):
                 continue
 
             if req.name.lower() in names:
-                raise ValueError('name collision; please rename one of the %rs' % name)
+                raise ValueError('name collision; please rename one of the %rs' % req.name)
             names.add(req.name.lower())
 
         # Second pass; the rest.
@@ -185,6 +185,7 @@ class Requirements(list):
         control_namespace = {
             're': re,
             'sys': sys,
+            'os': os,
             'OSX': sys.platform == 'darwin',
             'MACOS': sys.platform == 'darwin',
             'LINUX': sys.platform.startswith('linux'),
@@ -206,7 +207,7 @@ class Requirements(list):
                 else:
                     raise ValueError('unknown control type %r' % el.type)
 
-            if eval_control and not include_stack[-1]:
+            if eval_control and not all(include_stack):
                 continue
 
             if isinstance(el, Package):

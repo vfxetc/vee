@@ -1,7 +1,7 @@
 import collections
 
 from vee.package import Package
-from vee.exceptions import AlreadyInstalled, AlreadyLinked
+from vee.exceptions import AlreadyInstalled, AlreadyLinked, print_cli_exc
 from vee import log
 
 
@@ -68,7 +68,13 @@ class PackageSet(collections.OrderedDict):
             name = names.pop(0)
             print '==>', name
             with log.indent():
-                self._install_one(names, name, link_env, reinstall, relink, no_deps)
+                try:
+                    self._install_one(names, name, link_env, reinstall, relink, no_deps)
+                except Exception as e:
+                    print_cli_exc(e, verbose=True)
+                    log.exception('Exception while processing %s' % name)
+                    continue
+
 
     def _install_one(self, names, name, link_env, reinstall, relink, no_deps):
 
