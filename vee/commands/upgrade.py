@@ -78,7 +78,7 @@ def upgrade(args):
         # Create a symlink by version.
         version = req_set.headers.get('Version')
         if version:
-            path_by_version = home._abs_path('environments', 'versions', version.value + ('-dirty' if dirty else ''))
+            path_by_version = home._abs_path('environments', env_repo.name, 'versions', version.value + ('-dirty' if dirty else ''))
             if os.path.lexists(path_by_version):
                 os.unlink(path_by_version)
             makedirs(os.path.dirname(path_by_version))
