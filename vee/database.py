@@ -367,7 +367,9 @@ class Database(object):
 
     def connect(self):
         makedirs(os.path.dirname(self.path))
-        return sqlite3.connect(self.path, factory=_Connection)
+        con = sqlite3.connect(self.path, factory=_Connection)
+        con.execute('PRAGMA foreign_keys = ON')
+        return con
 
     def cursor(self):
         return self.connect().cursor()
