@@ -1,15 +1,20 @@
 
+- `--md5 xxx` for static packages: we are getting TONS of read errors either 
+  across the NFS or across HTTP.
+
+- summary of results at end of upgrade could be helpful
+
+- `%include PATH` for moving the platform dependencies into other files
+
 - `vee upgrade --clean` deletes the environment
 
 - shell setup fails really badly if kscore isn't installed
 
 - local PyPI mirror would be a good idea
+    - this could be some caching proxy server or anything
+    - could verify the checksum itself
 
 - parse `make -pn` to determine if there is even an 'install' target or not.
-
-- not providing bootstrapped setuptools and others to make, etc., which is
-  why building the docs is failing. Could set PYTHONPATH in os.environ so
-  that everything inherits it
 
 - automatically relocate generic packages? Homebrew, Python, and self packages
   would not do it.
@@ -31,39 +36,9 @@
     /usr/local/vee/installs/libtiff/4.0.3+5df00e1f/lib/libtiffxx.5.dylib
       Warning: Best target has 1 collisions for /usr/local/Cellar/libtiff/4.0.3/lib/libtiff.5.dylib
 
-- CythonMagick is compiling against the wrong libMagick++
-
 
 - should we be doing initial relocations on packages BEFORE repackacing them,
   replacing their install_path with @@VEE_INSTALL_PATH@@ ?
-  This would also give us the oppourtunity to see if the dependencies are
-  symlinks to themselves
-
-- how to assert the ID?
-  $ otool -L /usr/local/lib/libavutil.54.dylib
-  /usr/local/lib/libavutil.54.dylib:
-    /usr/local/lib/libavutil.54.dylib (compatibility version 54.0.0, current version 54.22.100)
-    ...
-
-  we can see from `otool -l` or `otool -D` that this is the ID of the library.
-
-  Seems like we need to definitvely tell what the ID is, by using otool or
-  by vendoring macholib.
-
-  Name variations may be due to symlinks:
-
-      $ otool -L /usr/local/opt/lame/lib/libmp3lame.dylib 
-      /usr/local/opt/lame/lib/libmp3lame.dylib:
-        /usr/local/lib/libmp3lame.0.dylib (compatibility version 1.0.0, current version 1.0.0)
-        /usr/lib/libSystem.B.dylib (compatibility version 1.0.0, current version 1197.1.1)
-
-      [mboers@vfx07] /usr/local/vee/environments/westernx/master/bin 
-      $ otool -D /usr/local/opt/lame/lib/libmp3lame.dylib 
-      /usr/local/opt/lame/lib/libmp3lame.dylib:
-      /usr/local/lib/libmp3lame.0.dylib
-
-      $ ll /usr/local/opt/lame/lib/libmp3lame.dylib 
-      lrwxr-xr-x  1 mboers  VFX  18 21 Oct 15:21 /usr/local/opt/lame/lib/libmp3lame.dylib -> libmp3lame.0.dylib
 
 
 WesternX
