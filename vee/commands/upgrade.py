@@ -1,10 +1,12 @@
-import os
 from subprocess import CalledProcessError
+import os
 
+from vee import log
 from vee.cli import style, style_warning
 from vee.commands.main import command, argument, group
+from vee.environment import Environment
+from vee.packageset import PackageSet
 from vee.utils import makedirs
-from vee import log
 
 
 @command(
@@ -12,6 +14,7 @@ from vee import log
     argument('--dirty', action='store_true', help='build even when work tree is dirty'),
     argument('--relink', action='store_true', help='relink packages'),
     argument('--reinstall', action='store_true', help='reinstall packages'),
+    argument('--no-deps', action='store_true', help='dont touch dependencies'),
     argument('-r', '--repo', action='append', dest='repos'),
     argument('subset', nargs='*'),
     help='upgrade packages specified by repositories, and link into environments',
@@ -25,54 +28,51 @@ def upgrade(args):
     else:
         repos = [home.get_env_repo(x) for x in args.repos] if args.repos else [home.get_env_repo()]
 
-    for repo in repos:
+    for env_repo in repos:
 
-        repo.clone_if_not_exists()
+        env_repo.clone_if_not_exists()
 
         try:
-            head = repo.head
+            head = env_repo.head
         except CalledProcessError:
             print style_warning('no commits in repository')
             head = None
 
         try:
-            remote_head = repo.rev_parse('%s/%s' % (repo.remote_name, repo.branch_name))
+            remote_head = env_repo.rev_parse('%s/%s' % (env_repo.remote_name, env_repo.branch_name))
         except ValueError:
-            print style_warning('tracked %s/%s does not exist in repo' % (repo.remote_name, repo.branch_name))
+            print style_warning('tracked %s/%s does not exist in env_repo' % (env_repo.remote_name, env_repo.branch_name))
             remote_head = None
 
         if remote_head and head != remote_head:
             print style_warning('%s repo not checked out to %s/%s' % (
-                repo.name, repo.remote_name, repo.branch_name))
+                env_repo.name, env_repo.remote_name, env_repo.branch_name))
 
-        dirty = bool(list(repo.status()))
+        dirty = bool(list(env_repo.status()))
         if not args.dirty and dirty:
-            print style('Error:', 'red', bold=True), style('%s repo is dirty; force with --dirty' % repo.name, bold=True)
+            print style('Error:', 'red', bold=True), style('%s repo is dirty; force with --dirty' % env_repo.name, bold=True)
             continue
 
-        path_by_commit = home._abs_path('environments', repo.name, 'commits', (head[:8] + ('-dirty' if dirty else '')) if head else 'nocommit')
-        path_by_branch = home._abs_path('environments', repo.name, repo.branch_name)
+        commit_name = (head[:8] + ('-dirty' if dirty else '')) if head else 'nocommit'
+        env_name = os.path.join(env_repo.name, 'commits', commit_name)
+        env = Environment(env_name, home=home)
 
-        cmd = ['link']
-        if args.relink:
-            cmd.append('--force')
-        if args.reinstall:
-            cmd.append('--reinstall')
-        for x in args.subset:
-            cmd.extend(('--subset', x))
-        cmd.extend(('--directory', path_by_commit, repo.abspath('requirements.txt')))
+        req_set = env_repo.load_requirements()
+        pkg_set = PackageSet(env=env, home=home)
         
-        try:
-            args.main(cmd)
-        except:
-            log.exception('Linking failed')
-            raise
-        else:
+        # Register the whole set, so that dependencies are pulled from here instead
+        # of weakly resolved from installed packages.
+        # TODO: This blanket reinstalls things, even if no_deps is set.
+        pkg_set.resolve_set(req_set, check_existing=not args.reinstall)
 
-            # Create a symlink by branch.
-            if os.path.lexists(path_by_branch):
-                os.unlink(path_by_branch)
-            makedirs(os.path.dirname(path_by_branch))
-            os.symlink(path_by_commit, path_by_branch)
+        # Install and/or link.
+        pkg_set.install(args.subset or None, link_env=env, reinstall=args.reinstall, relink=args.relink, no_deps=args.no_deps)
+
+        # Create a symlink by branch.
+        path_by_branch = home._abs_path('environments', env_repo.name, env_repo.branch_name)
+        if os.path.lexists(path_by_branch):
+            os.unlink(path_by_branch)
+        makedirs(os.path.dirname(path_by_branch))
+        os.symlink(env.path, path_by_branch)
 
 
