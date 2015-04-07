@@ -3,6 +3,7 @@ import collections
 from vee.package import Package
 from vee.exceptions import AlreadyInstalled, AlreadyLinked, print_cli_exc
 from vee import log
+from vee.cli import style
 
 
 class PackageSet(collections.OrderedDict):
@@ -11,6 +12,8 @@ class PackageSet(collections.OrderedDict):
         super(PackageSet, self).__init__()
         self.env = env
         self.home = home
+
+        self._parent_names = {}
 
         self._extracted = set()
         self._installed = set()
@@ -66,7 +69,18 @@ class PackageSet(collections.OrderedDict):
 
         while names:
             name = names.pop(0)
-            print '==>', name
+
+            self._parent_names.setdefault(name, None)
+            
+            parent_chain = []
+            tip = name
+            while tip and tip not in parent_chain:
+                parent_chain.append(tip)
+                tip = self._parent_names.get(tip)
+            parent_chain = parent_chain[1:]
+
+            print '==>', style(name, 'blue'), style('(%s)' % ' < '.join(parent_chain), faint=True) if parent_chain else ''
+
             with log.indent():
                 try:
                     self._install_one(names, name, link_env, reinstall, relink, no_deps)
@@ -79,7 +93,7 @@ class PackageSet(collections.OrderedDict):
     def _install_one(self, names, name, link_env, reinstall, relink, no_deps):
 
         pkg = self[name]
-        
+
         reinstall_this = name in reinstall
         relink_this    = name in relink
 
@@ -114,6 +128,7 @@ class PackageSet(collections.OrderedDict):
             # ease recording that into the database. 
             dep = self.resolve(dep, weak=True)
             pkg.dependencies[i] = dep
+            self._parent_names.setdefault(dep.name, pkg.name)
 
             if dep.name not in self._installed:
                 key = (name, dep.name)
