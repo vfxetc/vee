@@ -55,8 +55,9 @@ class PackageSet(collections.OrderedDict):
             names = [names]
         names = list(names) if names else self.keys()
 
-        if any(name not in self for name in names):
-            raise KeyError(name)
+        for name in names:
+            if name not in self:
+                raise KeyError(name)
 
         if not isinstance(reinstall, set):
             reinstall = set(names if no_deps else self.keys()) if reinstall else set()
@@ -100,7 +101,7 @@ class PackageSet(collections.OrderedDict):
         deferred = False
         deps_installed = True
         insert_i = 0
-        for i, dep in enumerate(pkg.dependencies):
+        for i, dep in ([] if no_deps else enumerate(pkg.dependencies)):
 
             # Since resolution is rather loose in here (only by name, not URL)
             # we want to replace dependencies with their concrete variant to

@@ -1,24 +1,18 @@
 
-- environments/REPO/versions/VERSION[-dirty]
-    - environment aliases in the database?
-
 - `vee upgrade --clean` deletes the environment
 
 - shell setup fails really badly if kscore isn't installed
 
-- PackageSet should be the one that prints out what package it is currently
-  working on, since `vee link` is not identifying dependencies.
-
 - local PyPI mirror would be a good idea
-
-- jpeg dependency of ffmpeg in vee-requirements.txt does not get covered
-  by the jpeg package. I think the name is actually 'jpeg-8'
 
 - parse `make -pn` to determine if there is even an 'install' target or not.
 
 - not providing bootstrapped setuptools and others to make, etc., which is
   why building the docs is failing. Could set PYTHONPATH in os.environ so
   that everything inherits it
+
+- automatically relocate generic packages? Homebrew, Python, and self packages
+  would not do it.
 
 - remaining relocation problems:
     

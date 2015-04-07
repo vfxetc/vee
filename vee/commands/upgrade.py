@@ -75,4 +75,13 @@ def upgrade(args):
         makedirs(os.path.dirname(path_by_branch))
         os.symlink(env.path, path_by_branch)
 
+        # Create a symlink by version.
+        version = req_set.headers.get('Version')
+        if version:
+            path_by_version = home._abs_path('environments', 'versions', version.value + ('-dirty' if dirty else ''))
+            if os.path.lexists(path_by_version):
+                os.unlink(path_by_version)
+            makedirs(os.path.dirname(path_by_version))
+            os.symlink(env.path, path_by_version)
+
 

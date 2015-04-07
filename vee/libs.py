@@ -236,6 +236,31 @@ def relocate(root, con, spec=None, dry_run=False, target_cache=None):
         with log.indent():
             _relocate_library(lib_path, con, auto, include, exclude, dry_run, target_cache)
 
+    # Do trivial rewrites of pkgconfig files.
+    pkg_config = os.path.join(root, 'lib', 'pkgconfig')
+    if os.path.exists(pkg_config):
+        for name in os.listdir(pkg_config):
+            if not name.endswith('.pc'):
+                continue
+            log.info(path)
+            path = os.path.join(pkg_config, name)
+            lines = list(open(path))
+            for i, line in enumerate(lines):
+                if re.match(r'^prefix=([^\$]+)\s*$', line):
+                    lines[i] = 'prefix=%s\n' % root
+                    break
+            else:
+                with log.indent():
+                    log.warning('No obvious prefix to replace')
+                continue
+            # As silly as this seems, *.pc files we have seen have their
+            # write flag removed, but we still own them (since we just installed
+            # them). Quickest way to fix: delete them.
+            if not os.access(path, os.W_OK):
+                os.unlink(path)
+            with open(path, 'w') as fh:
+                fh.writelines(lines)
+
 
 def _relocate_library(lib_path, con, auto, include, exclude, dry_run, target_cache):
 
