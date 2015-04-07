@@ -1,6 +1,7 @@
 import os
 import re
 import stat
+import itertools
 
 from vee.subproc import call
 from vee import log
@@ -15,37 +16,61 @@ def iter_unique(xs):
         yield x
 
 
-def name_variants(name):
+def name_variants(name, version_only=False):
 
     res = [name]
-    m = re.match(r'^(?:lib)?(.+?)(\.so|\.dylib)?(\..+)?$', name)
+    m = re.match(r'^(lib)?(.+?)([-\.\d]+)?(\.so|\.dylib)?(\..+)?$', name)
     if m:
-        base, _, extpost = m.groups()
-        res.append(base)
-        for ext in '.dylib', '.so':
-            if extpost:
-                res.append('lib%s%s%s' % (base, ext, extpost))
-            res.append('lib%s%s' % (base, ext))
+        m_lib, base, m_version, m_ext, m_post = m.groups()
+        version_parts = re.split(r'([-\.])', m_version) if m_version else []
+
+        if version_only:
+            posts = (m_post or '', )
+            exts  = (m_ext  or '', )
+            libs  = (m_lib  or '', )
+        else:
+            posts = m_post or '', ''
+            exts  = m_ext  or '', '.dylib', '.so', ''
+            libs  = m_lib  or '', '', 'lib'
+
+        versions = []
+        for version_i in xrange(-1, len(version_parts) + 1, 2):
+            version = ''.join(version_parts[:version_i]) if version_i > 0 else ''
+            versions.insert(0, version)
+
+        for post, lib, version, ext in itertools.product(posts, libs, versions, exts):
+            new_name = '%s%s%s%s%s' % (lib, base, version, ext, post)
+            res.append(new_name)
 
     return list(iter_unique(res))
 
 
 def get_dependencies(path):
-    raw = call(['otool', '-L', path], stdout=True)
-    lines = raw.strip().splitlines()
 
-    id_ = lines[0][:-1]
-    deps = []
+    ids = _parse_otool(call(['otool', '-D', path], stdout=True))
+    id_ = ids[0] if ids else None
 
-    for line in lines[1:]:
-        deps.append(re.sub(r'\s*\(.+?\)$', '', line.strip()))
+    deps = _parse_otool(call(['otool', '-L', path], stdout=True))
+
+    # Trim off the ID.
+    if deps and id_ and deps[0] == id_:
+        deps = deps[1:]
 
     return id_, deps
+
+
+def _parse_otool(raw):
+    lines = raw.strip().splitlines()
+    deps = []
+    for line in lines[1:]:
+        deps.append(re.sub(r'\s*\(.+?\)$', '', line.strip()))
+    return deps
 
 
 # Assuming that VEE doesn't have a very long lifetime, this isn't the
 # worst idea...
 _symbol_cache = {}
+IGNORE_SYMBOLS = set(('_main', ))
 
 def get_symbols(path):
     
@@ -60,6 +85,12 @@ def get_symbols(path):
             if not line:
                 continue
             name, type_, _ = line.split(None, 2)
+
+            # Some symbols can safely be ignored. E.g. "_main", which we
+            # sometimes see left over in some shared libs.
+            if name in IGNORE_SYMBOLS:
+                continue
+
             if type_ in 'TDBC':
                 defined.add(name)
             elif type_ == 'U':
@@ -92,12 +123,13 @@ def find_shared_libraries(path):
         for file_name in file_names:
             ext = os.path.splitext(file_name)[1]
 
-            # Frameworks on OSX leave out extensions much of the time,
-            # so we need to manually detech MachO's magic tag.
+            # Frameworks on OSX leave out extensions much of the time, and
+            # executable files in general won't have them so we need to manually
+            # detect MachO's magic tag.
             if not ext:
                 
                 if allow_blank_ext is None:
-                    allow_blank_ext = bool(re.search(r'\.framework(/|$)|/MacOS(/|$)', dir_path))
+                    allow_blank_ext = bool(re.search(r'(^|/)(\.framework|MacOS|bin|scripts)($/|)', dir_path))
                 if not allow_blank_ext:
                     continue
 
@@ -186,27 +218,40 @@ def relocate(root, con, spec=None, dry_run=False, target_cache=None):
         if stat.S_ISLNK(lib_stat.st_mode):
             continue
 
-        _relocate_library(lib_path, con, auto, include, exclude, dry_run, target_cache)
+        log.info(lib_path)
+        with log.indent():
+            _relocate_library(lib_path, con, auto, include, exclude, dry_run, target_cache)
 
 
 def _relocate_library(lib_path, con, auto, include, exclude, dry_run, target_cache):
 
-    log.info(lib_path)
 
     lib_id, lib_deps = get_dependencies(lib_path)
+
+    id_versions = set(name_variants(os.path.basename(lib_id), version_only=True)) if lib_id else set()
+    lib_versions = set(name_variants(os.path.basename(lib_path), version_only=True))
 
     cmd = ['install_name_tool']
 
     if lib_id != lib_path:
-        print '    -id %s' % lib_id
+        log.info('id %s' % (lib_path), verbosity=1)
         cmd.extend(('-id', lib_path))
 
     lib_def, lib_undef = get_symbols(lib_path)
 
-    for dep_path in lib_deps:
+    for dep_i, dep_path in enumerate(lib_deps):
 
         if dep_path == lib_id:
             log.warning('The ID is included?! %s' % lib_path)
+            cmd.extend(('-change', dep_path, lib_path))
+            continue
+
+        # If the dependency is similarly named to the library itself, then we
+        # assume it is its own dependency. Which I don't understand...
+        dep_versions = set(name_variants(os.path.basename(dep_path), version_only=True))
+        if dep_versions.intersection(id_versions) or dep_versions.intersection(lib_versions):
+            log.warning('Library depends on itself?! %s' % dep_path)
+            cmd.extend(('-change', dep_path, lib_path))
             continue
 
         do_exclude = any(dep_path.startswith(x) for x in exclude)
@@ -227,6 +272,13 @@ def _relocate_library(lib_path, con, auto, include, exclude, dry_run, target_cac
                 new_targets.extend([row[0] for row in cur])
                 targets.extend(new_targets)
         
+        # Go searching for the "best" relocation target.
+        # The one with the most defined symbols missing from the lib wins
+        # (essentially; it is more complex then that below). We also, dubiously,
+        # accept libraries which provide no matching symbols as long as they
+        # don't introduct any conflicts. There are a TON of these in FFmpeg.
+        best_score = -1
+        best_target = None
         seen_targets = set()
         for target in targets:
             if target in seen_targets:
@@ -238,16 +290,27 @@ def _relocate_library(lib_path, con, auto, include, exclude, dry_run, target_cac
             
             tar_def, tar_undef = get_symbols(target)
 
-            pros = len(tar_def.intersection(lib_undef))
-            cons = len(tar_def.intersection(lib_def)) + len(lib_undef.intersection(lib_def))
-            log.debug('+%d -%d %s' % (pros, cons, target), verbosity=2)
-            if pros > cons:
-                break
-        else:
-            log.warning('Could not relocate %s' % dep_path)
-            continue
+            pros   = len(tar_def.intersection(lib_undef))
+            shared = len(tar_def.intersection(lib_def))
+            cons   = len(lib_undef.intersection(lib_def))
+            log.debug('+%d ~%d -%d %s' % (pros, shared, cons, target), verbosity=2)
+            if pros - shared - cons > best_score:
+                best_score = pros - shared - cons
+                best_target = (pros, shared, cons, target)
 
-        log.info('%s -> %s' % (dep_name, target), verbosity=1)
+        if best_target is None:
+            log.warning('No relocation targets for %s' % dep_path)
+            continue
+        if best_score < 0:
+            log.warning('No positive relocation targets for %s' % dep_path)
+            continue
+        
+        if best_target[1] or best_target[2]:
+            log.warning('Best target has %s collisions for %s' % (best_target[1] + best_target[2], dep_path))
+
+        target = best_target[3]
+
+        log.info('change %s -> %s' % (dep_name, target), verbosity=1)
 
         cmd.extend(('-change', dep_path, target))
 

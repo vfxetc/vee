@@ -17,6 +17,45 @@
   why building the docs is failing. Could set PYTHONPATH in os.environ so
   that everything inherits it
 
+- ffmpeg binaries can't find openjpeg fails:
+  
+  Debug [vee.libs:273]: +0 -1 /usr/local/vee/installs/openjpeg/1.5.1_1+5df00e1f/lib/libopenjpeg.1.dylib
+  Debug [vee.libs:273]: +0 -1 /usr/local/Cellar/openjpeg/1.5.1_1/lib/libopenjpeg.1.dylib
+  Debug [vee.libs:273]: +0 -1 /usr/local/vee/installs/openjpeg/1.5.1_1+5df00e1f/lib/libopenjpeg.dylib
+  Debug [vee.libs:273]: +0 -1 /usr/local/Cellar/openjpeg/1.5.1_1/lib/libopenjpeg.dylib
+  Warning: No relocation targets for /usr/local/lib/libopenjpeg.1.dylib
+
+- should we be doing initial relocations on packages BEFORE repackacing them,
+  replacing their install_path with @@VEE_INSTALL_PATH@@ ?
+  This would also give us the oppourtunity to see if the dependencies are
+  symlinks to themselves
+
+- how to assert the ID?
+  $ otool -L /usr/local/lib/libavutil.54.dylib
+  /usr/local/lib/libavutil.54.dylib:
+    /usr/local/lib/libavutil.54.dylib (compatibility version 54.0.0, current version 54.22.100)
+    ...
+
+  we can see from `otool -l` or `otool -D` that this is the ID of the library.
+
+  Seems like we need to definitvely tell what the ID is, by using otool or
+  by vendoring macholib.
+
+  Name variations may be due to symlinks:
+
+      $ otool -L /usr/local/opt/lame/lib/libmp3lame.dylib 
+      /usr/local/opt/lame/lib/libmp3lame.dylib:
+        /usr/local/lib/libmp3lame.0.dylib (compatibility version 1.0.0, current version 1.0.0)
+        /usr/lib/libSystem.B.dylib (compatibility version 1.0.0, current version 1197.1.1)
+
+      [mboers@vfx07] /usr/local/vee/environments/westernx/master/bin 
+      $ otool -D /usr/local/opt/lame/lib/libmp3lame.dylib 
+      /usr/local/opt/lame/lib/libmp3lame.dylib:
+      /usr/local/lib/libmp3lame.0.dylib
+
+      $ ll /usr/local/opt/lame/lib/libmp3lame.dylib 
+      lrwxr-xr-x  1 mboers  VFX  18 21 Oct 15:21 /usr/local/opt/lame/lib/libmp3lame.dylib -> libmp3lame.0.dylib
+
 
 WesternX
 --------
@@ -26,6 +65,9 @@ WesternX
     - docs could not find sphinx-build, likely since the "make" step doesn't
       include the python bootstrap
     - cythonmagick returned exit status 1 during egg-info, without saying what
+    - pyav failed due to corrupt gitvee
+
+- OS X clean build issues:
     - pyav failed due to corrupt gitvee
 
 
