@@ -50,10 +50,11 @@ class GenericBuilder(PipelineStep):
         pkg = self.package
         if pkg.relocate:
             log.info(style_note('Relocating'))
-            libs.relocate(pkg.install_path,
-                con=pkg.home.db.connect(),
-                spec=pkg.relocate + ',SELF',
-            )
+            with log.indent():
+                libs.relocate(pkg.install_path,
+                    con=pkg.home.db.connect(),
+                    spec=pkg.relocate + ',SELF',
+                )
 
     def optlink(self):
         pkg = self.package

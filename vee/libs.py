@@ -192,12 +192,26 @@ def relocate(root, con, spec=None, dry_run=False, target_cache=None):
     for x in spec:
         if x in (None, '', 'AUTO'):
             auto = True
-        elif x in ('SELF', ):
-            include.append(root)
+            continue
+
+        if x[0] in '!-':
+            spec_set = exclude
+            x = x[1:]
+        else:
+            spec_set = include
+
+        if x == 'SELF':
+            spec_set.append(root)
+        elif x == 'HOMEBREW':
+            spec_set.extend((
+                '/usr/local/lib',
+                '/usr/local/opt',
+                '/usr/local/Cellar',
+                '/usr/local/vee/packages/homebrew', # TODO: These should use current home.
+                '/usr/local/vee/packages/linuxbrew',
+            ))
         elif x.startswith('/'):
-            include.append(x)
-        elif x.startswith('-/') or x.startswith('!/'):
-            exclude.append(x[1:])
+            spec_set.append(x)
         else:
             raise ValueError('malformed relocate spec %r' % x)
 

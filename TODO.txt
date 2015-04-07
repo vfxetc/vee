@@ -1,4 +1,7 @@
 
+- environments/REPO/versions/VERSION[-dirty]
+    - environment aliases in the database?
+
 - `vee upgrade --clean` deletes the environment
 
 - shell setup fails really badly if kscore isn't installed
@@ -17,13 +20,25 @@
   why building the docs is failing. Could set PYTHONPATH in os.environ so
   that everything inherits it
 
-- ffmpeg binaries can't find openjpeg fails:
-  
-  Debug [vee.libs:273]: +0 -1 /usr/local/vee/installs/openjpeg/1.5.1_1+5df00e1f/lib/libopenjpeg.1.dylib
-  Debug [vee.libs:273]: +0 -1 /usr/local/Cellar/openjpeg/1.5.1_1/lib/libopenjpeg.1.dylib
-  Debug [vee.libs:273]: +0 -1 /usr/local/vee/installs/openjpeg/1.5.1_1+5df00e1f/lib/libopenjpeg.dylib
-  Debug [vee.libs:273]: +0 -1 /usr/local/Cellar/openjpeg/1.5.1_1/lib/libopenjpeg.dylib
-  Warning: No relocation targets for /usr/local/lib/libopenjpeg.1.dylib
+- remaining relocation problems:
+    
+    /usr/local/vee/installs/imagemagick/6.9.1-0+5df00e1f/lib/ImageMagick/modules-Q16HDRI/coders/jp2.so
+      Warning: No relocation targets for /usr/local/lib/libopenjp2.7.dylib
+    /usr/local/vee/installs/openexr/2.1.0+5df00e1f/lib/libIlmImf-Imf_2_1.21.dylib
+      Warning: No relocation targets for /usr/local/lib/libImath-2_1.11.dylib
+      Warning: Best target has 1 collisions for /usr/local/lib/libIex-2_1.11.dylib
+      Warning: No relocation targets for /usr/local/lib/libIexMath-2_1.11.dylib
+      Warning: Best target has 1 collisions for /usr/local/lib/libIlmThread-2_1.11.dylib
+    /usr/local/vee/installs/gobject-introspection/1.44.0+5df00e1f/bin/g-ir-compiler
+      Warning: No relocation targets for /usr/local/Cellar/gobject-introspection/1.44.0/lib/libgirepository-1.0.1.dylib
+    /usr/local/vee/installs/gettext/0.19.4+5df00e1f/bin/msginit
+      Warning: Best target has 2 collisions for /usr/local/Cellar/gettext/0.19.4/lib/libgettextlib-0.19.4.dylib
+      Warning: Best target has 1 collisions for /usr/local/Cellar/gettext/0.19.4/lib/libintl.8.dylib
+    /usr/local/vee/installs/libtiff/4.0.3+5df00e1f/lib/libtiffxx.5.dylib
+      Warning: Best target has 1 collisions for /usr/local/Cellar/libtiff/4.0.3/lib/libtiff.5.dylib
+
+- CythonMagick is compiling against the wrong libMagick++
+
 
 - should we be doing initial relocations on packages BEFORE repackacing them,
   replacing their install_path with @@VEE_INSTALL_PATH@@ ?
