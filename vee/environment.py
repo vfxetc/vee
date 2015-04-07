@@ -205,7 +205,8 @@ class Environment(DBObject):
                 src_path = os.path.join(src_dir, name)
                 dst_path = os.path.join(dst_dir, name)
 
-                if self.rewrite_shebang(src_path, dst_path):
+                # Need to check again, since it may be a broken symlink.
+                if os.path.exists(src_path) and self.rewrite_shebang(src_path, dst_path):
                     dst_dir_is_real = True
                 else:
                     to_link.append(name)
