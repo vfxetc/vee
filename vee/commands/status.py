@@ -1,4 +1,5 @@
 import difflib
+import os
 import re
 
 from vee.cli import style, style_error, style_note, style_warning
@@ -60,6 +61,9 @@ def status(args):
     # Dev packages.
     for row in home.db.execute('SELECT * FROM development_packages'):
         row = dict(row)
+
+        if not os.path.exists(row['path']):
+            continue
 
         dev_repo = GitRepo(row['path'])
         row['remotes'] = dev_repo.remotes()

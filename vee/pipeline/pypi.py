@@ -31,14 +31,15 @@ class PyPiTransport(PipelineStep):
 
     def init(self):
         pkg = self.package
-        pkg.url = 'pypi:' + re.sub(r'^pypi[:+]', '', pkg.url)
+        self.name = re.sub(r'^pypi[:+]', '', pkg.url).lower()
+        pkg.url = 'pypi:' + self.name
 
     def _meta(self):
         pkg = self.package
-        path = pkg.home._abs_path('packages', 'pypi', pkg.name.lower(), 'meta.json')
+        path = pkg.home._abs_path('packages', 'pypi', self.name, 'meta.json')
         if not os.path.exists(path):
-            log.info(style_note('Looking up %s on PyPI' % pkg.name))
-            url = PYPI_URL_PATTERN % pkg.name.lower()
+            log.info(style_note('Looking up %s on PyPI' % self.name))
+            url = PYPI_URL_PATTERN % self.name
             res = urllib2.urlopen(url)
             makedirs(os.path.dirname(path))
             with open(path, 'wb') as fh:
@@ -69,7 +70,7 @@ class PyPiTransport(PipelineStep):
 
         pkg.revision = str(version)
 
-        pkg.package_name = os.path.join(pkg.name, os.path.basename(release['url']))
+        pkg.package_name = os.path.join(self.name, os.path.basename(release['url']))
         pkg._assert_paths(package=True)
 
         if os.path.exists(pkg.package_path):
