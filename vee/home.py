@@ -148,7 +148,7 @@ class Home(object):
         con = self.db.connect()
 
         # Look by name.
-        for row in con.execute('SELECT * FROM development_packages WHERE name = ?', [input]):
+        for row in con.execute('SELECT * FROM development_packages WHERE name = ? OR name = ?', [input, os.path.basename(input)]):
             if os.path.exists(row['path']):
                 return row
 
