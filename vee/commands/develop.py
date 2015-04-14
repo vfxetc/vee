@@ -111,6 +111,7 @@ def clone(args):
     help='track an existing checkout',
 )
 def add(args):
+    args.path = os.path.abspath(args.path)
     args.name = args.name or os.path.basename(args.path)
     return init(args, do_add=True)
 

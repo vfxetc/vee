@@ -1,3 +1,4 @@
+import os
 import re
 
 from vee.cli import style, style_error, style_note, style_warning
@@ -70,7 +71,7 @@ def add(args):
         return
 
 
-    row = home.get_development_record(args.package)
+    row = home.get_development_record(os.path.abspath(args.package))
 
     if not row:
         raise ValueError('No development package %r' % args.package)
