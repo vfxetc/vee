@@ -77,6 +77,7 @@ requirement_parser.add_argument('-e', '--environ', nargs='*', action=_Environmen
 requirement_parser.add_argument('-c', '--config', nargs='*', action=_ConfigAction, help='args to pass to `./configure`, `python setup.py`, `brew install`, etc..')
 
 requirement_parser.add_argument('--make-install', action='store_true', help='do `make install`')
+requirement_parser.add_argument('--defer-setup-build', action='store_true', help=argparse.SUPPRESS)
 
 requirement_parser.add_argument('--install-name')
 requirement_parser.add_argument('--build-subdir')

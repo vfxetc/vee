@@ -86,6 +86,12 @@ class PythonBuilder(GenericBuilder):
 
         if self.setup_path:
 
+            # Some packages need to be built at the same time as installing.
+            # Anything which uses the distutils install_clib command, for instance...
+            if pkg.defer_setup_build:
+                log.info(style_note('Deferring build to install stage'))
+                return
+
             log.info(style_note('Building Python package'))
 
             cmd = ['build']
@@ -170,12 +176,13 @@ class PythonBuilder(GenericBuilder):
 
         cmd = [
             'install',
-                '--skip-build',
-                '--root', pkg.install_path, # Better than prefix
-                '--prefix', '.',
-                '--install-lib', site_packages, # So that we don't get lib64; virtualenv symlinks them together anyways.
-                '--single-version-externally-managed',
+            '--root', pkg.install_path, # Better than prefix
+            '--prefix', '.',
+            '--install-lib', site_packages, # So that we don't get lib64; virtualenv symlinks them together anyways.
+            '--single-version-externally-managed',
         ]
+        if not pkg.defer_setup_build:
+            cmd.append('--skip-build')
         
         res = call_setup_py(self.setup_path, cmd, env=env, indent=True, verbosity=1)
         if res:

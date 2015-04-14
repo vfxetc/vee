@@ -165,7 +165,7 @@ def rescan(args):
 
     if args.names:
         for name in args.names:
-            row = con.execute('SELECT path FROM development_packages WHERE name = ?', [name]).fetchone()
+            row = con.execute('SELECT path FROM development_packages WHERE name = ? OR name = ?', [name, os.path.basename(os.path.abspath(name))]).fetchone()
             if not row:
                 log.warning('No dev package named %s' % name)
                 continue
