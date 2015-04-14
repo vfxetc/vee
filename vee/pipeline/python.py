@@ -34,8 +34,8 @@ class PythonBuilder(GenericBuilder):
             return
 
         setup_path = find_in_tree(pkg.build_path, 'setup.py')
-        egg_path = find_in_tree(pkg.build_path, 'EGG-INFO', 'dir') or find_in_tree(pkg.build_path, '*.egg-info', 'dir')
-        dist_path = find_in_tree(pkg.build_path, '*.dist-info', 'dir')
+        egg_path   = find_in_tree(pkg.build_path, 'EGG-INFO', 'dir') or find_in_tree(pkg.build_path, '*.egg-info', 'dir')
+        dist_path  = find_in_tree(pkg.build_path, '*.dist-info', 'dir')
 
         if setup_path or egg_path or dist_path:
             return cls(pkg, (setup_path, egg_path, dist_path))

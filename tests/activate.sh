@@ -8,6 +8,7 @@ root="$(cd "$(dirname "${BASH_SOURCE[0]}")"; cd ..; pwd)"
 # Clear out any existing variables.
 unset VEE_DEV
 unset VEE_REPO
+unset GIT
 
 # Setup demo VEE.
 export VEE="$root/demo"
@@ -18,7 +19,7 @@ export VEE_HOMEBREW="$root/sandbox/Homebrew"
 
 # Use scripts from source.
 export PATH="$root/bin:$PATH"
-export PYTHONPATH="$root"
+export PYTHONPATH="$root:$root/vee/_vendor"
 
 
 # Remove WX environ.
