@@ -32,6 +32,7 @@ def iter_availible_requirements(home):
        vee develop init [NAME]
    or: vee develop clone URL [NAME]
    or: vee develop add PATH [NAME]
+   or: vee develop rm PATTERN
    or: vee develop find PATH
    or: vee develop install NAME
    or: vee develop rescan [NAME ...]
