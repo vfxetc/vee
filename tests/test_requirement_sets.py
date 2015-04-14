@@ -19,6 +19,14 @@ class TestRequirementss(TestCase):
         self.assertEqual(reqs[1].base_environ, {'KEY': 'VALUE1'})
         self.assertEqual(reqs[2].base_environ, {'KEY': 'VALUE2'})
 
+    def test_local_envvars(self):
+        reqs = Requirements()
+        reqs.parse_file('''
+            url -e KEY=VALUE
+        '''.strip().splitlines())
+
+        flat = ''.join(reqs.iter_dump()).strip()
+        self.assertEqual(flat, 'file:url --environ=KEY=VALUE')
 
     def test_platforms(self):
         req_set = Requirements()

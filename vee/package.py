@@ -235,10 +235,13 @@ class Package(DBObject):
         return args
 
     def __str__(self):
-        return ' '.join(self.to_args(exclude=('base_environ')))
+        return ' '.join(self.to_args(exclude=('base_environ', )))
 
     def __repr__(self):
         return '%s(%r)' % (self.__class__.__name__, str(self))
+
+    def copy(self):
+        return self.__class__(self.to_kwargs(), home=self.home)
 
     def freeze(self, environ=True):
         kwargs = self.to_kwargs()

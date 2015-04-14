@@ -247,15 +247,15 @@ class Requirements(list):
                 environ[element.name] = element.value
 
             if isinstance(element, Package):
-                if freeze:
-                    req = element = element.package.freeze(environ=False)
-                else:
-                    req = element
+
+                req = element = (element.freeze() if freeze else element.copy())
+
+                # We don't need a name if it matches the guessed version.
                 if req.name and req.name == guess_name(req.url):
                     req.name = None
+
+                # Strip out anything in the base environment which matches.
                 for k, v in environ.iteritems():
-                    if req.environ.get(k) == v:
-                        del req.environ[k]
                     if req.base_environ.get(k) == v:
                         del req.base_environ[k]
 
