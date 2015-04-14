@@ -4,6 +4,7 @@ from vee.package import Package
 from vee.exceptions import AlreadyInstalled, AlreadyLinked, print_cli_exc
 from vee import log
 from vee.cli import style
+from vee.utils import guess_name
 
 
 class PackageSet(collections.OrderedDict):
@@ -23,8 +24,10 @@ class PackageSet(collections.OrderedDict):
 
     def resolve(self, req, check_existing=True, weak=False, env=None):
 
+        # We may need to guess a name.
+        name = req.name or guess_name(req.url)
         try:
-            return self[req.name]
+            return self[name]
         except KeyError:
             pass
 
@@ -32,6 +35,7 @@ class PackageSet(collections.OrderedDict):
         # because we want to allow others to keep the abstract and concrete
         # packages isolated if they want to.
         pkg = Package(req, home=self.home)
+        pkg.name = name
         if check_existing:
             (
                 pkg.resolve_existing(env=env or self.env) or
@@ -41,7 +45,7 @@ class PackageSet(collections.OrderedDict):
 
         # Store it under the package name since deferred dependencies will not
         # have a name set (in order to load the specific package they were before).
-        self[pkg.name] = pkg
+        self[name] = pkg
         return pkg
     
     def resolve_set(self, req_set, **kwargs):
