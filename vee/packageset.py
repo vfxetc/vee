@@ -35,7 +35,11 @@ class PackageSet(collections.OrderedDict):
         # because we want to allow others to keep the abstract and concrete
         # packages isolated if they want to.
         pkg = Package(req, home=self.home)
-        pkg.name = name
+
+        # Our guessed name may be wrong after the package is resolved (e.g.
+        # deferred packages will definitely be wrong).
+        pkg.name = pkg.name or name
+
         if check_existing:
             (
                 pkg.resolve_existing(env=env or self.env) or
@@ -45,7 +49,7 @@ class PackageSet(collections.OrderedDict):
 
         # Store it under the package name since deferred dependencies will not
         # have a name set (in order to load the specific package they were before).
-        self[name] = pkg
+        self[pkg.name] = pkg
         return pkg
     
     def resolve_set(self, req_set, **kwargs):
@@ -96,7 +100,11 @@ class PackageSet(collections.OrderedDict):
 
     def _install_one(self, names, name, link_env, reinstall, relink, no_deps):
 
-        pkg = self[name]
+        try:
+            pkg = self[name]
+        except KeyError:
+            print ', '.join(sorted(self.keys()))
+            raise
 
         reinstall_this = name in reinstall
         relink_this    = name in relink
