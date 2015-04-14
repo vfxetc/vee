@@ -122,6 +122,11 @@ def find_shared_libraries(path):
         allow_blank_ext = None
 
         for file_name in file_names:
+
+            path = os.path.join(dir_path, file_name)
+            if os.path.islink(path):
+                continue
+
             ext = os.path.splitext(file_name)[1]
 
             # Frameworks on OSX leave out extensions much of the time, and
@@ -130,11 +135,10 @@ def find_shared_libraries(path):
             if not ext:
                 
                 if allow_blank_ext is None:
-                    allow_blank_ext = bool(re.search(r'(^|/)(\.framework|MacOS|bin|scripts)($/|)', dir_path))
+                    allow_blank_ext = bool(re.search(r'(^|/)([^/]+\.framework|MacOS|bin|scripts)($/|)', dir_path))
                 if not allow_blank_ext:
                     continue
 
-                path = os.path.join(dir_path, file_name)
                 try:
                     tag = open(path, 'rb').read(4).encode('hex')
                 except IOError:
@@ -144,7 +148,7 @@ def find_shared_libraries(path):
 
             # Obvious ones.
             if ext in ('.so', '.dylib'):
-                yield os.path.join(dir_path, file_name)
+                yield path
 
 
 def get_installed_shared_libraries(con, package_id, install_path, rescan=False):
@@ -167,6 +171,7 @@ def get_installed_shared_libraries(con, package_id, install_path, rescan=False):
 
         res = []
         for lib_path in find_shared_libraries(install_path):
+            log.debug('Found shared library %s' % lib_path)
             res.append(lib_path)
             con.execute('''INSERT INTO shared_libraries (package_id, name, path) VALUES (?, ?, ?)''', [
                 package_id, os.path.basename(lib_path), lib_path,
