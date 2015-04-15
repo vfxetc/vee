@@ -195,14 +195,19 @@ class Requirements(list):
 
             if eval_control and isinstance(el, Control):
                 if el.type == 'if':
-                    include_stack.append(bool(eval(el.expr, control_namespace)))
+                    do_this = bool(eval(el.expr, control_namespace))
+                    include_stack.extend((do_this, do_this))
                 elif el.type == 'elif':
                     include_stack.pop()
-                    include_stack.append(bool(eval(el.expr, control_namespace)))
+                    done_one = include_stack.pop()
+                    do_this = False if done_one else bool(eval(el.expr, control_namespace))
+                    include_stack.extend((done_one or do_this, do_this))
                 elif el.type == 'else':
-                    prev = include_stack.pop()
-                    include_stack.append(not prev)
+                    include_stack.pop()
+                    done_one = include_stack.pop()
+                    include_stack.append(not done_one)
                 elif el.type == 'endif':
+                    include_stack.pop()
                     include_stack.pop()
                 else:
                     raise ValueError('unknown control type %r' % el.type)

@@ -28,6 +28,36 @@ class TestRequirementss(TestCase):
         flat = ''.join(reqs.iter_dump()).strip()
         self.assertEqual(flat, 'file:url --environ=KEY=VALUE')
 
+    def test_elif(self):
+        reqs = Requirements()
+        reqs.parse_file('''
+            % if 0:
+                zero
+            % elif 1:
+                one
+            % else:
+                two
+            % endif
+        '''.strip().splitlines())
+        pkgs = list(reqs.iter_packages())
+        self.assertEqual(len(pkgs), 1)
+        self.assertEqual(pkgs[0].name, 'one')
+
+    def test_else(self):
+        reqs = Requirements()
+        reqs.parse_file('''
+            % if 0:
+                zero
+            % elif 0:
+                one
+            % else:
+                two
+            % endif
+        '''.strip().splitlines())
+        pkgs = list(reqs.iter_packages())
+        self.assertEqual(len(pkgs), 1)
+        self.assertEqual(pkgs[0].name, 'two')
+
     def test_platforms(self):
         req_set = Requirements()
         req_set.parse_file('''
