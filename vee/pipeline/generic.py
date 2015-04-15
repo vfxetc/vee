@@ -8,6 +8,7 @@ from vee.envvars import join_env_path
 from vee.pipeline.base import PipelineStep
 from vee.subproc import call, bash_source
 from vee.utils import find_in_tree, linktree, makedirs
+from vee.homebrew import Homebrew
 
 
 class GenericBuilder(PipelineStep):
@@ -30,6 +31,13 @@ class GenericBuilder(PipelineStep):
     def install(self):
 
         pkg = self.package
+
+        if pkg.pseudo_homebrew:
+            homebrew = Homebrew(home=pkg.home)
+            version = pkg.revision.split('+')[0]
+            pkg.install_path = os.path.join(homebrew.cellar, pkg.name, version)
+            log.info(style_note('Re-installing into Homebrew', 'as %s/%s' % (pkg.name, version)))
+
         pkg._assert_paths(install=True)
 
         if pkg.make_install:
