@@ -30,6 +30,11 @@ class Homebrew(object):
     def __call__(self, cmd, *args, **kwargs):
         self.repo.clone_if_not_exists()
         bin = os.path.join(self.repo.work_tree, 'bin', 'brew')
+        
+        # We need to own the homebrew cache so that we can control permissions.
+        kwargs['env'] = env = kwargs.get('env', os.environ).copy()
+        env.setdefault('HOMEBREW_CACHE', os.path.join(self.repo.work_tree, 'Cache'))
+        
         res = call((bin, cmd) + args, _frame=1, **kwargs)
         if cmd in ('install', 'uninstall'):
             self._info.pop(args[0], None)

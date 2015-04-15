@@ -1,8 +1,17 @@
 
-- `--md5 xxx` for static packages: we are getting TONS of read errors either 
+- `--checksum md5:xxx` for static packages: we are getting TONS of read errors either 
   across the NFS or across HTTP.
+    - add a "prebake" pipeline, which is ['init', 'prebake']
 
-- summary of results at end of upgrade could be helpful
+- pipeline_log table containing the stdout/err and metadata from each pipeline
+  step. This would allow failed installs to tell you a quick `vee cat log:123`
+  in order to see what happened.
+
+- normalize_dev_path(xxx) -> (name, path) so that all the stuff dealing with
+  dev packages is normalized
+
+- summary of results at end of upgrade in a manner that ksfab can parse and
+  aggregate
 
 - `%include PATH` for moving the platform dependencies into other files
 
