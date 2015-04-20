@@ -3,7 +3,7 @@ from . import *
 from vee.requirements import Requirements
 
 
-class TestRequirementss(TestCase):
+class TestRequirements(TestCase):
 
     def test_global_envvars(self):
         req_set = Requirements()

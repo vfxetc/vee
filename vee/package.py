@@ -78,8 +78,8 @@ requirement_parser.add_argument('-c', '--config', nargs='*', action=_ConfigActio
 
 requirement_parser.add_argument('--make-install', action='store_true', help='do `make install`')
 
-requirement_parser.add_argument('--defer-setup-build', action='store_true', help=argparse.SUPPRESS)
-requirement_parser.add_argument('--pseudo-homebrew', action='store_true', help=argparse.SUPPRESS)
+requirement_parser.add_argument('--defer-setup-build', action='store_true', help='For Python packages, dont `python setup.py build` first')
+requirement_parser.add_argument('--pseudo-homebrew', action='store_true', help='assume is repackage of Homebrew')
 
 requirement_parser.add_argument('--install-name')
 requirement_parser.add_argument('--build-subdir')
@@ -260,16 +260,41 @@ class Package(DBObject):
         diff = {}
 
         def rep(m):
-            a, b, c, orig = m.groups()
-            abc = a or b or c
-            if abc:
-                return source.get(abc, '')
+
+            name_a, name_b, name_c, func, orig = m.groups()
+
+            name = name_a or name_b or name_c
+            if name:
+                return source.get(name, '')
+
+            if func:
+                args = func.split()
+                if args[0] in ('prefix', 'install_path')
+                    if len(args) != 2:
+                        raise ValueError('prefix function takes one argument')
+                    name = args[1]
+                    try:
+                        pkg = self.set[name]
+                    except KeyError:
+                        raise ValueError('unknown package %s' % name)
+                    if not pkg.install_path:
+                        raise ValueError('%s does not have a set install_path' % name)
+                    return pkg.install_path
+                else:
+                    raise ValueError('unknown environment function %r' % args[0])
+
             if orig:
                 return source.get(k)
 
         for e in (self.base_environ, self.environ):
             for k, v in e.iteritems():
-                v = re.sub(r'\$\{(\w+)\}|\$(\w+)|%(\w+)%|(@)', rep, v)
+                v = re.sub(r'''
+                    \$\{(\w+)\}| # variables with braces:    ${XXX}
+                    \$  (\w+)  | # variables without braces: $XXX
+                     %  (\w+)% | # Windows variables:        %XXX%
+                    \$\((.+?)\)| # Makefile-like functions:  $(prefix XXX)
+                    (@)          # Token representing original value.
+                ''', rep, v, flags=re.VERBOSE)
                 diff[k] = v
 
         return diff
