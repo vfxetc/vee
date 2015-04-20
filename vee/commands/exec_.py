@@ -30,6 +30,9 @@ def exec_(args):
 
     home = args.assert_home()
 
+    repo_names = []
+    env_names = []
+
     if not (args.export or args.command or args.prefix):
         raise ValueError('Must either --prefix, --export, or provide a command')
 
@@ -44,6 +47,7 @@ def exec_(args):
         repo = home.get_env_repo(name or None) # Allow '' to be the default.
         args.environment = args.environment or []
         args.environment.append('%s/%s' % (repo.name, repo.branch_name))
+        repo_names.append(repo.name)
 
     # Requirements and requirement sets.
     req_args = []
@@ -63,6 +67,7 @@ def exec_(args):
     for name in args.environment or ():
         env = Environment(name, home=home)
         paths.append(env.path)
+        env_names.append(name)
 
     if args.prefix:
         for path in paths:
@@ -93,6 +98,11 @@ def exec_(args):
     # Make sure setuptools is bootstrapped.
     bootstrap_environ(environ_diff)
 
+    environ_diff['VEE_EXEC_PATH'] = ':'.join(paths)
+    environ_diff['VEE_EXEC_REPO'] = ','.join(repo_names)
+    environ_diff['VEE_EXEC_ENV'] = ','.join(env_names)
+    environ_diff['VEE_EXEC_PREFIX'] = paths[0]
+
     # Print it out instead of running it.
     if args.export:
         for k, v in sorted(environ_diff.iteritems()):
@@ -104,7 +114,7 @@ def exec_(args):
             if k == 'PYTHONPATH' and existing.endswith(vendor_path):
                 existing += (':' if existing else '') + vendor_path
 
-            if existing is not None:
+            if existing is not None and not k.startswith('VEE_EXEC'):
                 v = v.replace(existing, '$' + k)
             print 'export %s="%s"' % (k, v)
         return

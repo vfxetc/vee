@@ -71,3 +71,32 @@ Requirement
 A requirement is specification of a package that we would like to have installed
 in an environment. These are still represented via the :class:`Package` class.
 
+
+.. _exec_env:
+
+Execution Environment
+---------------------
+
+.. envvar:: VEE_EXEC_ENV
+
+    A comma-delimited list of environment names that were linked into the
+    current environment. If you actually use an environment repository, this
+    will likely contain ``"NAME/BRANCH"`` of that repo. Each entry here will
+    have a corresponding entry in :envvar:`VEE_EXEC_PATH` as well.
+
+
+.. envvar:: VEE_EXEC_REPO
+
+    A comma-delimited list of environment repository names that were linked
+    into the current environment.
+
+.. envvar:: VEE_EXEC_PATH
+
+    A colon-delimited list of paths that are scanned to assemble the current
+    environment.
+
+.. envvar:: VEE_EXEC_PREFIX
+
+    The first path scanned to assemble the current environment. This is
+    mainly for convenience.
+
