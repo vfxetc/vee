@@ -113,7 +113,7 @@ class HashingWriter(object):
 
     def __init__(self, fh, hasher=None):
         self._fh = fh
-        self._hasher = hasher or hashlib.sha1()
+        self._hasher = hasher or hashlib.md5()
 
     def write(self, data):
         self._fh.write(data)
@@ -124,7 +124,7 @@ class HashingWriter(object):
 
 
 def _checksum_file(path, hasher=None):
-    hasher = hasher or hashlib.sha1()
+    hasher = hasher or hashlib.md5()
     with open(path, 'rb') as fh:
         while True:
             chunk = fh.read(16384)

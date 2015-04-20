@@ -1,4 +1,5 @@
 from cStringIO import StringIO
+import hashlib
 import os
 import sys
 import tarfile
@@ -85,7 +86,7 @@ def repackage(args):
         if args.verbose:
             print name
 
-        writer = HashingWriter(open(path, 'wb'))
+        writer = HashingWriter(open(path, 'wb'), hashlib.md5())
         archive = tarfile.open(fileobj=writer, mode='w|gz')
 
         for dir_path, dir_names, file_names in os.walk(pkg.install_path):
@@ -107,7 +108,7 @@ def repackage(args):
             archive.addfile(info, buf)
 
         archive.close()
-        checksums[pkg.name] = 'sha1=' + writer.hexdigest()
+        checksums[pkg.name] = 'md5:' + writer.hexdigest()
 
     print
     print 'Add as requirements in (roughly) the following order:'
