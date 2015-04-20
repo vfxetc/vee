@@ -5,7 +5,7 @@ import shlex
 import sys
 
 from vee import log
-from vee.cli import style
+from vee.cli import style, style_note
 from vee.homebrew import Homebrew
 from vee.package import Package
 from vee.pipeline.base import PipelineStep
@@ -21,21 +21,15 @@ class HomebrewManager(PipelineStep):
     def factory(cls, step, pkg):
         if step == 'init' and re.match(r'^homebrew[:+]', pkg.url):
             return cls(pkg)
+        if step == 'relocate' and pkg.pseudo_homebrew:
+            return cls(pkg)
 
-    def get_next(self, step):
-        if step != 'optlink':
-            return self
-
-    def init(self):
+    def __init__(self, *args):
+        super(HomebrewManager, self).__init__(*args)
 
         pkg = self.package
-        pkg.package_name = re.sub(r'^(git\+)?homebrew[:+]', '', pkg.url)
-        pkg.url = 'homebrew:' + pkg.package_name
 
         self.brew = Homebrew(home=pkg.home)
-        pkg.package_path = self.brew.cellar
-
-        self.repo = self.brew.repo
 
         # Parse the requested reversion into a package version, and repo revision.
         # (The version is ignored.)
@@ -50,6 +44,21 @@ class HomebrewManager(PipelineStep):
             if self.version and not self.revision and re.match(r'^[0-9a-f]{8,}$', self.version):
                 self.revision = self.version
                 self.version = None
+
+
+    def get_next(self, step):
+        if step != 'optlink':
+            return self
+
+    def init(self):
+
+        pkg = self.package
+        pkg.package_name = re.sub(r'^(git\+)?homebrew[:+]', '', pkg.url)
+        pkg.url = 'homebrew:' + pkg.package_name
+
+        pkg.package_path = self.brew.cellar
+
+        self.repo = self.brew.repo
 
         # TODO: immediately check info to see if we can satisfy the revision
         # with what is installed, and set install_path accordingly.
@@ -160,5 +169,14 @@ class HomebrewManager(PipelineStep):
         pass
 
     def relocate(self):
-        pass
+
+        pkg = self.package
+        if not pkg.pseudo_homebrew:
+            return
+
+        # --pseudo-homebrew is first handled by the generic.install, which
+        # sets the install_path to be in the Homebrew cellar. We finish the
+        # job by switching to that version.
+        log.info(style_note('Switching Homebrew to %s %s' % (pkg.name, self.version)))
+        self.brew('switch', pkg.name, self.version)
 

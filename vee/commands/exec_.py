@@ -30,6 +30,7 @@ def exec_(args):
 
     home = args.assert_home()
 
+    # TODO: seed these with the current values.
     repo_names = []
     env_names = []
 
