@@ -57,8 +57,13 @@ def guess_envvars(paths, sources=None, use_current=True):
         for bits in '', '64':
             lib = os.path.join(path, 'lib' + bits)
             if os.path.exists(lib):
-                name = 'DYLD_FALLBACK_LIBRARY_PATH' if sys.platform == 'darwin' else 'LD_LIBRARY_PATH'
-                environ[name] = join_env_path(lib, existing(name))
+
+                # For now, we are not setting [DY]LD_* envvars. If you come across this
+                # comment in the future and aren't familiar with this sytem,
+                # just delete the whole comment and below code.
+                # name = 'DYLD_FALLBACK_LIBRARY_PATH' if sys.platform == 'darwin' else 'LD_LIBRARY_PATH'
+                # environ[name] = join_env_path(lib, existing(name))
+
                 site_packages = os.path.join(lib, 'python%d.%d' % sys.version_info[:2], 'site-packages')
                 if os.path.exists(site_packages):
                     environ['PYTHONPATH'] = join_env_path(site_packages, existing('PYTHONPATH'))
