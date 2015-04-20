@@ -6,12 +6,13 @@ from vee.commands.main import command, argument
 from vee.git import GitRepo, normalize_git_url
 from vee.packageset import PackageSet
 from vee.package import Package
-from vee.utils import guess_name
+from vee.utils import guess_name, checksum_file
 
 
 @command(
     argument('--update', action='store_true', help='update all repos themselves'),
     argument('--bake-installed', action='store_true', help='bake all installed revisions'),
+    argument('--checksum', action='store_true', help='checksum existing packages'),
     argument('--repo'),
     argument('package', nargs='?', default='.'),
     help='record changes to dev packages in environment repo',
@@ -22,6 +23,8 @@ def add(args):
     env_repo = home.get_env_repo(args.repo)
     req_set = env_repo.load_requirements()
     pkg_set = PackageSet(home=home)
+
+    baked_any = None
 
     if args.update:
         baked_any = False
@@ -38,11 +41,6 @@ def add(args):
                     req.revision = pkg.repo.head[:8]
                     print style_note('Updated', str(req))
                     baked_any = True
-        if baked_any:
-            env_repo.dump_requirements(req_set)
-        else:
-            print style_note('No changes.')
-        return
 
     if args.bake_installed:
         baked_any = False
@@ -64,6 +62,20 @@ def add(args):
                 baked_any = True
                 print style_note('Pinned', req.name, req.revision)
 
+    if args.checksum:
+        baked_any = False
+
+        for req in req_set.iter_packages():
+            pkg = pkg_set.resolve(req)
+            if pkg.checksum:
+                continue
+            if not pkg.package_path or not os.path.isfile(pkg.package_path):
+                continue
+            req.checksum = checksum_file(pkg.package_path)
+            print style_note('Checksummed', pkg.name, req.checksum)
+            baked_any = True
+
+    if baked_any is not None:
         if baked_any:
             env_repo.dump_requirements(req_set)
         else:

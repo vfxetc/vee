@@ -10,6 +10,7 @@ import subprocess
 import sys
 import threading
 import time
+import hashlib
 
 
 class cached_property(object):
@@ -27,7 +28,6 @@ class cached_property(object):
             value = self.func(instance)
             instance.__dict__[self.__name__] = value
             return value
-
 
 
 def makedirs(*args):
@@ -109,4 +109,27 @@ def linktree(src, dst, symlinks=False, ignore=None):
                 names[:] = [x for x in names if x not in dont_walk]
 
 
+class HashingWriter(object):
+
+    def __init__(self, fh, hasher=None):
+        self._fh = fh
+        self._hasher = hasher or hashlib.sha1()
+
+    def write(self, data):
+        self._fh.write(data)
+        self._hasher.update(data)
+
+    def hexdigest(self):
+        return self._hasher.hexdigest()
+
+
+def checksum_file(path, hasher=None):
+    hasher = hasher or hashlib.sha1()
+    with open(path, 'rb') as fh:
+        while True:
+            chunk = fh.read(16384)
+            if not chunk:
+                break
+            hasher.update(chunk)
+    return '%s:%s' % (hasher.name, hasher.hexdigest())
 

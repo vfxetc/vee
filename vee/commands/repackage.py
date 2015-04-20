@@ -1,5 +1,4 @@
 from cStringIO import StringIO
-import hashlib
 import os
 import sys
 import tarfile
@@ -10,25 +9,11 @@ from vee.environment import Environment
 from vee.cli import style, style_note
 from vee import log
 from vee.package import Package
-from vee.utils import makedirs, guess_name
+from vee.utils import makedirs, guess_name, HashingWriter
 
 
 PLATFORM_DEPENDENT_EXTS = set(('.so', '.exe', '.dylib', '.a'))
 PLATFORM_TAG = sys.platform.strip('2')
-
-
-class HashingWriter(object):
-
-    def __init__(self, fh, hasher=None):
-        self._fh = fh
-        self._hasher = hasher or hashlib.sha1()
-
-    def write(self, data):
-        self._fh.write(data)
-        self._hasher.update(data)
-
-    def hexdigest(self):
-        return self._hasher.hexdigest()
 
 
 @command(
