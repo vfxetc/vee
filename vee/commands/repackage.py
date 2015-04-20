@@ -1,4 +1,5 @@
 from cStringIO import StringIO
+import hashlib
 import os
 import sys
 import tarfile
@@ -14,6 +15,20 @@ from vee.utils import makedirs, guess_name
 
 PLATFORM_DEPENDENT_EXTS = set(('.so', '.exe', '.dylib', '.a'))
 PLATFORM_TAG = sys.platform.strip('2')
+
+
+class HashingWriter(object):
+
+    def __init__(self, fh, hasher=None):
+        self._fh = fh
+        self._hasher = hasher or hashlib.sha1()
+
+    def write(self, data):
+        self._fh.write(data)
+        self._hasher.update(data)
+
+    def hexdigest(self):
+        return self._hasher.hexdigest()
 
 
 @command(
@@ -34,6 +49,7 @@ def repackage(args):
     todo = args.packages
     seen = set()
     in_order = []
+    checksums = {}
 
     while todo:
 
@@ -84,7 +100,8 @@ def repackage(args):
         if args.verbose:
             print name
 
-        archive = tarfile.open(path, 'w|gz')
+        writer = HashingWriter(open(path, 'wb'))
+        archive = tarfile.open(fileobj=writer, mode='w|gz')
 
         for dir_path, dir_names, file_names in os.walk(pkg.install_path):
             for file_name in file_names:
@@ -105,16 +122,24 @@ def repackage(args):
             archive.addfile(info, buf)
 
         archive.close()
+        checksums[pkg.name] = 'sha1=' + writer.hexdigest()
 
     print
     print 'Add as requirements in (roughly) the following order:'
     print
     for pkg, path in reversed(in_order):
+
+        checksum = checksums.get(pkg.name)
         url = (
             args.url.rstrip('/') + '/' + os.path.basename(path)
             if args.url
             else os.path.abspath(path)
         )
-        print '%s --name %s --revision %s' % (url, pkg.name, pkg.revision or '""')
+
+        parts = [url, '--name', pkg.name, '--revision', pkg.revision or '""']
+        if checksum:
+            parts.extend(('--checksum', checksum))
+
+        print ' '.join(parts)
 
 
