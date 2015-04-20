@@ -119,6 +119,7 @@ class Environment(DBObject):
             except OSError as e:
                 # These often come up when you are not the owner
                 # of the file.
+                log.exception('Could not copystat to %s' % new_path)
                 if e.errno != errno.EPERM:
                     raise
 
