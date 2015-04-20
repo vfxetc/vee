@@ -4,6 +4,7 @@ from vee.pipeline.base import PipelineStep
 from vee.subproc import call
 from vee.cli import style_note
 from vee import log
+from vee.utils import assert_file_checksum
 
 
 class ArchiveExtractor(PipelineStep):
@@ -36,6 +37,11 @@ class ArchiveExtractor(PipelineStep):
 
         pkg = self.package
         pkg._assert_paths(build=True)
+
+        if pkg.checksum:
+            log.info(style_note('Verifying checksum'), verbosity=1)
+            assert_file_checksum(pkg.package_path, pkg.checksum)
+
         log.info(style_note('Expanding %s to' % self.archive_type, pkg.build_path))
 
         pkg._clean_build_path()

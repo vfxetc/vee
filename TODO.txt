@@ -1,4 +1,9 @@
 
+- can we bootstrap patchelf?
+- can we include vee in the PYTHONPATH?
+
+- platform keys: darwin-10 and fedora-20 (instead of just linux)
+
 - detect that a package is from homebrew via existence or "INSTALL_RECEIPT.json"?
     - perhaps only when our metadata indicates that it is in the same path
 

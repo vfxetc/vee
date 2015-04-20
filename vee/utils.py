@@ -123,7 +123,7 @@ class HashingWriter(object):
         return self._hasher.hexdigest()
 
 
-def checksum_file(path, hasher=None):
+def _checksum_file(path, hasher=None):
     hasher = hasher or hashlib.sha1()
     with open(path, 'rb') as fh:
         while True:
@@ -131,5 +131,16 @@ def checksum_file(path, hasher=None):
             if not chunk:
                 break
             hasher.update(chunk)
-    return '%s:%s' % (hasher.name, hasher.hexdigest())
+    return hasher.name, hasher.hexdigest()
 
+def checksum_file(path, hasher=None):
+    return '%s:%s' % _checksum_file(path, hasher)
+
+def assert_file_checksum(path, checksum):
+    m = re.match(r'^(md5|sha1)[:=]([0-9a-fA-F]+)$', checksum)
+    if not m:
+        raise ValueError('unknown checksum format %r' % checksum)
+    name, hash1 = m.groups()
+    _, hash2 = _checksum_file(path, getattr(hashlib, name)())
+    if hash1 != hash2:
+        raise ValueError('%s:%s does not match expected %s' % (name, hash2, checksum))
