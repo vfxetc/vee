@@ -289,7 +289,7 @@ class Package(DBObject):
                 raise ValueError('unknown environment function %r' % args[0])
 
         if orig:
-            return environ.get(k)
+            return environ.get(name)
 
     _environ_diff = None
 
