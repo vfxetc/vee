@@ -25,9 +25,20 @@ class HttpTransport(PipelineStep):
             return self
 
     def init(self):
+
         pkg = self.package
+
         split = urlparse.urlsplit(pkg.url)
+
+        # Remove the fragment from the URL.
+        pkg.url = urlparse.urlunsplit((split.scheme, split.netloc, split.path, split.query, ''))
+
         pkg.package_name = os.path.join(split.netloc, split.path.strip('/'))
+
+        # Retain the checksum if in the fragment.
+        m = re.match(r'^(md5|sha1)[:=]([0-9a-fA-F]+)', split.fragment or '')
+        if m:
+            pkg.checksum = '%s:%s' % m.groups()
 
     def fetch(self):
         pkg = self.package

@@ -69,6 +69,9 @@ class PyPiTransport(PipelineStep):
             raise ValueError('no sdist %s %s on the PyPI;' % (self.name, expr if pkg.revision else '(any)'))
 
         pkg.revision = str(version)
+        
+        if release.get('md5_digest'):
+            pkg.checksum = 'md5:%s' % release['md5_digest']
 
         pkg.package_name = os.path.join(self.name, os.path.basename(release['url']))
         pkg._assert_paths(package=True)
