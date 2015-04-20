@@ -1,7 +1,18 @@
 
-- `--checksum md5:xxx` for static packages: we are getting TONS of read errors either 
-  across the NFS or across HTTP.
-    - add a "prebake" pipeline, which is ['init', 'prebake']
+- detect that a package is from homebrew via existence or "INSTALL_RECEIPT.json"?
+    - perhaps only when our metadata indicates that it is in the same path
+
+- `--checksum sha1:xxx` for static packages: we are getting TONS of read errors either 
+  across the NFS or across HTTP. This should be calculated during repackage,
+  before it even hits the disk (with a passthrough file object).
+
+  - Also support #md5=xxx in URL fragments.
+
+- add lots of cascading to foreign key contraints
+
+- requirements functions: $FFMPEG_PREFIX or $FFMPEG_INSTALL_PATH or ${packages['ffmpeg'].install_path}
+  $(prefix ffmpeg)
+  
 
 - pipeline_log table containing the stdout/err and metadata from each pipeline
   step. This would allow failed installs to tell you a quick `vee cat log:123`

@@ -78,15 +78,14 @@ requirement_parser.add_argument('-c', '--config', nargs='*', action=_ConfigActio
 
 requirement_parser.add_argument('--make-install', action='store_true', help='do `make install`')
 
-requirement_parser.add_argument('--defer-setup-build', action='store_true', help='For Python packages, dont `python setup.py build` first')
-requirement_parser.add_argument('--pseudo-homebrew', action='store_true', help='assume is repackage of Homebrew')
-
 requirement_parser.add_argument('--install-name')
 requirement_parser.add_argument('--build-subdir')
 requirement_parser.add_argument('--install-prefix')
 
-requirement_parser.add_argument('--relocate', help='how to relocate shared libs')
+requirement_parser.add_argument('--defer-setup-build', action='store_true', help='For Python packages, dont `python setup.py build` first')
 requirement_parser.add_argument('--hard-link', action='store_true', help='use hard links instead of copies')
+requirement_parser.add_argument('--pseudo-homebrew', action='store_true', help='assume is repackage of Homebrew')
+requirement_parser.add_argument('--relocate', help='how to relocate shared libs')
 
 requirement_parser.add_argument('url')
 
@@ -252,59 +251,58 @@ class Package(DBObject):
             kwargs['environ'] = self.environ_diff
         return self.__class__(kwargs, home=self.home)
 
-    def _resolve_environ(self, source=None):
+    def render_template(self, template, environ=None):
 
-        source = (source or os.environ).copy()
-        source['VEE'] = self.home.root
+        environ = (environ or os.environ).copy()
+        environ['VEE'] = self.home.root
 
-        diff = {}
+        return re.sub(r'''
+            \$\{(\w+)\}| # variables with braces:    ${XXX}
+            \$  (\w+)  | # variables without braces: $XXX
+             %  (\w+)% | # Windows variables:        %XXX%
+            \$\((.+?)\)| # Makefile-like functions:  $(prefix XXX)
+            (@)          # Token representing original value.
+        ''', lambda m: self._render_template_match(environ, m), template, flags=re.VERBOSE)
 
-        def rep(m):
+    def _render_template_match(self, environ, m):
 
-            name_a, name_b, name_c, func, orig = m.groups()
+        name_a, name_b, name_c, func, orig = m.groups()
 
-            name = name_a or name_b or name_c
-            if name:
-                return source.get(name, '')
+        name = name_a or name_b or name_c
+        if name:
+            return environ.get(name, '')
 
-            if func:
-                args = func.split()
-                if args[0] in ('prefix', 'install_path')
-                    if len(args) != 2:
-                        raise ValueError('prefix function takes one argument')
-                    name = args[1]
-                    try:
-                        pkg = self.set[name]
-                    except KeyError:
-                        raise ValueError('unknown package %s' % name)
-                    if not pkg.install_path:
-                        raise ValueError('%s does not have a set install_path' % name)
-                    return pkg.install_path
-                else:
-                    raise ValueError('unknown environment function %r' % args[0])
+        if func:
+            args = func.split()
+            if args[0] in ('prefix', 'install_path'):
+                if len(args) != 2:
+                    raise ValueError('prefix function takes one argument')
+                name = args[1]
+                try:
+                    pkg = self.set[name]
+                except KeyError:
+                    raise ValueError('unknown package %s' % name)
+                if not pkg.install_path:
+                    raise ValueError('%s does not have a set install_path' % name)
+                return pkg.install_path
+            else:
+                raise ValueError('unknown environment function %r' % args[0])
 
-            if orig:
-                return source.get(k)
-
-        for e in (self.base_environ, self.environ):
-            for k, v in e.iteritems():
-                v = re.sub(r'''
-                    \$\{(\w+)\}| # variables with braces:    ${XXX}
-                    \$  (\w+)  | # variables without braces: $XXX
-                     %  (\w+)% | # Windows variables:        %XXX%
-                    \$\((.+?)\)| # Makefile-like functions:  $(prefix XXX)
-                    (@)          # Token representing original value.
-                ''', rep, v, flags=re.VERBOSE)
-                diff[k] = v
-
-        return diff
+        if orig:
+            return environ.get(k)
 
     _environ_diff = None
 
     @property
     def environ_diff(self):
         if self._environ_diff is None:
-            self._environ_diff = self._resolve_environ()
+
+            self._environ_diff = {}
+            for e in (self.base_environ, self.environ):
+                for k, v in e.iteritems():
+                    self._environ_diff[k] = self.render_template(v)
+
+            # Just for debugging...
             for k, v in sorted(self._environ_diff.iteritems()):
                 old_v = os.environ.get(k)
                 if old_v is not None:
@@ -313,7 +311,8 @@ class Package(DBObject):
                 log.debug('%s %s=%s' % (
                     style('setenv', 'blue'), k, v
                 ), verbosity=2)
-        return self._environ_diff or {}
+
+        return self._environ_diff
 
     def fresh_environ(self):
         environ = os.environ.copy()

@@ -63,7 +63,7 @@ def doctor(args):
     if sys.platform == 'darwin':
         res = find_command('install_name_tool') or res
     if sys.platform.startswith('linux'):
-        res = find_command('chrpath', warn=True) or res
+        res = find_command('patchelf', warn=True) or res
 
     print style_note('==> configuration')
     home = args.assert_home()

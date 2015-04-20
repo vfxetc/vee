@@ -22,9 +22,8 @@ class TestPackageSets(TestCase):
 
         first = pkgs['first']
         first.install_path = '/path/to/first'
-        
+
         second = pkgs['second']
         env = second.fresh_environ()
-
 
         self.assertEqual(env['FIRST'], '/path/to/first')
