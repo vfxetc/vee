@@ -86,7 +86,8 @@ requirement_parser.add_argument('--install-prefix')
 requirement_parser.add_argument('--defer-setup-build', action='store_true', help='For Python packages, dont `python setup.py build` first')
 requirement_parser.add_argument('--hard-link', action='store_true', help='use hard links instead of copies')
 requirement_parser.add_argument('--pseudo-homebrew', action='store_true', help='assume is repackage of Homebrew')
-requirement_parser.add_argument('--relocate', help='how to relocate shared libs')
+requirement_parser.add_argument('--relocate', help='how to relocate shared libs on OS X, or RPATHS to set on Linux')
+requirement_parser.add_argument('--set-rpath', help='what rpaths to set on Linux')
 
 requirement_parser.add_argument('url')
 

@@ -56,14 +56,23 @@ class GenericBuilder(PipelineStep):
 
     def relocate(self):
         pkg = self.package
-        if not pkg.relocate:
-            return
-        log.info(style_note('Relocating'))
-        with log.indent():
-            libs.relocate(pkg.install_path,
-                con=pkg.home.db.connect(),
-                spec=pkg.render_template(pkg.relocate),
-            )
+
+        if pkg.relocate:
+            log.info(style_note('Relocating'))
+            with log.indent():
+                libs.relocate(pkg.install_path,
+                    con=pkg.home.db.connect(),
+                    spec=pkg.render_template(pkg.relocate),
+                )
+
+        if pkg.set_rpath:
+            log.info(style_note('Setting RPATH'))
+            with log.indent():
+                libs.relocate('LINUX,' + pkg.set_rpath,
+                    con=pkg.home.db.connect(),
+                    spec=pkg.render_template(pkg.relocate),
+                )
+
 
     def optlink(self):
         pkg = self.package

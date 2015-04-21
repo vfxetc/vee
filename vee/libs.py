@@ -191,7 +191,7 @@ def _parse_spec(spec, root):
     if spec is None:
         spec = [None]
     if not isinstance(spec, (list, tuple)):
-        spec = [x.strip() for x in spec.split(',')]
+        spec = [x.strip() for x in re.split(r'[,:]', spec)]
 
     for x in spec:
 
@@ -199,8 +199,8 @@ def _parse_spec(spec, root):
         if x in (None, '', 'AUTO'):
             flags.add('AUTO')
             continue
-        elif x in ('PKGCONFIG'):
-            flags.add('pkgconfig')
+        elif x in ('LINUX', 'DARWIN', 'PKGCONFIG'):
+            flags.add(x.lower())
             continue
 
         # Everything below here is paths that go into include or exclude.
@@ -234,6 +234,11 @@ def relocate(root, con, spec=None, dry_run=False, target_cache=None):
     target_cache = {} if target_cache is None else target_cache
 
     flags, include, exclude = _parse_spec(spec, root)
+
+    if 'linux' in flags and not sys.platform.startswith('linux'):
+        return
+    if 'darwin' in flags and sys.platform != 'darwin':
+        return
 
     if not (include or 'auto' in flags):
         raise ValueError('no libraries to include')
