@@ -301,7 +301,7 @@ class Package(DBObject):
             self._environ_diff = {}
             for e in (self.base_environ, self.environ):
                 for k, v in e.iteritems():
-                    self._environ_diff[k] = self.render_template(v)
+                    self._environ_diff[k] = self.render_template(v, name=k)
 
             # Just for debugging...
             for k, v in sorted(self._environ_diff.iteritems()):
