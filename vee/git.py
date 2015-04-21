@@ -13,14 +13,15 @@ class GitError(CliMixin, RuntimeError):
     pass
 
 
-def normalize_git_url(url, prefix=False, prefer=None, ext=False):
+def normalize_git_url(url, prefix=False, prefer=None, keep_ext=False):
     """Normalize differences in Git URLs.
 
-    :param bool prefix: Should the result have a "git+" prefix?
+    :param bool prefix: Should the result have a ``git+`` prefix?
     :param str prefer: Which scheme is prefered (for GitHub URLs)?
         One of ``(None, "https", "scp")``.
+    :param bool ext: Retain the ``.git`` extension? This is usually unnessesary.
 
-    GitHub URLs also lose their ``.git`` extension.
+    GitHub URLs never keep their ``.git`` extension.
 
     """
 
@@ -44,14 +45,19 @@ def normalize_git_url(url, prefix=False, prefer=None, ext=False):
     m = re.match(r'^(?:git\+)?(\w+):(.+)$', url)
     if m:
         scheme, the_rest = m.groups()
-        if not ext and the_rest.endswith('.git'):
+
+        if not keep_ext and the_rest.endswith('.git'):
             the_rest = the_rest[:-4]
+
+        # We understand how to transform GitHub HTTP to SCP, and that the
+        # .git extension is never needed.
         m = re.match(r'^//github\.com/(\w+)/(\w+)(?:\.git)?$', the_rest)
         if m:
             org_name, repo_name = m.groups()
             if prefer in ('scp', ):
                 return '%sgit@github.com:%s/%s' % (prefix, org_name, repo_name)
             return '%s%s://github.com/%s/%s' % (prefix, scheme, org_name, repo_name)
+
         return '%s%s:%s' % (prefix, scheme, the_rest)
 
     # SCP-like.
@@ -59,10 +65,12 @@ def normalize_git_url(url, prefix=False, prefer=None, ext=False):
     m = re.match(r'^(?:git\+)?([^:@]+@)?([^:]+):(.*)$', url)
     if m:
         userinfo, host, path = m.groups()
+        
         if host == 'github.com':
-            ext = False
-        if not ext and path.endswith('.git'):
+            keep_ext = False
+        if not keep_ext and path.endswith('.git'):
             path = path[:-4]
+
         if host == 'github.com' and prefer in ('https', ):
             return '%shttps://github.com/%s' % (prefix, path)
         return '%s%s%s:%s' % (prefix, userinfo or '', host, path.rstrip('/'))

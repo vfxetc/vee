@@ -29,11 +29,11 @@ class TestGitURLs(TestCase):
             'user@example.com:/path/to/repo'
         )
         self.assertEqual(
-            normalize_git_url('user@example.com:/path/to/repo.git', ext=True),
+            normalize_git_url('user@example.com:/path/to/repo.git', keep_ext=True),
             'user@example.com:/path/to/repo.git'
         )
         self.assertEqual(
-            normalize_git_url('user@example.com:/path/to/repo', ext=True),
+            normalize_git_url('user@example.com:/path/to/repo', keep_ext=True),
             'user@example.com:/path/to/repo'
         )
 

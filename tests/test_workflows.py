@@ -35,7 +35,7 @@ class TestWorkflows(TestCase):
         status = strip_ansi(vee(['status', '--repo', env_repo.name], stdout=True))
         self.assertIn('tdep_pkg is ahead of origin/master', status)
 
-        vee(['add', '--repo', env_repo.name, pkg_dev.name])
+        vee(['add', '--init', '--repo', env_repo.name, pkg_dev.name])
         pkg_dev.repo.git('push', 'origin', 'master')
 
         status = strip_ansi(vee(['status', '--repo', env_repo.name], stdout=True))

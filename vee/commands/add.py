@@ -14,6 +14,7 @@ from vee import log
     argument('--update', action='store_true', help='update all repos themselves'),
     argument('--bake-installed', action='store_true', help='bake all installed revisions'),
     argument('--checksum', action='store_true', help='checksum existing packages'),
+    argument('--init', action='store_true', help='create if not found in requirements'),
     argument('--repo'),
     argument('package', nargs='?', default='.'),
     help='record changes to dev packages in environment repo',
@@ -94,7 +95,7 @@ def add(args):
     # Get the normalized origin.
     dev_remote_urls = set()
     for url in dev_repo.remotes().itervalues():
-        url = normalize_git_url(url) or url
+        url = normalize_git_url(url, prefer='scp') or url
         log.debug('adding dev remote url: %s' % url)
         dev_remote_urls.add(url)
     if not dev_remote_urls:
@@ -102,11 +103,13 @@ def add(args):
         return 1
 
     for req in req_set.iter_packages():
+
+        # We only deal with git packages.
         pkg = pkg_set.resolve(req, check_existing=False)
         if pkg.fetch_type != 'git':
             continue
         
-        req_url = normalize_git_url(req.url)
+        req_url = normalize_git_url(req.url, prefer='scp')
         log.debug('does match package url?: %s' % req_url)
         if req_url in dev_remote_urls:
             if req.revision == dev_repo.head[:8]:
@@ -115,8 +118,10 @@ def add(args):
                 req.revision = dev_repo.head[:8]
                 print style_note('Updated', str(req))
             break
+
     else:
-        raise ValueError('no package %s' % args.package)
+        if not args.init:
+            raise ValueError('no package %s' % args.package)
         req = Package(
             url=normalize_git_url(dev_repo.remotes()['origin'], prefix=True),
             revision=dev_repo.head[:8],
