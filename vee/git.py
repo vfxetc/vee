@@ -13,7 +13,7 @@ class GitError(CliMixin, RuntimeError):
     pass
 
 
-def normalize_git_url(url, prefix=False, prefer=None):
+def normalize_git_url(url, prefix=False, prefer=None, ext=False):
     """Normalize differences in Git URLs.
 
     :param bool prefix: Should the result have a "git+" prefix?
@@ -44,6 +44,8 @@ def normalize_git_url(url, prefix=False, prefer=None):
     m = re.match(r'^(?:git\+)?(\w+):(.+)$', url)
     if m:
         scheme, the_rest = m.groups()
+        if not ext and the_rest.endswith('.git'):
+            the_rest = the_rest[:-4]
         m = re.match(r'^//github\.com/(\w+)/(\w+)(?:\.git)?$', the_rest)
         if m:
             org_name, repo_name = m.groups()
@@ -57,7 +59,9 @@ def normalize_git_url(url, prefix=False, prefer=None):
     m = re.match(r'^(?:git\+)?([^:@]+@)?([^:]+):(.*)$', url)
     if m:
         userinfo, host, path = m.groups()
-        if host == 'github.com' and path.endswith('.git'):
+        if host == 'github.com':
+            ext = False
+        if not ext and path.endswith('.git'):
             path = path[:-4]
         if host == 'github.com' and prefer in ('https', ):
             return '%shttps://github.com/%s' % (prefix, path)

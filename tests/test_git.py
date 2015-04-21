@@ -23,6 +23,20 @@ class TestGitURLs(TestCase):
             'user@example.com:path/to/repo'
         )
 
+    def test_ext(self):
+        self.assertEqual(
+            normalize_git_url('user@example.com:/path/to/repo.git'),
+            'user@example.com:/path/to/repo'
+        )
+        self.assertEqual(
+            normalize_git_url('user@example.com:/path/to/repo.git', ext=True),
+            'user@example.com:/path/to/repo.git'
+        )
+        self.assertEqual(
+            normalize_git_url('user@example.com:/path/to/repo', ext=True),
+            'user@example.com:/path/to/repo'
+        )
+
     def test_github(self):
         self.assertEqual(
             normalize_git_url('git@github.com:example/repo.git'),
