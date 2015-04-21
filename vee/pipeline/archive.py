@@ -39,7 +39,7 @@ class ArchiveExtractor(PipelineStep):
         pkg._assert_paths(build=True)
 
         if pkg.checksum:
-            log.info(style_note('Verifying checksum'), verbosity=1)
+            log.info(style_note('Verifying checksum', 'of ' + pkg.package_path), verbosity=1)
             assert_file_checksum(pkg.package_path, pkg.checksum)
 
         log.info(style_note('Expanding %s to' % self.archive_type, pkg.build_path))
