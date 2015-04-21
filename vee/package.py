@@ -252,7 +252,7 @@ class Package(DBObject):
             kwargs['environ'] = self.environ_diff
         return self.__class__(kwargs, home=self.home)
 
-    def render_template(self, template, environ=None):
+    def render_template(self, template, environ=None, name=None):
 
         environ = (environ or os.environ).copy()
         environ['VEE'] = self.home.root
@@ -263,9 +263,9 @@ class Package(DBObject):
              %  (\w+)% | # Windows variables:        %XXX%
             \$\((.+?)\)| # Makefile-like functions:  $(prefix XXX)
             (@)          # Token representing original value.
-        ''', lambda m: self._render_template_match(environ, m), template, flags=re.VERBOSE)
+        ''', lambda m: self._render_template_match(environ, name, m), template, flags=re.VERBOSE)
 
-    def _render_template_match(self, environ, m):
+    def _render_template_match(self, environ, old_name, m):
 
         name_a, name_b, name_c, func, orig = m.groups()
 
@@ -289,8 +289,8 @@ class Package(DBObject):
             else:
                 raise ValueError('unknown environment function %r' % args[0])
 
-        if orig:
-            return environ.get(name)
+        if orig and old_name:
+            return environ.get(old_name)
 
     _environ_diff = None
 
