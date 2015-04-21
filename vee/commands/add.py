@@ -7,6 +7,7 @@ from vee.git import GitRepo, normalize_git_url
 from vee.packageset import PackageSet
 from vee.package import Package
 from vee.utils import guess_name, checksum_file
+from vee import log
 
 
 @command(
@@ -94,6 +95,7 @@ def add(args):
     dev_remote_urls = set()
     for url in dev_repo.remotes().itervalues():
         url = normalize_git_url(url) or url
+        log.debug('adding dev remote url: %s' % url)
         dev_remote_urls.add(url)
     if not dev_remote_urls:
         print style_error('No git remotes for %s' % row['path'])
@@ -105,6 +107,7 @@ def add(args):
             continue
         
         req_url = normalize_git_url(req.url)
+        log.debug('does match package url?: %s' % req_url)
         if req_url in dev_remote_urls:
             if req.revision == dev_repo.head[:8]:
                 print style_note('No change to', str(req))
@@ -113,9 +116,11 @@ def add(args):
                 print style_note('Updated', str(req))
             break
     else:
+        raise ValueError('no package %s' % args.package)
         req = Package(
             url=normalize_git_url(dev_repo.remotes()['origin'], prefix=True),
             revision=dev_repo.head[:8],
+            home=home,
         )
         req_set.append(('', req, ''))
 
