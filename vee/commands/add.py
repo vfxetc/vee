@@ -121,7 +121,16 @@ def add(args):
 
     else:
         if not args.init:
-            raise ValueError('no package %s' % args.package)
+            print '{error}: No required package {name}; would match one of:'.format(error=style('Error', 'red'), name=style(args.package, bold=True))
+            for url in sorted(dev_remote_urls):
+                print '    {}'.format(url)
+            print 'Use {} to setup: git+{} --revision {}'.format(
+                style('vee add --init %s' % args.package, 'green'),
+                dev_repo.remotes()['origin'],
+                dev_repo.head[:8]
+            )
+            return 1
+
         req = Package(
             url=normalize_git_url(dev_repo.remotes()['origin'], prefix=True),
             revision=dev_repo.head[:8],
