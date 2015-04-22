@@ -456,8 +456,8 @@ class Package(DBObject):
         # Dependencies are deferred.
         deferred = self.url.startswith('deferred:')
         if deferred:
-            id_ = int(self.url.split(':')[1])
-            cur.execute('SELECT * from packages WHERE id = ?', [id_])
+            deferred_id = int(self.url.split(':')[1])
+            cur.execute('SELECT * from packages WHERE id = ?', [deferred_id])
         
         else:
 
@@ -504,6 +504,9 @@ class Package(DBObject):
                 continue
             break
         else:
+
+            if deferred:
+                raise ValueError('deferred package %d no longer exists; consider `vee gc`' % deferred_id)
             return
 
         log.debug('Found %s (%d%s%s) at %s' % (
