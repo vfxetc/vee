@@ -1,5 +1,6 @@
 import os
 import shutil
+import sys
 
 from vee import libs
 from vee import log
