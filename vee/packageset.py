@@ -92,6 +92,7 @@ class PackageSet(collections.OrderedDict):
 
             with log.indent():
 
+                # Avoid infinite error loops.
                 if name in self._errored:
                     log.warning('Skipping due to previous error.')
                     continue
@@ -151,6 +152,13 @@ class PackageSet(collections.OrderedDict):
             dep = self.resolve(dep, weak=True)
             pkg.dependencies[i] = dep
             self._parent_names.setdefault(dep.name, pkg.name)
+
+            # We must check if the dependency errored, otherwise we will still
+            # end up in an infinite loop.
+            if dep.name in self._errored:
+                log.warning('Skipping due to error in %s' % dep.name)
+                self._errored.add(pkg.name)
+                return
 
             if dep.name not in self._installed:
                 key = (name, dep.name)
