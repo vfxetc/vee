@@ -21,6 +21,7 @@ class PackageSet(collections.OrderedDict):
         self._deferred = set()
         self._persisted = set()
         self._linked = set()
+        self._errored = set()
 
     def resolve(self, req, check_existing=True, weak=False, env=None):
 
@@ -90,12 +91,21 @@ class PackageSet(collections.OrderedDict):
             print '==>', style(name, 'blue'), style('(%s)' % ' < '.join(parent_chain), faint=True) if parent_chain else ''
 
             with log.indent():
+
+                if name in self._errored:
+                    log.warning('Skipping due to previous error.')
+                    continue
+
                 try:
                     self._install_one(names, name, link_env, reinstall, relink, no_deps)
                 except Exception as e:
+                    self._errored.add(name)
                     print_cli_exc(e, verbose=True)
                     log.exception('Exception while processing %s' % name)
                     continue
+
+        if self._errored:
+            log.warning('There were errors in: %s' % ', '.join(sorted(self._errored)))
 
 
     def _install_one(self, names, name, link_env, reinstall, relink, no_deps):
