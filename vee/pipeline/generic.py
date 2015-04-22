@@ -65,12 +65,13 @@ class GenericBuilder(PipelineStep):
                     spec=pkg.render_template(pkg.relocate),
                 )
 
-        if pkg.set_rpath:
-            log.info(style_note('Setting RPATH'))
+        if pkg.set_rpath and sys.platform.startswith('linux'):
+            rpath = pkg.render_template(pkg.set_rpath)
+            log.info(style_note('Setting RPATH to', rpath))
             with log.indent():
-                libs.relocate('LINUX,' + pkg.set_rpath,
+                libs.relocate(pkg.install_path,
                     con=pkg.home.db.connect(),
-                    spec=pkg.render_template(pkg.relocate),
+                    spec=rpath,
                 )
 
 
