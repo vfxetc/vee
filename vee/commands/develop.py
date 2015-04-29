@@ -1,6 +1,7 @@
 import json
 import os
 import re
+import traceback
 
 from vee import log
 from vee.cli import style, style_error, style_note, style_warning
@@ -286,4 +287,29 @@ def setenv(args):
             environ[key] = value
 
     con.execute('UPDATE development_packages SET environ = ? WHERE id = ?', [json.dumps(environ), row['id']])
+
+
+@develop.subcommand(
+    help='run a git command on all dev packages',
+    parse_known_args=True,
+)
+def git(args, *command):
+
+    if not command:
+        print style_error('please provide a git command')
+        return 1
+    
+    home = args.assert_home()
+
+    retcode = 0
+    for dev_pkg in home.iter_development_packages():
+
+        log.info(style_note(dev_pkg.name, ' '.join(command)))
+        try:
+            dev_pkg.git(*command, verbosity=0, indent=False)
+        except Exception as e:
+            print_cli_exc(e)
+            retcode = 1
+
+    return retcode
 
