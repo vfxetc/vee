@@ -76,7 +76,11 @@ class EnvironmentRepo(GitRepo):
                     version.append(x)
             while len(version) <= semver_level:
                 version.append(0)
+            
             version[semver_level] = version[semver_level] + 1
+            for i in xrange(semver_level + 1, len(version)):
+                version[i] = 0
+
             version_header.value = '.'.join(str(x) for x in version)
 
         from vee import __about__ as about
