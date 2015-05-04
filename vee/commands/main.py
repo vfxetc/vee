@@ -181,6 +181,9 @@ def main(argv=None, environ=None, as_main=__name__=="__main__"):
         args.home = args.home_path and Home(args.home_path)
         args.main = getattr(args.home, 'main', None)
         
+        # TODO: Move this to a $VEE_UMASK envvar or something.
+        os.umask(0)
+        
         if func:
             res = func(args, *unparsed) or 0
         else:
