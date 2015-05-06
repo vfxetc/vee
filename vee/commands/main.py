@@ -6,17 +6,19 @@ See: `vee <command> --help` for more on individual commands.
 
 import argparse
 import cProfile
+import errno
 import functools
+import logging
 import os
+import pkg_resources
 import sys
 import traceback
-import logging
-import pkg_resources
 
+from vee import log
 from vee.cli import style
 from vee.exceptions import cli_exc_str, cli_errno, print_cli_exc
 from vee.home import Home
-from vee import log
+from vee.lockfile import RLockfile
 
 
 class AliasedSubParsersAction(argparse._SubParsersAction):
@@ -149,6 +151,10 @@ class _LogFormatter(logging.Formatter):
         msg = super(_LogFormatter, self).format(record)
         return msg.encode('string-escape')
 
+
+_global_locks = {}
+
+
 def main(argv=None, environ=None, as_main=__name__=="__main__"):
 
     args = None
@@ -181,12 +187,36 @@ def main(argv=None, environ=None, as_main=__name__=="__main__"):
         args.home = args.home_path and Home(args.home_path)
         args.main = getattr(args.home, 'main', None)
         
+        try:
+            lock = _global_locks[args.home_path]
+        except KeyError:
+            lock = RLockfile(os.path.join(args.home_path, '.vee-lock'),
+                blocking=False,
+                content=os.environ.get('VEE_LOCK_CONTENT') or ('%s/%s' % (os.getlogin(), os.getpid())),
+            )
+            _global_locks[args.home_path] = lock
+
         # TODO: Move this to a $VEE_UMASK envvar or something.
         # For now, just leave all permissions open.
         os.umask(0)
 
         if func:
-            res = func(args, *unparsed) or 0
+            try:
+                lock.acquire()
+            except IOError as e:
+                if e.errno == errno.EWOULDBLOCK:
+                    content = lock.get_content()
+                    if content:
+                        log.error('VEE is locked: %s' % content)
+                    else:
+                        log.error('VEE is locked')
+                    res = 1
+                else:
+                    raise
+            else:
+                res = func(args, *unparsed) or 0
+                lock.release()
+
         else:
             parser.print_help()
             res = 1
