@@ -77,6 +77,7 @@ requirement_parser.add_argument('--base-environ', nargs='*', action=_Environment
 requirement_parser.add_argument('-e', '--environ', nargs='*', action=_EnvironmentAction)
 requirement_parser.add_argument('-c', '--config', nargs='*', action=_ConfigAction, help='args to pass to `./configure`, `python setup.py`, `brew install`, etc..')
 
+requirement_parser.add_argument('--autoconf', action='store_true', help='the package uses autoconf; may ./bootstrap')
 requirement_parser.add_argument('--make-install', action='store_true', help='do `make install`')
 
 requirement_parser.add_argument('--install-name')
