@@ -182,8 +182,9 @@ def main(argv=None, environ=None, as_main=__name__=="__main__"):
         args.main = getattr(args.home, 'main', None)
         
         # TODO: Move this to a $VEE_UMASK envvar or something.
+        # For now, just leave all permissions open.
         os.umask(0)
-        
+
         if func:
             res = func(args, *unparsed) or 0
         else:

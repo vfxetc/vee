@@ -15,6 +15,7 @@ from vee.utils import makedirs
     argument('--relink', action='store_true', help='relink packages'),
     argument('--reinstall', action='store_true', help='reinstall packages'),
     argument('--no-deps', action='store_true', help='dont touch dependencies'),
+    argument('--force-branch-link', action='store_true'),
     argument('-r', '--repo', action='append', dest='repos'),
     argument('subset', nargs='*'),
     help='upgrade packages specified by repositories, and link into environments',
@@ -67,6 +68,10 @@ def upgrade(args):
 
         # Install and/or link.
         pkg_set.install(args.subset or None, link_env=env, reinstall=args.reinstall, relink=args.relink, no_deps=args.no_deps)
+
+        if pkg_set._errored and not args.force_branch_link:
+            print style_warning("Not creating branch or version links; force with --force-branch-link")
+            continue
 
         # Create a symlink by branch.
         path_by_branch = home._abs_path('environments', env_repo.name, env_repo.branch_name)
