@@ -27,6 +27,7 @@ from vee.requirements import Requirements
     argument('requirements', nargs='...'),
     help='link a package, or requirements.txt, into an environment',
     usage='vee link [--raw] ENVIRONMENT REQUIREMENTS',
+    acquire_lock=True,
 )
 def link(args):
 

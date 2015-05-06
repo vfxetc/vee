@@ -6,6 +6,7 @@ from vee.homebrew import Homebrew
 @command(
     help='run a homebrew command',
     parse_known_args=True,
+    acquire_lock=True,
 )
 def brew(args, *command):
 

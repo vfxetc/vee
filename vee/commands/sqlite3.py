@@ -10,6 +10,7 @@ from vee.utils import makedirs
     help='run a command in the database',
     parse_known_args=True,
     aliases=['sqlite'],
+    acquire_lock=True,
 )
 def sqlite3(args, *command):
     home = args.assert_home()

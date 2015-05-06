@@ -19,6 +19,7 @@ from vee.utils import makedirs
     argument('-r', '--repo', action='append', dest='repos'),
     argument('subset', nargs='*'),
     help='upgrade packages specified by repositories, and link into environments',
+    acquire_lock=True,
 )
 def upgrade(args):
 

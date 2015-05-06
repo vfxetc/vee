@@ -108,6 +108,7 @@ def populate_subparser(parent_subparser, funcs, depth=0):
 
         args, kwargs = func.__command_spec__
         func.__parse_known_args = kwargs.pop('parse_known_args', False)
+        func.__acquire_lock = kwargs.pop('acquire_lock', False)
         name = kwargs.pop('name', func.__name__)
         kwargs.setdefault('aliases', [])
         kwargs.setdefault('formatter_class', argparse.RawDescriptionHelpFormatter)
@@ -202,20 +203,19 @@ def main(argv=None, environ=None, as_main=__name__=="__main__"):
 
         if func:
             try:
-                lock.acquire()
+                if func.__acquire_lock:
+                    lock.acquire()
             except IOError as e:
                 if e.errno == errno.EWOULDBLOCK:
                     content = lock.get_content()
-                    if content:
-                        log.error('VEE is locked: %s' % content)
-                    else:
-                        log.error('VEE is locked')
+                    log.error('VEE is locked%s' % (': ' + content if content else '', ))
                     res = 1
                 else:
                     raise
             else:
                 res = func(args, *unparsed) or 0
-                lock.release()
+                if func.__acquire_lock:
+                    lock.release()
 
         else:
             parser.print_help()

@@ -10,6 +10,7 @@ from vee.requirements import Requirements
     argument('requirements', nargs='...'),
     help='install a package; low-level',
     usage='vee install [--force] PACKAGE [OPTIONS]',
+    acquire_lock=True,
 )
 def install(args):
 

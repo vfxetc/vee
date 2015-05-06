@@ -38,10 +38,13 @@ class Lockfile(object):
         return self._fd
 
     def acquire(self, blocking=None, content=None):
+        
         if self._locked:
             raise LockError('already locked')
+
         if blocking is None:
             blocking = self._blocking
+
         fcntl.lockf(self.fileno(), fcntl.LOCK_EX | (0 if blocking else fcntl.LOCK_NB))
 
         if not self._written_content:

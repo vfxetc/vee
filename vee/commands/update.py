@@ -8,6 +8,7 @@ from vee.environment import Environment
     argument('--force', action='store_true', help='force checkout, even if not fast-forward'),
     argument('-r', '--repo', action='append', dest='repos'),
     help='update repos',
+    acquire_lock=True,
 )
 def update(args):
 
