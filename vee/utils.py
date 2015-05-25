@@ -104,7 +104,11 @@ def linktree(src, dst, symlinks=False, ignore=None):
                 elif is_dir:
                     makedirs(dst_path)
                 else:
-                    os.link(src_path, dst_path)
+                    try:
+                        os.link(src_path, dst_path)
+                    except:
+                        print 'Error during: os.link(%r, %r)' % (src_path, dst_path)
+                        raise
             if dont_walk:
                 names[:] = [x for x in names if x not in dont_walk]
 
