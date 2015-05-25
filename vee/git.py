@@ -264,10 +264,14 @@ class GitRepo(object):
     def is_shallow(self):
         return os.path.exists(os.path.join(self.git_dir, 'shallow'))
 
-    def status(self):
+    def status(self, ignore_permissions=True):
         """Get a series of (index_status, work_tree_status, filename) tuples."""
+        cmd = []
+        if ignore_permissions:
+            cmd.extend(('-c', 'core.fileMode=false'))
         # We use the machine-parsable git status.
-        encoded = self.git('status', '-z', stdout=True)
+        cmd.extend(('status', '-z'))
+        encoded = self.git(*cmd, stdout=True)
         # In theory, there can be a second NULL-terminated field, but I
         # haven't seen it yet.
         parts = encoded.split('\0')
@@ -353,7 +357,7 @@ class GitRepo(object):
             else:
                 raise
 
-    def checkout(self, revision, branch=None, force=False, fetch=False):
+    def checkout(self, revision, branch=None, force=False, fetch=False, ignore_permissions=True):
 
         commit = self.rev_parse(revision, fetch=fetch)
         if self.head == commit:
@@ -361,7 +365,10 @@ class GitRepo(object):
 
         print style('Checking out', 'blue', bold=True), style('%s [%s]' % (revision, commit), bold=True)
 
-        cmd = ['checkout']
+        cmd = []
+        if ignore_permissions:
+            cmd.extend(('-c', 'core.fileMode=false'))
+        cmd.append('checkout')
         if force:
             cmd.append('--force')
         if branch: # Make this branch if it doesn't exist.
@@ -371,11 +378,11 @@ class GitRepo(object):
         self.git('submodule', 'update', '--init', '--checkout', '--recursive', silent=False)
         self._head = commit
 
-    def check_ff_safety(self, rev):
+    def check_ff_safety(self, rev, ignore_permissions=True):
 
         # Check the status of the work tree and index.
         status_ok = True
-        for idx, tree, name in self.status():
+        for idx, tree, name in self.status(ignore_permissions=ignore_permissions):
             if idx or tree:
                 print style('Error:', 'red', bold=True), style('uncomitted changes:', bold=True)
                 self.git('status')
