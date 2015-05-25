@@ -92,6 +92,8 @@ def linktree(src, dst, symlinks=False, ignore=None):
             dont_walk = set()
             for name in names:
                 if name in ignored_names:
+                    if is_dir:
+                        dont_walk.append(name)
                     continue
                 src_path = os.path.join(src_dir, name)
                 dst_path = os.path.join(dst_dir, name)
