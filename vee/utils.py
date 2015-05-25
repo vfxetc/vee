@@ -93,7 +93,7 @@ def linktree(src, dst, symlinks=False, ignore=None):
             for name in names:
                 if name in ignored_names:
                     if is_dir:
-                        dont_walk.append(name)
+                        dont_walk.add(name)
                     continue
                 src_path = os.path.join(src_dir, name)
                 dst_path = os.path.join(dst_dir, name)
@@ -102,7 +102,7 @@ def linktree(src, dst, symlinks=False, ignore=None):
                     abs_link = os.path.join(src_path, rel_link)
                     os.symlinks(abs_link, dst_path)
                     if is_dir:
-                        dont_walk.append(name)
+                        dont_walk.add(name)
                 elif is_dir:
                     makedirs(dst_path)
                 else:
