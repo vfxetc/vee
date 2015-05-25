@@ -1,3 +1,4 @@
+import json
 import os
 import re
 
@@ -36,6 +37,13 @@ class Home(object):
         env_value = os.environ.get('VEE_DEV')
         return env_value if env_value is not None else self._abs_path('dev')
 
+    @cached_property
+    def dev_search_path(self):
+        env_value = os.environ.get("VEE_DEV_PATH")
+        path = env_value.split(':') if env_value is not None else [self.dev_root]
+        path = [os.path.expanduser(x) for x in path]
+        return path
+
     def init(self, url=None, name=None, is_default=True):
         self._makedirs()
         if url:
@@ -53,10 +61,34 @@ class Home(object):
             path = self._abs_path(name)
             makedirs(path)
 
-    def iter_development_packages(self, exists=True):
+    def iter_development_packages(self, exists=True, search=False):
+        paths_seen = set()
         for row in self.db.execute('SELECT * FROM development_packages'):
             dev_pkg = DevPackage(row, home=self)
+            # We could check these against paths_seen, but we feel it is better
+            # to always return everything that managed to get into the database.
+            paths_seen.add(dev_pkg.work_tree)
             if dev_pkg.exists:
+                yield dev_pkg
+
+        if not search:
+            return
+
+        for root in self.dev_search_path:
+            if not os.path.exists(root):
+                continue
+            for name in os.listdir(root):
+                if not name.endswith('.vee-dev.json'):
+                    continue
+
+                data = json.loads(open(os.path.join(root, name)).read())
+                data['id'] = None
+                dev_pkg = DevPackage(data, home=self)
+
+                if dev_pkg.work_tree in paths_seen:
+                    continue
+                paths_seen.add(dev_pkg.work_tree)
+
                 yield dev_pkg
 
     def iter_env_repos(self):

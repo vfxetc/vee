@@ -75,20 +75,12 @@ def exec_(args):
             print path
         return
 
-    development_packages = []
-    if args.dev:
-        for pkg in home.db.execute('SELECT * FROM development_packages'):
-            path = pkg['path']
-            if os.path.exists(path):
-                paths.append(path)
-                development_packages.append(pkg)
-
     environ_diff = guess_envvars(paths)
 
-    for pkg in development_packages:
-        pkg_environ = json.loads(pkg['environ'])
-        if pkg_environ:
-            environ_diff.update(render_envvars(pkg_environ, pkg['path'], environ_diff))
+    if args.dev:
+        for pkg in home.iter_development_packages(exists=True, search=True):
+            if pkg.environ:
+                environ_diff.update(render_envvars(pkg.environ, pkg.work_tree, environ_diff))
 
     # More environment variables.
     command = args.command or []

@@ -1,3 +1,6 @@
+import os
+import json
+
 from vee.git import GitRepo
 
 
@@ -9,7 +12,21 @@ class DevPackage(GitRepo):
             # remote_name=db_row['remote'],
             # branch_name=db_row['branch'],
         )
-        self.id = db_row['id']
+        self.id = db_row.get('id')
         self.name = db_row['name']
+
+        self.environ = db_row.get('environ') or {}
+        if self.environ and isinstance(self.environ, str):
+            self.environ = json.loads(self.environ)
+
         self.home = home
 
+    def save_tag(self):
+        tag_path = os.path.abspath(os.path.join(self.work_tree, '..', '.%s.vee-dev.json' % self.name))
+        with open(tag_path, 'wb') as fh:
+            fh.write(json.dumps({
+                'id': self.id,
+                'name': self.name,
+                'path': self.work_tree,
+                'environ': self.environ,
+            }))

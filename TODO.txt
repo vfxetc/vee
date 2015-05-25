@@ -1,4 +1,20 @@
 
+
+- how can dev mode work on the farm, if the list of dev_packages is on your local VEE?
+    - All of the data needed to include a dev package are within a file (or
+      database) with the dev package in the file system. Then the main repo
+      simply points to them for convenience, but it isn't nessesary at all.
+
+    - file locations:
+      $DEV/$PKG/.vee-dev.json
+      $DEV/$PKG/.vee-dev.sh
+      $DEV/.vee-dev.$PKG.json
+
+    - $VEE_DEV_PATH is colon delimited, and searched for these files corresponding
+      to dev tools that we don't have recorded
+
+
+
 - can we bootstrap patchelf?
 - can we include vee in the PYTHONPATH?
 
@@ -170,11 +186,6 @@ Server
 - development_packages should record which user they are for. Perhaps a
   "dev_set" or "namespace", which defaults to the user, would be better.
 
-- how can dev mode work on the farm, if the list of dev_packages is on your
-  local home?
-    - All of the data needed to include a dev package are within a file (or
-      database) with the dev package in the file system. Then the main repo
-      simply points to them for convenience, but it isn't nessesary at all.
 
 - bash completions
 

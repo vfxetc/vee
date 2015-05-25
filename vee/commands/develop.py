@@ -1,3 +1,4 @@
+import fnmatch
 import json
 import os
 import re
@@ -6,6 +7,7 @@ import traceback
 from vee import log
 from vee.cli import style, style_error, style_note, style_warning
 from vee.commands.main import command, argument, group
+from vee.devpackage import DevPackage
 from vee.envvars import render_envvars
 from vee.exceptions import AlreadyInstalled, print_cli_exc
 from vee.git import GitRepo, normalize_git_url
@@ -66,11 +68,15 @@ def list_(args):
     else:
         cur = home.db.execute('SELECT * FROM development_packages ORDER BY lower(name)')
 
-    for row in cur:
-        path = row['path'].replace(home.dev_root, '$VEE_DEV').replace(home.root, '$VEE')
-        print style_note(row['name'], path)
+    for dev_pkg in sorted(home.iter_development_packages(), key=lambda p: p.name.lower()):
+
+        if args.glob and not fnmatch.fnmatch(dev_pkg.name, args.glob):
+            continue
+
+        path = dev_pkg.work_tree.replace(home.dev_root, '$VEE_DEV').replace(home.root, '$VEE')
+        print style_note(dev_pkg.name, path)
         if args.show_environ:
-            for k, v in sorted(render_envvars(json.loads(row['environ']), row['path']).iteritems()):
+            for k, v in sorted(render_envvars(dev_pkg.environ, dev_pkg.work_tree).iteritems()):
                 if os.environ.get(k):
                     v = v.replace(os.environ[k], '$' + k)
                 v = v.replace(home.dev_root, '$VEE_DEV')
@@ -153,7 +159,7 @@ def find(args):
 
 @develop.subcommand(
     argument('names', nargs='*'),
-    help='recursively find existing checkouts',
+    help='rescan packages for changes to build environment',
 )
 def rescan(args):
 
@@ -261,6 +267,10 @@ def init(args, do_clone=False, do_install=False, do_add=False, is_find=False):
 
     print style_note('Linking dev package', name, path)
     con.execute('INSERT INTO development_packages (name, path, environ) VALUES (?, ?, ?)', [name, path, json.dumps(package.environ)])
+
+    dev_pkg = DevPackage({'name': name, 'path': path, 'environ': package.environ}, home=home)
+    dev_pkg.save_tag()
+
 
 
 @develop.subcommand(
