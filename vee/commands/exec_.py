@@ -20,6 +20,7 @@ from vee.requirements import Requirements
     argument('-e', '--environment', action='append', help='an environment to include'),
 
     argument('-d', '--dev', action='store_true', help='include the development environment'),
+    argument('--bootstrap', action='store_true', help='restore a previous dev environment (in $VEE_EXEC_ARGS)'),
 
     argument('command', nargs='...', help='the command to run'),
     name='exec',
@@ -33,6 +34,34 @@ def exec_(args):
     # TODO: seed these with the current values.
     repo_names = []
     env_names = []
+
+    environ_diff = {}
+
+    if args.bootstrap:
+        bootstrap = os.environ['VEE_EXEC_ARGS'].split() if os.environ.get('VEE_EXEC_ARGS') else []
+        # This is gross, but easier than building another parser. It does mean
+        # that we expect this variable must be set by ourselves.
+        while bootstrap:
+            arg = bootstrap.pop(0)
+            if arg in ('--dev', ):
+                setattr(args, arg[2:], True)
+            elif arg in ('--requirements', '--repo', '--environment'):
+                v = getattr(args, arg[2:], None) or []
+                v.append(bootstrap.pop(0))
+                setattr(args, arg[2:], v)
+            else:
+                print >> sys.stderr, 'cannot bootstrap', arg
+
+    if args.dev:
+        # Store the original flags as provided so that --bootstrap can pick it back up.
+        bootstrap = os.environ['VEE_EXEC_ARGS'].split() if os.environ.get('VEE_EXEC_ARGS') else []
+        if '--dev' not in bootstrap:
+            bootstrap.append('--dev')
+        for attr in 'requirements', 'repo', 'environment':
+            for value in getattr(args, attr, None) or ():
+                bootstrap.append('--' + attr)
+                bootstrap.append(value)
+        environ_diff['VEE_EXEC_ARGS'] = ' '.join(bootstrap)
 
     if not (args.export or args.command or args.prefix):
         raise ValueError('Must either --prefix, --export, or provide a command')
@@ -75,7 +104,7 @@ def exec_(args):
             print path
         return
 
-    environ_diff = guess_envvars(paths)
+    environ_diff.update(guess_envvars(paths))
 
     if args.dev:
         for pkg in home.iter_development_packages(exists=True, search=True):
