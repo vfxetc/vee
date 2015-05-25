@@ -35,7 +35,7 @@ class Home(object):
     @cached_property
     def dev_root(self):
         env_value = os.environ.get('VEE_DEV')
-        return env_value if env_value is not None else self._abs_path('dev')
+        return os.path.expanduser(env_value) if env_value is not None else self._abs_path('dev')
 
     @cached_property
     def dev_search_path(self):
