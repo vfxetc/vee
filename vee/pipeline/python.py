@@ -193,7 +193,7 @@ class PythonBuilder(GenericBuilder):
 
         log.info(style_note('Building scripts'))
         cmd = [
-            'build_scripts', '-e', '/usr/bin/env VEE=%s VEE_PYTHON=%s dev python' % (os.environ.get("VEE", ''), os.environ.get('VEE_PYTHON', )),
+            'build_scripts', '-e', '/usr/bin/env VEE=%s VEE_PYTHON=%s dev python' % (os.environ.get("VEE", ''), os.environ.get('VEE_PYTHON', '')),
             'install_scripts', '-d', 'build/scripts',
         ]
         if call_setup_py(self.setup_path, cmd):
