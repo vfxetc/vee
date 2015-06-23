@@ -1,10 +1,12 @@
 import argparse
 import datetime
+import fnmatch
 import json
 import os
 import re
 import re
 import shlex
+import socket
 import sys
 
 from vee import log
@@ -183,9 +185,11 @@ class Requirements(list):
 
         include_stack = [True]
         control_namespace = {
-            're': re,
-            'sys': sys,
+            'fnmatch': fnmatch,
             'os': os,
+            're': re,
+            'socket': socket,
+            'sys': sys,
             'OSX': sys.platform == 'darwin',
             'MACOS': sys.platform == 'darwin',
             'LINUX': sys.platform.startswith('linux'),

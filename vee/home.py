@@ -68,6 +68,8 @@ class Home(object):
             # We could check these against paths_seen, but we feel it is better
             # to always return everything that managed to get into the database.
             paths_seen.add(dev_pkg.work_tree)
+            # This only detects if the git repo exists, not if the dev_package
+            # exists (where new ones may not have repos)
             if dev_pkg.exists:
                 yield dev_pkg
 

@@ -1,18 +1,8 @@
 
+- git is not respecting the umask. We could set core.sharedRepository
+  (see `man git-config`) in all of the repos, or use --shared when we init/clone.
 
-- how can dev mode work on the farm, if the list of dev_packages is on your local VEE?
-    - All of the data needed to include a dev package are within a file (or
-      database) with the dev package in the file system. Then the main repo
-      simply points to them for convenience, but it isn't nessesary at all.
-
-    - file locations:
-      $DEV/$PKG/.vee-dev.json
-      $DEV/$PKG/.vee-dev.sh
-      $DEV/.vee-dev.$PKG.json
-
-    - $VEE_DEV_PATH is colon delimited, and searched for these files corresponding
-      to dev tools that we don't have recorded
-
+- dev tags should have the platform in the name
 
 
 - can we bootstrap patchelf?
