@@ -195,7 +195,8 @@ def main(argv=None, environ=None, as_main=__name__=="__main__"):
 
         if func:
             try:
-                if func.__acquire_lock:
+                # don't grab the lock if we dont need it (or if the home isn't set)
+                if func.__acquire_lock and args.home_path:
                     try:
                         lock = _global_locks[args.home_path]
                     except KeyError:
