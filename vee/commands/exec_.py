@@ -1,6 +1,7 @@
 import json
 import os
 import re
+import sys
 
 from vee._vendor import vendor_path, bootstrap_environ
 from vee.commands.main import command, argument, group
@@ -110,6 +111,14 @@ def exec_(args):
         for pkg in home.iter_development_packages(exists=True, search=True):
             if pkg.environ:
                 environ_diff.update(render_envvars(pkg.environ, pkg.work_tree, environ_diff))
+
+        # Add the current Virtualenv as well.
+        venv = os.environ.get('VIRTUAL_ENV')
+        if venv:
+            environ_diff['PYTHONPATH'] = '%s:%s' % (
+                os.path.join(venv, 'lib', 'python%d.%d' % sys.version_info[:2], 'site-packages'),
+                environ_diff.get('PYTHONPATH', ''), # This is sloppy.
+            )
 
     # More environment variables.
     command = args.command or []
