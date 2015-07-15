@@ -112,13 +112,13 @@ def exec_(args):
             if pkg.environ:
                 environ_diff.update(render_envvars(pkg.environ, pkg.work_tree, environ_diff))
 
-        # Add the current Virtualenv as well.
-        venv = os.environ.get('VIRTUAL_ENV')
-        if venv:
-            environ_diff['PYTHONPATH'] = '%s:%s' % (
-                os.path.join(venv, 'lib', 'python%d.%d' % sys.version_info[:2], 'site-packages'),
-                environ_diff.get('PYTHONPATH', ''), # This is sloppy.
-            )
+    # Add the current virtualenv.
+    venv = os.environ.get('VIRTUAL_ENV')
+    if venv:
+        environ_diff['PYTHONPATH'] = '%s:%s' % (
+            os.path.join(venv, 'lib', 'python%d.%d' % sys.version_info[:2], 'site-packages'),
+            environ_diff.get('PYTHONPATH', ''), # This is sloppy.
+        )
 
     # More environment variables.
     command = args.command or []
