@@ -44,6 +44,7 @@ pkg_resources/_vendor/packaging/_structures.py
 pkg_resources/_vendor/packaging/specifiers.py
 pkg_resources/_vendor/packaging/version.py
 pkg_resources/tests/__init__.py
+pkg_resources/tests/test_markers.py
 pkg_resources/tests/test_pkg_resources.py
 pkg_resources/tests/test_resources.py
 setuptools/__init__.py
