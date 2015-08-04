@@ -71,7 +71,7 @@ requirement_parser.add_argument('-n', '--name')
 requirement_parser.add_argument('-r', '--revision')
 
 requirement_parser.add_argument('--etag', help='identifier for busting caches')
-requirement_parser.add_argument('--checksum', help='to verify that packages haven\'t changed')
+requirement_parser.add_argument('--checksum', help='to verify that package archives haven\'t changed')
 
 requirement_parser.add_argument('--base-environ', nargs='*', action=_EnvironmentAction, help=argparse.SUPPRESS)
 requirement_parser.add_argument('-e', '--environ', nargs='*', action=_EnvironmentAction)
@@ -89,6 +89,12 @@ requirement_parser.add_argument('--hard-link', action='store_true', help='use ha
 requirement_parser.add_argument('--pseudo-homebrew', action='store_true', help='assume is repackage of Homebrew')
 requirement_parser.add_argument('--relocate', help='how to relocate shared libs on OS X, or RPATHS to set on Linux')
 requirement_parser.add_argument('--set-rpath', help='what rpaths to set on Linux')
+
+requirement_parser.add_argument('--develop-sh', help='shell script in repository to source to build the package')
+requirement_parser.add_argument('--build-sh', help='shell script in repository to source to build the package')
+requirement_parser.add_argument('--install-sh', help='shell script in repository to source to build the package')
+requirement_parser.add_argument('--requirements-txt', help='shell script in repository to source to build the package')
+
 
 requirement_parser.add_argument('url')
 

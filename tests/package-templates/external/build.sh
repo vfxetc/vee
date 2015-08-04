@@ -1,0 +1,2 @@
+
+gcc -o MOCKNAME MOCKNAME.c

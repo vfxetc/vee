@@ -1,4 +1,5 @@
 import os
+import re
 
 from vee import log
 from vee.cli import style_note
@@ -22,7 +23,38 @@ class SelfBuilder(GenericBuilder):
             ('develop', 'vee-develop.sh'      , 'develop_sh'),
         ]:
             if step == file_step:
-                path = find_in_tree(pkg.build_path, file_name)
+
+                # Look for the attribute on the package:
+                url = getattr(pkg, attr_name, None)
+                if url:
+                    
+                    # Allow these scripts to be relative to the repository
+                    if url.startswith('repo:'):
+                        rel_path = url[5:].lstrip('/')
+                        try:
+                            root = pkg.set.env.repo.work_tree
+                        except AttributeError:
+                            raise RuntimeError('relative %s outside of environment' % attr_name)
+                        path = os.path.join(root, rel_path)
+
+                    # ... or be searched for
+                    elif '/' not in url:
+                        path = find_in_tree(pkg.build_path, url)
+
+                    # ... or just be relative (which can be forced via './something')
+                    else:
+                        path = os.path.abspath(pkg.build_path, url)
+
+                    if not path:
+                        raise ValueError('%s cannot be found for %s' % (attr_name, url))
+                    if not os.path.exists(path):
+                        raise ValueError('%s does not exist at %s' % (attr_name, path or url))
+
+                # Search the package tree for the generic name.
+                else:
+                    path = find_in_tree(pkg.build_path, file_name)
+
+                # Build the step.
                 if path:
                     self = cls(pkg)
                     setattr(self, attr_name, path)
@@ -33,6 +65,7 @@ class SelfBuilder(GenericBuilder):
         self.requirements_txt = self.build_sh = self.develop_sh = None
 
     def inspect(self):
+        log.info(style_note('Inspecting %s' % os.path.basename(self.requirements_txt)))
         pkg = self.package
         for line in open(self.requirements_txt):
             line = line.strip()
@@ -42,7 +75,7 @@ class SelfBuilder(GenericBuilder):
 
     def build(self):
 
-        log.info(style_note('source vee-build.sh'))
+        log.info(style_note('source %s' % os.path.basename(self.build_sh)))
 
         pkg = self.package
         pkg._assert_paths(build=True, install=True)
@@ -69,7 +102,7 @@ class SelfBuilder(GenericBuilder):
 
     def install(self):
 
-        log.info(style_note('source vee-install.sh'))
+        log.info(style_note('source %s' % os.path.basename(self.install_sh)))
 
         pkg = self.package
         pkg._assert_paths(build=True, install=True)
@@ -88,7 +121,7 @@ class SelfBuilder(GenericBuilder):
 
     def develop(self):
         
-        log.info(style_note('source vee-develop.sh'))
+        log.info(style_note('source %s' % os.path.basename(self.develop_sh)))
 
         pkg = self.package
 
