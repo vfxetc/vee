@@ -1,4 +1,22 @@
 
+- --build-sh, --install-sh, etc., need to execute within the build/install
+  path, not where they are sitting (since the repo:xxx ones are sitting
+  in the repo)
+
+- vee-rc command for communicating with parent vee via $VEE_RC_PORT
+  - name: vee-rc, subvee, __vee__, vee-agent, vee-build
+  - this is to replace the wacky envvar stuff for the build environment
+    - this is used by key_base
+  - also to replace the develop callback functions
+    vee_develop_setenv -> vee-agent setenv
+  - call the build/install/develop script if they are executable, otherwise
+    source them
+  - these are used in minimal places:
+    $ find ~/dev -name 'vee-*.sh' -maxdepth 3
+    /home/mboers/dev/key_base/vee-develop.sh
+    /home/mboers/dev/key_base/vee-build.sh
+    /home/mboers/dev/pyqb/vee-build.sh
+
 - git is not respecting the umask. We could set core.sharedRepository
   (see `man git-config`) in all of the repos, or use --shared when we init/clone.
 

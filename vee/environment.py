@@ -24,6 +24,8 @@ class Environment(DBObject):
 
     name = Column()
     path = Column()
+    repository_id = Column()
+    repository_commit = Column()
 
     def __init__(self, name=None, home=None, repo=None):
         super(Environment, self).__init__()
@@ -38,7 +40,9 @@ class Environment(DBObject):
         self.home = home
 
         if repo is not None:
-            name = os.path.join(repo.name, 'commits', repo.describe())
+            self.repository_id = repo.id
+            self.repository_commit = repo.describe()
+            name = os.path.join(repo.name, 'commits', self.repository_commit)
 
         if os.path.isabs(name):
             self.path = name

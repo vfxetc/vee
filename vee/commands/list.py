@@ -21,8 +21,35 @@ def describe(pkg, cache, depth=0):
         describe(dep, cache, depth + 1)
 
 
-@command(name='list')
+@command(
+    argument('-e', '--environments', action='store_true'),
+    name='list',
+)
 def list_(args):
+
+
+    if args.environments:
+        list_environments(args)
+        return
+    else:
+        list_packages(args)
+
+
+
+def list_environments(args):
+
+    home = args.assert_home()
+    con = home.db.connect()
+
+    cache = {}
+
+    for env in con.execute('SELECT * from environments ORDER by created_at ASC'):
+        print env['created_at'], style(env['name'], 'blue'), env['id']
+        # print list(row)
+
+
+
+def list_packages(args):
 
     home = args.assert_home()
     con = home.db.connect()
@@ -39,3 +66,4 @@ def list_(args):
         pkg._load_dependencies()
 
         describe(pkg, cache)
+
