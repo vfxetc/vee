@@ -339,12 +339,26 @@ class Database(object):
         did_backup = False
         con = self.connect()
         with con:
-            con.execute('''CREATE TABLE IF NOT EXISTS migrations (
-                name TEXT NOT NULL,
-                applied_at TIMESTAMP NOT NULL DEFAULT (datetime('now'))
-            )''')
-            cur = con.execute('SELECT name FROM migrations')
-            existing = set(row[0] for row in cur)
+
+            # We try to select without creating the table, so that we don't
+            # force the database to lock every time (which will fail if
+            # something else has an exclusive lock).
+            try:
+                cur = con.execute('SELECT name FROM migrations')
+
+            except sqlite3.OperationalError as e:
+                if e.args[0] != 'no such table: migrations':
+                    raise
+
+                con.execute('''CREATE TABLE IF NOT EXISTS migrations (
+                    name TEXT NOT NULL,
+                    applied_at TIMESTAMP NOT NULL DEFAULT (datetime('now'))
+                )''')
+                existing = set()
+
+            else:
+                existing = set(row[0] for row in cur)
+
         for f in _migrations:
             name = f.__name__.strip('_')
             if name not in existing:
