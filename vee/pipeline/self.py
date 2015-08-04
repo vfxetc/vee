@@ -88,6 +88,7 @@ class SelfBuilder(GenericBuilder):
             VEE_INSTALL_PATH=pkg.install_path,
         )
 
+        # TODO: somehow derive this from --build-sh provided script.
         cwd = os.path.dirname(self.build_sh)
         envfile = os.path.join(cwd, 'vee-env-' + os.urandom(8).encode('hex'))
 

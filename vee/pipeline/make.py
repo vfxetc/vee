@@ -14,17 +14,31 @@ class MakeBuilder(GenericBuilder):
     @classmethod
     def factory(cls, step, pkg):
         
-        # We provide 'install' via get_next.
-        if step != 'build':
+        if step not in ('build', 'install'):
             return
 
-        configure_ac = find_in_tree(pkg.build_path, 'configure.ac')
-        configure = find_in_tree(pkg.build_path, 'configure')
         makefile = find_in_tree(pkg.build_path, 'Makefile')
+        configure = find_in_tree(pkg.build_path, 'configure') if step == 'build' else None
+        configure_ac = find_in_tree(pkg.build_path, 'configure.ac') if step == 'build' else None
 
-        if configure_ac and not configure and not pkg.autoconf:
+        # We generally provide 'install' via get_next, but if you specify   
+        # --build-sh it will come looking here, and so we must redo that
+        # logic.
+        if step == 'install':
+            if makefile:
+                # HACK: I was too lazy too refactor the logic for --make-install,
+                # so I just use this API.
+                return cls(pkg, (None, None, makefile)).get_next(step)
+            else:
+                return
+
+        # Warn about both autoconf conflict states.
+        if configure_ac and not pkg.autoconf:
             log.warning('autoconf detected, but --autoconf flag is not set on package')
+        if configure and pkg.autoconf:
+            log.warning('--autoconf flag is set on package but ./configure was found')
 
+        # Only return with configure.ac iff the user set --autoconf
         if (configure_ac and pkg.autoconf) or configure or makefile:
             return cls(pkg, (configure_ac, configure, makefile))
 
