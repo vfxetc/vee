@@ -285,6 +285,15 @@ class GitRepo(object):
             res.append((idx, tree, name))
         return res
 
+    def is_dirty(self):
+        return bool(list(self.status()))
+
+    def describe(self):
+        head = self.head
+        dirty = self.is_dirty()
+        # `git describe --always` returns 7, but we use 8 for whatever reason.
+        return (head[:8] + ('-dirty' if dirty else '')) if head else 'nocommit'
+
     def distance(self, left, right, strict=True):
         out = self.git('rev-list', '--left-right', '--count', '%s...%s' % (left, right), stdout=True)
         m = re.match(r'^\s*(\d+)\s+(\d+)\s*$', out)

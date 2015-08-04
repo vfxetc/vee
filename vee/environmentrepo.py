@@ -5,6 +5,7 @@ from vee.git import GitRepo
 from vee.requirements import Requirements, Header
 from vee.utils import cached_property
 from vee.exceptions import CliMixin
+from vee.environment import Environment
 
 
 class EnvironmentRepo(GitRepo):
@@ -30,8 +31,11 @@ class EnvironmentRepo(GitRepo):
             force=force
         )
 
+    def get_environment(self):
+        return Environment(repo=self, home=self.home)
+    
     def load_requirements(self, revision=None):
-        reqs = Requirements(home=self.home)
+        reqs = Requirements(env_repo=self, home=self.home)
         if revision is not None:
             contents = self.show(revision, 'requirements.txt')
             if contents:

@@ -51,13 +51,11 @@ def upgrade(args):
                 env_repo.name, env_repo.remote_name, env_repo.branch_name))
 
         dirty = bool(list(env_repo.status()))
-        if not args.dirty and dirty:
+        if not args.dirty and env_repo.is_dirty():
             print style('Error:', 'red', bold=True), style('%s repo is dirty; force with --dirty' % env_repo.name, bold=True)
             continue
 
-        commit_name = (head[:8] + ('-dirty' if dirty else '')) if head else 'nocommit'
-        env_name = os.path.join(env_repo.name, 'commits', commit_name)
-        env = Environment(env_name, home=home)
+        env = env_repo.get_environment()
 
         req_set = env_repo.load_requirements()
         pkg_set = PackageSet(env=env, home=home)

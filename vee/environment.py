@@ -25,10 +25,22 @@ class Environment(DBObject):
     name = Column()
     path = Column()
 
-    def __init__(self, name, home):
+    def __init__(self, name=None, home=None, repo=None):
         super(Environment, self).__init__()
+
+        # Manually checking for b/c.
+        if repo is None and name is None:
+            raise ValueError('need either repo or name')
+        if home is None:
+            raise ValueError('home is required')
+
+        self.repo = repo
         self.home = home
-        if name.startswith('/'):
+
+        if repo is not None:
+            name = os.path.join(repo.name, 'commits', repo.describe())
+
+        if os.path.isabs(name):
             self.path = name
             self.name = os.path.relpath(name, home._abs_path('environments'))
         else:

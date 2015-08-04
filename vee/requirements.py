@@ -66,9 +66,11 @@ class Control(object):
 
 class Requirements(list):
 
-    def __init__(self, args=None, file=None, home=None):
+    def __init__(self, args=None, file=None, home=None, env_repo=None):
 
         self.home = home
+        self.env_repo = env_repo
+
         self._cumulative_environ = {}
         self.headers = {}
 
