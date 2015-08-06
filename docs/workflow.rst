@@ -25,8 +25,8 @@ User Repo Workflow
 
 .. code-block:: bash
     
-    # Replace with your org's VEE repo.
-    vee init git@git.westernx:westernx/vee-repo
+    # Add the environment repository (replace with your git remote and name)
+    vee remote add --default git@git.westernx:westernx/vee-repo westernx
 
     # Build the latest environment.
     vee update

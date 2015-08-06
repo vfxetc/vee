@@ -23,7 +23,7 @@ class Home(object):
 
     def __init__(self, root=None, repo=None):
 
-        self.root = os.environ.get('VEE') if root is None else root
+        self.root = os.environ.get('VEE', '/usr/local/vee') if root is None else root
         if self.root is None:
             raise ValueError('need a root, or $VEE')
 
@@ -31,6 +31,10 @@ class Home(object):
 
         self.db = Database(self._abs_path('vee-index.sqlite'))
         self.config = Config(self)
+
+    @property
+    def exists(self):
+        return self.db.exists
 
     @cached_property
     def dev_root(self):
@@ -44,8 +48,11 @@ class Home(object):
         path = [os.path.expanduser(x) for x in path]
         return path
 
-    def init(self, url=None, name=None, is_default=True):
-        self._makedirs()
+    def init(self, url=None, name=None, is_default=True, create_parents=False):
+        if self.exists:
+            raise ValueError('home already initialized')
+        self._makedirs(create_parents)
+        self.db.create()
         if url:
             env_repo = self.create_env_repo(
                 url=url,
@@ -56,7 +63,9 @@ class Home(object):
     def _abs_path(self, *args):
         return os.path.abspath(os.path.join(self.root, *args))
 
-    def _makedirs(self):
+    def _makedirs(self, create_parents=False):
+        if not create_parents and not os.path.exists(os.path.dirname(self.root)):
+            raise ValueError('parent of %s does not exist' % self.root)
         for name in ('builds', 'environments', 'installs', 'packages', 'repos'):
             path = self._abs_path(name)
             makedirs(path)

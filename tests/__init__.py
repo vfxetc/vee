@@ -75,7 +75,7 @@ os.environ.update(_environ_diff)
 setup_mock_http(sandbox_dir)
 
 home = Home(VEE)
-
+home.init()
 
 def vee(args, environ=None, check=True, stdout=False):
     full_environ = os.environ.copy()
@@ -106,16 +106,26 @@ class TestCase(_TestCase):
         return self.__class__.__name__ + '/' + self._testMethodName
 
     def class_sandbox(self, *args):
-        return sandbox('homes', self.__class__.__name__, 'class', *args)
+        return sandbox('homes', self.__class__.__name__, '__class__', *args)
 
     def sandbox(self, *args):
         return self.class_sandbox(self._testMethodName, *args)
 
-    def class_home(self):
-        return Home(self.class_sandbox())
+    def class_home(self, init=None):
+        return self.home(self.class_sandbox(), init)
 
-    def home(self):
-        return Home(self.sandbox())
+    def home(self, path=None, init=None):
+        home = Home(path or self.sandbox())
+        if init is None:
+            init = not home.db.exists
+        if init:
+            home.init(create_parents=True)
+        else:
+            try:
+                os.makedirs(os.path.dirname(home.root))
+            except OSError:
+                pass # Could check against errno.EEXIST, but meh.
+        return home
 
     def repo(self):
         return MockRepo('%s/%s' % (self.__class__.__name__, self._testMethodName))

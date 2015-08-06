@@ -21,5 +21,7 @@ class TestInstaller(TestCase):
             '--no-bashrc',
         ])
 
-        self.assertExists(os.path.join(root, 'src', 'bin', 'vee'))
-
+        vee = os.path.join(root, 'src', 'bin', 'vee')
+        self.assertExists(vee)
+        
+        subprocess.check_call([vee, 'doctor'])

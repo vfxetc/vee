@@ -10,6 +10,5 @@ from vee.home import PRIMARY_REPO
     usage='vee init URL',
 )
 def init(args):
-    home = args.assert_home()
-    home.init(name=args.name, url=args.url)
+    args.home.init(name=args.name, url=args.url)
 

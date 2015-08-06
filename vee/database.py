@@ -333,11 +333,12 @@ class Database(object):
 
     def __init__(self, path):
         self.path = path
-        self._migrate()
+        if self.exists:
+            self._migrate()
 
-    def _migrate(self):
+    def _migrate(self, con=None):
         did_backup = False
-        con = self.connect()
+        con = con or self.connect()
         with con:
 
             # We try to select without creating the table, so that we don't
@@ -379,8 +380,18 @@ class Database(object):
     def exists(self):
         return os.path.exists(self.path)
 
-    def connect(self):
-        makedirs(os.path.dirname(self.path))
+    def create(self):
+        if self.exists:
+            raise ValueError('database already exists')
+        con = self.connect(create=True)
+        self._migrate(con)
+
+    def connect(self, create=False):
+        if not create and not self.exists:
+            print 'create:', create
+            print 'exists:', self.exists
+            print self.path
+            raise ValueError('database does not exist; run `vee init`')
         con = sqlite3.connect(self.path, factory=_Connection)
         con.execute('PRAGMA foreign_keys = ON')
         return con

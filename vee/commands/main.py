@@ -58,11 +58,22 @@ def subcommand(parent, *args, **kwargs):
 
 class Namespace(argparse.Namespace):
 
+    # This used to be a thing when it was possible for the home to not exist
+    # because $VEE was not set.
     def assert_home(self):
-        if not self.home:
-            raise RuntimeError('please set $VEE or use --home')
         return self.home
 
+    @property
+    def home(self):
+        try:
+            return self._home
+        except AttributeError:
+            self._home = home = Home(self.home_path)
+            return home
+
+    @property
+    def main(self):
+        return self.home.main
 
 
 _parser = None
@@ -171,7 +182,7 @@ def main(argv=None, environ=None, as_main=__name__=="__main__"):
             func = get_func(args)
 
         args.environ = os.environ if environ is None else environ
-        args.home_path = args.home_path or args.environ.get('VEE')
+        args.home_path = args.environ.get('VEE', '/usr/local/vee') if args.home_path is None else args.home_path
         
         if args.log:
             root = logging.getLogger('vee')
@@ -185,18 +196,15 @@ def main(argv=None, environ=None, as_main=__name__=="__main__"):
         # level of verbosity.
         log.config.verbosity = max(log.config.verbosity, args.verbose or 0)
 
-        args.home = args.home_path and Home(args.home_path)
-        args.main = getattr(args.home, 'main', None)
-        
-
         # TODO: Move this to a $VEE_UMASK envvar or something.
         # For now, just leave all permissions open.
         os.umask(0)
 
         if func:
+            lock = None
             try:
-                # don't grab the lock if we dont need it (or if the home isn't set)
-                if func.__acquire_lock and args.home_path:
+                # Don't grab the lock if we dont need it (or if the home isn't set)
+                if func.__acquire_lock and args.home_path and os.path.exists(args.home_path):
                     try:
                         lock = _global_locks[args.home_path]
                     except KeyError:
@@ -216,7 +224,7 @@ def main(argv=None, environ=None, as_main=__name__=="__main__"):
                     raise
             else:
                 res = func(args, *unparsed) or 0
-                if func.__acquire_lock:
+                if func.__acquire_lock and lock is not None:
                     lock.release()
 
         else:
