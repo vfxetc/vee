@@ -49,12 +49,13 @@ def doctor(args):
                 return 1
 
     print style_note('==> dependencies')
-    for name, expected_version in [('setuptools', '14.3.1'), ('virtualenv', '12.0.7')]:
-        actual_version = globals()[name].__version__
+    for name, expected_version, in [('setuptools', '18.0.1'), ('virtualenv', '13.1.0')]:
+        module = globals()[name]
+        actual_version = module.__version__
         if expected_version == actual_version:
             print style_note(name + ':', expected_version)
         else:
-            print style('%s: %s (expected %s)' % (name, actual_version, expected_version), 'yellow')
+            print style('%s: %s (expected vendored %s) from %s' % (name, actual_version, expected_version, module.__file__), 'yellow')
             res = 2
 
     print style_note('==> executables')
