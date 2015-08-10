@@ -36,6 +36,14 @@ class Home(object):
     def exists(self):
         return self.db.exists
 
+    def init(self, if_not_exists=False, create_parents=False):
+        self._makedirs(create_parents) # Do this anyways.
+        if self.exists:
+            if if_not_exists:
+                return
+            raise ValueError('home already exists')
+        self.db.create()
+
     @cached_property
     def dev_root(self):
         env_value = os.environ.get('VEE_DEV')
@@ -47,18 +55,6 @@ class Home(object):
         path = env_value.split(':') if env_value is not None else [self.dev_root]
         path = [os.path.expanduser(x) for x in path]
         return path
-
-    def init(self, url=None, name=None, is_default=True, create_parents=False):
-        if self.exists:
-            raise ValueError('home already initialized')
-        self._makedirs(create_parents)
-        self.db.create()
-        if url:
-            env_repo = self.create_env_repo(
-                url=url,
-                name=name or self.default_repo_name or PRIMARY_REPO,
-                is_default=is_default
-            )
 
     def _abs_path(self, *args):
         return os.path.abspath(os.path.join(self.root, *args))
