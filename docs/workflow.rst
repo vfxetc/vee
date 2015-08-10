@@ -20,8 +20,8 @@ Basic Installation
     sudo chmod -R g=rwXs,o=rwX $VEE
 
 
-User Repo Workflow
-------------------
+User Workflow
+-------------
 
 .. code-block:: bash
     
@@ -49,8 +49,43 @@ User Repo Workflow
     vee upgrade
 
 
-User Manual Workflow
---------------------
+
+Developer Workflow
+------------------
+
+.. code-block:: bash
+
+    # Specify where you want your dev packages to be, if not in $VEE/dev.
+    export VEE_DEV=~/dev
+
+    # Install a package for development. This must be a package that is
+    # referred to by the default repository.
+    vee develop install PACKAGE
+
+    cd ~/dev/PACKAGE
+
+    # Develop here; use `dev` to run in the dev environment.
+    dev MY_COMMAND
+
+    # Commit your changes to the package.
+    git commit -am 'What you did to PACKAGE.'
+
+    # Commit your changes to the VEE repo.
+    vee add PACKAGE
+    vee commit --patch -m 'Did something to PACKAGE.'
+
+    # Test locally.
+    vee upgrade
+    MY_COMMAND
+
+    # Push out the package, and repo.
+    git push
+    vee push
+
+
+
+Manual Workflow
+---------------
 
 .. code-block:: bash
 
@@ -68,36 +103,3 @@ User Manual Workflow
     # Execute within the "example" environment.
     vee exec -e example python -c 'import sgmock; print sgmock'
 
-
-Developer Workflow
-------------------
-
-.. warning:: This is still in heavy development.
-
-.. code-block:: bash
-
-    # Specify where you want your dev packages to be, if not in $VEE.
-    export VEE_DEV=~/dev
-
-    # Install a package for development. This must be a pacakge that is
-    # referred to by the default repository.
-    vee develop install PACKAGE
-
-    cd ~/dev/$package
-
-    # Develop here; use `dev` to run in the dev environment.
-    dev MY_COMMAND
-
-    # Commit your changes to the package.
-    git commit -am 'What you did to PACKAGE.'
-
-    # Commit your changes to the VEE repo.
-    vee add PACKAGE
-    vee commit --patch -m 'Did something to PACAKGE.'
-
-    # Test locally.
-    vee upgrade
-    MY_COMMAND
-
-    # Push out the package, and repo.
-    vee push

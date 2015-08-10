@@ -3,7 +3,7 @@ SPHINXBUILD   = sphinx-build
 PAPER         =
 BUILDDIR      = _build
 
-DEPS          = _build/commands.inc
+DEPS          = _build/requirements.inc _build/commands.inc
 
 
 # User-friendly check for sphinx-build

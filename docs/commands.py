@@ -19,10 +19,15 @@ def get_sub_action(parser):
 parser = get_parser()
 
 usage = parser.format_usage().replace('usage:', '')
-print '''.. _cli_vee:
+print '''
 
 top-level
 ---------
+
+.. _cli_vee:
+
+``vee``
+~~~~~~~
 
 ::
 
@@ -46,6 +51,8 @@ for group_name, funcs in parser._func_groups:
             continue
 
         if not did_header:
+            print '.. _cli_%s:' % group_name.replace(' ', '_')
+            print
             print group_name
             print '-' * len(group_name)
             print

@@ -72,6 +72,66 @@ A requirement is specification of a package that we would like to have installed
 in an environment. These are still represented via the :class:`Package` class.
 
 
+.. _requirements:
+
+Requirement Specification
+-------------------------
+
+Requirements are specified via a series of command-line-like arguments.
+The first is a URL, which may be HTTP, common git formats, or VEE-specific, e.g.:
+
+- ``http://cython.org/release/Cython-0.22.tar.gz``
+- ``git+git@git.westernx:westernx/sitetools``
+- ``pypi:pyyaml``
+
+The requirements are further refined by the following arguments:
+
+.. include:: _build/requirements.inc
+
+These may be passed to individual commands, e.g.::
+
+    vee link pypi:pyyaml --revision=3.11
+
+or via a ``requirements.txt`` file, which contains a list of requirements.
+
+
+.. _requirements_txt:
+
+``requirements.txt``
+--------------------
+
+The requirements file may also include:
+
+    - Headers, which are lines formatted like ``Header: Value``, e.g.::
+
+        Name: WesternX
+        Version: 0.43.23
+        Vee-Revision: 0.1-dev+4254bc1
+
+    - Comments beginning with ``#``;
+    - Basic control flow, starting with ``%``, e.g.::
+
+        # For the Shotgun cache:
+        % if os.environ.get('VEEINCLUDE_SGCACHE'):
+            git+git@git.westernx:westernx/sgapi --revision=6da9d1c5
+            git+git@git.westernx:westernx/sgcache --revision=cd673656
+            git+git@git.westernx:westernx/sgevents --revision=a58e61c5
+        % endif
+
+
+.. _env_repo:
+
+Environment Repository
+----------------------
+
+An environment repository is a git repository which contains (at a minimum)
+a :ref:`requirements_txt` file.
+
+They are managed by the :ref:`cli_vee_repo` command.
+
+
+
+
 .. _exec_env:
 
 Execution Environment
