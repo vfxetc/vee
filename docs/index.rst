@@ -1,5 +1,6 @@
-
 .. highlight:: python
+
+.. _index:
 
 VEE: Versioned Execution Environment
 ====================================
