@@ -223,6 +223,7 @@ def main(argv=None):
 
 
     heading('Done!')
+    print 'VEE will still need to be initialized via `vee init`.'
 
 
 if __name__ == '__main__':

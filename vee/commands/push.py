@@ -7,6 +7,8 @@ from vee.git import GitRepo, normalize_git_url
 
 @command(
     argument('-r', '--repo'),
+    help='push changes to environment repo',
+    group='development',
 )
 def push(args):
     home = args.assert_home()

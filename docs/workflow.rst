@@ -25,11 +25,13 @@ User Repo Workflow
 
 .. code-block:: bash
     
-    # Add the environment repository (replace with your git remote and name)
-    vee remote add --default git@git.westernx:westernx/vee-repo westernx
+    # Before your first use of vee, it must be initialized. This command
+    # will error if already run, with no ill effects.
+    vee init
 
-    # Build the latest environment.
-    vee update
+    # Add the environment repository (replace with your git remote and name),
+    # and build it.
+    vee repo clone git@git.westernx:westernx/vee-repo westernx
     vee upgrade
 
     # Run some installed commands.
@@ -41,21 +43,27 @@ User Repo Workflow
     vee exec --export >> ~/.bashrc
     COMMAND
 
+    # Whenever there are changes to the environment repo, you must "update"
+    # to fetch the changes, and "upgrade" to build the environment.
+    vee update
+    vee upgrade
+
 
 User Manual Workflow
 --------------------
 
 .. code-block:: bash
 
-    # Install some individual packages.
-    vee install homebrew+sqlite
-    vee install homebrew+ffmpeg --configuration='--with-faac'
-    vee install git+https://github.com/shotgunsoftware/python-api.git --name shotgun_api3
-    vee install --force https://github.com/westernx/sgmock/archive/master.zip --install-name sgmock/0.1
-    vee install git+git@git.westernx:westernx/sgsession
+    # Install some individual packages into the default environment.
+    # These will be lost upon the next "upgrade".
+    vee link homebrew+sqlite
+    vee link homebrew+ffmpeg --configuration='--with-faac'
+    vee link git+https://github.com/shotgunsoftware/python-api.git --name shotgun_api3
+    vee link --force https://github.com/westernx/sgmock/archive/master.zip --install-name sgmock/0.1
+    vee link git+git@git.westernx:westernx/sgsession
 
     # Link a few packages into an "example" environment.
-    vee link example examples/basic.txt
+    vee link -e example examples/basic.txt
 
     # Execute within the "example" environment.
     vee exec -e example python -c 'import sgmock; print sgmock'

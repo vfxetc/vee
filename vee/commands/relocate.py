@@ -15,6 +15,7 @@ from vee import log
     argument('--spec', default='AUTO'),
     argument('path', nargs='?'),
     help='relocate a package',
+    group='plumbing',
 )
 def relocate(args):
 

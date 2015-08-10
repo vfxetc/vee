@@ -19,6 +19,8 @@ default_messages = {
     argument('--micro', action='store_true'),
     argument('-r', '--repo'),
     argument('-m', '--message'),
+    help='commit changes to environment repo',
+    group='development',
 )
 def commit(args):
 

@@ -27,6 +27,10 @@ def delete_package(con, id_):
     argument('-p', '--prune-orphaned-packages', action='store_true'),
 
     argument('-n', '--dry-run', action='store_true'),
+
+    group='plumbing',
+    help='cleanup VEE',
+
 )
 def gc(args):
 

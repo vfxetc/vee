@@ -11,6 +11,7 @@ from vee.utils import makedirs
     parse_known_args=True,
     aliases=['sqlite'],
     acquire_lock=True,
+    group='plumbing',
 )
 def sqlite3(args, *command):
     home = args.assert_home()

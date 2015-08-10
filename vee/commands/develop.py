@@ -30,7 +30,7 @@ def iter_availible_requirements(home):
 
 @command(
     aliases=['dev'],
-    help='develop a package',
+    help='setup development packages',
     usage="""
        vee develop init [NAME]
    or: vee develop clone URL [NAME]
@@ -42,6 +42,7 @@ def iter_availible_requirements(home):
    or: vee develop setenv NAME KEY=value [...]
    or: vee develop list [--availible] [--environ]
 """.strip(),
+    group='development',
 )
 def develop(args):
     pass

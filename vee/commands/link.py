@@ -26,10 +26,25 @@ from vee.requirements import Requirements
 
     argument('requirements', nargs='...'),
     help='link a package, or requirements.txt, into an environment',
-    usage='vee link [--raw] ENVIRONMENT REQUIREMENTS',
     acquire_lock=True,
+    group='plumbing',
+    usage='vee link ENVIRON (REQUIREMENT [OPTIONS])+',
 )
 def link(args):
+    """Link the given requirement or requirements into the given environment,
+    e.g.::
+        
+        # Install and link a single package.
+        $ vee link git+git@github.com:westernx/sgmock
+
+        # Install and link multiple packages.
+        $ vee link git+git@github.com:westernx/sgmock git+git@github.com:westernx/sgsession \\
+            http:/example.org/path/to/tarball.tgz --make-install
+
+        # Install and link from a requirement set.
+        $ vee link path/to/requirements.txt
+
+    """
 
     if args.no_install and args.re_install:
         raise ValueError('please use only one of --no-install and --re-install')

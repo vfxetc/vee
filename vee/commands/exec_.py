@@ -27,8 +27,32 @@ from vee.requirements import Requirements
     name='exec',
     help='execute in this environment',
     usage='vee exec (-r REQUIREMENTS | ENVIRONMENT) COMMAND [...]',
+    group='workflow',
 )
 def exec_(args):
+    """Construct an environment, and either export it or run a command in it.
+    e.g.::
+
+        # Run in the default repository.
+        $ vee exec $command
+
+        # Run within a given repository.
+        $ vee exec --repo named_repo $command
+
+        # Run within a named environment.
+        $ vee exec -e named_environ $command
+
+        # Run within a constructed runtime for a set of requirements.
+        $ vee exec -r requirements.txt $command
+
+        # Export the default environment.
+        $ vee exec --export
+        export LD_LIBRARY_PATH="/usr/local/vee/lib:$LD_LIBRARY_PATH"
+        export PATH="/usr/local/vee/bin:$PATH"
+        export PYTHONPATH="/usr/local/vee/lib/python2.7/site-packages"
+
+    """
+
 
     home = args.assert_home()
 

@@ -10,12 +10,15 @@ from vee.subproc import call, which
 
 
 @command(
-    argument('--ping', action='store_true', help='print "pong"'),
-    argument('--version', action='store_true', help='print version'),
-    argument('--revision', action='store_true', help='print revision'),
+    argument('--ping', action='store_true', help='print "pong", and exit'),
+    argument('--version', action='store_true', help='print VEE\'s version, and exit'),
+    argument('--revision', action='store_true', help='print VEE\'s revision, and exit'),
     help='perform a self-check',
+    usage='vee doctor [--ping,--version,--revision]',
+    group='setup',
 )
 def doctor(args):
+    """Perform self-checks to make sure VEE is OK."""
 
     if args.ping:
         print 'pong'

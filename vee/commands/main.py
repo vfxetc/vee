@@ -1,6 +1,6 @@
 """VEE is a manager of versioned execution environments.
 
-See: `vee <command> --help` for more on individual commands.
+See: `vee COMMAND --help` for more on individual commands.
 
 """
 
@@ -89,29 +89,101 @@ def get_parser():
         prog='vee',
         formatter_class=argparse.RawDescriptionHelpFormatter,
         description=__doc__,
-        usage='vee [-h] COMMAND [ARGS]',
+        #usage='vee [-h] [-v] COMMAND ...',
     )
 
     parser.register('action', 'parsers', AliasedSubParsersAction)
-    command_subparser = parser.add_subparsers(metavar='COMMAND')
 
-    parser.add_argument('-v', '--verbose', action='count', default=0)
+    parser.add_argument('-v', '--verbose', action='count', default=0, help='increase verbosity; may be used multiple times')
     parser.add_argument('--log', help='dump complete log to file')
 
     parser.add_argument('--home',
         dest='home_path',
         metavar='VEE',
-        help='path of managed environments',
+        help='path of managed environments; defaults to $VEE or /usr/local/vee',
     )
 
     funcs = [ep.load() for ep in pkg_resources.iter_entry_points('vee_commands')]
-
-    populate_subparser(command_subparser, funcs)
+    populate_subparser(parser, funcs)
 
     return parser
 
 
-def populate_subparser(parent_subparser, funcs, depth=0):
+
+def trim_docstring(docstring):
+
+    if not docstring:
+        return ''
+
+    lines = docstring.expandtabs().splitlines()
+
+    # Determine minimum indentation (first line doesn't count):
+    indent = sys.maxint
+    for line in lines[1:]:
+        stripped = line.lstrip()
+        if stripped:
+            indent = min(indent, len(line) - len(stripped))
+
+    # Remove indentation (first line is special):
+    trimmed = [lines[0].strip()]
+    if indent < sys.maxint:
+        for line in lines[1:]:
+            trimmed.append(line[indent:].rstrip())
+
+    # Strip off trailing and leading blank lines:
+    while trimmed and not trimmed[-1]:
+        trimmed.pop()
+    while trimmed and not trimmed[0]:
+        trimmed.pop(0)
+
+    return '\n'.join(trimmed)
+
+
+def populate_subparser(parent_parser, funcs, depth=0):
+
+    parent_parser._func_groups = groups = []
+    groups_by_name = {}
+    for group_name in 'setup', 'workflow', 'development':
+        group = []
+        groups.append((group_name, group))
+        groups_by_name[group_name] = group
+
+    # Group them by name.
+    for func in funcs:
+        func_help = func.__command_spec__[1].get('help')
+        if not help:
+            continue
+        group_name = func.__command_spec__[1].pop('group', 'the rest')
+        if group_name not in groups_by_name:
+            group = []
+            groups.append((group_name, group))
+            groups_by_name[group_name] = group
+        func_name = func.__command_spec__[1].get('name', func.__name__)
+        groups_by_name[group_name].append((func_name, func))
+
+    # Filter out empty groups.
+    groups[:] = [(n, f) for n, f in groups if f]
+
+    # Build up all the help. This is a little silly to do in advance, but... meh.
+    help_chunks = []
+    for group_name, group_funcs in groups:
+        did_header = False
+        for func_name, func in sorted(group_funcs):
+            func_help = func.__command_spec__[1].get('help')
+            if func_help is argparse.SUPPRESS or not func_help:
+                continue
+            if not did_header:
+                if len(groups) > 1:
+                    help_chunks.append('')
+                    help_chunks.append('%s:' % group_name)
+                did_header = True
+            help_chunks.append('  %-12s %s' % (func_name, func_help))
+
+    parent_subparser = parent_parser.add_subparsers(
+        help=argparse.SUPPRESS,
+        title='subcommands',
+        description='\n'.join(help_chunks),
+    )
 
     funcs.sort(key=lambda f: f.__command_spec__[1].get('name', f.__name__))
 
@@ -120,18 +192,24 @@ def populate_subparser(parent_subparser, funcs, depth=0):
         args, kwargs = func.__command_spec__
         func.__parse_known_args = kwargs.pop('parse_known_args', False)
         func.__acquire_lock = kwargs.pop('acquire_lock', False)
+        add_verbose = kwargs.pop('add_verbose', True)
+
         name = kwargs.pop('name', func.__name__)
         kwargs.setdefault('aliases', [])
         kwargs.setdefault('formatter_class', argparse.RawDescriptionHelpFormatter)
+        kwargs.setdefault('description', trim_docstring(func.__doc__))
+        kwargs.setdefault('conflict_handler', 'resolve')
 
         parser = parent_subparser.add_parser(name, **kwargs)
         parser.set_defaults(**{'func%d' % depth: func})
         parser.register('action', 'parsers', AliasedSubParsersAction)
 
+        if add_verbose:
+            parser.add_argument('-v', '--verbose', action='count', default=0, help='increase verbosity; may be used multiple times')
+
         subcommands = getattr(func, '__subcommands__', None)
         if subcommands:
-            command_subparser = parser.add_subparsers(metavar='SUBCOMMAND')
-            populate_subparser(command_subparser, subcommands, depth + 1)
+            populate_subparser(parser, subcommands, depth + 1)
 
         for arg_args, arg_kwargs in args:
             if arg_kwargs.pop('__type__', None) == 'group':

@@ -29,6 +29,7 @@ Contents
     concepts
     pipeline
     commands
+    python_api
 
 
 Indices and tables

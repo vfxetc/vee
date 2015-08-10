@@ -11,11 +11,16 @@ from vee.environment import Environment
         argument('--clear', action='store_true', help='clear all config'),
         exclusive=True,
     ),
-    argument('args', nargs='...'),
+    argument('values', nargs='...', help='values for getting, setting, etc.'),
     # We have no help so the command doesn't show up in main help.
     # help='manage the configuration',
 )
 def config(args):
+    """Manipulate the key-value config.
+
+    THE CONFIG SYSTEM IS CURRENTLY UNUSED.
+
+    """
 
     args.assert_home()
     config = args.home.config
@@ -26,18 +31,18 @@ def config(args):
         return
 
     if args.set:
-        if len(args.args) % 2:
+        if len(args.values) % 2:
             raise CliException('--set requires even number of arguments')
-        for i in xrange(0, len(args.args), 2):
-            config[args.args[i]] = args.args[i + 1]
+        for i in xrange(0, len(args.values), 2):
+            config[args.values[i]] = args.values[i + 1]
         return
 
     if args.delete:
-        for k in args.args:
+        for k in args.values:
             del config[k]
     
     if args.clear:
         config.clear()
     
-    for k in args.args:
+    for k in args.values:
         print config[k]

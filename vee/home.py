@@ -21,6 +21,13 @@ PRIMARY_REPO = 'primary'
 
 class Home(object):
 
+    """The starting point of everything VEE.
+
+    :param str root: The root directory of the home; defaults to ``$VEE``.
+    :param str repo: The name of the default repository; defaults to ``$VEE_REPO``.
+
+    """
+
     def __init__(self, root=None, repo=None):
 
         self.root = os.environ.get('VEE', '/usr/local/vee') if root is None else root

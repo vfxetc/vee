@@ -4,12 +4,27 @@ from vee.home import PRIMARY_REPO
 
 
 @command(
-    argument('--name', help='name for new repository'),
     argument('url', nargs='?', help='URL of new repository to clone'),
+    argument('name', nargs='?', help='name for new repository'),
     help='initialize VEE\'s home',
     usage='vee init URL',
+    group='setup',
 )
 def init(args):
+    """Initialize the structures on disk before any other commands, and
+    optionally setup the first environment repository.
+
+    E.g.:
+
+        vee init git@git.westernx:westernx/vee-repo primary
+
+    This is the same as:
+
+        vee init
+        vee repo clone git@git.westernx:westernx/vee-repo primary
+
+
+    """
 
     try:
         args.home.init()

@@ -20,9 +20,12 @@ from vee.utils import makedirs
     argument('subset', nargs='*'),
     help='upgrade packages specified by repositories, and link into environments',
     acquire_lock=True,
+    group='workflow'
 )
 def upgrade(args):
-
+    """Install packages and link into environments, as specified by repositories.
+    """
+    
     home = args.assert_home()
 
     if args.all:

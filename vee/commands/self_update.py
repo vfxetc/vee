@@ -8,10 +8,13 @@ from vee.commands.main import command, argument
     name='self-update',
     help='update vee itself',
     aliases=['selfupdate'],
+    group='setup',
 )
 def self_update(args):
+    """Update VEE itself. This effectively runs `install_vee.py` with a few
+    default arguments, or is the same as `git pull` in the `src` directory.
 
-    args.assert_home()
+    """
 
     try:
         import install_vee

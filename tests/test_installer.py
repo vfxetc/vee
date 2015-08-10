@@ -24,4 +24,7 @@ class TestInstaller(TestCase):
         vee = os.path.join(root, 'src', 'bin', 'vee')
         self.assertExists(vee)
         
+        # This should be required, but isn't.
+        #subprocess.check_call([vee, 'init'])
+
         subprocess.check_call([vee, 'doctor'])

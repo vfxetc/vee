@@ -18,6 +18,7 @@ from vee import log
     argument('--repo'),
     argument('package', nargs='?', default='.'),
     help='record changes to dev packages in environment repo',
+    group='development',
 )
 def add(args):
 

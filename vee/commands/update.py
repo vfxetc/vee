@@ -9,8 +9,12 @@ from vee.environment import Environment
     argument('-r', '--repo', action='append', dest='repos'),
     help='update repos',
     acquire_lock=True,
+    group='workflow',
 )
 def update(args):
+    """Update the environment repository (via `git pull`). This will fail if
+    your repositories are dirty, or have forked from their remotes.
+    """
 
     home = args.assert_home()
 

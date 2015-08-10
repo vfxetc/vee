@@ -11,15 +11,35 @@ from vee.utils import makedirs
 @command(
     help='manage environment repos',
     usage="""
-       vee repo init OPTIONS NAME
-   or: vee repo add OPTIONS PATH [NAME]
-   or: vee repo clone OPTIONS URL [NAME]
-   or: vee repo set OPTIONS NAME
+       vee repo init NAME
+   or: vee repo add PATH [NAME]
+   or: vee repo clone URL [NAME]
+   or: vee repo set NAME
    or: vee repo delete NAME
    or: vee repo list
-""".strip()
+""".strip(),
+    group='setup',
 )
 def repo(args):
+    """Manipulate environment repositories,
+    e.g.::
+
+        # Start a new repo.
+        $ vee repo init example
+
+        # Add a new repo, and make it the default.
+        $ vee repo clone --default git@github.com:example/myrepo
+
+        # Change a repo's url and branch
+        $ vee repo set --branch unstable myrepo
+
+        # Delete a repo.
+        $ vee repo delete myrepo
+
+        # List all repos.
+        $ vee repo list
+
+    """
     # Never goes here.
     pass
 
@@ -48,7 +68,7 @@ def init(args, is_set=False):
     argument('--branch', help='git branch to track', default='master'),
     argument('path'),
     argument('name', nargs='?'),
-    help='add an existing repository'
+    help='add an existing repository clone'
 )
 def add(args, is_set=False):
     home = args.assert_home()

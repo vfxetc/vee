@@ -10,8 +10,22 @@ from vee.utils import makedirs
     argument('--stree', action='store_true', help='launch SourceTree'),
     help='run a git command in a repository',
     parse_known_args=True,
+    group='plumbing',
+    usage='vee git [-r REPO] COMMAND+',
 )
 def git(args, *command):
+    """Run a ``git`` command on a environment repository's git repository.
+    (Sorry for the name collision.)
+
+    e.g.::
+
+        $ vee git -r primary status
+        On branch master
+        Your branch is behind 'origin/master' by 1 commit, and can be fast-forwarded.
+          (use "git pull" to update your local branch)
+        nothing to commit, working directory clean
+
+    """
 
     home = args.assert_home()
     repo = home.get_env_repo(args.repo)

@@ -10,6 +10,8 @@ from vee import log
 
 @command(
     argument('-r', '--repo', nargs='?'),
+    help='open requirements.txt in $EDITOR',
+    group='development',
 )
 def edit(args):
 
