@@ -35,3 +35,19 @@ class TestRepos(TestCase):
         # Set another to be default.
         home.main(['repo', 'set', '--default', 'B'])
         self.assertEqual(defaults(), ['B'])
+
+    def test_single_repo_is_default(self):
+
+        home = self.home()
+
+        # Make a generic repo.
+        repo = home.create_env_repo(is_default=False)
+
+        # There is only the one.
+        self.assertEqual(len(list(home.iter_env_repos())), 1)
+
+        # It is also the default.
+        repo2 = home.get_env_repo()
+        self.assertTrue(repo2 is not None)
+        self.assertEqual(repo.name, repo2.name)
+

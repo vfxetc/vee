@@ -17,6 +17,7 @@ from vee.commands.main import main as _main
 from vee.git import GitRepo
 from vee.home import Home
 from vee.subproc import call
+from vee.utils import makedirs
 
 from .mock.http import setup_mock_http, mock_url
 from .mock.package import MockPackage
@@ -116,15 +117,11 @@ class TestCase(_TestCase):
 
     def home(self, path=None, init=None):
         home = Home(path or self.sandbox())
+        makedirs(os.path.dirname(home.root))
         if init is None:
             init = not home.db.exists
         if init:
             home.init(create_parents=True)
-        else:
-            try:
-                os.makedirs(os.path.dirname(home.root))
-            except OSError:
-                pass # Could check against errno.EEXIST, but meh.
         return home
 
     def repo(self):

@@ -109,11 +109,22 @@ class Home(object):
         name = name or self.default_repo_name
         
         if name:
-            row = self.db.execute('SELECT * FROM repositories WHERE name = ?', [name]).fetchone()
+            row = self.db.execute('SELECT * FROM repositories WHERE name = ? LIMIT 1', [name]).fetchone()
+            if not row:
+                raise ValueError('%r repo does not exist' % name)
+
         else:
-            row = self.db.execute('SELECT * FROM repositories WHERE is_default').fetchone()
-        if not row:
-            raise ValueError('%s repo does not exist' % (repr(name) if row else 'default'))
+            # Grab the default repo if possible, otherwise make sure there is
+            # only one.
+            rows = self.db.execute('SELECT * FROM repositories ORDER BY is_default DESC LIMIT 2').fetchall()
+            if not rows:
+                raise ValueError('no repositories exist')
+            elif rows[0]['is_default']:
+                row = rows[0]
+            elif len(rows) == 1:
+                row = rows[0]
+            else:
+                raise ValueError('multiple repositories with no default')
         
         env_repo = EnvironmentRepo(row, home=self)
         if not env_repo.exists:
@@ -153,6 +164,8 @@ class Home(object):
         elif not env_repo.exists:
             makedirs(env_repo.work_tree)
             env_repo.git('init')
+
+        return env_repo
 
     def update_env_repo(self, name, url=None, remote=None, branch=None, is_default=None):
 
