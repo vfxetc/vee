@@ -103,7 +103,7 @@ def add(args):
         print style_error('No git remotes for %s' % row['path'])
         return 1
 
-    for req in req_set.iter_packages():
+    for req in req_set.iter_packages(eval_control=False):
 
         # We only deal with git packages.
         pkg = pkg_set.resolve(req, check_existing=False)
