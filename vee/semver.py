@@ -30,6 +30,13 @@ class Version(object):
 
     def __init__(self, raw):
 
+        # Git revisions.
+        if re.match(r'^[0-9a-fA-F]{6,}$', raw):
+            self.build_metadata = (raw.lower(), )
+            raw = ''
+        else:
+            self.build_metadata = None
+
         # Epoch (PEP)
         m = re.match(r'^(\d+)!(.+)$', raw)
         if m:
@@ -84,7 +91,8 @@ class Version(object):
             self.build_metadata = tuple(int(x) if x.isdigit() else x for x in m.group(1).split('.'))
             raw = raw[m.end(1):]
         else:
-            self.build_metadata = None
+            pass
+            # build_metadata is already set to None at the top.
 
         self.unknown = tuple(int(x) if x.isdigit() else x for x in raw.split('.')) if raw else None
 
@@ -95,6 +103,14 @@ class Version(object):
     @property
     def pre_release(self):
         return self.pep_pre_release or self.sem_pre_release
+
+    @property
+    def git_rev(self):
+        if not self.build_metadata or len(self.build_metadata) != 1:
+            return
+        rev = self.build_metadata[0]
+        if re.match(r'^[0-9a-fA-F]{6,}$', rev):
+            return rev
 
     def __str__(self):
         chunks = []
@@ -126,7 +142,17 @@ class Version(object):
         if not isinstance(b, Version):
             b = Version(b)
 
-        return a.__dict__ == b.__dict__
+        if a.__dict__ == b.__dict__:
+            return True
+
+        rev_a = a.git_rev
+        rev_b = b.git_rev
+
+        if rev_a and rev_b:
+            min_len = min(len(rev_a), len(rev_b))
+            return rev_a[:min_len] == rev_b[:min_len]
+
+        return False
 
     def __ne__(a, b):
         return not (a == b)
@@ -168,6 +194,7 @@ def _op(name):
 @_op('==')
 def _op_eq(a, b):
     return a == b
+
 @_op('!=')
 def _op_ne(a, b):
     return a != b
@@ -224,6 +251,9 @@ class VersionExpr(object):
             op, raw_version = m.groups()
             version = Version(raw_version)
             self.clauses.append((op, version))
+
+    def __repr__(self):
+        return '%s(%r)' % (self.__class__.__name__, str(self))
 
     def __str__(self):
         return ','.join('%s%s' % x for x in self.clauses)

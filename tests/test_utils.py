@@ -39,6 +39,10 @@ class TestGuessName(TestCase):
             guess_name('homebrew:sqlite3'),
             'sqlite3',
         )
+        self.assertEqual(
+            guess_name('git+https://github.com/PixarAnimationStudios/OpenSubdiv'),
+            'opensubdiv',
+        )
 
     def test_guess_name_regressions(self):
         self.assertEqual(

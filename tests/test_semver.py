@@ -90,7 +90,8 @@ class TestVersions(TestCase):
 
         v = Version('abcdef')
         self.assertEqual(v.release, None)
-        self.assertEqual(v.unknown, ('abcdef', ))
+        self.assertEqual(v.build_metadata, ('abcdef', ))
+        self.assertEqual(v.git_rev, 'abcdef')
 
     def test_comparisons(self):
 
@@ -232,7 +233,6 @@ class TestVersions(TestCase):
         self.assertFalse(expr.eval('1.0.0a1'))
         self.assertFalse(expr.eval('2.0.0'))
 
-
     def test_multiple_exprs(self):
 
         expr = VersionExpr('>= 1.0.0, < 2.0.0')
@@ -242,7 +242,21 @@ class TestVersions(TestCase):
         self.assertFalse(expr.eval('1.0.0a'))
         self.assertFalse(expr.eval('0.9.0'))
 
+    def test_gitrev_expr(self):
 
+        commits = ('deadbeef', 'deadbeef01234', 'deadbe')
+        for a in commits:
+            expr = VersionExpr(a)
+            for b in commits:
+                self.assertTrue(expr.eval(b))
+
+        expr = VersionExpr('deadbeef1')
+        self.assertFalse(expr.eval('deadb'))
+        self.assertFalse(expr.eval('deadbeef2'))
+
+        self.assertTrue(VersionExpr('986b416').eval('986b4161'))
+
+        self.assertTrue(VersionExpr('986b416').eval(Version('986b4161')))
 
 
 
