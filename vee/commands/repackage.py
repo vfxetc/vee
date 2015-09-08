@@ -4,6 +4,7 @@ import os
 import sys
 import tarfile
 import tempfile
+import stat
 
 from vee.commands.main import command, argument, group
 from vee.environment import Environment
@@ -90,12 +91,23 @@ def repackage(args):
         archive = tarfile.open(fileobj=writer, mode='w|gz')
 
         for dir_path, dir_names, file_names in os.walk(pkg.install_path):
+        
+            for dir_name in dir_names:
+                path = os.path.join(dir_path, dir_name)
+                rel_path = os.path.relpath(path, pkg.install_path)
+                if args.verbose:
+                    print '    ' + rel_path + '/'
+                archive.add(path, rel_path, recursive=False)
+            
             for file_name in file_names:
-                file_path = os.path.join(dir_path, file_name)
-                rel_path = os.path.relpath(file_path, pkg.install_path)
+                path = os.path.join(dir_path, file_name)
+                mode = os.lstat(path).st_mode
+                if not (stat.S_ISREG(mode) or stat.S_ISDIR(mode) or stat.S_ISLNK(mode)):
+                    continue
+                rel_path = os.path.relpath(path, pkg.install_path)
                 if args.verbose:
                     print '    ' + rel_path
-                archive.add(file_path, rel_path)
+                archive.add(path, rel_path)
 
         if pkg.dependencies:
             requirements = []
