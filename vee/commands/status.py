@@ -15,7 +15,7 @@ def summarize_rev_distance(local, remote, local_name='You', local_verb='are', re
     indent='    ',
 ):
     if local and remote:
-        print indent + style_warning('%s and the tool have forked%s' % (local_name, '; ' + fork_action if fork_action else '.'))
+        print indent + style_warning('%s and %s have forked%s' % (local_name, remote_name or 'the remote', '; ' + fork_action if fork_action else '.'))
         print indent + style_warning('There are %d local commit%s, and %d remote commit%s.' % (
             local,
             's' if local > 1 else '',

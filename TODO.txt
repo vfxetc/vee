@@ -1,4 +1,15 @@
 
+
+- `vee commit` makes sure you haven't forked
+- `vee status` tries to fetch if the revision is not in the local repo
+
+- Should we auto-detect dev directories on VEE_DEV_PATH if we can?
+  `vee dev find` or `vee dev rescan` could be adjusted to auto-detect
+  things too. It likely isn't a great idea to have the discovery run on every
+  dev, since you can easily have repos that you put quite a bit of work into
+  auto-discovering, only to have them fail. However, that failure could also
+  be cached in the JSON document.
+
 - --build-sh, --install-sh, etc., need to execute within the build/install
   path, not where they are sitting (since the repo:xxx ones are sitting
   in the repo)
