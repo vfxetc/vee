@@ -15,7 +15,18 @@ from vee.database import DBObject, Column
 IGNORE_DIRS = frozenset(('.git', '.svn'))
 IGNORE_FILES = frozenset(('.DS_Store', ))
 
-TOP_LEVEL_DIRS = frozenset(('bin', 'etc', 'include', 'lib', 'lib64', 'sbin', 'share', 'opt', 'var'))
+
+# The directories which are allowed to exist at the top-level of an environment.
+# Other top-level entities will be ignored.
+TOP_LEVEL_DIRS = frozenset((
+
+    # Subset of the "Filesystem Hierarchy Standard" that is for static data:
+    'bin', 'etc', 'include', 'lib', 'lib64', 'sbin', 'share', 'opt', 'var',
+
+    # For Qt:
+    'mkspecs', 'plugins',
+
+))
 
 
 class Environment(DBObject):
