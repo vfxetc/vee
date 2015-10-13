@@ -3,10 +3,14 @@ import glob
 import os
 import re
 import subprocess
+import logging
 
 from vee.cli import style
 from vee.subproc import call
 from vee.exceptions import CliMixin
+
+
+log = logging.getLogger(__name__)
 
 
 class GitError(CliMixin, RuntimeError):
@@ -335,10 +339,18 @@ class GitRepo(object):
             # Fetch the new history on top of the shallow history.
             if shallow:
                 print style('Fetching shallow', 'blue', bold=True), style(remote or 'defaults', bold=True)
-                self._fetch('--update-shallow', *args)
-                if not rev_to_parse:
-                    return
-                commit = self._rev_parse(rev_to_parse)
+                try:
+                    self._fetch('--update-shallow', *args)
+                except GitError as e:
+                    if 'unknown option' in e.args[0]:
+                        log.warning('git too old for --update-shallow')
+                        commit = None
+                    else:
+                        raise
+                else:
+                    if not rev_to_parse:
+                        return
+                    commit = self._rev_parse(rev_to_parse)
 
             # Lets get the whole history.
             if not shallow or not commit:
