@@ -29,4 +29,4 @@ def update(args):
         did_update = env_repo.update(force=args.force)
         success = success and did_update
 
-    return int(success)
+    return int(not success)

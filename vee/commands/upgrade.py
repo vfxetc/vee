@@ -41,5 +41,5 @@ def upgrade(args):
             reinstall=args.reinstall, relink=args.relink, no_deps=args.no_deps,
             force_branch_link=args.force_branch_link) and success
 
-    return int(success)
+    return int(not success)
     
