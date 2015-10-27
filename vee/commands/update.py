@@ -23,25 +23,10 @@ def update(args):
     else:
         env_repos = [home.get_env_repo(x) for x in args.repos] if args.repos else [home.get_env_repo()]
 
-    retcode = 0
+    success = True
 
     for env_repo in env_repos:
+        did_update = env_repo.update(force=args.force)
+        success = success and did_update
 
-        print style_note('Updating repo', env_repo.name)
-
-        env_repo.clone_if_not_exists()
-
-        if env_repo.remote_name not in env_repo.remotes():
-            print style_warning('"%s" does not have remote "%s"' % (env_repo.name, env_repo.remote_name))
-            continue
-
-        rev = env_repo.fetch()
-
-        if not args.force and not env_repo.check_ff_safety(rev):
-            print style('Error:', 'red', bold=True), style('Cannot fast-forward; skipping.', bold=True)
-            retcode = retcode or 1
-            continue
-
-        env_repo.checkout(force=args.force)
-
-    return retcode
+    return int(success)

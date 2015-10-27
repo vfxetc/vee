@@ -1,11 +1,15 @@
+from subprocess import CalledProcessError
 import os
 import re
 
-from vee.git import GitRepo
-from vee.requirements import Requirements, Header
-from vee.utils import cached_property
-from vee.exceptions import CliMixin
+from vee import log
+from vee.cli import style_note, style_warning, style_error
 from vee.environment import Environment
+from vee.exceptions import CliMixin
+from vee.git import GitRepo
+from vee.packageset import PackageSet
+from vee.requirements import Requirements, Header
+from vee.utils import cached_property, makedirs
 
 
 class EnvironmentRepo(GitRepo):
@@ -94,3 +98,84 @@ class EnvironmentRepo(GitRepo):
 
         self.git('add', self._req_path, silent=True)
         self.git('commit', '-m', message, silent=True)
+
+    def update(self, force=False):
+
+        log.info(style_note('Updating repo', self.name))
+
+        self.clone_if_not_exists()
+
+        if self.remote_name not in self.remotes():
+            log.warning(style_warning('"%s" does not have remote "%s"' % (self.name, self.remote_name)))
+            return True
+
+        rev = self.fetch()
+
+        if not force and not self.check_ff_safety(rev):
+            log.error(style('Error:', 'red', bold=True), style('Cannot fast-forward; skipping.', bold=True))
+            return False
+
+        self.checkout(force=force)
+        return True
+
+    def upgrade(self, dirty=False, subset=None, reinstall=False, relink=False,
+        no_deps=False, force_branch_link=True
+    ):
+
+        self.clone_if_not_exists()
+
+        try:
+            head = self.head
+        except CalledProcessError:
+            log.warning(style_warning('no commits in repository'))
+            head = None
+
+        try:
+            remote_head = self.rev_parse('%s/%s' % (self.remote_name, self.branch_name))
+        except ValueError:
+            log.warning(style_warning('tracked %s/%s does not exist in self' % (self.remote_name, self.branch_name)))
+            remote_head = None
+
+        if remote_head and head != remote_head:
+            log.warning(style_warning('%s repo not checked out to %s/%s' % (
+                self.name, self.remote_name, self.branch_name)))
+
+        dirty = bool(list(self.status()))
+        if not dirty and self.is_dirty():
+            log.error(style('Error:', 'red', bold=True), style('%s repo is dirty; force with --dirty' % self.name, bold=True))
+            return False
+
+        env = self.get_environment()
+
+        req_set = self.load_requirements()
+        pkg_set = PackageSet(env=env, home=self.home)
+        
+        # Register the whole set, so that dependencies are pulled from here instead
+        # of weakly resolved from installed packages.
+        # TODO: This blanket reinstalls things, even if no_deps is set.
+        pkg_set.resolve_set(req_set, check_existing=not reinstall)
+
+        # Install and/or link.
+        pkg_set.install(subset or None, link_env=env, reinstall=reinstall, relink=relink, no_deps=no_deps)
+
+        if pkg_set._errored and not force_branch_link:
+            log.warning(style_warning("Not creating branch or version links; force with --force-branch-link"))
+            return False
+
+        # Create a symlink by branch.
+        path_by_branch = self.home._abs_path('environments', self.name, self.branch_name)
+        if os.path.lexists(path_by_branch):
+            os.unlink(path_by_branch)
+        makedirs(os.path.dirname(path_by_branch))
+        os.symlink(env.path, path_by_branch)
+
+        # Create a symlink by version.
+        version = req_set.headers.get('Version')
+        if version:
+            path_by_version = self.home._abs_path('environments', self.name, 'versions', version.value + ('-dirty' if dirty else ''))
+            if os.path.lexists(path_by_version):
+                os.unlink(path_by_version)
+            makedirs(os.path.dirname(path_by_version))
+            os.symlink(env.path, path_by_version)
+
+        return True
