@@ -3,7 +3,7 @@ import os
 import re
 
 from vee import log
-from vee.cli import style_note, style_warning, style_error
+from vee.cli import style_note, style_warning, style_error, style
 from vee.environment import Environment
 from vee.exceptions import CliMixin
 from vee.git import GitRepo
@@ -112,7 +112,7 @@ class EnvironmentRepo(GitRepo):
         rev = self.fetch()
 
         if not force and not self.check_ff_safety(rev):
-            log.error(style('Error:', 'red', bold=True), style('Cannot fast-forward; skipping.', bold=True))
+            log.error('Cannot fast-forward; skipping.')
             return False
 
         self.checkout(force=force)
@@ -142,7 +142,7 @@ class EnvironmentRepo(GitRepo):
 
         dirty = bool(list(self.status()))
         if not dirty and self.is_dirty():
-            log.error(style('Error:', 'red', bold=True), style('%s repo is dirty; force with --dirty' % self.name, bold=True))
+            log.error('%s repo is dirty; force with --dirty' % self.name)
             return False
 
         env = self.get_environment()
