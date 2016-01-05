@@ -26,6 +26,9 @@ TOP_LEVEL_DIRS = frozenset((
     # For Qt:
     'mkspecs', 'plugins',
 
+    # For OS X:
+    'Library', 'Resources',
+
 ))
 
 
