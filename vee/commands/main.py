@@ -96,6 +96,7 @@ def get_parser():
 
     parser.add_argument('-v', '--verbose', action='count', default=0, help='increase verbosity; may be used multiple times')
     parser.add_argument('--log', help='dump complete log to file')
+    parser.add_argument('--profile', dest='cprofile_path', help='dump execution profile to disk')
 
     parser.add_argument('--home',
         dest='home_path',
@@ -301,7 +302,10 @@ def main(argv=None, environ=None, as_main=__name__=="__main__"):
                 else:
                     raise
             else:
-                res = func(args, *unparsed) or 0
+                if args.cprofile_path:
+                    res = cProfile.runctx('func(args, *unparsed)', locals(), globals(), filename=args.cprofile_path) or 0
+                else:
+                    res = func(args, *unparsed) or 0
                 if func.__acquire_lock and lock is not None:
                     lock.release()
 
