@@ -116,6 +116,11 @@ class Environment(DBObject):
 
     def rewrite_shebang(self, old_path, new_path):
 
+        # Only care if it is at all executable.
+        stat = os.stat(old_path)
+        if not (stat.st_mode & 0o111):
+            return
+
         # If it starts with a Python shebang, rewrite it.
         with open(old_path, 'rb') as old_fh:
             old_shebang = old_fh.readline()
