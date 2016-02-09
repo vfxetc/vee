@@ -38,7 +38,7 @@ def guess_envvars(paths, sources=None, use_current=True):
     if use_current:
         sources.append(os.environ)
 
-    environ = {}   
+    environ = {}
     sources.insert(0, environ)
 
     def existing(key):
@@ -67,5 +67,10 @@ def guess_envvars(paths, sources=None, use_current=True):
                 site_packages = os.path.join(lib, 'python%d.%d' % sys.version_info[:2], 'site-packages')
                 if os.path.exists(site_packages):
                     environ['PYTHONPATH'] = join_env_path(site_packages, existing('PYTHONPATH'))
+
+        # TODO: Check for version.
+        gem_home = os.path.join(path, 'lib', 'ruby', '2.0.0')
+        if os.path.exists(gem_home):
+            environ['GEM_PATH'] = join_env_path(gem_home, existing('GEM_PATH'))
 
     return environ

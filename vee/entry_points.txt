@@ -45,6 +45,7 @@ server = vee.commands.server:server
 
 # External package managers.
 homebrew = vee.pipeline.homebrew:HomebrewManager
+gem = vee.pipeline.gem:GemManager
 
 # Transports.
 file = vee.pipeline.file:FileTransport
@@ -63,4 +64,3 @@ self    = vee.pipeline.self:SelfBuilder
 
 # Internal
 deferred = vee.pipeline.deferred:DeferredStep
-
