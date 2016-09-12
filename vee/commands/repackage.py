@@ -24,6 +24,7 @@ PLATFORM_TAG = sys.platform.strip('2')
     argument('-v', '--verbose', action='store_true'),
     argument('-u', '--url', help='base of URL to output for requirements.txt'),
     argument('-d', '--dir', required=True, help='output directory'),
+    argument('-e', '--extra', action='append', help='Extra arguments'),
     argument('packages', nargs='+', help='names or URLs'),
 )
 def repackage(args):
@@ -127,7 +128,6 @@ def repackage(args):
     print
     for pkg, path in reversed(in_order):
 
-        checksum = checksums.get(pkg.name)
         url = (
             args.url.rstrip('/') + '/' + os.path.basename(path)
             if args.url
@@ -135,8 +135,23 @@ def repackage(args):
         )
 
         parts = [url, '--name', pkg.name, '--revision', pkg.revision or '""']
+        
+        checksum = checksums.get(pkg.name)
+        if not checksum and os.path.exists(path):
+            hasher = hashlib.md5()
+            with open(path, 'rb') as fh:
+                while True:
+                    chunk = fh.read(16 * 1024 * 1024)
+                    if chunk:
+                        hasher.update(chunk)
+                    else:
+                        break
+            checksum = 'md5:' + hasher.hexdigest()
         if checksum:
             parts.extend(('--checksum', checksum))
+
+        if args.extra:
+            parts.extend(args.extra)
 
         print ' '.join(parts)
 
