@@ -19,7 +19,7 @@ def edit(args):
     env_repo = home.get_env_repo(args.repo)
 
     cmd = []
-    cmd.extend(shlex.split(os.environ['EDITOR']))
+    cmd.extend(shlex.split(os.environ.get('EDITOR', 'vim')))
     cmd.append(os.path.join(env_repo.work_tree, 'requirements.txt'))
 
     log.debug(cmd, verbosity=1)
