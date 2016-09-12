@@ -45,6 +45,10 @@ class HomebrewManager(PipelineStep):
                 self.revision = self.version
                 self.version = None
 
+    @cached_property
+    def untapped_name(self):
+        raw_name = self.package.name or self.package.package_name
+        return raw_name.split('/')[-1]
 
     def get_next(self, step):
         if step != 'optlink':
@@ -55,6 +59,8 @@ class HomebrewManager(PipelineStep):
         pkg = self.package
         pkg.package_name = re.sub(r'^(git\+)?homebrew[:+]', '', pkg.url)
         pkg.url = 'homebrew:' + pkg.package_name
+
+        pkg.name = pkg.name or self.untapped_name
 
         pkg.package_path = self.brew.cellar
 
@@ -138,8 +144,7 @@ class HomebrewManager(PipelineStep):
 
         # We use the basename for taps (e.g. because ncurses might come out as
         # homebrew/dupes/ncurses, but this heirarchy does not exist in the Cellar).
-        pkg_basename = os.path.basename(pkg.package_name)
-        pkg.build_name = os.path.join(pkg_basename,
+        pkg.build_name = os.path.join(self.untapped_name,
             'HEAD' if '--HEAD' in pkg.config else self.version
         )
         pkg.build_path = pkg.install_path = os.path.join(self.brew.cellar, pkg.build_name)
@@ -180,6 +185,6 @@ class HomebrewManager(PipelineStep):
         # --pseudo-homebrew is first handled by the generic.install, which
         # sets the install_path to be in the Homebrew cellar. We finish the
         # job by switching to that version.
-        log.info(style_note('Switching Homebrew to %s %s' % (pkg.name, self.version)))
-        self.brew('switch', pkg.name, self.version)
+        log.info(style_note('Switching Homebrew to %s %s' % (self.untapped_name, self.version)))
+        self.brew('switch', self.untapped_name, self.version)
 
