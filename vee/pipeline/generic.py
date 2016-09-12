@@ -57,25 +57,7 @@ class GenericBuilder(PipelineStep):
             shutil.copytree(pkg.build_path_to_install, pkg.install_path_from_build, symlinks=True)
 
     def relocate(self):
-        pkg = self.package
-
-        if pkg.relocate:
-            log.info(style_note('Relocating'))
-            with log.indent():
-                libs.relocate(pkg.install_path,
-                    con=pkg.home.db.connect(),
-                    spec=pkg.render_template(pkg.relocate),
-                )
-
-        if pkg.set_rpath and sys.platform.startswith('linux'):
-            rpath = pkg.render_template(pkg.set_rpath)
-            log.info(style_note('Setting RPATH to', rpath))
-            with log.indent():
-                libs.relocate(pkg.install_path,
-                    con=pkg.home.db.connect(),
-                    spec=rpath,
-                )
-
+        relocate_package(self.package)
 
     def optlink(self):
         pkg = self.package
@@ -95,3 +77,23 @@ class GenericBuilder(PipelineStep):
                 log.info(style_note("Adding ./%s to $PATH" % name))
                 pkg.environ['PATH'] = join_env_path('./' + name, pkg.environ.get('PATH', '@'))
 
+
+
+def relocate_package(pkg):
+
+    if pkg.relocate:
+        log.info(style_note('Relocating'))
+        with log.indent():
+            libs.relocate(pkg.install_path,
+                con=pkg.home.db.connect(),
+                spec=pkg.render_template(pkg.relocate),
+            )
+
+    if pkg.set_rpath and sys.platform.startswith('linux'):
+        rpath = pkg.render_template(pkg.set_rpath)
+        log.info(style_note('Setting RPATH to', rpath))
+        with log.indent():
+            libs.relocate(pkg.install_path,
+                con=pkg.home.db.connect(),
+                spec=rpath,
+            )

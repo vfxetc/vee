@@ -11,6 +11,7 @@ from vee.package import Package
 from vee.pipeline.base import PipelineStep
 from vee.subproc import call
 from vee.utils import makedirs, cached_property
+from vee.pipeline.generic import relocate_package
 
 
 class HomebrewManager(PipelineStep):
@@ -187,6 +188,8 @@ class HomebrewManager(PipelineStep):
 
         pkg = self.package
 
+        # Standard --relocate and --set-rpath
+        relocate_package(pkg)
 
         if pkg.pseudo_homebrew:
 
