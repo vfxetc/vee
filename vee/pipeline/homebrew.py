@@ -50,6 +50,13 @@ class HomebrewManager(PipelineStep):
         raw_name = self.package.name or self.package.package_name
         return raw_name.split('/')[-1]
 
+    @cached_property
+    def tap_name(self):
+        raw_name = self.package.name or self.package.package_name
+        parts = raw_name.split('/', 1)
+        if len(parts) == 2:
+            return parts[0]
+
     def get_next(self, step):
         if step != 'optlink':
             return self
@@ -179,12 +186,15 @@ class HomebrewManager(PipelineStep):
     def relocate(self):
 
         pkg = self.package
-        if not pkg.pseudo_homebrew:
-            return
 
-        # --pseudo-homebrew is first handled by the generic.install, which
-        # sets the install_path to be in the Homebrew cellar. We finish the
-        # job by switching to that version.
-        log.info(style_note('Switching Homebrew to %s %s' % (self.untapped_name, self.version)))
-        self.brew('switch', self.untapped_name, self.version)
+
+        if pkg.pseudo_homebrew:
+
+            # --pseudo-homebrew is first handled by the generic.install, which
+            # sets the install_path to be in the Homebrew cellar. We finish the
+            # job by switching to that version.
+            log.info(style_note('Switching Homebrew to %s %s' % (self.untapped_name, self.version)))
+            if self.tap_name:
+                self.brew.assert_tapped(self.tap_name)
+            self.brew('switch', self.untapped_name, self.version)
 

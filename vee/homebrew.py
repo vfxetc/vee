@@ -27,6 +27,11 @@ class Homebrew(object):
     def cellar(self):
         return os.path.join(self.repo.work_tree, 'Cellar')
 
+    def assert_tapped(self, name):
+        path = os.path.join(self.repo.work_tree, 'Library', 'Taps', name)
+        if not os.path.exists(path):
+            self('tap', name)
+
     def __call__(self, cmd, *args, **kwargs):
         
         if self.repo.clone_if_not_exists():
