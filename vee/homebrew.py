@@ -28,7 +28,12 @@ class Homebrew(object):
         return os.path.join(self.repo.work_tree, 'Cellar')
 
     def __call__(self, cmd, *args, **kwargs):
-        self.repo.clone_if_not_exists()
+        
+        if self.repo.clone_if_not_exists():
+            # Homebrew should be updated the first time, since it has gotten
+            # a little more complicated. The recursion here should be fine.
+            self('update')
+        
         bin = os.path.join(self.repo.work_tree, 'bin', 'brew')
         
         # We need to own the homebrew cache so that we can control permissions.

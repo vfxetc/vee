@@ -141,10 +141,12 @@ class GitRepo(object):
         return res
 
     def clone_if_not_exists(self, remote_url=None, shallow=True):
+        """Assert that the repo has been cloned. Return True if it did not exist."""
+        
         self.remote_url = remote_url or self.remote_url
 
         if self.exists:
-            return
+            return False
 
         if not self.remote_url:
             raise ValueError('git repo %r does not exist; need remote url' % self.git_dir)
@@ -157,14 +159,15 @@ class GitRepo(object):
                 self.git('pull', '--depth=1', 'origin', 'master')
             else:
                 self.git('pull', 'origin', 'master')
-            return
 
-        if shallow:
+        elif shallow:
             print style('Cloning shallow', 'blue', bold=True), style(self.remote_url, bold=True)
             call(['git', 'clone', '--depth=1', self.remote_url, self.work_tree])
         else:
             print style('Cloning', 'blue', bold=True), style(self.remote_url, bold=True)
             call(['git', 'clone', self.remote_url, self.work_tree])
+
+        return True
 
     def assert_remote_url(self, name=None):
         """Make sure our remote URL is what we think it is."""
