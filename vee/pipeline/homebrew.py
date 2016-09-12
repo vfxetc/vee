@@ -136,7 +136,10 @@ class HomebrewManager(PipelineStep):
             info['installed'][-1]['version'] if info['installed'] else info['versions']['stable']
         )
 
-        pkg.build_name = os.path.join(pkg.package_name,
+        # We use the basename for taps (e.g. because ncurses might come out as
+        # homebrew/dupes/ncurses, but this heirarchy does not exist in the Cellar).
+        pkg_basename = os.path.basename(pkg.package_name)
+        pkg.build_name = os.path.join(pkg_basename,
             'HEAD' if '--HEAD' in pkg.config else self.version
         )
         pkg.build_path = pkg.install_path = os.path.join(self.brew.cellar, pkg.build_name)

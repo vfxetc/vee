@@ -74,6 +74,7 @@ def repackage(args):
                 break
 
         name = '%s-%s-%s.tgz' % (pkg.name, pkg.revision, PLATFORM_TAG if platform_dependent else 'any')
+        name = name.replace('/', '-') # For taps.
         path = os.path.join(args.dir, name)
 
         in_order.append((pkg, path))
