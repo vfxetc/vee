@@ -54,7 +54,7 @@ class HomebrewManager(PipelineStep):
     @cached_property
     def tap_name(self):
         raw_name = self.package.name or self.package.package_name
-        parts = raw_name.split('/', 1)
+        parts = raw_name.rsplit('/', 1)
         if len(parts) == 2:
             return parts[0]
 
