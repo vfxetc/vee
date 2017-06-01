@@ -173,7 +173,13 @@ def rescan(args):
 
     if args.names:
         for name in args.names:
-            row = con.execute('SELECT path FROM development_packages WHERE name = ? OR name = ?', [name, os.path.basename(os.path.abspath(name))]).fetchone()
+
+            # It doesn't matter if this isn't actually a path, as it doesn't
+            # check on disk. All we really want to do here is catch when name
+            # is ".".
+            name = os.path.basename(os.path.abspath(name))
+
+            row = con.execute('SELECT path FROM development_packages WHERE name = ?', [name]).fetchone()
             if not row:
                 log.warning('No dev package named %s' % name)
                 continue

@@ -18,7 +18,9 @@ site_packages = os.path.join('lib', 'python' + python_version, 'site-packages')
 
 def call_setup_py(setup_py, args, **kwargs):
     kwargs['cwd'] = os.path.dirname(setup_py)
+    kwargs.setdefault('vee_in_env', True)
     cmd = ['python', '-c', 'import sys, setuptools; sys.argv[0]=__file__=%r; execfile(__file__)' % os.path.basename(setup_py)]
+    cmd.extend(('--command-packages', 'vee.distutils'))
     cmd.extend(args)
     return call(cmd, **kwargs)
 
@@ -165,7 +167,7 @@ class PythonBuilder(GenericBuilder):
 
         # Setup the PYTHONPATH to point to the "install" directory.
         env = pkg.fresh_environ()
-        env['PYTHONPATH'] = '%s:%s' % (install_site_packages, env.get('PYTHONPATH', ''))
+        env['PYTHONPATH'] = join_env_path(install_site_packages, env.get('PYTHONPATH'))
         
         if os.path.exists(pkg.install_path):
             log.warning('Removing existing install', pkg.install_path)
@@ -192,10 +194,7 @@ class PythonBuilder(GenericBuilder):
         pkg = self.package
 
         log.info(style_note('Building scripts'))
-        cmd = [
-            'build_scripts', '-e', '/usr/bin/env VEE=%s VEE_PYTHON=%s dev python' % (os.environ.get("VEE", ''), os.environ.get('VEE_PYTHON', '')),
-            'install_scripts', '-d', 'build/scripts',
-        ]
+        cmd = ['vee_develop']
         if call_setup_py(self.setup_path, cmd):
             raise RuntimeError('Could not build scripts')
 

@@ -7,9 +7,9 @@ import sys
 import threading
 import errno
 
-from vee.cli import style
 from vee import log
-
+from vee.cli import style
+from vee.envvars import join_env_path
 
 
 class _CallOutput(object):
@@ -127,6 +127,12 @@ def call(cmd, **kwargs):
     pty = kwargs.pop('pty', None)
     stdout = _CallOutput(kwargs.pop('stdout', None), 'stdout', verbosity, pty=pty)
     stderr = _CallOutput(kwargs.pop('stderr', None), 'stderr', verbosity, pty=pty)
+
+    if kwargs.pop('vee_in_env', False):
+        env = kwargs.get('env', os.environ).copy()
+        env['PYTHONPATH'] = join_env_path(os.path.join(VEE, 'src'), env.get('PYTHONPATH'))
+        env['PATH'] = join_env_path(os.path.join(VEE, 'bin'), env.get('PATH'))
+        kwargs['env'] = env
 
     proc = subprocess.Popen(cmd, stdout=stdout.slave_fd, stderr=stderr.slave_fd, bufsize=0, **kwargs)
     stdout.start(proc)
