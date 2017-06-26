@@ -1,7 +1,7 @@
 import collections
 
 from vee.package import Package
-from vee.exceptions import AlreadyInstalled, AlreadyLinked, print_cli_exc
+from vee.exceptions import AlreadyInstalled, AlreadyLinked, PipelineError, print_cli_exc
 from vee import log
 from vee.cli import style
 from vee.utils import guess_name
@@ -99,6 +99,10 @@ class PackageSet(collections.OrderedDict):
 
                 try:
                     self._install_one(names, name, link_env, reinstall, relink, no_deps)
+                except PipelineError as e:
+                    self._errored.add(name)
+                    log.error(str(e))
+                    continue
                 except Exception as e:
                     self._errored.add(name)
                     print_cli_exc(e, verbose=True)

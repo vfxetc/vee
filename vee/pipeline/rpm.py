@@ -9,12 +9,19 @@ from vee.utils import cached_property
 from vee.exceptions import AlreadyInstalled, PipelineError
 
 
+_installed_packages = set()
+
 class RPMChecker(PipelineStep):
+
+    factory_priority = 1000
 
     @cached_property
     def installed_packages(self):
+        
+        if _installed_packages:
+            return _installed_packages
 
-        packages = set()
+        packages = _installed_packages
 
         out = call(['rpm', '-qa'], stdout=True)
         for line in out.splitlines():
@@ -38,9 +45,11 @@ class RPMChecker(PipelineStep):
         if step == 'init' and re.match(r'^rpm:', pkg.url):
             return cls(pkg)
 
+    def get_next(self, step):
+        return self
+
     def init(self):
-        pkg = self.package
-        pkg.install_path = '/'
+        pass
 
     def fetch(self):
         pkg = self.package
