@@ -25,7 +25,7 @@ class RPMChecker(PipelineStep):
 
         out = call(['rpm', '-qa'], stdout=True)
         for line in out.splitlines():
-            line = line.strip()
+            line = line.strip().lower()
             if not line:
                 continue
             packages.add(line)
@@ -55,8 +55,8 @@ class RPMChecker(PipelineStep):
 
     def fetch(self):
         pkg = self.package
-        if pkg.name not in self.installed_packages:
-            raise PipelineError('RPM %s is not installed.' % pkg.name)
+        if pkg.name.lower() not in self.installed_packages:
+            raise PipelineError('rpm package "%s" is not installed.' % pkg.name)
         raise AlreadyInstalled()
 
     def inspect(self):

@@ -203,6 +203,9 @@ class PackageSet(collections.OrderedDict):
             names.insert(insert_i, name)
             return
 
+        if pkg.virtual:
+            return
+        
         if name not in self._persisted:
 
             # We need to wait to persist until all dependencies are

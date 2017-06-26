@@ -403,6 +403,8 @@ class Package(DBObject):
         shutil.rmtree(self.install_path)
 
     def shared_libraries(self, rescan=False):
+        if self.virtual:
+            raise RuntimeError('cannot find libraries of virtual package')
         self._assert_paths(install=True)
         if not self.installed:
             raise RuntimeError('cannot find libraries if not installed')
@@ -431,10 +433,8 @@ class Package(DBObject):
             raise AlreadyLinked(str(frozen or self.freeze()), self.link_id or row[0])
 
     def persist_in_db(self, con=None):
-
         if self.virtual:
-            return
-        
+            raise RuntimeError('cannot persist virtual package')
         self._set_names(package=True, build=True, install=True)
         if not self.installed:
             log.warning('%s does not appear to be installed to %s' % (self.name, self.install_path))
