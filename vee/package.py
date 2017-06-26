@@ -89,6 +89,7 @@ requirement_parser.add_argument('--hard-link', action='store_true', help='use ha
 requirement_parser.add_argument('--pseudo-homebrew', action='store_true', help='assume is repackage of Homebrew')
 requirement_parser.add_argument('--relocate', help='how to relocate shared libs on OS X, or RPATHS to set on Linux')
 requirement_parser.add_argument('--set-rpath', help='what rpaths to set on Linux')
+requirement_parser.add_argument('--virtual', action='store_true', help='package is runtime only; does not persist')
 
 requirement_parser.add_argument('--develop-sh', help='shell script in repository to source to build the package')
 requirement_parser.add_argument('--build-sh', help='shell script in repository to source to build the package')
@@ -430,6 +431,10 @@ class Package(DBObject):
             raise AlreadyLinked(str(frozen or self.freeze()), self.link_id or row[0])
 
     def persist_in_db(self, con=None):
+
+        if self.virtual:
+            return
+        
         self._set_names(package=True, build=True, install=True)
         if not self.installed:
             log.warning('%s does not appear to be installed to %s' % (self.name, self.install_path))

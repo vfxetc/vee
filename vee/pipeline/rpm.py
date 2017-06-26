@@ -49,7 +49,9 @@ class RPMChecker(PipelineStep):
         return self
 
     def init(self):
-        pass
+        pkg = self.package
+        # Signal that we should not be persisted to the database.
+        pkg.virtual = True
 
     def fetch(self):
         pkg = self.package
