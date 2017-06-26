@@ -68,9 +68,10 @@ class NotInstalled(RuntimeError):
 class AlreadyInstalled(RuntimeError):
     __cli_format__ = '{self} is already installed'
 
-
-
 class AlreadyLinked(RuntimeError):
     __cli_format__ = '{self} is already linked into the environment'
+
+class PipelineError(RuntimeError):
+    pass
 
 

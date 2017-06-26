@@ -2,10 +2,9 @@ import os
 import re
 
 from vee import log
-from vee.cli import style, style_note
 from vee.pipeline.base import PipelineStep
 from vee.subproc import call
-from vee.utils import makedirs
+from vee.utils import makedirs, cached_property
 from vee.package import Package
 
 
@@ -14,17 +13,16 @@ class GemManager(PipelineStep):
 
     factory_priority = 1000
 
-    _system_gems = {}
 
-    @property
+    @cached_property
     def system_gems(self):
-        if not self._system_gems:
-            out = call(['gem', 'list', '--no-details'], stdout=True)
-            for line in out.splitlines():
-                m = re.match(r'^(\w+) \((.+?)\)', line.strip())
-                if m:
-                    self._system_gems[m.group(1)] = m.group(2)
-        return self._system_gems
+        gems = {}
+        out = call(['gem', 'list', '--no-details'], stdout=True)
+        for line in out.splitlines():
+            m = re.match(r'^(\w+) \((.+?)\)', line.strip())
+            if m:
+                gems[m.group(1)] = m.group(2)
+        return gems
 
     @classmethod
     def factory(cls, step, pkg):

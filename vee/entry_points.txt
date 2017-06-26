@@ -46,6 +46,7 @@ server = vee.commands.server:server
 # External package managers.
 homebrew = vee.pipeline.homebrew:HomebrewManager
 gem = vee.pipeline.gem:GemManager
+rpm = vee.pipeline.rpm:RPMChecker
 
 # Transports.
 file = vee.pipeline.file:FileTransport
