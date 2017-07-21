@@ -312,11 +312,16 @@ class GitRepo(object):
 
     def fetch(self, remote=None, ref=None, shallow=True):
 
-        args = []
+        remote  = remote or self.remote_url or 'origin'
+        remote_is_name = bool(re.match(r'^\w+$', remote))
 
-        remote = remote or self.remote_url
-        if remote:
-            args.append(remote)
+        # If we're fetching from a URL, then treat it as a "vee" remote.
+        dst_remote = remote if remote_is_name else 'vee'
+
+        # Override the repo settings to fetch all branches from the remote.
+        refspec = '+refs/heads/*:refs/remotes/{}/*'.format(dst_remote)
+
+        fetch_args = [remote, refspec]
 
         if ref:
 
@@ -325,14 +330,9 @@ class GitRepo(object):
             if re.match(r'^[0-9a-f]{8,}$', ref): # this is an iffy test!
                 rev_to_parse = ref
 
-            # remote is a name; we `fetch REMOTE REF`
-            elif re.match(r'\w+', remote):
-                rev_to_parse = '%s/%s' % (remote, ref)
-
-            # remote is a URL; we `fetch REMOTE_URL REF` and parse "FETCH_HEAD"
             else:
-                args.append(ref)
-                rev_to_parse = 'FETCH_HEAD'
+                rev_to_parse = '{}/{}'.format(dst_remote, ref)
+
         else:
             rev_to_parse = None
 
@@ -343,7 +343,7 @@ class GitRepo(object):
             if shallow:
                 print style('Fetching shallow', 'blue', bold=True), style(remote or 'defaults', bold=True)
                 try:
-                    self._fetch('--update-shallow', *args)
+                    self._fetch('--update-shallow', *fetch_args)
                 except GitError as e:
                     if 'unknown option' in e.args[0]:
                         log.warning('git too old for --update-shallow')
@@ -358,13 +358,13 @@ class GitRepo(object):
             # Lets get the whole history.
             if not shallow or not commit:
                 print style('Fetching unshallow', 'blue', bold=True), style(remote or 'defaults', bold=True)
-                self._fetch('--unshallow', *args)
+                self._fetch('--unshallow', *fetch_args)
                 commit = self._rev_parse(rev_to_parse)
 
         else:
             # Normal fetch here.
             print style('Fetching', 'blue', bold=True), style(remote or 'defaults', bold=True)
-            self._fetch(*args)
+            self._fetch(*fetch_args)
             if not rev_to_parse:
                 return
             commit = self._rev_parse(rev_to_parse)
