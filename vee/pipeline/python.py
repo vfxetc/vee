@@ -70,14 +70,11 @@ class PythonBuilder(GenericBuilder):
             requires_path = os.path.join(self.egg_path, 'requires.txt')
             if os.path.exists(requires_path):
                 for line in open(requires_path, 'rb'):
-                    line = line.strip()
-                    if not line:
-                        continue
-                    if line.startswith('['):
-                        break
-                    name = re.split('\W', line)[0].lower()
-                    log.debug('%s depends on %s' % (pkg.name, name))
-                    pkg.dependencies.append(Package(name=name, url='pypi:%s' % name))
+                    m = re.match(r'^([\w-]+)', line)
+                    if m:
+                        name = m.group(1).lower()
+                        log.debug('%s depends on %s' % (pkg.name, name))
+                        pkg.dependencies.append(Package(name=name, url='pypi:%s' % name))
 
 
 
