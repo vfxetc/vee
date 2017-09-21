@@ -52,7 +52,7 @@ def doctor(args):
                 return 1
 
     print style_note('==> dependencies')
-    for name, expected_version, in [('setuptools', '18.0.1'), ('virtualenv', '13.1.0')]:
+    for name, expected_version, in [('setuptools', '18.0.1'), ('virtualenv', '13.1.2')]:
         module = globals()[name]
         actual_version = module.__version__
         if expected_version == actual_version:

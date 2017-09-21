@@ -35,10 +35,10 @@ def link(args):
     e.g.::
         
         # Install and link a single package.
-        $ vee link git+git@github.com:westernx/sgmock
+        $ vee link git+git@github.com:vfxetc/sgmock
 
         # Install and link multiple packages.
-        $ vee link git+git@github.com:westernx/sgmock git+git@github.com:westernx/sgsession \\
+        $ vee link git+git@github.com:vfxetc/sgmock git+git@github.com:vfxetc/sgsession \\
             http:/example.org/path/to/tarball.tgz --make-install
 
         # Install and link from a requirement set.

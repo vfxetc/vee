@@ -8,7 +8,7 @@ Basic Installation
 .. code-block:: bash
 
     # Install VEE from GitHub; it will prompt you for install location.
-    python <(curl -fsSL https://raw.githubusercontent.com/westernx/vee/master/install_vee.py)
+    python <(curl -fsSL https://raw.githubusercontent.com/vfxetc/vee/master/install_vee.py)
     
     # Either add VEE to your environment, or to your .bashrc; the installer
     # above defaults to:
@@ -31,7 +31,7 @@ User Workflow
 
     # Add the environment repository (replace with your git remote and name),
     # and build it.
-    vee repo clone git@git.westernx:westernx/vee-repo westernx
+    vee repo clone git@github.com:vfxetc/vee-repo vfxetc
     vee upgrade
 
     # Run some installed commands.
@@ -94,8 +94,8 @@ Manual Workflow
     vee link homebrew+sqlite
     vee link homebrew+ffmpeg --configuration='--with-faac'
     vee link git+https://github.com/shotgunsoftware/python-api.git --name shotgun_api3
-    vee link --force https://github.com/westernx/sgmock/archive/master.zip --install-name sgmock/0.1
-    vee link git+git@git.westernx:westernx/sgsession
+    vee link --force https://github.com/vfxetc/sgmock/archive/master.zip --install-name sgmock/0.1
+    vee link git+git@github.com:vfxetc/sgsession
 
     # Link a few packages into an "example" environment.
     vee link -e example examples/basic.txt

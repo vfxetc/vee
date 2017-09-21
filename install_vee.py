@@ -2,11 +2,11 @@
 
 This script may be run on its own, or straight from GitHub, e.g.:
 
-    python <(curl -fsSL https://raw.githubusercontent.com/westernx/vee/master/install_vee.py)
+    python <(curl -fsSL https://raw.githubusercontent.com/vfxetc/vee/master/install_vee.py)
 
 To install to /usr/local/vee, and force an update to the latest version:
 
-    python <(curl -fsSL https://raw.githubusercontent.com/westernx/vee/master/install_vee.py) --yes
+    python <(curl -fsSL https://raw.githubusercontent.com/vfxetc/vee/master/install_vee.py) --yes
 
 
 '''
@@ -80,7 +80,7 @@ def main(argv=None):
     parser = argparse.ArgumentParser()
     parser.add_argument('--prefix', help='where to install vee')
 
-    parser.add_argument('--url', default='https://github.com/westernx/vee.git')
+    parser.add_argument('--url', default='https://github.com/vfxetc/vee.git')
     parser.add_argument('--branch', default='master')
 
     parser.add_argument('--force', action=SwitchAction, help='install over local changes')

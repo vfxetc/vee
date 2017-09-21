@@ -81,7 +81,7 @@ Requirements are specified via a series of command-line-like arguments.
 The first is a URL, which may be HTTP, common git formats, or VEE-specific, e.g.:
 
 - ``http://cython.org/release/Cython-0.22.tar.gz``
-- ``git+git@git.westernx:westernx/sitetools``
+- ``git+git@github.com:vfxetc/sitetools``
 - ``pypi:pyyaml``
 
 The requirements are further refined by the following arguments:
@@ -104,7 +104,7 @@ The requirements file may also include:
 
     - Headers, which are lines formatted like ``Header: Value``, e.g.::
 
-        Name: WesternX
+        Name: example
         Version: 0.43.23
         Vee-Revision: 0.1-dev+4254bc1
 
@@ -113,9 +113,9 @@ The requirements file may also include:
 
         # For the Shotgun cache:
         % if os.environ.get('VEEINCLUDE_SGCACHE'):
-            git+git@git.westernx:westernx/sgapi --revision=6da9d1c5
-            git+git@git.westernx:westernx/sgcache --revision=cd673656
-            git+git@git.westernx:westernx/sgevents --revision=a58e61c5
+            git+git@github.com:vfxetc/sgapi --revision=6da9d1c5
+            git+git@github.com:vfxetc/sgcache --revision=cd673656
+            git+git@github.com:vfxetc/sgevents --revision=a58e61c5
         % endif
 
 

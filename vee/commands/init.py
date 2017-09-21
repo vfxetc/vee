@@ -16,12 +16,12 @@ def init(args):
 
     E.g.:
 
-        vee init git@git.westernx:westernx/vee-repo primary
+        vee init git@github.com:vfxetc/vee-repo primary
 
     This is the same as:
 
         vee init
-        vee repo clone git@git.westernx:westernx/vee-repo primary
+        vee repo clone git@github.com:vfxetc/vee-repo primary
 
 
     """

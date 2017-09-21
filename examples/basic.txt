@@ -10,6 +10,6 @@ git+git@github.com:mikeboers/sitetools
 git+https://github.com/shotgunsoftware/python-api.git --name shotgun_api3
 
 # Our Shotgun libraries.
-git+git@github.com:westernx/sgmock
-git+git@github.com:westernx/sgsession
-git+git@github.com:westernx/sgfs
+git+git@github.com:vfxetc/sgmock
+git+git@github.com:vfxetc/sgsession
+git+git@github.com:vfxetc/sgfs

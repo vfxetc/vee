@@ -1,4 +1,4 @@
-#!/Users/mikeboers/Documents/WesternX/dev/vee/venv/bin/python
+#!/Users/mikeboers/Documents/dev/vee/venv/bin/python
 
 from MOCKNAME.core import main
 

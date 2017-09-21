@@ -1,4 +1,4 @@
-#!/Users/mikeboers/Documents/WesternX/dev/vee/venv/bin/python
+#!/Users/mikeboers/Documents/dev/vee/venv/bin/python
 # EASY-INSTALL-ENTRY-SCRIPT: 'MOCKNAME==MOCKVERSION','console_scripts','MOCKNAME-ep'
 __requires__ = 'MOCKNAME==MOCKVERSION'
 import sys

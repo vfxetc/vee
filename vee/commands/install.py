@@ -22,10 +22,10 @@ def install(args):
     Examples:
 
         # Install a single package.
-        vee install git+git@github.com:westernx/sgmock
+        vee install git+git@github.com:vfxetc/sgmock
 
         # Install multiple packages.
-        vee install git+git@github.com:westernx/sgmock git+git@github.com:westernx/sgsession \\
+        vee install git+git@github.com:vfxetc/sgmock git+git@github.com:vfxetc/sgsession \\
             http:/example.org/path/to/tarball.tgz --make-install
 
         # Install from a requirement set.
