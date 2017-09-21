@@ -129,9 +129,15 @@ def call(cmd, **kwargs):
     stderr = _CallOutput(kwargs.pop('stderr', None), 'stderr', verbosity, pty=pty)
 
     if kwargs.pop('vee_in_env', False):
+
+        vee_src = os.path.abspath(os.path.join(__file__, '..', '..'))
+
         env = kwargs.get('env', os.environ).copy()
-        env['PYTHONPATH'] = join_env_path(os.path.join(VEE, 'src'), env.get('PYTHONPATH'))
-        env['PATH'] = join_env_path(os.path.join(VEE, 'bin'), env.get('PATH'))
+        env['PYTHONPATH'] = join_env_path(
+            vee_src,
+            env.get('PYTHONPATH')
+        )
+        env['PATH'] = join_env_path(os.path.join(vee_src, 'bin'), env.get('PATH'))
         kwargs['env'] = env
 
     proc = subprocess.Popen(cmd, stdout=stdout.slave_fd, stderr=stderr.slave_fd, bufsize=0, **kwargs)
