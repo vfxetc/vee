@@ -4,13 +4,15 @@ import datetime
 import errno
 import fnmatch
 import functools
+import hashlib
+import itertools
 import os
 import re
+import stat
 import subprocess
 import sys
 import threading
 import time
-import hashlib
 
 
 class cached_property(object):
@@ -38,6 +40,72 @@ def makedirs(*args):
         if e.errno != errno.EEXIST:
             raise e
     return path
+
+
+def chmod(path, specs, recurse=False):
+
+    if isinstance(specs, basestring):
+        specs = specs.split(',')
+
+    ops = []
+    for spec in specs:
+        m = re.match(r'([augo]*)([=+-])([rwx]*)$', spec.strip())
+        if not m:
+            raise ValueError('Bad chmod request.', spec)
+        raw_who, op, raw_mode = m.groups()
+
+        if raw_who == 'a' or not raw_who:
+            raw_who = 'ugo'
+
+        mask = 0
+        value = 0
+
+        for who in 'usr', 'grp', 'oth':
+
+            if raw_who and who[0] not in raw_who:
+                continue
+
+            mask |= getattr(stat, 'S_IRWX{}'.format(who[0].upper()))
+
+            for mode in 'rwx':
+                if mode not in raw_mode:
+                    continue
+                value |= getattr(stat, 'S_I{}{}'.format(mode.upper(), who.upper()))
+
+        ops.append((op, mask, value))
+
+    if not recurse:
+        _chmod(path, ops)
+        return
+
+    for root, dir_names, file_names in os.walk(path):
+        for name in itertools.chain(dir_names, file_names):
+            _chmod(os.path.join(root, name), ops)
+
+
+def _chmod(path, ops):
+
+    st = os.stat(path)
+    new_mode = old_mode = stat.S_IMODE(st.st_mode)
+
+    for op, mask, value in ops:
+
+        masked   = new_mode & mask
+        unmasked = new_mode & (~mask)
+
+        if op == '+':
+            masked |= value
+        elif op == '=':
+            masked = value
+        elif op == '-':
+            masked &= ~value
+        else:
+            raise ValueError('Unknown chmod op.', op)
+
+        new_mode = masked | unmasked
+
+    if new_mode != old_mode:
+        os.chmod(path, new_mode)
 
 
 _FIND_SKIP_DIRS = frozenset(('.git', '.svn'))

@@ -192,7 +192,7 @@ class Package(DBObject):
         else:
             self.pipeline = Pipeline(self, [
                 'init', 'fetch', 'extract', 'inspect', 'build', 'install',
-                'relocate', 'optlink',
+                'post_install', 'relocate', 'optlink',
             ])
 
         # Give the fetch pipeline step a chance to normalize the URL.

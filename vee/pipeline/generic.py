@@ -8,7 +8,7 @@ from vee.cli import style_note
 from vee.envvars import join_env_path
 from vee.pipeline.base import PipelineStep
 from vee.subproc import call, bash_source
-from vee.utils import find_in_tree, linktree, makedirs
+from vee.utils import find_in_tree, linktree, makedirs, chmod
 from vee.homebrew import Homebrew
 
 
@@ -55,6 +55,9 @@ class GenericBuilder(PipelineStep):
         else:
             log.info(style_note('Installing via copy', 'to ' + pkg.install_path))
             shutil.copytree(pkg.build_path_to_install, pkg.install_path_from_build, symlinks=True)
+
+    def post_install(self):
+        chmod(self.package.install_path, '-w', recurse=True)
 
     def relocate(self):
         relocate_package(self.package)

@@ -1,6 +1,8 @@
+import stat
+
 from . import *
 
-from vee.utils import guess_name
+from vee.utils import guess_name, chmod
 from vee.git import normalize_git_url
 
 
@@ -51,3 +53,24 @@ class TestGuessName(TestCase):
         )
 
 
+
+class TestChmod(TestCase):
+
+    def test_chmod(self):
+
+        dir_ = self.sandbox()
+        os.makedirs(dir_)
+
+        for start, spec, end in (
+            (0o777, '-w'    , 0o555),
+            (0o777, '=r'    , 0o444),
+            (0o777, 'go-w'  , 0o755),
+            (0o555, 'u+w,o=', 0o750),
+        ):
+            name = '{:o},{},{:o}'.format(start, spec, end)
+            path = os.path.join(dir_, name)
+            open(path, 'w')
+            os.chmod(path, start)
+            chmod(path, spec)
+            mode = stat.S_IMODE(os.stat(path).st_mode)
+            self.assertEqual(oct(mode), oct(end))
