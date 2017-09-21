@@ -21,9 +21,9 @@ PRIMARY_REPO = 'primary'
 DB_NAME = 'vee-index.sqlite'
 
 
-def default_home_path():
+def default_home_path(environ=None):
     try:
-        return os.environ['VEE']
+        return (environ or os.environ)['VEE']
     except KeyError:
         return find_home()
 

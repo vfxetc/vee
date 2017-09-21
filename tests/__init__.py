@@ -55,8 +55,7 @@ def sandbox(*args):
 # Move into the sandbox.
 os.chdir(sandbox_dir)
 
-# Clear out any VEE envvars as this tends to mess up testing in Western Post
-# since we have VEE_DEV (and many others) set.
+# Clear out any VEE* envvars as this tends to mess up testing.
 for k in os.environ.keys():
     if k.startswith('VEE'):
         del os.environ[k]

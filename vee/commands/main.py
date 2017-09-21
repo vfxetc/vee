@@ -101,7 +101,6 @@ def get_parser():
     parser.add_argument('--home',
         dest='home_path',
         metavar='VEE',
-        default=default_home_path(),
         help="path of managed environments; defaults to $VEE or the directory above VEE's source"
     )
 
@@ -262,6 +261,7 @@ def main(argv=None, environ=None, as_main=__name__=="__main__"):
             func = get_func(args)
 
         args.environ = os.environ if environ is None else environ
+        args.home_path = default_home_path(environ=args.environ)
         
         if args.log:
             root = logging.getLogger('vee')
