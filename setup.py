@@ -5,15 +5,15 @@ from setuptools import setup, find_packages
 here = os.path.abspath(os.path.join(__file__, '..'))
 
 about_path = os.path.join(here, 'vee', '__about__.py')
-about_ns = {}
-execfile(about_path, {'__file__': about_path}, about_ns)
+about = {}
+execfile(about_path, {'__file__': about_path}, about)
 
 setup(
 
     name='vee',
-    version=about_ns['__version__'],
+    version=about['__version__'],
     description='Versioned Execution Environment',
-    url='http://github.com/westernx/vee',
+    url='http://github.com/vfxetc/vee',
     
     packages=find_packages(exclude=['build*', 'tests*']),
     
@@ -29,10 +29,8 @@ setup(
         'Programming Language :: Python :: 2',
         'Topic :: Software Development :: Libraries :: Python Modules',
     ],
-
-    # scripts=['bin/vee'],
     
-    entry_points=open(os.path.join(here, 'vee', 'entry_points.txt')).read(),
+    entry_points=open(os.path.join(here, 'vee', '_egg-info', 'entry_points.txt')).read(),
     
     
 )

@@ -17,7 +17,7 @@ def _bootstrap_entrypoints():
     # Make a dummy metadata provider (which looks in our package for metadata),
     # and a dummy distribution (which lives wherever it does on dist).
     class Provider(pkg_resources.DefaultProvider):
-        egg_info = os.path.abspath(os.path.join(__file__, '..'))
+        egg_info = os.path.abspath(os.path.join(__file__, '..', '_egg-info'))
     dummy = pkg_resources.Distribution(
         project_name='vee',
         version='99.99.99',
