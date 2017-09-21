@@ -47,9 +47,9 @@ def exec_(args):
 
         # Export the default environment.
         $ vee exec --export
-        export LD_LIBRARY_PATH="/usr/local/vee/lib:$LD_LIBRARY_PATH"
-        export PATH="/usr/local/vee/bin:$PATH"
-        export PYTHONPATH="/usr/local/vee/lib/python2.7/site-packages"
+        export LD_LIBRARY_PATH="/usr/local/vee/environments/primary/master/lib:$LD_LIBRARY_PATH"
+        export PATH="/usr/local/vee/environments/primary/master/bin:$PATH"
+        export PYTHONPATH="/usr/local/vee/environments/primary/master/lib/python2.7/site-packages"
 
     """
 

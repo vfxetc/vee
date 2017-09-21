@@ -17,7 +17,7 @@ import traceback
 from vee import log
 from vee.cli import style
 from vee.exceptions import cli_exc_str, cli_errno, print_cli_exc
-from vee.home import Home
+from vee.home import Home, default_home_path
 from vee.lockfile import RLockfile
 
 
@@ -101,7 +101,8 @@ def get_parser():
     parser.add_argument('--home',
         dest='home_path',
         metavar='VEE',
-        help='path of managed environments; defaults to $VEE or /usr/local/vee',
+        default=default_home_path(),
+        help="path of managed environments; defaults to $VEE or the directory above VEE's source"
     )
 
     funcs = [ep.load() for ep in pkg_resources.iter_entry_points('vee_commands')]
@@ -261,7 +262,6 @@ def main(argv=None, environ=None, as_main=__name__=="__main__"):
             func = get_func(args)
 
         args.environ = os.environ if environ is None else environ
-        args.home_path = args.environ.get('VEE', '/usr/local/vee') if args.home_path is None else args.home_path
         
         if args.log:
             root = logging.getLogger('vee')

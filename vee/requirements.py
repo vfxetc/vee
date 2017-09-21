@@ -280,7 +280,7 @@ if __name__ == '__main__':
 
     from vee.home import Home
 
-    reqs = Requirements(Home('/usr/local/vee'))
+    reqs = Requirements(Home())
     reqs.parse_args(sys.argv[1:])
 
     print ''.join(reqs.iter_dump())

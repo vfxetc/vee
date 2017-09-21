@@ -18,6 +18,22 @@ from vee import log
 # $VEE/environments/primary/refs/origin/master
 PRIMARY_REPO = 'primary'
 
+DB_NAME = 'vee-index.sqlite'
+
+
+def default_home_path():
+    try:
+        return os.environ['VEE']
+    except KeyError:
+        return find_home()
+
+def find_home():
+    root = os.path.abspath(os.path.join(__file__, '..', '..', '..'))
+    while root and root != os.path.sep:
+        if os.path.exists(os.path.join(root, DB_NAME)):
+            return root
+        root = os.path.dirname(root)
+
 
 class Home(object):
 
@@ -30,13 +46,17 @@ class Home(object):
 
     def __init__(self, root=None, repo=None):
 
-        self.root = os.environ.get('VEE', '/usr/local/vee') if root is None else root
-        if self.root is None:
-            raise ValueError('need a root, or $VEE')
+        if root is None:
+            root = default_home()
+        if root is None:
+            raise ValueError('Need a root, or $VEE.')
+        self.root = root
 
         self.default_repo_name = repo if repo is not None else os.environ.get('VEE_REPO')
 
-        self.db = Database(self._abs_path('vee-index.sqlite'))
+        dbpath = self._abs_path(DB_NAME)
+        self.db = Database(dbpath)
+
         self.config = Config(self)
 
     @property

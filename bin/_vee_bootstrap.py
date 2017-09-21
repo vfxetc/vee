@@ -42,14 +42,4 @@ except ImportError as e:
     exit(1)
 
 
-# Auto-detect the home.
-if os.environ.get('VEE') is None:
-    root = os.path.dirname(__file__)
-    while len(root) > 1:
-        if os.path.exists(os.path.join(root, 'vee-index.db')):
-            os.environ['VEE'] = root
-            break
-        root = os.path.dirname(root)
-
-
 exit(main(as_main=True) or 0)
