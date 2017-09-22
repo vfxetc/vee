@@ -57,7 +57,8 @@ class GenericBuilder(PipelineStep):
             shutil.copytree(pkg.build_path_to_install, pkg.install_path_from_build, symlinks=True)
 
     def post_install(self):
-        chmod(self.package.install_path, '-w', recurse=True)
+        # TODO: Pull this from repository config (when that exists).
+        chmod(self.package.install_path, 'o-w', recurse=True)
 
     def relocate(self):
         relocate_package(self.package)
