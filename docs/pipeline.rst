@@ -56,6 +56,11 @@ The source is built into a build "artifact".
 
 The build artifact is installed into :attr:`Package.install_path`.
 
+"post_install"
+~~~~~~~~~~~~~~
+
+Permission/ownership modification of the install.
+
 "relocate"
 ~~~~~~~~~~
 

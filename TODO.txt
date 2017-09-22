@@ -1,4 +1,17 @@
 
+- Replace vendored stuff with get-pip.py
+  
+  python get-pip.py -I --prefix $(pwd)/test
+  PYTHONPATH=$(pwd)/test/lib/python2.7/site-packages test/bin/pip install -I --prefix $(pwd)/test setuptools wheel packaging
+
+  - src/bootstraps/2.7/{bin,lib}
+
+- config.py (or something) in repository for things like:
+
+  POST_INSTALL_CHMOD = 'go-w'
+  POST_INSTALL_CHGRP = 'vee'
+
+  INSTALL_UMASK = 0o022
 
 - `vee commit` makes sure you haven't forked
 - `vee status` tries to fetch if the revision is not in the local repo
@@ -50,7 +63,10 @@
 
 - add lots of cascading to foreign key contraints
 
-- requirements functions: $FFMPEG_PREFIX or $FFMPEG_INSTALL_PATH or ${packages['ffmpeg'].install_path}
+- requirements functions:
+  $FFMPEG_PREFIX
+  $FFMPEG_INSTALL_PATH
+  ${packages['ffmpeg'].install_path}
   $(prefix ffmpeg)
   
 
