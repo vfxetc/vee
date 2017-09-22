@@ -200,6 +200,8 @@ class Requirements(list):
         for _, el, _ in self:
 
             if eval_control and isinstance(el, Control):
+
+                # The "if" stack is always two values: have any run, and should this run?
                 if el.type == 'if':
                     do_this = bool(eval(el.expr, control_namespace))
                     include_stack.extend((do_this, do_this))
@@ -211,10 +213,12 @@ class Requirements(list):
                 elif el.type == 'else':
                     include_stack.pop()
                     done_one = include_stack.pop()
-                    include_stack.append(not done_one)
+                    do_this = not done_one
+                    include_stack.extend((True, do_this))
                 elif el.type == 'endif':
                     include_stack.pop()
                     include_stack.pop()
+
                 else:
                     raise ValueError('unknown control type %r' % el.type)
 
