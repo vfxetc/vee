@@ -2,6 +2,7 @@
 
 import os
 import sys
+import traceback
 
 
 def ANSI(*args):
@@ -36,7 +37,7 @@ try:
 
 except ImportError as e:
     print >> sys.stderr, red("Error:") + " vee's install is broken."
-    print >> sys.stderr, e
+    traceback.print_exc()
     if bootstrapped:
         print >> sys.stderr, 'Bootstrap found:', bootstrapped
     exit(1)

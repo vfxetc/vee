@@ -9,7 +9,7 @@ import shlex
 import shutil
 import sys
 
-from vee._vendor import pkg_resources
+import pkg_resources
 
 from vee import libs
 from vee import log

@@ -3,7 +3,7 @@ import os
 import re
 import sys
 
-from vee._vendor import vendor_path, bootstrap_environ
+from vee._bootstrap import vendor_path, bootstrap_environ
 from vee.commands.main import command, argument, group
 from vee.environment import Environment
 from vee.envvars import guess_envvars, render_envvars
