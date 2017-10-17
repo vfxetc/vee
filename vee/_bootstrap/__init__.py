@@ -3,16 +3,15 @@ import sys
 import urllib
 import subprocess
 
-from vee.utils import makedirs
+from vee.utils import makedirs, find_home
 
 
 vendored_packages = ['setuptools', 'wheel', 'packaging', 'virtualenv']
-vendor_prefix = os.path.abspath(os.path.join(__file__, '..', '..', '..', 'build', 'vendor'))
+vendor_prefix = os.environ.get('VEE_VENDOR', '').strip() or os.path.join(find_home(default_here=True), 'vendor')
 vendor_path = os.path.join(vendor_prefix, 'lib', 'python{0.major}.{0.minor}'.format(sys.version_info), 'site-packages')
 
 
 def assert_vendored():
-
 
     force = os.environ.get('VEE_FORCE_BOOTSTRAP_VENDORED')
 
@@ -31,7 +30,7 @@ def assert_vendored():
         # Get pip.
         if force or not os.path.exists(pip):
             get_pip = os.path.abspath(os.path.join(__file__, '..', 'get-pip.py'))
-            subprocess.check_call([sys.executable, get_pip, '-I', '--prefix', vendor_prefix])
+            subprocess.check_call([sys.executable, get_pip, '-I', '--prefix', vendor_prefix], stdout=sys.stderr)
 
         subprocess.check_call([sys.executable,
             pip,
@@ -39,29 +38,30 @@ def assert_vendored():
             '--ignore-installed',
             '--upgrade',
             '--prefix', vendor_prefix,
-        ] + vendored_packages)
+        ] + vendored_packages, stdout=sys.stderr)
 
-    return vendor_path
 
 
 def bootstrap_vendored():
 
-    prefix = assert_vendored()
+    assert_vendored()
 
     # Force our vendored packages to the front of the path.
-    if prefix not in sys.path:
-        sys.path.insert(0, prefix)
+    if vendor_path not in sys.path:
+        sys.path.insert(0, vendor_path)
 
     import pkg_resources
 
     # Make our vendored packages availible to provide entry_points, etc..
-    if prefix not in pkg_resources.working_set.entries:
-        pkg_resources.working_set.add_entry(prefix)
+    if vendor_path not in pkg_resources.working_set.entries:
+        pkg_resources.working_set.add_entry(vendor_path)
 
 
 def bootstrap_environ(environ=None):
 
     environ = environ or os.environ
+
+    #environ['VEE_VENDOR'] = vendor_prefix
 
     try:
         py_path = environ['PYTHONPATH'].split(':')

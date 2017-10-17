@@ -218,3 +218,22 @@ def assert_file_checksum(path, checksum):
     _, hash2 = _checksum_file(path, getattr(hashlib, name)())
     if hash1 != hash2:
         raise ValueError('%s:%s does not match expected %s' % (name, hash2, checksum))
+
+
+DB_NAME = 'vee-index.sqlite'
+
+def default_home_path(environ=None):
+    try:
+        return (environ or os.environ)['VEE']
+    except KeyError:
+        return find_home()
+
+def find_home(default_here=False):
+    root = here = os.path.abspath(os.path.join(__file__, '..', '..', '..'))
+    while root and root != os.path.sep:
+        if os.path.exists(os.path.join(root, DB_NAME)):
+            return root
+        root = os.path.dirname(root)
+    if default_here:
+        return here
+

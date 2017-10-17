@@ -9,7 +9,7 @@ from vee.database import Database
 from vee.devpackage import DevPackage
 from vee.environmentrepo import EnvironmentRepo
 from vee.git import GitRepo
-from vee.utils import makedirs, cached_property
+from vee.utils import makedirs, cached_property, find_home, DB_NAME
 from vee import log
 
 
@@ -18,21 +18,6 @@ from vee import log
 # $VEE/environments/primary/refs/origin/master
 PRIMARY_REPO = 'primary'
 
-DB_NAME = 'vee-index.sqlite'
-
-
-def default_home_path(environ=None):
-    try:
-        return (environ or os.environ)['VEE']
-    except KeyError:
-        return find_home()
-
-def find_home():
-    root = os.path.abspath(os.path.join(__file__, '..', '..', '..'))
-    while root and root != os.path.sep:
-        if os.path.exists(os.path.join(root, DB_NAME)):
-            return root
-        root = os.path.dirname(root)
 
 
 class Home(object):

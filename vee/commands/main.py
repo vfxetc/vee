@@ -17,7 +17,8 @@ import traceback
 from vee import log
 from vee.cli import style
 from vee.exceptions import cli_exc_str, cli_errno, print_cli_exc
-from vee.home import Home, default_home_path
+from vee.home import Home
+from vee.utils import default_home_path
 from vee.lockfile import RLockfile
 
 
