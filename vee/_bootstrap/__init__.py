@@ -32,13 +32,15 @@ def assert_vendored():
             get_pip = os.path.abspath(os.path.join(__file__, '..', 'get-pip.py'))
             subprocess.check_call([sys.executable, get_pip, '-I', '--prefix', vendor_prefix], stdout=sys.stderr)
 
+        environ = os.environ.copy()
+        environ['PYTHONPATH'] = vendor_path
         subprocess.check_call([sys.executable,
             pip,
             'install',
             '--ignore-installed',
             '--upgrade',
             '--prefix', vendor_prefix,
-        ] + vendored_packages, stdout=sys.stderr)
+        ] + vendored_packages, stdout=sys.stderr, env=environ)
 
 
 
