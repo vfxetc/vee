@@ -1,10 +1,5 @@
 
-- Replace vendored stuff with get-pip.py
-  
-  python get-pip.py -I --prefix $(pwd)/test
-  PYTHONPATH=$(pwd)/test/lib/python2.7/site-packages test/bin/pip install -I --prefix $(pwd)/test setuptools wheel packaging
-
-  - src/bootstraps/2.7/{bin,lib}
+- Need to `brew update` after closing homebrew for the first time.
 
 - config.py (or something) in repository for things like:
 

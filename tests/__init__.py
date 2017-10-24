@@ -39,7 +39,7 @@ is_travis = bool(os.environ.get('TRAVIS'))
 if os.path.exists(sandbox_dir):
     for name in os.listdir(sandbox_dir):
         # Leave Homebrew between tests.
-        if name == 'Homebrew':
+        if name in ('Homebrew', 'Vendor'):
             continue
         path = os.path.join(sandbox_dir, name)
         if os.path.isdir(path):
@@ -67,6 +67,7 @@ _environ_diff = {
     # 'VEE_DEV': os.path.join(VEE, 'dev'),
     # 'VEE_REPO': 'sandbox',
     'VEE_HOMEBREW': sandbox('Homebrew'),
+    'VEE_VENDOR': os.path.join(sandbox_dir, 'Vendor'),
     'PATH': '%s:%s' % (os.path.join(root_dir, 'bin'), os.environ['PATH']),
 }
 os.environ.update(_environ_diff)
