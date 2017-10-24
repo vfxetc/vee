@@ -1,4 +1,5 @@
 import argparse
+import collections
 import datetime
 import fnmatch
 import json
@@ -64,9 +65,24 @@ class Control(object):
         )
 
 
-class Requirements(list):
+class RequirementItem(object):
+
+    def __init__(self, value, prefix='', suffix='', filename=None, lineno=None):
+        self.value    = value
+        self.prefix   = prefix or ''
+        self.suffix   = suffix or ''
+        self.filename = filename or None
+        self.lineno   = lineno or None
+
+    def __getattr__(self, name):
+        return getattr(self.value, name)
+
+
+class Requirements(collections.MutableSequence):
 
     def __init__(self, args=None, file=None, home=None, env_repo=None):
+
+        self._items = []
 
         self.home = home
         self.env_repo = env_repo
@@ -81,6 +97,42 @@ class Requirements(list):
         if file:
             self.parse_file(file)
 
+    def _coerce(self, value, args=()):
+        
+        # This is the older format, and might still be used in some places.
+        if isinstance(value, tuple) and len(value) == 3:
+            if args:
+                raise ValueError("RequirementItem 3-tuple cannot have extra args.", value, args)
+            args = (value[0], value[2])
+            value = value[1]
+
+        if isinstance(value, RequirementItem):
+            if args:
+                raise ValueError("Cannot pass RequirementItem with extra args.", value, args)
+            return value
+
+        if isinstance(value, (Envvar, Header, Control, Package)):
+            return RequirementItem(value, *args)
+
+        if value:
+            raise ValueError('Non-false value not of Envvar, Header, Control, or Package.', value)
+
+        return RequirementItem(None, *args)
+
+    # Sequence ABC methods.
+    def __getitem__(self, index):
+        return self._items[index]
+    def __setitem__(self, index, value):
+        self._items[index] = self._coerce(value)
+    def __delitem__(self, index):
+        del self._items[index]
+    def __len__(self):
+        return len(self._items)
+    def append(self, value, *args):
+        self._items.append(self._coerce(value, args))
+    def insert(self, index, value, *args):
+        self._items.insert(index, self._coerce(value, args))
+
     def parse_args(self, args):
 
         remaining = args
@@ -93,27 +145,30 @@ class Requirements(list):
 
         self._guess_names()
 
-    def parse_file(self, source):
+    def parse_file(self, source, filename=None):
         
         if source == '-':
+            filename = filename or '<stdin>'
             source = sys.stdin
         elif isinstance(source, basestring):
+            filename = filename or source
             source = open(source, 'r')
 
+        def append(x):
+            self.append(RequirementItem(x, prefix, suffix, filename, line_i + 1))
+
         line_iter = iter(source)
-        for line in line_iter:
+        for line_i, line in enumerate(line_iter):
 
             line = line.rstrip()
             while line.endswith('\\'):
                 line = line[:-1] + next(line_iter).rstrip()
 
             m = re.match(r'^(\s*)([^#]*?)(\s*#.*)?$', line)
-            before, spec, after = m.groups()
-            before = before or ''
-            after = after or ''
+            prefix, spec, suffix = m.groups()
 
             if not spec:
-                self.append((before, '', after))
+                append('')
                 continue
 
             # Note: This will freak out with colons in comments.
@@ -121,21 +176,21 @@ class Requirements(list):
             m = re.match(r'^%\s*(if|elif|else|endif)\s*(.*?):?\s*$', spec)
             if m:
                 type_, expr = m.groups()
-                self.append((before, Control(type_, expr), after))
+                append(Control(type_, expr))
                 continue
 
             m = re.match(r'^(\w+)=(\S.*)$', spec)
             if m:
                 name, value = m.groups()
                 self._cumulative_environ[name] = value
-                self.append((before, Envvar(name, value), after))
+                append(Envvar(name, value))
                 continue
 
             m = re.match(r'^([\w-]+): (\S.*)$', spec)
             if m:
                 header = Header(*m.groups())
                 self.headers[header.name] = header
-                self.append((before, header, after))
+                append(header)
                 continue
 
             try:
@@ -147,7 +202,7 @@ class Requirements(list):
                 continue
             for k, v in self._cumulative_environ.iteritems():
                 pkg.base_environ.setdefault(k, v)
-            self.append((before, pkg, after))
+            append(pkg)
 
         self._guess_names()
 
@@ -197,7 +252,9 @@ class Requirements(list):
             'LINUX': sys.platform.startswith('linux'),
         }
 
-        for _, el, _ in self:
+        for item in self:
+
+            el = item.value # TODO: Refactor.
 
             if eval_control and isinstance(el, Control):
 
@@ -229,24 +286,27 @@ class Requirements(list):
                 yield el
 
     def get_header(self, name):
-        for _, el, _ in self:
+        for item in self:
+            el = item.value
             if isinstance(el, Header) and el.name.lower() == name.lower():
                 return el.value
         raise KeyError(name)
 
     def set_header(self, name, value):
-        for _, el, _ in self:
+        for item in self:
+            el = item.value
             if isinstance(el, Header) and el.name.lower() == name.lower():
                 el.value = value
                 return
         self.add_header(name, value)
 
     def add_header(self, name, value):
-        for i, (_, el, _) in enumerate(self):
+        for i, item in enumerate(self):
+            el = item.value
             if not isinstance(el, Header):
                 break
         header = Header(name, value)
-        self.insert(i, ('', header, ''))
+        self.insert(i, RequirementItem(header))
         return header
 
     def iter_dump(self, freeze=False):
@@ -256,7 +316,10 @@ class Requirements(list):
         # in the current state.
         environ = {}
 
-        for before, element, after in self:
+        for item in self:
+
+            # TODO: Refactor.
+            element = item.value
 
             if isinstance(element, Envvar):
                 environ[element.name] = element.value
@@ -274,7 +337,7 @@ class Requirements(list):
                     if req.base_environ.get(k) == v:
                         del req.base_environ[k]
 
-            yield '%s%s%s\n' % (before or '', element, after or '')
+            yield '%s%s%s\n' % (item.prefix or '', element or '', item.suffix or '')
 
 
 
