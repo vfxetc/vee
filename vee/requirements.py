@@ -14,10 +14,7 @@ from vee import log
 from vee.cli import style
 from vee.exceptions import AlreadyInstalled, CliMixin
 from vee.package import Package, requirement_parser, RequirementParseError
-from vee.utils import cached_property, guess_name
-
-
-
+from vee.utils import cached_property, guess_name, makedirs
 
 
 class Envvar(tuple):
@@ -65,6 +62,16 @@ class Control(object):
         )
 
 
+class Include(object):
+
+    def __init__(self, path, requirements):
+        self.path = path
+        self.requirements = requirements
+
+    def __str__(self):
+        return '% include {}'.format(self.path)
+
+
 class RequirementItem(object):
 
     def __init__(self, value, prefix='', suffix='', filename=None, lineno=None):
@@ -77,6 +84,10 @@ class RequirementItem(object):
     def __getattr__(self, name):
         return getattr(self.value, name)
 
+    @property
+    def is_include(self):
+        return isinstance(self.value, Include)
+
 
 class Requirements(collections.MutableSequence):
 
@@ -84,6 +95,7 @@ class Requirements(collections.MutableSequence):
 
         self._items = []
 
+        self.filename = None
         self.home = home
         self.env_repo = env_repo
 
@@ -111,11 +123,11 @@ class Requirements(collections.MutableSequence):
                 raise ValueError("Cannot pass RequirementItem with extra args.", value, args)
             return value
 
-        if isinstance(value, (Envvar, Header, Control, Package)):
+        if isinstance(value, (Envvar, Header, Control, Package, Include)):
             return RequirementItem(value, *args)
 
         if value:
-            raise ValueError('Non-false value not of Envvar, Header, Control, or Package.', value)
+            raise ValueError('Non-false value not of Envvar, Header, Control, Package, or Include.', value)
 
         return RequirementItem(None, *args)
 
@@ -154,6 +166,8 @@ class Requirements(collections.MutableSequence):
             filename = filename or source
             source = open(source, 'r')
 
+        self.filename = self.filename or filename
+
         def append(x):
             self.append(RequirementItem(x, prefix, suffix, filename, line_i + 1))
 
@@ -168,7 +182,7 @@ class Requirements(collections.MutableSequence):
             prefix, spec, suffix = m.groups()
 
             if not spec:
-                append('')
+                append(None)
                 continue
 
             # Note: This will freak out with colons in comments.
@@ -177,6 +191,17 @@ class Requirements(collections.MutableSequence):
             if m:
                 type_, expr = m.groups()
                 append(Control(type_, expr))
+                continue
+
+            m = re.match(r'^%\s*include\s+(.+?)\s*$', spec)
+            if m:
+                raw_path = m.group(1)
+                path = os.path.normpath(raw_path).strip('/')
+                if raw_path != path:
+                    raise ValueError("Malformed include path.", raw_path)
+                if self.filename:
+                    path = os.path.join(os.path.dirname(self.filename), path)
+                append(Include(raw_path, Requirements(file=path, home=self.home, env_repo=self.env_repo)))
                 continue
 
             m = re.match(r'^(\w+)=(\S.*)$', spec)
@@ -284,6 +309,9 @@ class Requirements(collections.MutableSequence):
 
             if isinstance(el, Package):
                 yield el
+            elif isinstance(el, Include):
+                for x in el.requirements.iter_packages(eval_control):
+                    yield x
 
     def get_header(self, name):
         for item in self:
@@ -339,7 +367,25 @@ class Requirements(collections.MutableSequence):
 
             yield '%s%s%s\n' % (item.prefix or '', element or '', item.suffix or '')
 
+    def dump(self, path, recurse=True):
 
+        tmp = path + '.tmp'
+        with open(tmp, 'w') as fh:
+            for line in self.iter_dump():
+                fh.write(line)
+        os.rename(tmp, path)
+
+        if not recurse:
+            return
+
+        for item in self:
+            if not item.is_include:
+                continue
+            include = item.value
+            req_set = include.requirements
+            sub_path = os.path.join(os.path.dirname(path), include.path)
+            makedirs(os.path.dirname(sub_path))
+            req_set.dump(sub_path)
 
 if __name__ == '__main__':
 

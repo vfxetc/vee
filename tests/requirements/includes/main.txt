@@ -1,0 +1,11 @@
+
+main.tgz
+
+%include always.txt
+
+% if True:
+    %include true.txt
+% else:
+    %include false.txt
+% end
+

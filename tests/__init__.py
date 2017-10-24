@@ -1,8 +1,9 @@
+from textwrap import dedent
 import os
 import re
 import shutil
-import sys
 import subprocess
+import sys
 
 try:
     from unittest.case import SkipTest as _Skip

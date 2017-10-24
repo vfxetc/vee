@@ -81,3 +81,44 @@ class TestRequirements(TestCase):
         elif sys.platform == 'linux2':
             self.assertEqual(reqs[1].name, 'linux')
         self.assertEqual(reqs[2].name, 'after')
+
+    def test_includes_read(self):
+        req_set = Requirements(file=os.path.abspath(os.path.join(__file__, '..', 'requirements', 'includes', 'main.txt')))
+        names = [pkg.name for pkg in req_set.iter_packages()]
+        self.assertEqual(names, ['main', 'always', 'true'])
+
+    def test_includes_write(self):
+
+        os.makedirs(self.sandbox())
+
+        main_path = self.sandbox('main.txt')
+        with open(main_path, 'w') as fh:
+            fh.write(dedent('''
+                main.tgz
+                %include include.txt
+            '''.lstrip()))
+
+        incl_path = self.sandbox('include.txt')
+        with open(incl_path, 'w') as fh:
+            fh.write(dedent('''
+                include.tgz
+            '''.lstrip()))
+
+        req_set = Requirements(file=main_path)
+        main, incl = req_set.iter_packages()
+        self.assertEqual(main.name, 'main')
+
+        main.revision = '1'
+        incl.revision = '2'
+
+        req_set.dump(main_path)
+
+        req_set = Requirements(file=main_path)
+        main, incl = req_set.iter_packages()
+        self.assertEqual(main.name, 'main')
+        self.assertEqual(main.revision, '1')
+        self.assertEqual(incl.revision, '2')
+
+
+
+

@@ -50,12 +50,8 @@ class EnvironmentRepo(GitRepo):
         return reqs
 
     def dump_requirements(self, req_set):
-        tmp = self._req_path + '.tmp'
-        with open(tmp, 'wb') as fh:
-            for line in req_set.iter_dump():
-                fh.write(line)
-        os.rename(tmp, self._req_path)
-
+        req_set.dump(self._req_path)
+    
     def commit(self, message, semver_level=None):
 
         self.git('add', self._req_path, silent=True)
