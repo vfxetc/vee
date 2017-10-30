@@ -279,16 +279,21 @@ class GitRepo(object):
         # We use the machine-parsable git status.
         cmd.extend(('status', '-z'))
         encoded = self.git(*cmd, stdout=True)
-        # In theory, there can be a second NULL-terminated field, but I
-        # haven't seen it yet.
+
         parts = encoded.split('\0')
         res = []
-        for part in parts:
+        while parts:
+            part = parts.pop(0)
             if not part:
                 continue
+
             idx  = part[0].strip()
             tree = part[1].strip()
             name = part[3:]
+
+            if idx == 'C': # This is a rename (I think).
+                parts.pop(0) # We don't really care about the old name at this point.
+
             res.append((idx, tree, name))
         return res
 

@@ -50,20 +50,9 @@ class EnvironmentRepo(GitRepo):
         return reqs
 
     def dump_requirements(self, req_set):
-        req_set.dump(self._req_path)
+        return req_set.dump(self._req_path)
     
     def commit(self, message, semver_level=None):
-
-        self.git('add', self._req_path, silent=True)
-        
-        status = list(self.status())
-        if not status:
-            raise RuntimeError('nothing to commit')
-
-        # Make sure there are no other changes.
-        for idx, tree, name in status:
-            if tree.strip():
-                raise RuntimeError('work-tree is dirty')
 
         req_set = self.load_requirements()
 
@@ -90,9 +79,19 @@ class EnvironmentRepo(GitRepo):
         from vee import __about__ as about
         req_set.set_header('Vee-Revision', about.__version__ + '+' + about.__revision__)
 
-        self.dump_requirements(req_set)
+        paths = self.dump_requirements(req_set)
+        for path in paths:
+            self.git('add', path, silent=True)
 
-        self.git('add', self._req_path, silent=True)
+        status = list(self.status())
+        if not status:
+            raise RuntimeError('nothing to commit')
+
+        # Make sure there are no other changes.
+        for idx, tree, name in status:
+            if tree.strip():
+                raise RuntimeError('work-tree is dirty')
+
         self.git('commit', '-m', message, silent=True)
 
     def update(self, force=False):
