@@ -62,6 +62,25 @@ class Control(object):
         )
 
 
+class Expression(object):
+
+    def __init__(self, source, type='eval'):
+        self.source = source
+        self.type = type
+
+    def __repr__(self):
+        if self.type == 'eval':
+            return 'Expression(%r)' % self.source
+        else:
+            return 'Expression(%r, type=%r)' % (self.source, self.type)
+
+    def __str__(self):
+        return '%% %s %s' % (self.type, self.source)
+
+    def __call__(self, namespace):
+        eval(compile(self.source, '<vee>', 'exec'), namespace, namespace)
+
+
 class Include(object):
 
     def __init__(self, path, requirements):
@@ -193,6 +212,12 @@ class Requirements(collections.MutableSequence):
                 append(Control(type_, expr))
                 continue
 
+            m = re.match(r'^%\s*(set|eval|expr)\s+(.+?)\s*$', spec)
+            if m:
+                type_, source = m.groups()
+                append(Expression(source, type_))
+                continue
+
             m = re.match(r'^%\s*include\s+(.+?)\s*$', spec)
             if m:
                 raw_path = m.group(1)
@@ -307,6 +332,10 @@ class Requirements(collections.MutableSequence):
             if eval_control and not all(include_stack):
                 continue
 
+            if isinstance(el, Expression):
+                el(control_namespace)
+                continue
+
             if isinstance(el, Package):
                 yield el
             elif isinstance(el, Include):
@@ -369,6 +398,8 @@ class Requirements(collections.MutableSequence):
 
     def dump(self, path, recurse=True):
 
+        paths = [path]
+
         tmp = path + '.tmp'
         with open(tmp, 'w') as fh:
             for line in self.iter_dump():
@@ -385,7 +416,9 @@ class Requirements(collections.MutableSequence):
             req_set = include.requirements
             sub_path = os.path.join(os.path.dirname(path), include.path)
             makedirs(os.path.dirname(sub_path))
-            req_set.dump(sub_path)
+            paths.extend(req_set.dump(sub_path))
+
+        return paths
 
 if __name__ == '__main__':
 
