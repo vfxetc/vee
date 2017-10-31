@@ -176,14 +176,16 @@ class Requirements(collections.MutableSequence):
 
         self._guess_names()
 
-    def parse_file(self, source, filename=None):
+    def parse_file(self, source, filename=None, alt_open=None):
         
+        open_ = alt_open or open
+
         if source == '-':
             filename = filename or '<stdin>'
             source = sys.stdin
         elif isinstance(source, basestring):
             filename = filename or source
-            source = open(source, 'r')
+            source = open_(source)
 
         self.filename = self.filename or filename
 
@@ -226,7 +228,9 @@ class Requirements(collections.MutableSequence):
                     raise ValueError("Malformed include path.", raw_path)
                 if self.filename:
                     path = os.path.join(os.path.dirname(self.filename), path)
-                append(Include(raw_path, Requirements(file=path, home=self.home, env_repo=self.env_repo)))
+                reqs = Requirements(env_repo=self.env_repo, home=self.home)
+                reqs.parse_file(path, alt_open=alt_open)
+                append(Include(raw_path, reqs))
                 continue
 
             m = re.match(r'^(\w+)=(\S.*)$', spec)

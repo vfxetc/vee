@@ -40,13 +40,10 @@ class EnvironmentRepo(GitRepo):
     
     def load_requirements(self, revision=None):
         reqs = Requirements(env_repo=self, home=self.home)
-        if revision is not None:
-            contents = self.show(revision, 'requirements.txt')
-            if contents:
-                reqs.parse_file(contents.splitlines())
-        else:
-            if os.path.exists(self._req_path):
-                reqs.parse_file(self._req_path)
+        if revision:
+            reqs.parse_file(os.path.basename(self._req_path), alt_open=lambda x: self.show(revision, x).splitlines())
+        elif os.path.exists(self._req_path):
+            reqs.parse_file(self._req_path)
         return reqs
 
     def dump_requirements(self, req_set):
