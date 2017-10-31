@@ -1,7 +1,7 @@
 import os
 import subprocess
 
-__version__ = '0.2.0'
+__version__ = '0.3.0'
 
 try:
     __revision__ = subprocess.check_output(['git', 'describe', '--tags', '--always', '--dirty'], cwd=os.path.dirname(__file__)).strip()
