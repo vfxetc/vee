@@ -32,7 +32,7 @@ class Home(object):
     def __init__(self, root=None, repo=None):
 
         if root is None:
-            root = default_home()
+            root = find_home()
         if root is None:
             raise ValueError('Need a root, or $VEE.')
         self.root = root
