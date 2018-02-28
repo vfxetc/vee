@@ -82,7 +82,7 @@ class PipelineStep(object):
         return None
 
     def run(self, name, *args, **kwargs):
-        func = getattr(self, name)
+        func = getattr(self, name, None)
         if not func:
             raise ValueError('%s does not provide %s step' % (self.__class__.__name__, name))
         return func(*args, **kwargs)

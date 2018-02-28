@@ -184,6 +184,9 @@ class HomebrewManager(PipelineStep):
     def install(self):
         pass
 
+    def post_install(self):
+        pass
+    
     def relocate(self):
 
         pkg = self.package
