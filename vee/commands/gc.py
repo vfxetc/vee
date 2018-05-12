@@ -21,10 +21,10 @@ def delete_package(con, id_):
 
 @command(
 
-    argument('-e', '--prune-environments', action='store_true'),
     argument('--keep-latest', type=int, default=10),
 
-    argument('-p', '--prune-orphaned-packages', action='store_true'),
+    argument('-e', '--prune-environments', action='store_true'),
+    argument('-p', '--prune-packages', action='store_true'),
 
     argument('-n', '--dry-run', action='store_true'),
 
@@ -112,7 +112,7 @@ def gc(args):
                 continue
             install_paths_to_id[install_path] = id_
 
-            if args.prune_orphaned_packages:
+            if args.prune_packages:
                 row = con.execute('SELECT count(1) FROM links WHERE package_id = ?', [id_]).fetchone()
                 if not row[0]:
                     log.info('%s (%d) is not linked; deleting' % (name, id_))

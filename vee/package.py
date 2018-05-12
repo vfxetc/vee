@@ -91,9 +91,9 @@ requirement_parser.add_argument('--relocate', help='how to relocate shared libs 
 requirement_parser.add_argument('--set-rpath', help='what rpaths to set on Linux')
 requirement_parser.add_argument('--virtual', action='store_true', help='package is runtime only; does not persist')
 
-requirement_parser.add_argument('--develop-sh', help='shell script in repository to source to build the package')
+requirement_parser.add_argument('--develop-sh', help='shell script in repository to source to develop the package')
 requirement_parser.add_argument('--build-sh', help='shell script in repository to source to build the package')
-requirement_parser.add_argument('--install-sh', help='shell script in repository to source to build the package')
+requirement_parser.add_argument('--install-sh', help='shell script in repository to source to install the package')
 requirement_parser.add_argument('--requirements-txt', help='shell script in repository to source to build the package')
 
 
