@@ -13,7 +13,7 @@ from vee import log
 from vee.semver import Version, VersionExpr
 from vee.pipeline.http import download
 
-PYPI_URL_PATTERN = 'https://pypi.python.org/pypi/%s/json'
+PYPI_URL_PATTERN = 'https://pypi.org/pypi/%s/json'
 
 
 class PyPiTransport(PipelineStep):
