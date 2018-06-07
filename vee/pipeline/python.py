@@ -70,7 +70,7 @@ class PythonBuilder(GenericBuilder):
             requires_path = os.path.join(self.egg_path, 'requires.txt')
             if os.path.exists(requires_path):
                 for line in open(requires_path, 'rb'):
-                    m = re.match(r'^([\w-]+)', line)
+                    m = re.match(r'^([\w\.-]+)', line)
                     if m:
                         name = m.group(1).lower()
                         log.debug('%s depends on %s' % (pkg.name, name))
