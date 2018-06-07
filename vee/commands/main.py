@@ -98,6 +98,8 @@ def get_parser():
     parser.add_argument('-v', '--verbose', action='count', default=0, help='increase verbosity; may be used multiple times')
     parser.add_argument('--log', help='dump complete log to file')
     parser.add_argument('--profile', dest='cprofile_path', help='dump execution profile to disk')
+    parser.add_argument('--real-prefix', default=os.environ.get('VEE_REAL_PREFIX'),
+        help="Force a value for sys.real_prefix.")
 
     parser.add_argument('--home',
         dest='home_path',
@@ -264,6 +266,9 @@ def main(argv=None, environ=None, as_main=__name__=="__main__"):
         args.environ = os.environ if environ is None else environ
         args.home_path = default_home_path(environ=args.environ)
         
+        if args.real_prefix and args.real_prefix != getattr(sys, 'real_prefix', None):
+            sys.real_prefix = args.real_prefix
+
         if args.log:
             root = logging.getLogger('vee')
             stream = sys.stdout if args.log == '-' else open(args.log, 'ab')

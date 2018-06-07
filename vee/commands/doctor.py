@@ -87,11 +87,15 @@ def doctor(args):
     if sys.platform.startswith('linux'):
         res = find_command('patchelf', warn=True) or res
 
+    print style_note('==> Python runtime')
+    print style_note('sys.real_prefix:', getattr(sys, 'real_prefix', '<none>'))
+    print style_note('sys.base_prefix:', getattr(sys, 'base_prefix', '<none>'))
+    print style_note('sys.prefix:', sys.prefix)
+
     print style_note('==> configuration')
     home = args.assert_home()
     print style_note('home:', home.root)
     print style_note('vendor:', vendor_prefix)
-    
     try:
         repo = home.get_env_repo()
     except ValueError:
