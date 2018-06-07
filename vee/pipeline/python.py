@@ -70,6 +70,11 @@ class PythonBuilder(GenericBuilder):
             requires_path = os.path.join(self.egg_path, 'requires.txt')
             if os.path.exists(requires_path):
                 for line in open(requires_path, 'rb'):
+                    
+                    # Stop once we get to the "extras".
+                    if line.startswith('['):
+                        pass #break
+
                     m = re.match(r'^([\w\.-]+)', line)
                     if m:
                         name = m.group(1).lower()
