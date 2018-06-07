@@ -73,7 +73,7 @@ class PythonBuilder(GenericBuilder):
                     
                     # Stop once we get to the "extras".
                     if line.startswith('['):
-                        pass #break
+                        break
 
                     m = re.match(r'^([\w\.-]+)', line)
                     if m:
