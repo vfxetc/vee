@@ -2,11 +2,12 @@ import os
 import sys
 import urllib
 import subprocess
+import ssl
 
 from vee.utils import makedirs, find_home
 
 
-vendored_packages = ['setuptools', 'wheel', 'packaging', 'virtualenv']
+vendored_packages = ['setuptools', 'wheel', 'packaging', 'virtualenv', 'urllib3']
 vendor_prefix = os.environ.get('VEE_VENDOR', '').strip() or os.path.join(find_home(default_here=True), 'vendor')
 vendor_path = os.path.join(vendor_prefix, 'lib', 'python{0.major}.{0.minor}'.format(sys.version_info), 'site-packages')
 
@@ -59,6 +60,20 @@ def bootstrap_vendored():
         pkg_resources.working_set.add_entry(vendor_path)
 
 
+def bootstrap_openssl():
+
+    # NOTE: The logic here is lifted entirely from pip;
+    # see https://github.com/pypa/pip/commit/9c037803197b05bb722223c2f5deffcbb7f4b0c4
+
+    # We want to inject the use of SecureTransport as early as possible so that any
+    # references or sessions or what have you are ensured to have it, however we
+    # only want to do this in the case that we're running on macOS and the linked
+    # OpenSSL is too old to handle TLSv1.2
+    if sys.platform == "darwin" and ssl.OPENSSL_VERSION_NUMBER < 0x1000100f:  # OpenSSL 1.0.1
+        import urllib3.contrib.securetransport
+        urllib3.contrib.securetransport.inject_into_urllib3()
+
+
 def bootstrap_environ(environ=None):
 
     environ = environ or os.environ
@@ -100,6 +115,7 @@ def bootstrap_entrypoints():
 
 def bootstrap():
     bootstrap_vendored()
+    bootstrap_openssl()
     bootstrap_environ()
     bootstrap_entrypoints()
 
