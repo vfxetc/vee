@@ -176,7 +176,7 @@ class Requirements(collections.MutableSequence):
 
         self._guess_names()
 
-    def parse_file(self, source, filename=None, alt_open=None):
+    def parse_file(self, source, filename=None, alt_open=None, _depth=0):
         
         open_ = alt_open or open
 
@@ -229,7 +229,7 @@ class Requirements(collections.MutableSequence):
                 if self.filename:
                     path = os.path.join(os.path.dirname(self.filename), path)
                 reqs = Requirements(env_repo=self.env_repo, home=self.home)
-                reqs.parse_file(path, alt_open=alt_open)
+                reqs.parse_file(path, alt_open=alt_open, _depth=_depth + 1)
                 append(Include(raw_path, reqs))
                 continue
 
@@ -258,7 +258,8 @@ class Requirements(collections.MutableSequence):
                 pkg.base_environ.setdefault(k, v)
             append(pkg)
 
-        self._guess_names()
+        if not _depth:
+            self._guess_names()
 
     def _guess_names(self, strict=True):
         """Guess names for every requirement which does not already have one.
@@ -292,7 +293,7 @@ class Requirements(collections.MutableSequence):
                 names.add(name.lower())
                 req.name = name
 
-    def iter_packages(self, eval_control=True):
+    def iter_packages(self, eval_control=True, locals_=None):
 
         include_stack = [True]
         control_namespace = {
@@ -305,6 +306,8 @@ class Requirements(collections.MutableSequence):
             'MACOS': sys.platform == 'darwin',
             'LINUX': sys.platform.startswith('linux'),
         }
+        if locals_:
+            control_namespace.update(locals_)
 
         for item in self:
 
@@ -342,8 +345,9 @@ class Requirements(collections.MutableSequence):
 
             if isinstance(el, Package):
                 yield el
+
             elif isinstance(el, Include):
-                for x in el.requirements.iter_packages(eval_control):
+                for x in el.requirements.iter_packages(eval_control, locals_=control_namespace):
                     yield x
 
     def get_header(self, name):
