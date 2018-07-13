@@ -7,7 +7,7 @@ import shutil
 
 from vee.cli import style_note
 from vee.pipeline.base import PipelineStep
-from vee.utils import makedirs
+from vee.utils import makedirs, http_request
 from vee import log
 
 
@@ -55,13 +55,13 @@ def download(url, dst):
 
     makedirs(os.path.dirname(dst))
 
-    temp = dst + '.downloading'
+    tmp = dst + '.downloading'
 
     src_fh = None
     dst_fh = None
     try:
-        src_fh = urllib2.urlopen(url)
-        dst_fh = open(temp, 'wb')
+        src_fh = http_request('GET', url, preload_content=False)
+        dst_fh = open(tmp, 'wb')
         # TODO: Indicate progress.
         for chunk in iter(lambda: src_fh.read(16384), ''):
             dst_fh.write(chunk)
@@ -71,4 +71,4 @@ def download(url, dst):
         if dst_fh:
             dst_fh.close()
 
-    shutil.move(temp, dst)
+    shutil.move(tmp, dst)

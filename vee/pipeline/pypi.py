@@ -1,6 +1,5 @@
 import datetime
 import os
-import urllib2
 import urlparse
 import re
 import shutil
@@ -8,7 +7,7 @@ import json
 
 from vee.cli import style, style_note
 from vee.pipeline.base import PipelineStep
-from vee.utils import makedirs
+from vee.utils import makedirs, http_request
 from vee import log
 from vee.semver import Version, VersionExpr
 from vee.pipeline.http import download
@@ -37,14 +36,28 @@ class PyPiTransport(PipelineStep):
     def _meta(self):
         pkg = self.package
         path = pkg.home._abs_path('packages', 'pypi', self.name, 'meta.json')
-        if not os.path.exists(path):
+
+        meta = None
+        if os.path.exists(path):
+            try:
+                meta = json.load(open(path, 'rb'))
+            except ValueError:
+                pass
+
+        if meta is None:
+
             log.info(style_note('Looking up %s on PyPI' % self.name))
             url = PYPI_URL_PATTERN % self.name
-            res = urllib2.urlopen(url)
+            res = http_request('GET', url)
+            body = res.data
+            meta = json.loads(body)
+
             makedirs(os.path.dirname(path))
-            with open(path, 'wb') as fh:
-                fh.write(res.read())
-        return json.load(open(path, 'rb'))
+            with open(path + '.tmp', 'wb') as fh:
+                fh.write(body)
+            os.rename(path + '.tmp', path)
+
+        return meta
 
     def fetch(self):
 

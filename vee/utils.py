@@ -13,6 +13,8 @@ import subprocess
 import sys
 import threading
 import time
+import ssl
+
 
 
 class cached_property(object):
@@ -236,4 +238,19 @@ def find_home(default_here=False):
         root = os.path.dirname(root)
     if default_here:
         return here
+
+
+_httplib3_global_pool = None
+
+def http_pool():
+    global _httplib3_global_pool
+    if _httplib3_global_pool is None:
+        import urllib3 # Need to defer because _bootstrap import utils.
+        _httplib3_global_pool = urllib3.PoolManager()
+    return _httplib3_global_pool
+
+def http_request(*args, **kwargs):
+    return http_pool().request(*args, **kwargs)
+
+
 
