@@ -179,6 +179,10 @@ def main(argv=None):
     heading('Cleaning ignored files')
     check_call(['git', '--git-dir', git_dir, '--work-tree', vee_src, 'clean', '-dxf'], stdout=PIPE)
 
+    # Building the binaries.
+    heading('Building binaries')
+    check_call(['make'], pwd=os.path.join(vee_src, 'bin'))
+
     # Basic sanity checks.
     heading('Performing self-check')
     if not os.path.exists(os.path.join(vee_src, 'vee', '__init__.py')):

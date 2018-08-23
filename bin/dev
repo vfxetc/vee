@@ -1,9 +1,0 @@
-#!/bin/bash
-
-here="$(cd "$(dirname "${BASH_SOURCE[0]}")"; pwd)"
-
-if [[ ! "$VEE_PYTHON" ]]; then
-    VEE_PYTHON=python
-fi
-
-"$VEE_PYTHON" "$here/_vee_bootstrap.py" exec --dev "$@"
