@@ -253,16 +253,22 @@ def main(argv=None, environ=None, as_main=__name__=="__main__"):
 
     try:
 
-        parser = get_parser()
+
+        if argv is None:
+            argv = sys.argv[1:]
 
         # Split up args in shebangs if we seem to be in a situation where
         # it wasn't done for us.
-        if argv is None:
-            argv = sys.argv[1:]
-        if len(argv) == 1 and '--shebang ' in argv[0]:
-            argv = argv[0].split()
+        raw_argv = argv
+        argv = []
+        for arg in raw_argv:
+            if '--shebang ' in arg:
+                argv.extend(arg.split())
+            else:
+                argv.append(arg)
         argv = [x for x in argv if x != '--shebang']
 
+        parser = get_parser()
         args, unparsed = parser.parse_known_args(argv, namespace=Namespace())
 
         func = get_func(args)
