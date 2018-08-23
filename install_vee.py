@@ -181,7 +181,7 @@ def main(argv=None):
 
     # Building the binaries.
     heading('Building binaries')
-    check_call(['make'], pwd=os.path.join(vee_src, 'bin'))
+    check_call(['make', '-C', os.path.join(vee_src, 'bin')])
 
     # Basic sanity checks.
     heading('Performing self-check')
