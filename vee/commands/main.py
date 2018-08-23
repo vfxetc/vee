@@ -251,13 +251,20 @@ _global_locks = {}
 
 def main(argv=None, environ=None, as_main=__name__=="__main__"):
 
-    args = None
-
     try:
 
         parser = get_parser()
 
+        # Split up args in shebangs if we seem to be in a situation where
+        # it wasn't done for us.
+        if argv is None:
+            argv = sys.argv[1:]
+        if len(argv) == 1 and '--shebang ' in argv[0]:
+            argv = argv[0].split()
+        argv = [x for x in argv if x != '--shebang']
+
         args, unparsed = parser.parse_known_args(argv, namespace=Namespace())
+
         func = get_func(args)
         if func and unparsed and not func.__parse_known_args:
             args = parser.parse_args(argv, namespace=Namespace())

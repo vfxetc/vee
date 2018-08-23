@@ -18,7 +18,15 @@ class vee_develop(Command):
     def run(self):
 
         build = self.distribution.get_command_obj('build_scripts')
-        build.executable = '/usr/bin/env VEE=%s VEE_PYTHON=%s dev python' % (os.environ.get("VEE", ''), os.environ.get('VEE_PYTHON', ''))
+
+        dev_path = os.path.abspath(os.path.join(__file__, '..', '..', '..', 'bin', 'dev'))
+        build.executable = '%s --shebang python' % (
+            dev_path,
+            # TODO: Restore this functionality.
+            #os.environ.get('VEE', ''),
+            #os.environ.get('VEE_PYTHON', ''),
+        )
+
         self.run_command('build_scripts')
 
         install = self.distribution.get_command_obj('install_scripts')
