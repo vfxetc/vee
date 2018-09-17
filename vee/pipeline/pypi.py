@@ -4,6 +4,7 @@ import urlparse
 import re
 import shutil
 import json
+import sys
 
 from vee.cli import style, style_note
 from vee.pipeline.base import PipelineStep
@@ -54,7 +55,8 @@ class PyPiTransport(PipelineStep):
 
             makedirs(os.path.dirname(path))
             with open(path + '.tmp', 'wb') as fh:
-                fh.write(body)
+                # We re-dump to get indenting.
+                fh.write(json.dumps(meta, indent=4, sort_keys=True))
             os.rename(path + '.tmp', path)
 
         return meta
@@ -74,12 +76,44 @@ class PyPiTransport(PipelineStep):
         else:
             matching_releases = all_releases
 
+        usable_releases = []
         for version, releases in matching_releases:
-            release = next((r for r in releases if r['packagetype'] == 'sdist'), None)
-            if release:
-                break
-        else:
-            raise ValueError('no sdist %s %s on the PyPI;' % (self.name, expr if pkg.revision else '(any)'))
+
+            for release in releases:
+
+                if release['packagetype'] == 'sdist':
+                    usable_releases.append((version, 0, release))
+                    continue
+
+                if release['packagetype'] == 'bdist_wheel':
+                    m = re.match(r'^(.+)-([^-]+)-([^-]+)-([^-]+)-([^-]+)\.whl$', release['filename'])
+                    if not m:
+                        log.warning("Could not parse wheel filename: {}".format(release['filename']))
+                    name, version_tag, python_tag, abi_tag, platform_tag = m.groups()
+
+                    if python_tag not in ('py2', 'py27', 'py2.py3'):
+                        continue
+
+                    if abi_tag not in ('none', ):
+                        continue
+
+                    if platform_tag != 'any':
+                        if sys.platform == 'darwin':
+                            if not platform_tag.startswith('macos'):
+                                continue
+                        elif sys.platform.startswith('linux'):
+                            if platform_tag not in ('manylinux1_x86_64', ):
+                                continue
+                        else:
+                            continue
+
+                    usable_releases.append((version, 1, release))
+
+        if not usable_releases:
+            raise ValueError('no usable release of %s %s on the PyPI;' % (self.name, expr if pkg.revision else '(any version)'))
+        usable_releases.sort()
+
+        version, _, release = usable_releases[-1]
 
         pkg.revision = str(version)
         
