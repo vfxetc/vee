@@ -48,7 +48,7 @@ class PythonBuilder(GenericBuilder):
     
     def __init__(self, pkg, paths):
         super(PythonBuilder, self).__init__(pkg)
-        self.setup_path, self.egg_path, self.dist_path = paths
+        self.setup_path, self.egg_path, self.dist_info_dir = paths
 
     
     def inspect(self):
@@ -144,16 +144,50 @@ class PythonBuilder(GenericBuilder):
             return
 
         # python setup.py bdist_wheel
-        if self.dist_path:
+        if self.dist_info_dir:
 
-            log.info(style_note('Found Python Wheel', os.path.basename(self.dist_path)))
-            log.warning('Scripts and other data will not be installed.')
+            if pkg.package_path.endswith('.whl'):
+                log.info(style_note("Found Python Wheel", os.path.basename(self.dist_info_dir)))
+            else:
+                log.info(style_note("Found dist-info", os.path.basename(self.dist_info_dir)))
+                log.warning("Bare dist-info does not appear to be a wheel.")
 
-            if not pkg.package_path.endswith('.whl'):
-                log.warning('package does not appear to be a Wheel')
+            top_level_dir, dist_info_name = os.path.split(self.dist_info_dir)
+            wheel_basename = os.path.splitext(dist_info_name)[0]
 
-            pkg.build_subdir = os.path.dirname(self.dist_path)
-            pkg.install_prefix = site_packages
+            build_dir = os.path.join(top_level_dir, 'build')
+            pkg.build_subdir = build_dir
+
+            lib_dir = os.path.join(build_dir, site_packages)
+            os.makedirs(lib_dir)
+
+            # We need the metadata at runtime.
+            shutil.copytree(self.dist_info_dir, os.path.join(lib_dir, dist_info_name))
+
+            # Things listed as "top level" end up in site-packages.
+            for name in open(os.path.join(self.dist_info_dir, 'top_level.txt')):
+                name = name.strip()
+                if not name:
+                    continue
+                src = os.path.join(top_level_dir, name)
+                if not os.path.exists(src):
+                    log.warning("Top-level {} is missing.".format(name))
+                if os.path.isdir(src):
+                    shutil.copytree(src, os.path.join(lib_dir, name))
+                else:
+                    shutil.copy(src, lib_dir)
+
+            # Things in data have their own spots.
+            data_dir = os.path.join(top_level_dir, wheel_basename + '.data')
+            if os.path.exists(data_dir):
+                for name in os.listdir(data_dir):
+                    if name.startswith('.'):
+                        continue
+                    path = os.path.join(data_dir, name)
+                    if name == 'scripts':
+                        shutil.copytree(path, os.path.join(build_dir, 'bin'))
+                    else:
+                        log.warning("Unknown wheel data: {}.".format(name))
 
             return
 
