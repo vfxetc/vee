@@ -59,15 +59,8 @@ def status(args):
     by_name = {}
 
     # Dev packages.
-    for row in home.db.execute('SELECT * FROM development_packages'):
-        row = dict(row)
-
-        if not os.path.exists(row['path']):
-            continue
-
-        dev_repo = GitRepo(row['path'])
-        row['remotes'] = dev_repo.remotes()
-        by_name.setdefault(row['name'], {})['dev'] = row
+    for dev_repo in home.iter_development_packages():
+        by_name.setdefault(dev_repo.name, {})['dev'] = dev_repo
 
     # Current requirements.
     for revision, name in [
@@ -89,11 +82,11 @@ def status(args):
 
     for name, everything in by_name:
 
-        dev_row = everything.get('dev')
+        dev_repo = everything.get('dev')
         work_req = everything.get('work')
         head_req = everything.get('head')
 
-        has_dev = dev_row is not None
+        has_dev = dev_repo is not None
         only_has_dev = has_dev and not (work_req or head_req)
 
         # Skip dev-only stuff most of the time.
@@ -134,23 +127,17 @@ def status(args):
                     elif tag in ('equal', ):
                         print ' '.join(work_args[j1:j2]),
 
-        if dev_row:
+        if dev_repo:
 
-            if 'warning' in dev_row:
-                print dev_row['warning']
+            remotes = dev_repo.remotes()
 
-            if 'origin' in dev_row['remotes']:
-                dev_row['remote_name'] = 'origin'
+            if 'origin' in remotes:
+                dev_repo._st_remote_name = 'origin'
             else:
-                remote_names = sorted(dev_row['remotes'])
-                dev_row['remote_name'] = remote_names[0]
+                remote_names = sorted(remotes)
+                dev_repo._st_remote_name = remote_names[0]
                 if len(remote_names) != 1:
                     print '    ' + style_warning('More that one non-origin remote; picking %s' % dev_row['remote_name'])
-
-        dev_repo = dev_row and GitRepo(dev_row['path'])
-        if dev_repo and not dev_repo.exists:
-            print style_warning('Git repo does not exist.')
-            dev_row = dev_repo = None
 
         if dev_repo:
 
@@ -158,16 +145,16 @@ def status(args):
                 print '    ' + style_warning('Work tree is dirty.')
 
             if args.fetch:
-                dev_remote_head = dev_repo.fetch(dev_row['remote_name'], 'master')
+                dev_remote_head = dev_repo.fetch(dev_repo._st_remote_name, 'master')
             else:
-                dev_remote_head = dev_repo.rev_parse(dev_row['remote_name'] + '/master')
+                dev_remote_head = dev_repo.rev_parse(dev_repo._st_remote_name + '/master')
 
             # Check your local dev vs. its remote.
             dev_local, dev_remote = dev_repo.distance(dev_repo.head, dev_remote_head)
             summarize_rev_distance(dev_local, dev_remote,
                 local_name=name,
                 local_verb='is',
-                remote_name='%s/master' % dev_row['remote_name'],
+                remote_name='%s/master' % dev_repo._st_remote_name,
                 behind_action='please pull or `vee dev ff %s`' % name,
             )
 

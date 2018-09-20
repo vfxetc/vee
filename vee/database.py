@@ -188,6 +188,11 @@ def _create_dependency_table(con):
 
     )''')
 
+@_migrations.append
+def _drop_dev_packages(con):
+    if 'development_packages' in con.tables():
+        con.execute('''DROP TABLE development_packages''')
+
 
 
 class _Row(sqlite3.Row):

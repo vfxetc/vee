@@ -85,13 +85,9 @@ def add(args):
             print style_note('No changes.')
         return
 
-
-    row = home.get_development_record(os.path.abspath(args.package))
-
-    if not row:
+    dev_repo = home.find_development_package(os.path.abspath(args.package))
+    if not dev_repo:
         raise ValueError('No development package %r' % args.package)
-
-    dev_repo = GitRepo(row['path'])
 
     # Get the normalized origin.
     dev_remote_urls = set()

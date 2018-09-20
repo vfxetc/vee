@@ -64,11 +64,6 @@ def list_(args):
             print style_note(req.name, str(req))
         return
 
-    if args.glob:
-        cur = home.db.execute('SELECT * FROM development_packages WHERE name GLOB ? ORDER BY lower(name)', [args.glob])
-    else:
-        cur = home.db.execute('SELECT * FROM development_packages ORDER BY lower(name)')
-
     for dev_pkg in sorted(home.iter_development_packages(), key=lambda p: p.name.lower()):
 
         if args.glob and not fnmatch.fnmatch(dev_pkg.name, args.glob):
@@ -126,21 +121,6 @@ def add(args):
 
 
 @develop.subcommand(
-    argument('patterns', nargs='+'),
-    help='stop tracking dev packages',
-)
-def rm(args):
-    res = 0
-    con = args.assert_home().db.connect()
-    for pattern in args.patterns:
-        cur = con.execute('DELETE FROM development_packages WHERE name GLOB ?', [pattern])
-        if not cur.rowcount:
-            print style_warning('No dev packages matching "%s"' % pattern)
-            res = 1
-    return res
-
-
-@develop.subcommand(
     argument('--force', action='store_true'),
     argument('path'),
     help='recursively find existing checkouts',
@@ -169,31 +149,21 @@ def rescan(args):
 
     args.force = True
 
-    pairs = []
+    repos = []
 
     if args.names:
         for name in args.names:
-
-            # It doesn't matter if this isn't actually a path, as it doesn't
-            # check on disk. All we really want to do here is catch when name
-            # is ".".
-            name = os.path.basename(os.path.abspath(name))
-
-            row = con.execute('SELECT path FROM development_packages WHERE name = ?', [name]).fetchone()
-            if not row:
-                log.warning('No dev package named %s' % name)
+            dev_repo = home.find_development_package(name)
+            if not dev_repo:
+                log.warning("No dev package: {}".format(name))
                 continue
-            path = row[0]
-            if not os.path.exists(path):
-                log.warning('Dev package %s not longer exists at %s' % (name, path))
-                continue
-            pairs.append((name, path))
+            repos.append(dev_repo)
     else:
-        pairs = list(con.execute('SELECT name, path FROM development_packages'))
+        repos = list(home.iter_development_packages())
 
-    for name, path in pairs:
-        args.name = name
-        args.path = path
+    for repo in repos:
+        args.name = os.path.basename(repo.work_tree)
+        args.path = repo.work_tree
         init(args, do_add=True)
 
 
@@ -211,19 +181,6 @@ def init(args, do_clone=False, do_install=False, do_add=False, is_find=False):
     home = args.assert_home()
     
     con = home.db.connect()
-
-    # Make sure there are no other packages already, and clear out old ones
-    # which no longer exist.
-    for row in con.execute('SELECT * FROM development_packages WHERE name = ?', [name]):
-        if not args.force and os.path.exists(os.path.join(row['path'], '.git')):
-            if is_find:
-                print style_note('"%s" already exists:' % name, row['path'])
-                return
-            else:
-                print style_error('"%s" already exists:' % name, row['path'])
-                return 1
-        else:
-            con.execute('DELETE FROM development_packages WHERE id = ?', [row['id']])
 
     path = os.path.abspath(args.path or os.path.join(home.dev_root, name))
 
@@ -273,7 +230,6 @@ def init(args, do_clone=False, do_install=False, do_add=False, is_find=False):
         return 1
 
     print style_note('Linking dev package', name, path)
-    con.execute('INSERT INTO development_packages (name, path, environ) VALUES (?, ?, ?)', [name, path, json.dumps(package.environ)])
 
     dev_pkg = DevPackage({'name': name, 'path': path, 'environ': package.environ}, home=home)
     dev_pkg.save_tag()
@@ -288,38 +244,53 @@ def init(args, do_clone=False, do_install=False, do_add=False, is_find=False):
 def setenv(args):
     
     home = args.assert_home()
-    con = home.db.connect()
-    
-    row = con.execute('SELECT * FROM development_packages WHERE name = ?', [args.name]).fetchone()
-    if not row:
-        raise ValueError('unknown dev package %r' % args.name)
 
-    environ = json.loads(row['environ'])
+    dev_pkg = home.find_development_package(args.name)
+    if not dev_pkg:
+        raise ValueError("Unknown dev package: {!r}".format(args.name))
 
     for envvar in args.envvars:
         if re.match(r'^-\w+$', envvar):
             del environ[envvar[1:]]
         else:
             key, value = envvar.split('=', 1)
-            environ[key] = value
+            dev_pkg.environ[key] = value
 
-    con.execute('UPDATE development_packages SET environ = ? WHERE id = ?', [json.dumps(environ), row['id']])
+    dev_pkg.save_tag()
 
 
 @develop.subcommand(
+    argument('-a', '--all', action='store_true'),
+    argument('-n', '--name', action='append'),
     help='run a git command on all dev packages',
     parse_known_args=True,
 )
 def git(args, *command):
 
+    if not (args.all or args.name):
+        print style_error("Please provide -n NAME or --all.")
+        return 1
+
     if not command:
-        print style_error('please provide a git command')
+        print style_error('Please provide a git command.')
         return 1
     
     home = args.assert_home()
 
     retcode = 0
-    for dev_pkg in home.iter_development_packages():
+
+    if args.all:
+        dev_pkgs = home.iter_development_packages()
+    else:
+        dev_pkgs = []
+        for name in args.names:
+            dev_pkg = home.find_development_package(name)
+            if not dev_pkg:
+                print style_error("Could not find dev package: {!r}.".format(name))
+                return 2
+            dev_pkgs.append(dev_pkg)
+
+    for dev_pkg in dev_pkgs:
 
         log.info(style_note(dev_pkg.name, ' '.join(command)))
         try:

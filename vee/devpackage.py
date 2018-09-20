@@ -30,3 +30,9 @@ class DevPackage(GitRepo):
                 'path': self.work_tree,
                 'environ': self.environ,
             }))
+
+    @classmethod
+    def from_tag(cls, path, home=None):
+        data = json.loads(open(path).read())
+        data['id'] = None
+        return cls(data, home=home)

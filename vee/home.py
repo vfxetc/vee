@@ -78,37 +78,53 @@ class Home(object):
             path = self._abs_path(name)
             makedirs(path)
 
-    def iter_development_packages(self, exists=True, search=False):
-        paths_seen = set()
-        for row in self.db.execute('SELECT * FROM development_packages'):
-            dev_pkg = DevPackage(row, home=self)
-            # We could check these against paths_seen, but we feel it is better
-            # to always return everything that managed to get into the database.
-            paths_seen.add(dev_pkg.work_tree)
-            # This only detects if the git repo exists, not if the dev_package
-            # exists (where new ones may not have repos)
-            if dev_pkg.exists:
-                yield dev_pkg
+    def iter_development_packages(self, exists=True, search=True):
 
         if not search:
-            return
+            # We used to have a development_packages table, and searching was
+            # something that had to be requested.
+            log.debug("iter_development_packages(..., seach=False) is deprecated.")
 
         for root in self.dev_search_path:
+
             if not os.path.exists(root):
                 continue
+
             for name in os.listdir(root):
-                if not name.endswith('.vee-dev.json'):
+
+                path = os.path.join(root, name)
+
+                if name.endswith('.vee-dev.json'):
+                    yield DevPackage.from_tag(path, home=self)
                     continue
 
-                data = json.loads(open(os.path.join(root, name)).read())
-                data['id'] = None
-                dev_pkg = DevPackage(data, home=self)
+                # Not used yet.
+                sub_path = os.path.join(path, '.vee-dev.json')
+                if os.path.exists(sub_path):
+                    yield DevPackage.from_tag(sub_path, home=self)
 
-                if dev_pkg.work_tree in paths_seen:
-                    continue
-                paths_seen.add(dev_pkg.work_tree)
+    def find_development_package(self, name):
 
-                yield dev_pkg
+        if '/' in name:
+            paths = [name]
+            name = os.path.basename(name)
+        else:
+            paths = []
+            for root in self.dev_search_path:
+                path = os.path.join(root, name)
+                if os.path.exists(path):
+                    paths.append(path)
+
+        for path in paths:
+
+            sidecar_path = os.path.join(os.path.dirname(path), '.' + name + '.vee-dev.json')
+            if os.path.exists(sidecar_path):
+                return DevPackage.from_tag(sidecar_path, home=self)
+
+            # Not used yet.
+            subcar_path = os.path.join(path, '.vee-dev')
+            if os.path.exists(subcar_path):
+                return DevPackage.from_tag(sidecar_path, home=self)
 
     def iter_env_repos(self):
         for row in self.db.execute('SELECT * FROM repositories'):
@@ -206,22 +222,5 @@ class Home(object):
         environ['VEE'] = self.root
 
         return main(args, environ, **kwargs)
-
-
-    def get_development_record(self, input, paths=True):
-        con = self.db.connect()
-
-        # Look by name.
-        for row in con.execute('SELECT * FROM development_packages WHERE name = ? OR name = ?', [input, os.path.basename(input)]):
-            if os.path.exists(row['path']):
-                return row
-
-        if not paths:
-            return
-        # Look by path.
-        path = os.path.abspath(input)
-        for row in con.execute('SELECT * FROM development_packages WHERE path = ? OR ? LIKE (path || "/%")', [path, path]):
-            if os.path.exists(row['path']):
-                return row
 
 
