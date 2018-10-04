@@ -81,6 +81,31 @@ class PythonBuilder(GenericBuilder):
                         log.debug('%s depends on %s' % (pkg.name, name))
                         pkg.dependencies.append(Package(name=name, url='pypi:%s' % name))
 
+        if self.dist_info_dir:
+
+            for line in open(os.path.join(self.dist_info_dir, 'METADATA')):
+
+                line = line.strip()
+                if not line:
+                    break # We're at the end of the headers.
+
+                key, value = line.split(': ', 1)
+                key = key.lower()
+
+                if key == 'requires-dist':
+
+                    # Extras look like `FOO; extra == 'BAR'`. We don't handle them.
+                    if ';' in value:
+                        continue
+
+                    m = re.match(r'([\w-]+)(?:\s+\(([^)]+)\))?', value)
+                    if not m:
+                        log.warning('Could not parts requires-dist {!r}'.format(value))
+                        continue
+
+                    dep_name, version_expr = m.groups()
+                    # TODO: Figure out how to handle the versions.
+                    pkg.dependencies.append(Package(name=dep_name, url='pypi:{}'.format(dep_name)))
 
 
 
