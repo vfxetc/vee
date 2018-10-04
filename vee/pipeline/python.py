@@ -99,13 +99,22 @@ class PythonBuilder(GenericBuilder):
 
                 if key == 'requires-dist':
 
-                    # Extras look like `FOO; extra == 'BAR'`. We don't handle them.
+                    # Environmental markers look like `FOO; extra == 'BAR'`.
                     if ';' in value:
-                        continue
+
+                        value, raw_marker = value.split(';')
+                        value = value.strip()
+
+                        # We delay the import just in case the bootstrap is borked.
+                        from packaging.markers import Marker
+
+                        marker = Marker(raw_marker)
+                        if not marker.evaluate({'extra': None}):
+                            continue
 
                     m = re.match(r'([\w-]+)(?:\s+\(([^)]+)\))?', value)
                     if not m:
-                        log.warning('Could not parts requires-dist {!r}'.format(value))
+                        log.warning('Could not parse requires-dist {!r}'.format(value))
                         continue
 
                     dep_name, version_expr = m.groups()
@@ -200,6 +209,7 @@ class PythonBuilder(GenericBuilder):
         #     --no-warn-script-location
         #     --disable-pip-version-check
 
+        # We delay the import just in case the bootstrap is borked.
         try:
             from pip._internal.wheel import move_wheel_files
         except ImportError:
