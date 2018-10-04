@@ -110,8 +110,11 @@ class PythonBuilder(GenericBuilder):
                         continue
 
                     dep_name, version_expr = m.groups()
-                    # TODO: Figure out how to handle the versions.
-                    pkg.dependencies.append(Package(name=dep_name, url='pypi:{}'.format(dep_name)))
+                    pkg.dependencies.append(Package(
+                        name=dep_name,
+                        url='pypi:{}'.format(dep_name),
+                        revision=version_expr,
+                    ))
 
 
 
