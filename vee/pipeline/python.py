@@ -67,6 +67,7 @@ class PythonBuilder(GenericBuilder):
                 log.warning('Could not find newly created *.egg-info')
 
         if self.egg_path:
+
             requires_path = os.path.join(self.egg_path, 'requires.txt')
             if os.path.exists(requires_path):
                 for line in open(requires_path, 'rb'):
@@ -191,12 +192,19 @@ class PythonBuilder(GenericBuilder):
 
             # Things listed as "top level" end up in site-packages.
             for name in open(os.path.join(self.dist_info_dir, 'top_level.txt')):
+                
                 name = name.strip()
                 if not name:
                     continue
-                src = os.path.join(top_level_dir, name)
-                if not os.path.exists(src):
+
+                for ext in '', '.py':
+                    src = os.path.join(top_level_dir, name) + ext
+                    if os.path.exists(src):
+                        break
+                else:
                     log.warning("Top-level {} is missing.".format(name))
+                    continue
+
                 if os.path.isdir(src):
                     shutil.copytree(src, os.path.join(lib_dir, name))
                 else:
