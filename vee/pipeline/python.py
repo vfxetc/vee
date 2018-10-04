@@ -3,6 +3,8 @@ import re
 import shutil
 import sys
 
+from pip._internal.wheel import move_wheel_files
+
 from vee import log
 from vee.cli import style, style_note, style_warning
 from vee.envvars import join_env_path
@@ -24,6 +26,9 @@ def call_setup_py(setup_py, args, **kwargs):
     cmd.extend(args)
     return call(cmd, **kwargs)
 
+
+class DummyPipRequirement(object):
+    pass
 
 class PythonBuilder(GenericBuilder):
 
@@ -184,45 +189,21 @@ class PythonBuilder(GenericBuilder):
             build_dir = os.path.join(top_level_dir, 'build')
             pkg.build_subdir = build_dir
 
-            lib_dir = os.path.join(build_dir, site_packages)
-            os.makedirs(lib_dir)
-
-            # We need the metadata at runtime.
-            shutil.copytree(self.dist_info_dir, os.path.join(lib_dir, dist_info_name))
-
-            # Things listed as "top level" end up in site-packages.
-            for name in open(os.path.join(self.dist_info_dir, 'top_level.txt')):
-                
-                name = name.strip()
-                if not name:
-                    continue
-
-                for ext in '', '.py':
-                    src = os.path.join(top_level_dir, name) + ext
-                    if os.path.exists(src):
-                        break
-                else:
-                    log.warning("Top-level {} is missing.".format(name))
-                    continue
-
-                if os.path.isdir(src):
-                    shutil.copytree(src, os.path.join(lib_dir, name))
-                else:
-                    shutil.copy(src, lib_dir)
-
-            # Things in data have their own spots.
-            data_dir = os.path.join(top_level_dir, wheel_basename + '.data')
-            if os.path.exists(data_dir):
-                for name in os.listdir(data_dir):
-                    if name.startswith('.'):
-                        continue
-                    path = os.path.join(data_dir, name)
-                    if name == 'scripts':
-                        shutil.copytree(path, os.path.join(build_dir, 'bin'))
-                    else:
-                        log.warning("Unknown wheel data: {}.".format(name))
-
-            return
+            # Lets just take advantage of pip!
+            # The only reason we're reading into pip like this is because we
+            # would rather just do this part, rather than have it go through
+            # the full process with the *.whl file. If this breaks, feel
+            # free to do something like:
+            #     pip install --force-reinstall --prefix {build_dir} --no-deps {pkg.package_path}
+            # along with:
+            #     --no-warn-script-location
+            #     --disable-pip-version-check
+            req = DummyPipRequirement()
+            req.name = wheel_basename
+            move_wheel_files(self.name, req,
+                wheeldir=top_level_dir,
+                prefix=build_dir,
+            )
 
     def install(self):
 
