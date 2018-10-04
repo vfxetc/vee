@@ -3,8 +3,6 @@ import re
 import shutil
 import sys
 
-from pip._internal.wheel import move_wheel_files
-
 from vee import log
 from vee.cli import style, style_note, style_warning
 from vee.envvars import join_env_path
@@ -201,6 +199,12 @@ class PythonBuilder(GenericBuilder):
             # along with:
             #     --no-warn-script-location
             #     --disable-pip-version-check
+
+            try:
+                from pip._internal.wheel import move_wheel_files
+            except ImportError:
+                from pip.wheel import move_wheel_files
+
             req = DummyPipRequirement()
             req.name = wheel_basename
             move_wheel_files(self.name, req,
