@@ -35,29 +35,15 @@ class PyPiTransport(PipelineStep):
         pkg.url = 'pypi:' + self.name
 
     def _meta(self):
+        
         pkg = self.package
         path = pkg.home._abs_path('packages', 'pypi', self.name, 'meta.json')
 
-        meta = None
-        if os.path.exists(path):
-            try:
-                meta = json.load(open(path, 'rb'))
-            except ValueError:
-                pass
-
-        if meta is None:
-
-            log.info(style_note('Looking up %s on PyPI' % self.name))
-            url = PYPI_URL_PATTERN % self.name
-            res = http_request('GET', url)
-            body = res.data
-            meta = json.loads(body)
-
-            makedirs(os.path.dirname(path))
-            with open(path + '.tmp', 'wb') as fh:
-                # We re-dump to get indenting.
-                fh.write(json.dumps(meta, indent=4, sort_keys=True))
-            os.rename(path + '.tmp', path)
+        log.info(style_note('Looking up %s on PyPI' % self.name))
+        url = PYPI_URL_PATTERN % self.name
+        res = http_request('GET', url)
+        body = res.data
+        meta = json.loads(body)
 
         return meta
 
