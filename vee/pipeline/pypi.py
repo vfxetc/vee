@@ -55,12 +55,20 @@ class PyPiTransport(PipelineStep):
         all_releases = [(Version(v), rs) for v, rs in meta['releases'].iteritems()]
         all_releases.sort(reverse=True)
 
+        if not all_releases:
+            raise ValueError('no releases of {} (any version) on the PyPI'.format(self.name))
+
         if pkg.revision:
             expr = VersionExpr(pkg.revision)
             matching_releases = [(v, rs) for v, rs in all_releases if expr.eval(v)]
             log.debug('%s matched %s' % (expr, ','.join(str(v) for v, _ in matching_releases) or 'none'))
+
+            if not matching_releases:
+                raise ValueError('no releases of {} {} on the PyPI'.format(self.name, expr))
+
         else:
             matching_releases = all_releases
+
 
         usable_releases = []
         for version, releases in matching_releases:

@@ -208,10 +208,13 @@ class TestVersions(TestCase):
         self.assertTrue(expr.eval('2'))
 
     def test_gte_expr(self):
-        expr = VersionExpr('>= 1.0.0')
+        # This one has no space as a test of that, since that used to be
+        # a parsing problem.
+        expr = VersionExpr('>=1.0.0')
         self.assertTrue(expr.eval('1.0.0'))
         self.assertFalse(expr.eval('1.0.0a1'))
         self.assertTrue(expr.eval('2'))
+        self.assertTrue(expr.eval('2.0.0'))
 
     def test_lt_expr(self):
         expr = VersionExpr('< 1.0.0')
