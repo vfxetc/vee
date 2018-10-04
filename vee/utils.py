@@ -212,13 +212,16 @@ def _checksum_file(path, hasher=None):
 def checksum_file(path, hasher=None):
     return '%s:%s' % _checksum_file(path, hasher)
 
-def assert_file_checksum(path, checksum):
+def test_file_checksum(path, checksum):
     m = re.match(r'^(md5|sha1)[:=]([0-9a-fA-F]+)$', checksum)
     if not m:
         raise ValueError('unknown checksum format %r' % checksum)
     name, hash1 = m.groups()
     _, hash2 = _checksum_file(path, getattr(hashlib, name)())
-    if hash1 != hash2:
+    return hash1 == hash2
+
+def assert_file_checksum(path, checksum):
+    if not test_file_checksum(path, checksum):
         raise ValueError('%s:%s does not match expected %s' % (name, hash2, checksum))
 
 

@@ -39,11 +39,10 @@ class PythonBuilder(GenericBuilder):
             return
 
         setup_path = find_in_tree(pkg.build_path, 'setup.py')
-        egg_path   = find_in_tree(pkg.build_path, 'EGG-INFO', 'dir') or find_in_tree(pkg.build_path, '*.egg-info', 'dir')
         dist_path  = find_in_tree(pkg.build_path, '*.dist-info', 'dir')
 
-        if setup_path or egg_path or dist_path:
-            return cls(pkg, (setup_path, egg_path, dist_path))
+        if setup_path or dist_path:
+            return cls(pkg, (setup_path, dist_path))
 
     def get_next(self, name):
         if name in ('build', 'install', 'develop'):
@@ -51,25 +50,27 @@ class PythonBuilder(GenericBuilder):
     
     def __init__(self, pkg, paths):
         super(PythonBuilder, self).__init__(pkg)
-        self.setup_path, self.egg_path, self.dist_info_dir = paths
+        self.setup_path, self.dist_info_dir = paths
 
     
     def inspect(self):
 
         pkg = self.package
 
-        if self.setup_path and not self.egg_path:
-
-            log.info(style_note('Building Python egg-info'))
-            res = call_setup_py(self.setup_path, ['egg_info'], env=pkg.fresh_environ(), indent=True, verbosity=1)
-            if res:
-                raise RuntimeError('Could not build Python package')
+        if self.setup_path:
 
             self.egg_path = find_in_tree(pkg.build_path, '*.egg-info', 'dir')
             if not self.egg_path:
-                log.warning('Could not find newly created *.egg-info')
 
-        if self.egg_path:
+                log.info(style_note('Building Python egg-info'))
+                res = call_setup_py(self.setup_path, ['egg_info'], env=pkg.fresh_environ(), indent=True, verbosity=1)
+                if res:
+                    raise RuntimeError('Could not build Python package')
+
+                self.egg_path = find_in_tree(pkg.build_path, '*.egg-info', 'dir')
+                if not self.egg_path:
+                    log.warning('Could not find newly created *.egg-info')
+                    return
 
             requires_path = os.path.join(self.egg_path, 'requires.txt')
             if os.path.exists(requires_path):
@@ -114,8 +115,6 @@ class PythonBuilder(GenericBuilder):
                         revision=version_expr,
                     ))
 
-
-
     def build(self):
 
         pkg = self.package
@@ -137,86 +136,16 @@ class PythonBuilder(GenericBuilder):
             if res:
                 raise RuntimeError('Could not build Python package')
 
-            return
-
-        # python setup.py bdist_egg
-        if self.egg_path:
-
-            log.info(style_note('Found Python Egg', os.path.basename(self.egg_path)))
-            log.warning('Scripts and other data will not be installed.')
-
-            if not pkg.package_path.endswith('.egg'):
-                log.warning('package does not appear to be an Egg')
-
-            # We must rename the egg!
-            pkg_info_path = os.path.join(self.egg_path, 'PKG-INFO')
-            if not os.path.exists(pkg_info_path):
-                log.warning('EGG-INFO/PKG-INFO does not exist')
-            else:
-                pkg_info = {}
-                for line in open(pkg_info_path, 'rU'):
-                    line = line.strip()
-                    if not line:
-                        continue
-                    name, value = line.split(':')
-                    pkg_info[name.strip().lower()] = value.strip()
-                try:
-                    pkg_name = pkg_info['name']
-                    pkg_version = pkg_info['version']
-                except KeyError:
-                    log.warning('EGG-INFO/PKG-INFO is malformed')
-                else:
-                    new_egg_path = os.path.join(os.path.dirname(self.egg_path), '%s-%s.egg-info' % (pkg_name, pkg_version))
-                    shutil.move(self.egg_path, new_egg_path)
-                    self.egg_path = new_egg_path
-
-            pkg.build_subdir = os.path.dirname(self.egg_path)
-            pkg.install_prefix = site_packages
-
-            return
-
-        # python setup.py bdist_wheel
-        if self.dist_info_dir:
-
-            if pkg.package_path.endswith('.whl'):
-                log.info(style_note("Found Python Wheel", os.path.basename(self.dist_info_dir)))
-            else:
-                log.info(style_note("Found dist-info", os.path.basename(self.dist_info_dir)))
-                log.warning("Bare dist-info does not appear to be a wheel.")
-
-            top_level_dir, dist_info_name = os.path.split(self.dist_info_dir)
-            wheel_basename = os.path.splitext(dist_info_name)[0]
-
-            build_dir = os.path.join(top_level_dir, 'build')
-            pkg.build_subdir = build_dir
-
-            # Lets just take advantage of pip!
-            # The only reason we're reading into pip like this is because we
-            # would rather just do this part, rather than have it go through
-            # the full process with the *.whl file. If this breaks, feel
-            # free to do something like:
-            #     pip install --force-reinstall --prefix {build_dir} --no-deps {pkg.package_path}
-            # along with:
-            #     --no-warn-script-location
-            #     --disable-pip-version-check
-
-            try:
-                from pip._internal.wheel import move_wheel_files
-            except ImportError:
-                from pip.wheel import move_wheel_files
-
-            req = DummyPipRequirement()
-            req.name = wheel_basename
-            move_wheel_files(self.name, req,
-                wheeldir=top_level_dir,
-                prefix=build_dir,
-            )
-
     def install(self):
-
-        if not self.setup_path:
+        if self.setup_path:
+            self._install_setup()
+        elif self.dist_info_dir:
+            self._install_wheel()
+        else:
             return super(PythonBuilder, self).install()
-        
+
+    def _install_setup(self):
+
         pkg = self.package
         pkg._assert_paths(install=True)
 
@@ -246,6 +175,42 @@ class PythonBuilder(GenericBuilder):
         res = call_setup_py(self.setup_path, cmd, env=env, indent=True, verbosity=1)
         if res:
             raise RuntimeError('Could not install Python package')
+
+    def _install_wheel(self):
+
+        pkg = self.package
+        pkg._assert_paths(install=True)
+
+        if pkg.package_path.endswith('.whl'):
+            log.info(style_note("Found Python Wheel", os.path.basename(self.dist_info_dir)))
+        else:
+            log.info(style_note("Found dist-info", os.path.basename(self.dist_info_dir)))
+            log.warning("Bare dist-info does not appear to be a wheel.")
+
+        wheel_dir, dist_info_name = os.path.split(self.dist_info_dir)
+        wheel_name = os.path.splitext(dist_info_name)[0]
+
+        # Lets just take advantage of pip!
+        # The only reason we're reading into pip like this is because we
+        # would rather just do this part, rather than have it go through
+        # the full process with the *.whl file. If this breaks, feel
+        # free to do something like:
+        #     pip install --force-reinstall --prefix {pkg.install_path} --no-deps {pkg.package_path}
+        # along with:
+        #     --no-warn-script-location
+        #     --disable-pip-version-check
+
+        try:
+            from pip._internal.wheel import move_wheel_files
+        except ImportError:
+            from pip.wheel import move_wheel_files
+
+        req = DummyPipRequirement()
+        req.name = wheel_name
+        move_wheel_files(self.name, req,
+            wheeldir=wheel_dir,
+            prefix=pkg.install_path,
+        )
 
     def develop(self):
         pkg = self.package

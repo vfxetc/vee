@@ -120,6 +120,7 @@ class PyPiTransport(PipelineStep):
         if os.path.exists(pkg.package_path):
             log.info(style_note('Already downloaded', release['url']))
             return
+        
         log.info(style_note('Downloading', release['url']))
         download(release['url'], pkg.package_path)
 
