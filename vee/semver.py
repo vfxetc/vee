@@ -245,7 +245,7 @@ class VersionExpr(object):
     def __init__(self, raw):
         self.clauses = []
         for chunk in re.split(r'\s*,\s*', raw.strip()):
-            m = re.match(r'^(%s)\s*([\w\.!@-]+)$' % '|'.join(re.escape(x) for x in _expr_ops), chunk)
+            m = re.match(r'^(%s)\s*([\w\.!@+-]+)$' % '|'.join(re.escape(x) for x in _expr_ops), chunk)
             if not m:
                 raise ValueError('could not parse version expr chunk: %r' % chunk)
             op, raw_version = m.groups()
