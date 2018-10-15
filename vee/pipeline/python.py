@@ -172,10 +172,18 @@ class PythonBuilder(GenericBuilder):
         log.info(style_note('Installing Python package', 'to ' + install_site_packages))
 
         cmd = [
+        
             'install',
             '--root', pkg.install_path, # Better than prefix
             '--prefix', '.',
-            '--install-lib', site_packages, # So that we don't get lib64; virtualenv symlinks them together anyways.
+
+            # At one point we forced everything into `lib`, so we don't get a
+            # `lib64`. Virtualenv symlinked them together anyways. But then we
+            # switched to using pip's internals to unpack wheels, and it would
+            # place stuff into both `lib` and `lib64`. So we don't really
+            # know where we stand on this anymore.
+            '--install-lib', site_packages,
+
             '--single-version-externally-managed',
         ]
         if not pkg.defer_setup_build:
