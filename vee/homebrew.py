@@ -44,6 +44,7 @@ class Homebrew(object):
         # We need to own the homebrew cache so that we can control permissions.
         kwargs['env'] = env = kwargs.get('env', os.environ).copy()
         env.setdefault('HOMEBREW_CACHE', os.path.join(self.repo.work_tree, 'Cache'))
+        env.setdefault('HOMEBREW_LOGS', os.path.join(self.repo.work_tree, 'Logs'))
         
         res = call((bin, cmd) + args, _frame=1, **kwargs)
         if cmd in ('install', 'uninstall'):
