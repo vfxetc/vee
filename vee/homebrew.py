@@ -19,7 +19,7 @@ class Homebrew(object):
                 os.environ.get('VEE_HOMEBREW') or
                 home._abs_path('packages', self.name)
             )
-            remote_url = 'https://github.com/Homebrew/%s.git' % self.name
+            remote_url = 'https://github.com/{}/brew.git'.format(self.name)
             self.repo = GitRepo(work_tree=work_tree, remote_url=remote_url)
         self._info = {}
 
