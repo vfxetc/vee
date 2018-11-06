@@ -34,19 +34,43 @@ class Homebrew(object):
 
     def __call__(self, cmd, *args, **kwargs):
         
-        if self.repo.clone_if_not_exists():
+        brew_head = os.environ.get('VEE_HOMEBREW_COMMIT')
+        core_head = os.environ.get('VEE_HOMEBREW_CORE_COMMIT')
+
+        bin_ = os.path.join(self.repo.work_tree, 'bin', 'brew')
+
+        if self.repo.clone_if_not_exists(shallow=not brew_head):
             # Homebrew should be updated the first time, since it has gotten
-            # a little more complicated. The recursion here should be fine.
-            self('update')
+            # a little more complicated. We call it directly so that
+            # it can update itself here, and then our pin will drag it back.
+            print "HERE1"
+            call((bin_, 'update'))
         
-        bin = os.path.join(self.repo.work_tree, 'bin', 'brew')
+        if brew_head:
+            if self.repo.is_shallow:
+                self.repo.fetch(shallow=False)
+            self.repo.checkout(brew_head)
+
+        if core_head:
+            repo = GitRepo(
+                os.path.join(self.repo.work_tree, 'Library', 'Taps', 'homebrew', 'homebrew-core'),
+                'https://github.com/homebrew/homebrew-core.git',
+            )
+            repo.clone_if_not_exists(shallow=False)
+            if repo.is_shallow:
+                repo.fetch(shallow=False)
+            repo.checkout(core_head)
         
         # We need to own the homebrew cache so that we can control permissions.
         kwargs['env'] = env = kwargs.get('env', os.environ).copy()
         env.setdefault('HOMEBREW_CACHE', os.path.join(self.repo.work_tree, 'Cache'))
         env.setdefault('HOMEBREW_LOGS', os.path.join(self.repo.work_tree, 'Logs'))
-        
-        res = call((bin, cmd) + args, _frame=1, **kwargs)
+
+        # Keep our pin.
+        if brew_head or core_head:
+            env['HOMEBREW_NO_AUTO_UPDATE'] = '1'
+
+        res = call((bin_, cmd) + args, _frame=1, **kwargs)
         if cmd in ('install', 'uninstall'):
             self._info.pop(args[0], None)
         return res
