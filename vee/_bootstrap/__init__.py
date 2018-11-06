@@ -1,14 +1,16 @@
+from textwrap import dedent
 import os
+import ssl
+import subprocess
 import sys
 import urllib
-import subprocess
-import ssl
 
 from vee.utils import makedirs, find_home
 
 
+vee_home = find_home(default_here=True)
 vendored_packages = ['setuptools', 'wheel', 'packaging', 'virtualenv', 'urllib3']
-vendor_prefix = os.environ.get('VEE_VENDOR', '').strip() or os.path.join(find_home(default_here=True), 'vendor')
+vendor_prefix = os.environ.get('VEE_VENDOR', '').strip() or os.path.join(vee_home, 'vendor')
 vendor_path = os.path.join(vendor_prefix, 'lib', 'python{0.major}.{0.minor}'.format(sys.version_info), 'site-packages')
 
 
@@ -33,16 +35,30 @@ def assert_vendored():
             get_pip = os.path.abspath(os.path.join(__file__, '..', 'get-pip.py'))
             subprocess.check_call([sys.executable, get_pip, '-I', '--prefix', vendor_prefix], stdout=sys.stderr)
 
-        environ = os.environ.copy()
-        environ['PYTHONPATH'] = vendor_path
-        subprocess.check_call([sys.executable,
-            pip,
-            'install',
-            '--ignore-installed',
-            '--upgrade',
-            '--prefix', vendor_prefix,
-        ] + vendored_packages, stdout=sys.stderr, env=environ)
+        # We really need to jump through a hoop here, because sometimes
+        # the Python shipped with macOS has a pip egg, which gets priority
+        # on sys.path. See <http://mikeboers.com/blog/2014/05/23/where-does-the-sys-path-start>.
+        # So here we are mimicking what the `pip.__main__` module does to force
+        # our pip to be the one that is run.
+        subprocess.check_call([
 
+            'python', '-c', dedent('''
+
+                import sys
+                sys.path.insert(0, {!r})
+
+                from pip._internal import main as _main
+                sys.exit(_main())
+
+            '''.format(vendor_path)),
+
+            'install',
+            '--upgrade',
+            '--ignore-installed',
+            '--cache-dir', os.path.join(vee_home, 'cache', 'pip'),
+            '--prefix', vendor_prefix,
+
+        ] + vendored_packages, stdout=sys.stderr)
 
 
 def bootstrap_vendored():
@@ -50,8 +66,9 @@ def bootstrap_vendored():
     assert_vendored()
 
     # Force our vendored packages to the front of the path.
-    if vendor_path not in sys.path:
-        sys.path.insert(0, vendor_path)
+    # We're super agressive because macOS may have shipped with eggs which
+    # land in front.
+    sys.path.insert(0, vendor_path)
 
     import pkg_resources
 
