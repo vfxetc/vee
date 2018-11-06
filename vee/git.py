@@ -364,6 +364,8 @@ class GitRepo(object):
             if not shallow or not commit:
                 print style('Fetching unshallow', 'blue', bold=True), style(remote or 'defaults', bold=True)
                 self._fetch('--unshallow', *fetch_args)
+                if not rev_to_parse:
+                    return
                 commit = self._rev_parse(rev_to_parse)
 
         else:
