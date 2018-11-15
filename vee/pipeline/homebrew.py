@@ -125,8 +125,7 @@ class HomebrewManager(PipelineStep):
                 path = os.path.join(self.brew.cellar, name)
                 if not os.path.exists(path):
                     continue
-            dep = Package(name=name, url='homebrew:' + name, home=pkg.home)
-            pkg.dependencies.append(dep)
+            dep = pkg.add_dependency(name=name, url='homebrew:' + name)
             existing[name] = dep
     
     def install_name_from_info(self, name, info=None):

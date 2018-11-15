@@ -84,7 +84,7 @@ class PythonBuilder(GenericBuilder):
                     if m:
                         name = m.group(1).lower()
                         log.debug('%s depends on %s' % (pkg.name, name))
-                        pkg.dependencies.append(Package(name=name, url='pypi:%s' % name))
+                        pkg.add_dependency(name=name, url='pypi:%s' % name)
 
         if self.dist_info_dir:
 
@@ -118,11 +118,11 @@ class PythonBuilder(GenericBuilder):
                         continue
 
                     dep_name, version_expr = m.groups()
-                    pkg.dependencies.append(Package(
+                    pkg.add_dependency(
                         name=dep_name,
                         url='pypi:{}'.format(dep_name),
                         revision=version_expr,
-                    ))
+                    )
 
     def build(self):
 

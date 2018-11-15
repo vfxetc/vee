@@ -261,6 +261,14 @@ class Package(DBObject):
             kwargs['environ'] = self.environ_diff
         return self.__class__(kwargs, home=self.home)
 
+    def add_dependency(self, **kwargs):
+        kwargs.setdefault('base_environ', self.base_environ)
+        kwargs.setdefault('environ', self.environ)
+        kwargs.setdefault('home', self.home)
+        dep = Package(**kwargs)
+        self.dependencies.append(dep)
+        return dep
+
     def render_template(self, template, environ=None, name=None):
 
         environ = (environ or os.environ).copy()
