@@ -3,12 +3,12 @@ from vee.commands.main import command, argument, group
 
 @command(
     argument('--all', action='store_true', help='upgrade all repositories'),
-    argument('--update', action='store_true', help='update before upgrading'),
+    argument('-u', '--update', action='store_true', help='update before upgrading'),
     argument('--dirty', action='store_true', help='build even when work tree is dirty'),
     argument('--relink', action='store_true', help='relink packages'),
     argument('--reinstall', action='store_true', help='reinstall packages'),
     argument('--no-deps', action='store_true', help='dont touch dependencies'),
-    argument('--force-branch-link', action='store_true'),
+    argument('-f', '--force-branch-link', action='store_true'),
     argument('-r', '--repo', action='append', dest='repos'),
     argument('subset', nargs='*'),
     help='upgrade packages specified by repositories, and link into environments',
