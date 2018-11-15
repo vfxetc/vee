@@ -43,7 +43,6 @@ class Homebrew(object):
             # Homebrew should be updated the first time, since it has gotten
             # a little more complicated. We call it directly so that
             # it can update itself here, and then our pin will drag it back.
-            print "HERE1"
             call((bin_, 'update'))
         
         if brew_head:
