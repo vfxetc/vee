@@ -308,7 +308,11 @@ def main(argv=None, environ=None, as_main=__name__=="__main__"):
                     except KeyError:
                         lock_content = (
                             os.environ.get('VEE_LOCK_CONTENT') or
-                            '%s@%s/%s' % (os.getlogin(), os.environ.get('SSH_CLIENT', 'localhost').split()[0], os.getpid())
+                            '%s@%s/%s' % (
+                                os.environ.get('LOGNAME', '<unknown>'),
+                                os.environ.get('SSH_CLIENT', 'localhost').split()[0],
+                                os.getpid(),
+                            )
                         )
                         lock = RLockfile(os.path.join(args.home_path, '.vee-lock'), blocking=False, content=lock_content)
                         _global_locks[args.home_path] = lock
