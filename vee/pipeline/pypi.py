@@ -6,12 +6,12 @@ import shutil
 import json
 import sys
 
+from vee import log
 from vee.cli import style, style_note
 from vee.pipeline.base import PipelineStep
-from vee.utils import makedirs, http_request
-from vee import log
-from vee.semver import Version, VersionExpr
 from vee.pipeline.http import download
+from vee.semver import Version, VersionExpr
+from vee.utils import makedirs, http_request
 
 PYPI_URL_PATTERN = 'https://pypi.org/pypi/%s/json'
 
@@ -69,6 +69,12 @@ class PyPiTransport(PipelineStep):
         else:
             matching_releases = all_releases
 
+        # We delay the import just in case the bootstrap is borked.
+        try:
+            from pip._internal import pep425tags 
+        except ImportError:
+            from pip import pep425tags 
+        supported_tags = pep425tags.get_supported()
 
         usable_releases = []
         for version, releases in matching_releases:
@@ -83,23 +89,16 @@ class PyPiTransport(PipelineStep):
                     m = re.match(r'^(.+)-([^-]+)-([^-]+)-([^-]+)-([^-]+)\.whl$', release['filename'])
                     if not m:
                         log.warning("Could not parse wheel filename: {}".format(release['filename']))
-                    name, version_tag, python_tag, abi_tag, platform_tag = m.groups()
+                    
+                    name, version_tag, python_tag, abi_tag, platform_tags = m.groups()
 
-                    if python_tag not in ('py2', 'py27', 'py2.py3'):
+                    # Platform tags can have multiple seperated by dots.
+                    for platform_tag in platform_tags.split('.'):
+                        tags = (python_tag, abi_tag, platform_tag)
+                        if tags in supported_tags:
+                            break
+                    else:
                         continue
-
-                    if abi_tag not in ('none', ):
-                        continue
-
-                    if platform_tag != 'any':
-                        if sys.platform == 'darwin':
-                            if not platform_tag.startswith('macos'):
-                                continue
-                        elif sys.platform.startswith('linux'):
-                            if platform_tag not in ('manylinux1_x86_64', ):
-                                continue
-                        else:
-                            continue
 
                     usable_releases.append((version, 1, release))
 
