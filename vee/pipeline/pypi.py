@@ -70,11 +70,17 @@ class PyPiTransport(PipelineStep):
             matching_releases = all_releases
 
         # We delay the import just in case the bootstrap is borked.
+        # There have been many ways to get this functionality. We try them
+        # from most recent.
         try:
-            from pip._internal import pep425tags 
+            from packaging.tags import compatible_tags as get_tags
         except ImportError:
-            from pip import pep425tags 
-        supported_tags = pep425tags.get_supported()
+            try:
+                from pip._internal.pep425tags import get_supported as get_tags
+            except ImportError:
+                from pip.pep425tags import get_supported as get_tags
+
+        supported_tags = get_tags()
 
         usable_releases = []
         for version, releases in matching_releases:
