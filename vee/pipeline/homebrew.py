@@ -114,9 +114,9 @@ class HomebrewManager(PipelineStep):
         existing = {}
         for dep in pkg.dependencies:
             existing[dep.name] = dep
-        cmd = ['deps', '--1', '--skip-build']
-        if not optional:
-            cmd.append('--skip-optional')
+        cmd = ['deps', '--1']
+        if optional:
+            cmd.append('--include-optional')
         cmd.append(pkg.package_name)
         for name in self.brew(*cmd, stdout=True).strip().split():
             if name in existing:
