@@ -71,7 +71,14 @@ class Environment(DBObject):
         if not os.path.exists(python):
             makedirs(self.path)
             print(style('Creating Python virtualenv', 'blue', bold=True), style(self.path, bold=True))
-            virtualenv.create_environment(self.path, no_setuptools=True, no_pip=True)
+
+            if hasattr(virtualenv, 'cli_run'):
+                # New API (in which there isn't really any API)
+                virtualenv.cli_run(['--no-pip', '--no-wheel', '--no-setuptools', self.path])
+            else:
+                # Old API
+                virtualenv.create_environment(self.path, no_setuptools=True, no_pip=True)
+
         if not os.path.exists(python + '-config'):
             names = (
                 'python%d.%d-config' % sys.version_info[:2],
