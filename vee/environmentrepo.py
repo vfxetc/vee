@@ -98,7 +98,7 @@ class EnvironmentRepo(GitRepo):
         self.clone_if_not_exists()
 
         if self.remote_name not in self.remotes():
-            log.warning(style_warning('"%s" does not have remote "%s"' % (self.name, self.remote_name)))
+            log.warning('"%s" does not have remote "%s"' % (self.name, self.remote_name))
             return True
 
         rev = self.fetch()
@@ -119,18 +119,18 @@ class EnvironmentRepo(GitRepo):
         try:
             head = self.head
         except CalledProcessError:
-            log.warning(style_warning('no commits in repository'))
+            log.warning('no commits in repository')
             head = None
 
         try:
             remote_head = self.rev_parse('%s/%s' % (self.remote_name, self.branch_name))
         except ValueError:
-            log.warning(style_warning('tracked %s/%s does not exist in self' % (self.remote_name, self.branch_name)))
+            log.warning('tracked %s/%s does not exist in self' % (self.remote_name, self.branch_name))
             remote_head = None
 
         if remote_head and head != remote_head:
-            log.warning(style_warning('%s repo not checked out to %s/%s' % (
-                self.name, self.remote_name, self.branch_name)))
+            log.warning('%s repo not checked out to %s/%s' % (
+                self.name, self.remote_name, self.branch_name))
 
         dirty = bool(list(self.status()))
         if not dirty and self.is_dirty():
@@ -151,7 +151,7 @@ class EnvironmentRepo(GitRepo):
         pkg_set.install(subset or None, link_env=env, reinstall=reinstall, relink=relink, no_deps=no_deps)
 
         if pkg_set._errored and not force_branch_link:
-            log.warning(style_warning("Not creating branch or version links; force with --force-branch-link"))
+            log.warning("Not creating branch or version links; force with --force-branch-link")
             return False
 
         # Create a symlink by branch.
