@@ -20,7 +20,7 @@ class HomebrewManager(PipelineStep):
 
     @classmethod
     def factory(cls, step, pkg):
-        if step == 'init' and re.match(r'^homebrew[:+]', pkg.url):
+        if step == 'init' and re.match(r'^(home)?brew[:+]', pkg.url):
             return cls(pkg)
         if step == 'relocate' and pkg.pseudo_homebrew:
             return cls(pkg)
@@ -65,8 +65,8 @@ class HomebrewManager(PipelineStep):
     def init(self):
 
         pkg = self.package
-        pkg.package_name = re.sub(r'^(git\+)?homebrew[:+]', '', pkg.url)
-        pkg.url = 'homebrew:' + pkg.package_name
+        pkg.package_name = re.sub(r'^(git\+)?(home)?brew[:+]', '', pkg.url)
+        pkg.url = 'brew:' + pkg.package_name
 
         pkg.name = pkg.name or self.untapped_name
 
