@@ -5,19 +5,23 @@
 VEE: Versioned Execution Environment
 ====================================
 
-
-This project aims to encapsulate various package Packages in order to allow for
+This project aims to encapsulate various package in order to allow for
 consistent, versioned assembly of an execution environment across a fleet of
 OS X and Linux hosts.
 
-Eventually, VEE may provide continuous deployment.
+The initial goal is to source packages from:
 
-The initial goal is to include packages from:
+- Homebrew_
+- `The Python Package Index <PyPI_>`_
+- RubyGems_
+- ad-hoc ``git``, ``http``, and local packages
 
-- Homebrew_ (and linuxbrew_);
-- the `Python Package Index <PyPI_>`_;
-- ad-hoc Python packages;
-- ad-hoc general packages.
+and to build packages using:
+
+- ``python setup.py build``
+- ``make``
+- ``cmake``
+- or custom build scripts
 
 
 Contents
@@ -45,6 +49,6 @@ Indices and tables
 
 
 .. _Homebrew: http://brew.sh/
-.. _linuxbrew: https://github.com/Homebrew/linuxbrew
-.. _PyPI: https://pypi.python.org/pypi
+.. _PyPI: https://pypi.org/
+.. _RubyGems: https://rubygems.org/
 

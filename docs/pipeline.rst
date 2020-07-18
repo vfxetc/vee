@@ -6,7 +6,7 @@ which are determined as the pipeline is processed. This enables us to defer
 the build type of a package (e.g. a Python distribution) until after it has
 been downloaded and extracted.
 
-There are to main pipelines currently in VEE: the :ref:`install_pipeline` and
+There are two main pipelines currently in VEE: the :ref:`install_pipeline` and
 :ref:`develop_pipeline`.
 
 All pipelines must start with an "init" step, which must be indempodent, and
@@ -31,14 +31,14 @@ more than once in common usage. It may also set the package name/path.
 ~~~~~~~
 
 The package is retrieved and placed at :attr:`Package.package_path`.
-This step should be idempotent (and so is assumed to cache its results and
+This step **SHOULD** be idempotent (and so is assumed to cache its results and
 may freely be called multiple times).
 
 "extract"
 ~~~~~~~~~
 
 The package's contents ("source") are placed into :attr:`Package.build_path`
-(which is usually a temporary directory).
+(which defaults to a temporary directory).
 
 "inspect"
 ~~~~~~~~~
@@ -81,44 +81,44 @@ The built-in pipeline looks like:
 
    digraph install_pipeline {
 
-      "git.init" -> "git.fetch";
-      "git.fetch" -> "file.extract";
+      "git:init" -> "git:fetch";
+      "git:fetch" -> "file:extract";
 
-      "generic.init" -> "file.fetch";
+      "generic:init" -> "file:fetch";
 
-      "file.fetch" -> "file.extract";
-      "file.fetch" -> "archive.extract";
+      "file:fetch" -> "file:extract";
+      "file:fetch" -> "archive:extract";
 
-      "http.init" -> "http.fetch";
-      "http.fetch" -> "archive.extract";
+      "http:init" -> "http:fetch";
+      "http:fetch" -> "archive:extract";
 
-      "file.extract" -> "generic.inspect"
-      "file.extract" -> "python.inspect"
-      "archive.extract" -> "generic.inspect"
-      "archive.extract" -> "python.inspect"
+      "file:extract" -> "generic:inspect"
+      "file:extract" -> "python:inspect"
+      "archive:extract" -> "generic:inspect"
+      "archive:extract" -> "python:inspect"
 
-      "python.inspect" -> "python.build" -> "python.install"
-      "generic.inspect" -> "generic.build" -> "generic.install"
-      "generic.inspect" -> "self.build" -> "generic.install"
-      "generic.build" -> "self.install"
-      "self.build" -> "self.install"
+      "python:inspect" -> "python:build" -> "python:install"
+      "generic:inspect" -> "generic:build" -> "generic:install"
+      "generic:inspect" -> "self:build" -> "generic:install"
+      "generic:build" -> "self:install"
+      "self:build" -> "self:install"
 
-      "generic.inspect" -> "make.build" -> "generic.install"
-      "make.build" -> "make.install"
+      "generic:inspect" -> "make:build" -> "generic:install"
+      "make:build" -> "make:install"
 
-      "python.install" -> "generic.relocate"
-      "generic.install" -> "generic.relocate"
-      "self.install" -> "generic.relocate"
-      "make.install" -> "generic.relocate"
+      "python:install" -> "generic:relocate"
+      "generic:install" -> "generic:relocate"
+      "self:install" -> "generic:relocate"
+      "make:install" -> "generic:relocate"
 
-      "homebrew.init" -> "homebrew.fetch" -> "homebrew.extract" -> "homebrew.inspect" -> "homebrew.build" -> "homebrew.install" -> "generic.relocate"
+      "homebrew:init" -> "homebrew:fetch" -> "homebrew:extract" -> "homebrew:inspect" -> "homebrew:build" -> "homebrew:install" -> "generic:relocate"
 
-      "generic.inspect" [style=dashed]
-      "generic.build" [style=dashed]
-      "homebrew.extract" [style=dashed]
-      "homebrew.install" [style=dashed]
+      "generic:inspect" [style=dashed]
+      "generic:build" [style=dashed]
+      "homebrew:extract" [style=dashed]
+      "homebrew:install" [style=dashed]
 
-      "generic.relocate" -> "generic.optlink"
+      "generic:relocate" -> "generic:optlink"
 
 
 
@@ -155,7 +155,7 @@ set from :class:`Requirement` attributes, or self-determined on request via
 ``Package._assert_names(build=True, ...)``.
 
 There are a series of ``*_path`` properties on a :class:`Package`. They usually
-incorporate the corresponding name, but don't have it. They are set from
+incorporate the corresponding name, but aren't required to. They are set from
 ``Package._assert_paths(build=True, ...)``.
 
 .. warning:: It is very important that an API consumer only every assert the existence of
@@ -164,12 +164,12 @@ incorporate the corresponding name, but don't have it. They are set from
     deferred as long as possible so that they may use information revealed during
     the earlier of the build pipeline.
 
-The ``*_name`` attributes exist only for the construction of paths; API consumers
-should only ever use the ``*_path`` properties:
+.. note:: The ``*_name`` attributes exist only for the construction of paths; API consumers
+    should only ever use the ``*_path`` properties
 
 .. attribute:: Package.package_path
 
-    The location of the package (e.g. archive or git work tree) on disk. This
+    The location of the package (e.g. tarball or git work tree) on disk. This
     must always be correct and never change. Therefore it can only derive from
     the requirement's specification.
 
@@ -186,7 +186,7 @@ should only ever use the ``*_path`` properties:
 .. attribute:: Package.build_subdir
 
     Where within the build_path to install from. Good for selecting a sub directory
-    that the package build itself into.
+    that the package built itself into.
 
 .. attribute:: Package.install_prefix
 
@@ -234,7 +234,7 @@ and the install process will be (essentially) to call:
 
 .. code-block:: bash
 
-    python setup.py install --skip-build --single-version-externally-managed
+    python setup.py install --skip-build
 
 
 ``EGG-INFO`` or ``*.dist-info``
@@ -301,5 +301,4 @@ An optional ``--make-install`` flag signals that it is safe to do so.
 Instead of running ``python setup.py install``, we break it into
 ``python setup.py build`` and ``python setup.py install --skip-build``.
 
-Some packages may not like this much.
 

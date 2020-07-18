@@ -1,23 +1,6 @@
 Core Concepts
 =============
 
-.. _name:
-
-Names
------
-
-Package names are currently assumed to existing within a single
-namespace, regardless of what type of package they represent. This means that
-there are potentially severe collisions between a similarly named package in
-Homebrew and on the PyPI, for instance.
-
-The ``--name`` argument is provided to allow for manual disambiguation.
-
-In the future, we may add a concept of namespaces, such that Python projects
-exist within a "python" namespace, Ruby gems within "ruby", and Homebrew/others
-within "binaries".
-
-
 Home
 ----
 
@@ -109,7 +92,9 @@ The requirements file may also include:
         Vee-Revision: 0.1-dev+4254bc1
 
     - Comments beginning with ``#``;
-    - Basic control flow, starting with ``%``, e.g.::
+    - Basic control flow, starting with ``%``, e.g.:
+
+      ::
 
         # For the Shotgun cache:
         % if os.environ.get('VEEINCLUDE_SGCACHE'):
@@ -117,6 +102,19 @@ The requirements file may also include:
             git+git@github.com:vfxetc/sgcache --revision=cd673656
             git+git@github.com:vfxetc/sgevents --revision=a58e61c5
         % endif
+
+
+.. _name:
+
+Name Conflicts
+--------------
+
+Package names are currently assumed to existing within a single
+namespace, regardless of what type of package they represent. This means that
+there are potentially severe collisions between a similarly named package in
+Homebrew and on the PyPI, for instance.
+
+The ``--name`` argument is provided to allow for manual disambiguation.
 
 
 .. _env_repo:
@@ -128,8 +126,6 @@ An environment repository is a git repository which contains (at a minimum)
 a :ref:`requirements_txt` file.
 
 They are managed by the :ref:`cli_vee_repo` command.
-
-
 
 
 .. _exec_env:
