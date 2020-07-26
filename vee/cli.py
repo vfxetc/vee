@@ -64,7 +64,7 @@ def _colour_to_code(c):
                 return '8;2;%d;%d;%d' % (r, g, b)
         if len(c) == 1:
             return '8;5;%d' % (0xe8 + c[0])
-    if isinstance(c, basestring):
+    if isinstance(c, str):
         return str(_colour_codes[c.lower()])
     if isinstance(c, int):
         return str(c)

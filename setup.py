@@ -6,7 +6,8 @@ here = os.path.abspath(os.path.join(__file__, '..'))
 
 about_path = os.path.join(here, 'vee', '__about__.py')
 about = {}
-execfile(about_path, {'__file__': about_path}, about)
+exec(compile(open(about_path).read(), about_path, 'exec'), {'__file__': about_path}, about)
+
 
 setup(
 
