@@ -9,7 +9,6 @@ import wheel
 from vee.cli import style, style_note, style_warning
 from vee.commands.main import command, argument
 from vee.subproc import call, which
-from vee._bootstrap import vendor_prefix
 
 
 def parse_version(x):
@@ -95,7 +94,6 @@ def doctor(args):
     print(style_note('==> configuration'))
     home = args.assert_home()
     print(style_note('home:', home.root))
-    print(style_note('vendor:', vendor_prefix))
     try:
         repo = home.get_env_repo()
     except ValueError:
