@@ -15,31 +15,31 @@ def summarize_rev_distance(local, remote, local_name='You', local_verb='are', re
     indent='    ',
 ):
     if local and remote:
-        print indent + style_warning('%s and %s have forked%s' % (local_name, remote_name or 'the remote', '; ' + fork_action if fork_action else '.'))
-        print indent + style_warning('There are %d local commit%s, and %d remote commit%s.' % (
+        print(indent + style_warning('%s and %s have forked%s' % (local_name, remote_name or 'the remote', '; ' + fork_action if fork_action else '.')))
+        print(indent + style_warning('There are %d local commit%s, and %d remote commit%s.' % (
             local,
             's' if local > 1 else '',
             remote,
             's' if remote > 1 else '',
-        ))
+        )))
     elif local:
-        print indent + style('%s %s ahead%s by %d commit%s%s' % (
+        print(indent + style('%s %s ahead%s by %d commit%s%s' % (
             local_name,
             local_verb,
             ' of ' + remote_name if remote_name else '',
             local,
             's' if local > 1 else '',
             '; ' + ahead_action if ahead_action else '.',
-        ), fg='green', reset=True)
+        ), fg='green', reset=True))
     elif remote:
-        print indent + style_warning('%s %s behind%s by %d commit%s%s' % (
+        print(indent + style_warning('%s %s behind%s by %d commit%s%s' % (
             local_name,
             local_verb,
             ' ' + remote_name if remote_name else '',
             remote,
             's' if remote > 1 else '',
             '; ' + behind_action if behind_action else '.',
-        ))
+        )))
 
 
 @command(
@@ -94,15 +94,15 @@ def status(args):
             continue
 
         # Title.
-        print '%s %s' % (
+        print('%s %s' % (
             style('%s %s' % ('==>' if has_dev else '-->', name), fg='blue'),
             '(dev only)' if only_has_dev else ''
-        )
+        ))
 
         # Status of requirements.
         if work_req and head_req and str(work_req) == str(head_req):
             if args.verbose:
-                print '=== %s' % work_req
+                print('=== %s' % work_req)
         else:
 
             # Print a lovely coloured diff of the specific arguments that
@@ -113,19 +113,19 @@ def status(args):
             differ = difflib.SequenceMatcher(None, head_args, work_args)
             opcodes = differ.get_opcodes()
             if head_req is not None:
-                print style('---', fg='red', bold=True),
+                print(style('---', fg='red', bold=True), end=' ')
                 for tag, i1, i2, j1, j2 in opcodes:
                     if tag in ('replace', 'delete'):
-                        print style(' '.join(head_args[i1:i2]), fg='red', bold=True)
+                        print(style(' '.join(head_args[i1:i2]), fg='red', bold=True))
                     elif tag in ('equal', ):
-                        print ' '.join(head_args[i1:i2]),
+                        print(' '.join(head_args[i1:i2]), end=' ')
             if work_req is not None:
-                print style('+++', fg='green', bold=True),
+                print(style('+++', fg='green', bold=True), end=' ')
                 for tag, i1, i2, j1, j2 in opcodes:
                     if tag in ('replace', 'insert'):
-                        print style(' '.join(work_args[j1:j2]), fg='green', bold=True)
+                        print(style(' '.join(work_args[j1:j2]), fg='green', bold=True))
                     elif tag in ('equal', ):
-                        print ' '.join(work_args[j1:j2]),
+                        print(' '.join(work_args[j1:j2]), end=' ')
 
         if dev_repo:
 
@@ -137,12 +137,12 @@ def status(args):
                 remote_names = sorted(remotes)
                 dev_repo._st_remote_name = remote_names[0]
                 if len(remote_names) != 1:
-                    print '    ' + style_warning('More that one non-origin remote; picking %s' % dev_row['remote_name'])
+                    print('    ' + style_warning('More that one non-origin remote; picking %s' % dev_row['remote_name']))
 
         if dev_repo:
 
             if dev_repo.status():
-                print '    ' + style_warning('Work tree is dirty.')
+                print('    ' + style_warning('Work tree is dirty.'))
 
             if args.fetch:
                 dev_remote_head = dev_repo.fetch(dev_repo._st_remote_name, 'master')
@@ -173,7 +173,7 @@ def status(args):
                 )
 
             except Exception as e:
-                print '    ' + format_cli_exc(e)
+                print('    ' + format_cli_exc(e))
 
         # TODO: Warn if you have added something to the repo, but not pushed it.
 

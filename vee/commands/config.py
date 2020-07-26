@@ -27,7 +27,7 @@ def config(args):
 
     if args.list:
         for k, v in sorted(config.iteritems()):
-            print '%s=%s' % (k, v)
+            print('%s=%s' % (k, v))
         return
 
     if args.set:
@@ -45,4 +45,4 @@ def config(args):
         config.clear()
     
     for k in args.values:
-        print config[k]
+        print(config[k])

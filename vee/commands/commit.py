@@ -32,7 +32,7 @@ def commit(args):
     env_repo = home.get_env_repo(args.repo)
 
     if not env_repo.status():
-        print style_error('Nothing to commit.')
+        print(style_error('Nothing to commit.'))
         return 1
 
     if args.semver_level is None:
@@ -105,7 +105,7 @@ def commit(args):
         os.unlink(path)
 
         if code:
-            print style_error("Editor ({}) failed".format(editor), "and returned code {}".format(code))
+            print(style_error("Editor ({}) failed".format(editor), "and returned code {}".format(code)))
             return
 
         message = [line.rstrip() for line in message if not line.lstrip().startswith('#')]

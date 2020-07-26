@@ -18,16 +18,16 @@ for action in parser._actions:
     if action.help == SUPPRESS:
         continue
 
-    print '.. _requirement_arg_%s:' % action.dest
-    print
+    print('.. _requirement_arg_%s:' % action.dest)
+    print()
 
     lines = formatter._format_action(action).splitlines()
 
-    print '``%s``' % lines[0]
+    print('``%s``' % lines[0])
     #print '~' * (4 + len(lines[0]))
-    print
-    print '\n'.join(lines[1:])
-    print
+    print()
+    print('\n'.join(lines[1:]))
+    print()
 
 #for line in parser.format_help().splitlines():
 #    print '    ' + line

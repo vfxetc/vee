@@ -437,7 +437,7 @@ if __name__ == '__main__':
     reqs = Requirements(Home())
     reqs.parse_args(sys.argv[1:])
 
-    print ''.join(reqs.iter_dump())
+    print(''.join(reqs.iter_dump()))
 
 
 

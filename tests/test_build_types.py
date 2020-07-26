@@ -22,7 +22,7 @@ class TestBuildTypes(TestCase):
             try:
                 call(['vee', 'exec', '-R', pkg.path, name], stdout=out.append)
             except:
-                print ''.join(out)
+                print(''.join(out))
                 raise
             self.assertEqual(''.join(out).strip(), '%s:1' % name)
 

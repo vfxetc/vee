@@ -37,7 +37,7 @@ class vee_develop(Command):
         try:
             mt_scripts = self.distribution.get_command_obj('build_metatools_scripts')
         except Exception:
-            print 'missing build_metatools_scripts'
+            print('missing build_metatools_scripts')
         else:
             mt_scripts.build_dir = 'build/scripts'
             self.run_command('build_metatools_scripts')

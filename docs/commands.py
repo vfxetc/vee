@@ -19,7 +19,7 @@ def get_sub_action(parser):
 parser = get_parser()
 
 usage = parser.format_usage().replace('usage:', '')
-print '''
+print('''
 
 top-level
 ---------
@@ -31,10 +31,10 @@ top-level
 
 ::
 
-'''
+''')
 
 for line in parser.format_help().splitlines():
-    print '    ' + line
+    print('    ' + line)
 
 
 subaction = get_sub_action(parser)
@@ -51,23 +51,23 @@ for group_name, funcs in parser._func_groups:
             continue
 
         if not did_header:
-            print '.. _cli_%s:' % group_name.replace(' ', '_')
-            print
-            print group_name
-            print '-' * len(group_name)
-            print
+            print('.. _cli_%s:' % group_name.replace(' ', '_'))
+            print()
+            print(group_name)
+            print('-' * len(group_name))
+            print()
             did_header = True
 
         subparser = subaction._name_parser_map[name]
 
-        print '.. _cli_vee_%s:' % name
-        print
-        print '``vee %s``' % name
-        print '~' * (8 + len(name))
-        print
-        print '::'
-        print
+        print('.. _cli_vee_%s:' % name)
+        print()
+        print('``vee %s``' % name)
+        print('~' * (8 + len(name)))
+        print()
+        print('::')
+        print()
         for line in subparser.format_help().splitlines():
-            print '    ' + line
-        print
+            print('    ' + line)
+        print()
 

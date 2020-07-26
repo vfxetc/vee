@@ -1,7 +1,7 @@
 import datetime
 import os
 import urllib2
-import urlparse
+import urllib.parse
 import re
 import shutil
 
@@ -28,10 +28,10 @@ class HttpTransport(PipelineStep):
 
         pkg = self.package
 
-        split = urlparse.urlsplit(pkg.url)
+        split = urllib.parse.urlsplit(pkg.url)
 
         # Remove the fragment from the URL.
-        pkg.url = urlparse.urlunsplit((split.scheme, split.netloc, split.path, split.query, ''))
+        pkg.url = urllib.parse.urlunsplit((split.scheme, split.netloc, split.path, split.query, ''))
 
         pkg.package_name = os.path.join(split.netloc, split.path.strip('/'))
 

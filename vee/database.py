@@ -393,9 +393,9 @@ class Database(object):
 
     def connect(self, create=False):
         if not create and not self.exists:
-            print 'create:', create
-            print 'exists:', self.exists
-            print self.path
+            print('create:', create)
+            print('exists:', self.exists)
+            print(self.path)
             raise ValueError('database does not exist; run `vee init`')
         con = sqlite3.connect(self.path, factory=_Connection)
         con.execute('PRAGMA foreign_keys = ON')

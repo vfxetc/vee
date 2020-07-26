@@ -28,15 +28,15 @@ def init(args):
 
     try:
         args.home.init()
-        print 'Initialized %s' % args.home.root
+        print('Initialized %s' % args.home.root)
     except ValueError:
-        print style_error('Home already exists.')
+        print(style_error('Home already exists.'))
         if args.url:
-            print 'Create a new repository via:'
-            print '\tvee repo clone --default %s %s' % (args.url, args.name or '')
+            print('Create a new repository via:')
+            print('\tvee repo clone --default %s %s' % (args.url, args.name or ''))
         return
 
     if args.url:
         env_repo = args.home.create_env_repo(url=args.url, name=args.name)
-        print 'Created repo %s at %s' % (env_repo.name, env_repo.work_tree)
+        print('Created repo %s at %s' % (env_repo.name, env_repo.work_tree))
 

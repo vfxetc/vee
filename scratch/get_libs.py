@@ -40,7 +40,7 @@ while to_copy:
     new_names = check_output(['brew', 'deps', name]).strip().split()
     to_copy.extend(new_names)
 
-    print name
+    print(name)
 
     old_pkg_home = os.path.realpath('/usr/local/opt/' + name)
     new_pkg_home = CONTENTS + '/opt/' + name

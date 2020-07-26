@@ -107,7 +107,7 @@ def delete(args):
     home = args.assert_home()
     cur = home.db.execute('DELETE FROM repositories WHERE name = ?', [args.name])
     if not cur.rowcount:
-        print style_error('No %r repository.' % args.name)
+        print(style_error('No %r repository.' % args.name))
 
 
 @repo.subcommand(
@@ -139,18 +139,18 @@ def list_(args):
     home = args.assert_home()
     rows = list(home.db.execute('SELECT * FROM repositories'))
     if not rows:
-        print style_warning('No repositories.')
+        print(style_warning('No repositories.'))
         return
     max_len = max(len(row['name']) for row in rows)
     for row in rows:
         env_repo = EnvironmentRepo(row, home=home)
         if env_repo.exists:
-            print style_note(
+            print(style_note(
                 env_repo.name,
                 '%s/%s' % (env_repo.remote_name, env_repo.branch_name),
                 env_repo.remotes().get(env_repo.remote_name, '') + 
                 ' --default' if row['is_default'] else '',
-            )
+            ))
 
 
 

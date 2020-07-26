@@ -130,54 +130,54 @@ def style_warning(msg, detail=''):
 
 if __name__ == '__main__':
 
-    print 'ANSI Styles'
+    print('ANSI Styles')
     for i in xrange(1, 108):
-        print CSI + '0m' + CSI + str(i) + 'm' + ('%03d' % i) + CSI + '0m',
+        print(CSI + '0m' + CSI + str(i) + 'm' + ('%03d' % i) + CSI + '0m', end=' ')
         if i % 10 == 0:
-            print
-    print
-    print
+            print()
+    print()
+    print()
 
-    print 'ANSI Colours'
+    print('ANSI Colours')
     swatches = (('Normal', dict()),
                 ('Faint',  dict(faint=True)),
                 ('Bright', dict(bright=True)),
                 ('Bold',   dict(bold=True)),
                )
     for title, _ in swatches:
-        print '%-32s' % title,
-    print
+        print('%-32s' % title, end=' ')
+    print()
     for bg in sorted(_colour_codes.values()):
         for _, kwargs in swatches:
             for fg in sorted(_colour_codes.values()):
-                print colour(' %d%d' % (fg, bg), fg, bg, **kwargs),
-            print colour(reset=True),
-        print colour(reset=True)
-    print
+                print(colour(' %d%d' % (fg, bg), fg, bg, **kwargs), end=' ')
+            print(colour(reset=True), end=' ')
+        print(colour(reset=True))
+    print()
 
-    print '216 Colours'
+    print('216 Colours')
     for r in xrange(0, 6):
         for g in xrange(0, 6):
             for b in xrange(0, 6):
-                print colour(u'◉ R%dG%dB%d' % (r, g, b), fg=(r, g, b), reset=True),
-            print ' '
-    print
+                print(colour(u'◉ R%dG%dB%d' % (r, g, b), fg=(r, g, b), reset=True), end=' ')
+            print(' ')
+    print()
 
-    print 'Grays'
+    print('Grays')
     for g in xrange(0, 24):
-        print colour('%02d' % g, fg=(g, ), reset=True),
-    print
+        print(colour('%02d' % g, fg=(g, ), reset=True), end=' ')
+    print()
     for g in xrange(0, 24):
-        print colour('%02d' % g, bg=(g, ), reset=True),
-    print
-    print
+        print(colour('%02d' % g, bg=(g, ), reset=True), end=' ')
+    print()
+    print()
 
     exit()
 
-    print '24-bit Colours'
+    print('24-bit Colours')
     for r in xrange(0, 256, 256/8):
         for g in xrange(0, 256, 256/8):
             for b in xrange(0, 256, 256/8):
-                print colour('%02X%02X%02X' % (r, g, b), fg=(r, g, b), reset=True),
-            print
-    print
+                print(colour('%02X%02X%02X' % (r, g, b), fg=(r, g, b), reset=True), end=' ')
+            print()
+    print()

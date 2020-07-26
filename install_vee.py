@@ -25,13 +25,13 @@ faint  = lambda x: SGR(2) + x + SGR(0)
 
 
 def heading(heading, msg='', detail=''):
-    print blue(heading), bold(msg), detail
+    print(blue(heading), bold(msg), detail)
 
 def error(msg, detail=''):
-    print red("Error:"), bold(msg), detail
+    print(red("Error:"), bold(msg), detail)
 
 def warning(msg, detail=''):
-    print yellow('Warning:'), bold(msg), detail
+    print(yellow('Warning:'), bold(msg), detail)
 
 
 import sys
@@ -96,7 +96,7 @@ def main(argv=None):
             return value
         if args.yes:
             return default
-        print '%s [%s]:' % (green(message), faint(default)),
+        print('%s [%s]:' % (green(message), faint(default)), end=' ')
         res = raw_input().strip()
         return res or default
 
@@ -104,7 +104,7 @@ def main(argv=None):
         if args.yes:
             return True
         while True:
-            print '%s [%s]:' % (green(message), faint('Yn')),
+            print('%s [%s]:' % (green(message), faint('Yn')), end=' ')
             res = raw_input().strip().lower()
             if res in ('', 'y', 'yes'):
                 return True
@@ -201,7 +201,7 @@ def main(argv=None):
     if prompt_switch('bashrc', 'Append to your ~/.bashrc?'):
 
         heading('Adding VEE to your ~/.bashrc')
-        print yellow('Note:'), bold('You may need to open a new terminal, or `source ~/.bashrc`, for VEE to work.')
+        print(yellow('Note:'), bold('You may need to open a new terminal, or `source ~/.bashrc`, for VEE to work.'))
 
         bashrc = os.path.expanduser('~/.bashrc')
         if os.path.exists(bashrc):
@@ -223,11 +223,11 @@ def main(argv=None):
     elif os.environ.get('VEE', '') != prefix:
         heading('Add the following to your environment:')
         for line in shell_lines:
-            print '    ' + line.split('#')[0]
+            print('    ' + line.split('#')[0])
 
 
     heading('Done!')
-    print 'VEE will still need to be initialized via `vee init`.'
+    print('VEE will still need to be initialized via `vee init`.')
 
 
 if __name__ == '__main__':

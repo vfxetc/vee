@@ -1,6 +1,6 @@
 import datetime
 import os
-import urlparse
+import urllib.parse
 import re
 import shutil
 import json

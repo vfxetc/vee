@@ -35,14 +35,14 @@ def add(args):
             pkg = pkg_set.resolve(req, check_existing=False)
             if pkg.fetch_type != 'git':
                 continue
-            print style_note('Fetching', str(req))
+            print(style_note('Fetching', str(req)))
             pkg.repo.fetch('origin', 'master') # TODO: track these another way?
             if pkg.repo.check_ff_safety('origin/master'):
                 pkg.repo.checkout('origin/master')
                 head = pkg.repo.head[:8]
                 if head != req.revision:
                     req.revision = pkg.repo.head[:8]
-                    print style_note('Updated', str(req))
+                    print(style_note('Updated', str(req)))
                     baked_any = True
 
     if args.bake_installed:
@@ -58,12 +58,12 @@ def add(args):
             if req.name and req.name == guess_name(req.url):
                 req.name = None
                 baked_any = True
-                print style_note('Unset redundant name', req.name)
+                print(style_note('Unset redundant name', req.name))
 
             if pkg.installed and req.revision != repo.head[:8]:
                 req.revision = repo.head[:8]
                 baked_any = True
-                print style_note('Pinned', req.name, req.revision)
+                print(style_note('Pinned', req.name, req.revision))
 
     if args.checksum:
         baked_any = False
@@ -75,14 +75,14 @@ def add(args):
             if not pkg.package_path or not os.path.isfile(pkg.package_path):
                 continue
             req.checksum = checksum_file(pkg.package_path)
-            print style_note('Checksummed', pkg.name, req.checksum)
+            print(style_note('Checksummed', pkg.name, req.checksum))
             baked_any = True
 
     if baked_any is not None:
         if baked_any:
             env_repo.dump_requirements(req_set)
         else:
-            print style_note('No changes.')
+            print(style_note('No changes.'))
         return
 
     dev_repo = home.find_development_package(os.path.abspath(args.package))
@@ -96,7 +96,7 @@ def add(args):
         log.debug('adding dev remote url: %s' % url)
         dev_remote_urls.add(url)
     if not dev_remote_urls:
-        print style_error('No git remotes for %s' % row['path'])
+        print(style_error('No git remotes for %s' % row['path']))
         return 1
 
     for req in req_set.iter_packages(eval_control=False):
@@ -110,22 +110,22 @@ def add(args):
         log.debug('does match package url?: %s' % req_url)
         if req_url in dev_remote_urls:
             if req.revision == dev_repo.head[:8]:
-                print style_note('No change to', str(req))
+                print(style_note('No change to', str(req)))
             else:
                 req.revision = dev_repo.head[:8]
-                print style_note('Updated', str(req))
+                print(style_note('Updated', str(req)))
             break
 
     else:
         if not args.init:
-            print '{error}: No required package {name}; would match one of:'.format(error=style('Error', 'red'), name=style(args.package, bold=True))
+            print('{error}: No required package {name}; would match one of:'.format(error=style('Error', 'red'), name=style(args.package, bold=True)))
             for url in sorted(dev_remote_urls):
-                print '    {}'.format(url)
-            print 'Use {} to setup: git+{} --revision {}'.format(
+                print('    {}'.format(url))
+            print('Use {} to setup: git+{} --revision {}'.format(
                 style('vee add --init %s' % args.package, 'green'),
                 dev_repo.remotes()['origin'],
                 dev_repo.head[:8]
-            )
+            ))
             return 1
 
         req = Package(

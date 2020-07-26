@@ -1,4 +1,4 @@
-from cStringIO import StringIO
+from io import StringIO
 import hashlib
 import os
 import sys
@@ -58,7 +58,7 @@ def repackage(args):
             continue
         seen.add(pkg.name)
 
-        print style_note(str(pkg))
+        print(style_note(str(pkg)))
 
         if not args.no_deps:
             todo.extend(pkg.dependencies)
@@ -83,11 +83,11 @@ def repackage(args):
             if args.force:
                 os.unlink(path)
             else:
-                print '%s already exists' % name
+                print('%s already exists' % name)
                 continue
 
         if args.verbose:
-            print name
+            print(name)
 
         writer = HashingWriter(open(path, 'wb'), hashlib.md5())
         archive = tarfile.open(fileobj=writer, mode='w|gz')
@@ -98,7 +98,7 @@ def repackage(args):
                 path = os.path.join(dir_path, dir_name)
                 rel_path = os.path.relpath(path, pkg.install_path)
                 if args.verbose:
-                    print '    ' + rel_path + '/'
+                    print('    ' + rel_path + '/')
                 archive.add(path, rel_path, recursive=False)
             
             for file_name in file_names:
@@ -108,7 +108,7 @@ def repackage(args):
                     continue
                 rel_path = os.path.relpath(path, pkg.install_path)
                 if args.verbose:
-                    print '    ' + rel_path
+                    print('    ' + rel_path)
                 archive.add(path, rel_path)
 
         if pkg.dependencies:
@@ -124,9 +124,9 @@ def repackage(args):
         archive.close()
         checksums[pkg.name] = 'md5:' + writer.hexdigest()
 
-    print
-    print 'Add as requirements in (roughly) the following order:'
-    print
+    print()
+    print('Add as requirements in (roughly) the following order:')
+    print()
     for pkg, path in reversed(in_order):
 
         url = (
@@ -154,6 +154,6 @@ def repackage(args):
         if args.extra:
             parts.extend(args.extra)
 
-        print ' '.join(parts)
+        print(' '.join(parts))
 
 

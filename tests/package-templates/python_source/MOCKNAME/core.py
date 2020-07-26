@@ -1,6 +1,6 @@
 
 def echo():
-    print 'MOCKNAME:MOCKREVNO'
+    print('MOCKNAME:MOCKREVNO')
 
 def main():
     echo()

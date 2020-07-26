@@ -100,13 +100,13 @@ lib = MyLib(sys.argv[1])
 
 for i, (tag, value) in enumerate(lib.dyn_commands):
     if tag == DT_NULL:
-        print i, 'DT_NULL'
+        print(i, 'DT_NULL')
     elif tag == DT_NEEDED:
-        print i, 'DT_NEEDED', lib.ptr_to_str[value]
+        print(i, 'DT_NEEDED', lib.ptr_to_str[value])
     elif tag == DT_RUNPATH:
-        print i, 'DT_RUNPATH', lib.ptr_to_str[value]
+        print(i, 'DT_RUNPATH', lib.ptr_to_str[value])
     elif tag == DT_RPATH:
-        print i, 'DT_RPATH', lib.ptr_to_str[value]
+        print(i, 'DT_RPATH', lib.ptr_to_str[value])
 
 lib.set_rpath('/path/to/libs')
 lib.dump(open(sys.argv[1] + '-mod', 'wb'))

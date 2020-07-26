@@ -9,8 +9,8 @@ from vee.package import Package
 
 def describe(pkg, cache, depth=0):
 
-    print ('    ' * depth) + style(pkg.name, 'blue'), pkg.id, style(
-        '***' if pkg.id in cache else str(pkg), faint=True)
+    print(('    ' * depth) + style(pkg.name, 'blue'), pkg.id, style(
+        '***' if pkg.id in cache else str(pkg), faint=True))
 
     if pkg.id in cache:
         return
@@ -44,7 +44,7 @@ def list_environments(args):
     cache = {}
 
     for env in con.execute('SELECT * from environments ORDER by created_at ASC'):
-        print env['created_at'], style(env['name'], 'blue'), env['id']
+        print(env['created_at'], style(env['name'], 'blue'), env['id'])
         # print list(row)
 
 

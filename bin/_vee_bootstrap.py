@@ -24,8 +24,8 @@ except ImportError as e:
             sys.path.append(path)
             break
     else:
-        print >> sys.stderr, red("Error:") + " vee can't bootstrap."
-        print >> sys.stderr, e
+        print(red("Error:") + " vee can't bootstrap.", file=sys.stderr)
+        print(e, file=sys.stderr)
         exit(2)
 
 else:
@@ -36,10 +36,10 @@ try:
     from vee.commands.main import main
 
 except ImportError as e:
-    print >> sys.stderr, red("Error:") + " vee's install is broken."
+    print(red("Error:") + " vee's install is broken.", file=sys.stderr)
     traceback.print_exc()
     if bootstrapped:
-        print >> sys.stderr, 'Bootstrap found:', bootstrapped
+        print('Bootstrap found:', bootstrapped, file=sys.stderr)
     exit(1)
 
 

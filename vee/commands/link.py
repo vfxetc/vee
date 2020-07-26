@@ -65,7 +65,7 @@ def link(args):
 
     if args.raw:
         for dir_ in args.requirements:
-            print style('Linking', 'blue', bold=True), style(dir_, bold=True)
+            print(style('Linking', 'blue', bold=True), style(dir_, bold=True))
             env.link_directory(dir_)
         return
 

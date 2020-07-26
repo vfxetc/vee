@@ -72,7 +72,7 @@ class TestRequirements(TestCase):
 
         '''.strip().splitlines())
 
-        print req_set
+        print(req_set)
 
         reqs = list(req_set.iter_packages())
         self.assertEqual(reqs[0].name, 'before')

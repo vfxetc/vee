@@ -75,7 +75,7 @@ def exec_(args):
                 v.append(bootstrap.pop(0))
                 setattr(args, arg[2:], v)
             else:
-                print >> sys.stderr, 'cannot bootstrap', arg
+                print('cannot bootstrap', arg, file=sys.stderr)
 
     if args.dev:
         # Store the original flags as provided so that --bootstrap can pick it back up.
@@ -126,7 +126,7 @@ def exec_(args):
 
     if args.prefix:
         for path in paths:
-            print path
+            print(path)
         return
 
     environ_diff.update(guess_envvars(paths))
@@ -171,7 +171,7 @@ def exec_(args):
 
             if existing is not None and not k.startswith('VEE_EXEC'):
                 v = v.replace(existing, '$' + k)
-            print 'export %s="%s"' % (k, v)
+            print('export %s="%s"' % (k, v))
         return
 
     environ = os.environ.copy()

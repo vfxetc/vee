@@ -88,7 +88,7 @@ class PackageSet(collections.OrderedDict):
                 tip = self._parent_names.get(tip)
             parent_chain = parent_chain[1:]
 
-            print '==>', style(name, 'blue'), style('(%s)' % ' < '.join(parent_chain), faint=True) if parent_chain else ''
+            print('==>', style(name, 'blue'), style('(%s)' % ' < '.join(parent_chain), faint=True) if parent_chain else '')
 
             with log.indent():
 
@@ -118,7 +118,7 @@ class PackageSet(collections.OrderedDict):
         try:
             pkg = self[name]
         except KeyError:
-            print ', '.join(sorted(self.keys()))
+            print(', '.join(sorted(self.keys())))
             raise
 
         reinstall_this = name in reinstall

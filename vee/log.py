@@ -102,7 +102,7 @@ class StdoutHandler(logging.Handler):
 
         msg = self.format(record)
         for line in msg.rstrip().splitlines():
-            print indent + line
+            print(indent + line)
 
         self._last_nl = True
 
@@ -161,8 +161,8 @@ if __name__ == '__main__':
         main.warning('Indented warning')
         main.error('Indenter error')
 
-    print 'Captured', len(logs), 'logs:'
+    print('Captured', len(logs), 'logs:')
     for rec in logs:
-        print rec.message
+        print(rec.message)
 
 

@@ -120,7 +120,7 @@ class Server(Agent):
 
     def do_read(self):
         sock, addr = self.socket.accept()
-        print 'new connection from', addr
+        print('new connection from', addr)
         client = ServerClient(self, sock, addr)
         self.clients.append(client)
 
@@ -152,7 +152,7 @@ class ServerClient(NetworkLayer):
     def handle_one(self):
         line = self.line_buffer.pop(0)
         obj = json.loads(line)
-        print 'handle', json.dumps(obj, indent=4, sort_keys=True)
+        print('handle', json.dumps(obj, indent=4, sort_keys=True))
 
 
 

@@ -35,7 +35,7 @@ def git(args, *command):
         return
 
     if not command:
-        print style_error('please provide a git command')
+        print(style_error('please provide a git command'))
         return 1
     
     makedirs(repo.work_tree)

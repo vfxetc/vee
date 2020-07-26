@@ -105,6 +105,6 @@ end
 
 for name in 'oath-toolkit', 'wget', 'x264':
     pprint(run('get_info(%r)' % name))
-    print
+    print()
 
      

@@ -61,7 +61,7 @@ for path in walk():
         old, new = rewrite(path, libname)
         if new != old:
             if to_print:
-                print to_print
+                print(to_print)
                 to_print = None
             check_call(['install_name_tool', '-id', new, path])
 
@@ -71,7 +71,7 @@ for path in walk():
         old, new = rewrite(path, line)
         if new != old:
             if to_print:
-                print to_print
+                print(to_print)
                 to_print = None
             check_call(['install_name_tool', '-change', old, new, path])
 

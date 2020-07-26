@@ -70,9 +70,8 @@ class Environment(DBObject):
         python = os.path.join(self.path, 'bin', 'python')
         if not os.path.exists(python):
             makedirs(self.path)
-            print style('Creating Python virtualenv', 'blue', bold=True), style(self.path, bold=True)
+            print(style('Creating Python virtualenv', 'blue', bold=True), style(self.path, bold=True))
             virtualenv.create_environment(self.path, no_setuptools=True, no_pip=True)
-
         if not os.path.exists(python + '-config'):
             names = (
                 'python%d.%d-config' % sys.version_info[:2],

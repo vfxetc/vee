@@ -36,11 +36,11 @@ def relocate(args):
                 continue
             seen_paths.add(install_path)
 
-            print install_path
+            print(install_path)
 
             found = libs.get_installed_shared_libraries(home.db.connect(), package_id, install_path, rescan=args.rescan)
             for lib in found:
-                print '    ' + lib
+                print('    ' + lib)
 
         return
 
