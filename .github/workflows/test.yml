@@ -1,0 +1,43 @@
+name: test
+
+on: [push, pull_request]
+
+jobs:
+
+  test-nix:
+
+    name: "py-${{ matrix.config.python }} ${{matrix.config.os}}"
+
+    runs-on: ${{ matrix.config.os }}
+
+    strategy:
+      matrix:
+        config:
+          - {os: ubuntu-latest, python: 3.7}
+          - {os: ubuntu-latest, python: pypy3}
+          - {os: macos-latest,  python: 3.7}
+
+    steps:
+
+    - uses: actions/checkout@v2
+      name: Checkout
+
+    - name: Python ${{ matrix.config.python }}
+      uses: actions/setup-python@v1
+      with:
+        python-version: ${{ matrix.config.python }}
+
+    - name: Git Config
+      run: |
+        git config --global user.email "github-actions-vee@mikeboers.com"
+        git config --global user.name  "GitHub Actions"
+
+    - name: Install Dependencies
+      run: |
+        . activate.sh
+        pip install --upgrade pip setuptools wheel nose
+
+    - name: Test
+      run: |
+        . activate.sh
+        nosetests
