@@ -130,15 +130,15 @@ class Environment(DBObject):
         # If it starts with a Python shebang, rewrite it.
         with open(old_path, 'rb') as old_fh:
             old_shebang = old_fh.readline()
-            m = re.match(r'#!(|\S+/)([^\s/]+)', old_shebang)
+            m = re.match(rb'#!(|\S+/)([^\s/]+)', old_shebang)
             if not m:
                 return
 
-            new_bin = os.path.join(self.path, 'bin', m.group(2))
+            new_bin = os.path.join(os.fsencode(self.path), b'bin', m.group(2))
             if not os.path.exists(new_bin):
                 return
 
-            new_shebang = '#!%s%s' % (new_bin, old_shebang[m.end(2):])
+            new_shebang = b'#!%s%s' % (new_bin, old_shebang[m.end(2):])
             log.info('Rewriting shebang of %s' % old_path, verbosity=1)
             log.debug('New shebang: %s' % new_shebang.strip(), verbosity=1)
 

@@ -63,7 +63,7 @@ def download(url, dst):
         src_fh = http_request('GET', url, preload_content=False)
         dst_fh = open(tmp, 'wb')
         # TODO: Indicate progress.
-        for chunk in iter(lambda: src_fh.read(16384), ''):
+        for chunk in iter(lambda: src_fh.read(16384), b''):
             dst_fh.write(chunk)
     finally:
         if src_fh:

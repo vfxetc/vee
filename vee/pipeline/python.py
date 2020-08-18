@@ -74,7 +74,7 @@ class PythonBuilder(GenericBuilder):
 
             requires_path = os.path.join(self.egg_path, 'requires.txt')
             if os.path.exists(requires_path):
-                for line in open(requires_path, 'rb'):
+                for line in open(requires_path, 'r'):
                     
                     # Stop once we get to the "extras".
                     if line.startswith('['):

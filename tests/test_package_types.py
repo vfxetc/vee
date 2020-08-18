@@ -9,7 +9,7 @@ class TestPackageTypes(TestCase):
         vee(['install', package, '--install-name', '%s/1.0.0' % name, '--make-install',])
         exe = sandbox('vee/installs/%s/1.0.0/bin/%s' % (name, name))
         self.assertTrue(os.path.exists(exe))
-        self.assertEqual(subprocess.check_output([exe]).strip(), '%s:1' % name)
+        self.assertEqual(subprocess.check_output([exe]).decode().strip(), '%s:1' % name)
 
     def test_http(self):
         self.assert_echo_installs('type_http', mock_url('packages/type_http.tgz'))

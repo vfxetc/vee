@@ -1,3 +1,4 @@
+import base64
 import os
 import re
 
@@ -90,7 +91,7 @@ class SelfBuilder(GenericBuilder):
 
         # TODO: somehow derive this from --build-sh provided script.
         cwd = os.path.dirname(self.build_sh)
-        envfile = os.path.join(cwd, 'vee-env-' + os.urandom(8).encode('hex'))
+        envfile = os.path.join(cwd, 'vee-env-' + base64.b16encode(os.urandom(8)).decode())
 
         call(['bash', '-c', '. %s; env | grep VEE > %s' % (os.path.basename(self.build_sh), envfile)], env=env, cwd=cwd)
 
