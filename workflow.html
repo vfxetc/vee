@@ -1,0 +1,192 @@
+
+<!DOCTYPE html>
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta charset="utf-8" />
+    <title>Workflows &#8212; VEE 0.1 documentation</title>
+    <link rel="stylesheet" href="_static/nature.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" type="text/css" href="_static/graphviz.css" />
+    <link rel="stylesheet" type="text/css" href="_static/custom.css" />
+    <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <script type="text/javascript" src="_static/language_data.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Core Concepts" href="concepts.html" />
+    <link rel="prev" title="Installation" href="install.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="concepts.html" title="Core Concepts"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="install.html" title="Installation"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="index.html">VEE 0.1 documentation</a> &#187;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="workflows">
+<h1>Workflows<a class="headerlink" href="#workflows" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="user-workflow">
+<h2>User Workflow<a class="headerlink" href="#user-workflow" title="Permalink to this headline">¶</a></h2>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># Before your first use of vee, it must be initialized. This command</span>
+<span class="c1"># will error if already run, with no ill effects.</span>
+vee init
+
+<span class="c1"># Add the environment repository (replace with your git remote and name),</span>
+<span class="c1"># and build it.</span>
+vee repo clone git@github.com:vfxetc/vee-repo vfxetc
+vee upgrade
+
+<span class="c1"># Run some installed commands.</span>
+vee <span class="nb">exec</span> COMMAND
+<span class="c1">#   or:</span>
+<span class="nb">eval</span> <span class="s2">&quot;</span><span class="k">$(</span>vee <span class="nb">exec</span> --export<span class="k">)</span><span class="s2">&quot;</span>
+COMMAND
+<span class="c1">#   or:</span>
+vee <span class="nb">exec</span> --export &gt;&gt; ~/.bashrc
+COMMAND
+
+<span class="c1"># Whenever there are changes to the environment repo, you must &quot;update&quot;</span>
+<span class="c1"># to fetch the changes, and &quot;upgrade&quot; to build the environment.</span>
+vee update
+vee upgrade
+</pre></div>
+</div>
+</div>
+<div class="section" id="developer-workflow">
+<h2>Developer Workflow<a class="headerlink" href="#developer-workflow" title="Permalink to this headline">¶</a></h2>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># Specify where you want your dev packages to be, if not in $VEE/dev.</span>
+<span class="nb">export</span> <span class="nv">VEE_DEV</span><span class="o">=</span>~/dev
+
+<span class="c1"># Install a package for development. This must be a package that is</span>
+<span class="c1"># referred to by the default repository.</span>
+vee develop install PACKAGE
+
+<span class="nb">cd</span> ~/dev/PACKAGE
+
+<span class="c1"># Develop here; use `dev` to run in the dev environment.</span>
+dev MY_COMMAND
+
+<span class="c1"># Commit your changes to the package.</span>
+git commit -am <span class="s1">&#39;What you did to PACKAGE.&#39;</span>
+
+<span class="c1"># Commit your changes to the VEE repo.</span>
+vee add PACKAGE
+vee commit --patch -m <span class="s1">&#39;Did something to PACKAGE.&#39;</span>
+
+<span class="c1"># Test locally.</span>
+vee upgrade
+MY_COMMAND
+
+<span class="c1"># Push out the package, and repo.</span>
+git push
+vee push
+</pre></div>
+</div>
+</div>
+<div class="section" id="manual-workflow">
+<h2>Manual Workflow<a class="headerlink" href="#manual-workflow" title="Permalink to this headline">¶</a></h2>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># Install some individual packages into the default environment.</span>
+<span class="c1"># These will be lost upon the next &quot;upgrade&quot;.</span>
+vee link homebrew+sqlite
+vee link homebrew+ffmpeg --configuration<span class="o">=</span><span class="s1">&#39;--with-faac&#39;</span>
+vee link git+https://github.com/shotgunsoftware/python-api.git --name shotgun_api3
+vee link --force https://github.com/vfxetc/sgmock/archive/master.zip --install-name sgmock/0.1
+vee link git+git@github.com:vfxetc/sgsession
+
+<span class="c1"># Link a few packages into an &quot;example&quot; environment.</span>
+vee link -e example examples/basic.txt
+
+<span class="c1"># Execute within the &quot;example&quot; environment.</span>
+vee <span class="nb">exec</span> -e example python -c <span class="s1">&#39;import sgmock; print sgmock&#39;</span>
+</pre></div>
+</div>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="index.html">Table of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">Workflows</a><ul>
+<li><a class="reference internal" href="#user-workflow">User Workflow</a></li>
+<li><a class="reference internal" href="#developer-workflow">Developer Workflow</a></li>
+<li><a class="reference internal" href="#manual-workflow">Manual Workflow</a></li>
+</ul>
+</li>
+</ul>
+
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="install.html"
+                        title="previous chapter">Installation</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="concepts.html"
+                        title="next chapter">Core Concepts</a></p>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="_sources/workflow.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="concepts.html" title="Core Concepts"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="install.html" title="Installation"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="index.html">VEE 0.1 documentation</a> &#187;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2015-2020, Mike Boers.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 2.2.1.
+    </div>
+  </body>
+</html>

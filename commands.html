@@ -1,0 +1,618 @@
+
+<!DOCTYPE html>
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta charset="utf-8" />
+    <title>Command-Line Interface &#8212; VEE 0.1 documentation</title>
+    <link rel="stylesheet" href="_static/nature.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" type="text/css" href="_static/graphviz.css" />
+    <link rel="stylesheet" type="text/css" href="_static/custom.css" />
+    <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <script type="text/javascript" src="_static/language_data.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="prev" title="Pipelines" href="pipeline.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="pipeline.html" title="Pipelines"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="index.html">VEE 0.1 documentation</a> &#187;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="command-line-interface">
+<span id="cli"></span><h1>Command-Line Interface<a class="headerlink" href="#command-line-interface" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="top-level">
+<h2>top-level<a class="headerlink" href="#top-level" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="vee">
+<span id="cli-vee"></span><h3><code class="docutils literal notranslate"><span class="pre">vee</span></code><a class="headerlink" href="#vee" title="Permalink to this headline">¶</a></h3>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>usage: vee [-h] [-v] [--log LOG] [--profile CPROFILE_PATH]
+           [--real-prefix REAL_PREFIX] [--home VEE]
+
+VEE is a manager of versioned execution environments.
+
+See: `vee COMMAND --help` for more on individual commands.
+
+optional arguments:
+  -h, --help            show this help message and exit
+  -v, --verbose         increase verbosity; may be used multiple times
+  --log LOG             dump complete log to file
+  --profile CPROFILE_PATH
+                        dump execution profile to disk
+  --real-prefix REAL_PREFIX
+                        Force a value for sys.real_prefix.
+  --home VEE            path of managed environments; defaults to $VEE or the
+                        directory above VEE&#39;s source
+
+subcommands:
+
+  setup:
+    doctor       perform a self-check
+    init         initialize VEE&#39;s home
+    repo         manage environment repos
+    self-update  update vee itself
+
+  workflow:
+    exec         execute in this environment
+    update       update repos
+    upgrade      upgrade packages specified by repositories, and link into environments
+
+  development:
+    add          record changes to dev packages in environment repo
+    commit       commit changes to environment repo
+    develop      setup development packages
+    edit         open requirements.txt in $EDITOR
+    push         push changes to environment repo
+
+  plumbing:
+    brew         run a homebrew command
+    gc           cleanup VEE
+    git          run a git command in a repository
+    install      install a package; low-level
+    link         link a package, or requirements.txt, into an environment
+    relocate     relocate a package
+    sqlite3      run a command in the database
+</pre></div>
+</div>
+</div>
+</div>
+<div class="section" id="setup">
+<span id="cli-setup"></span><h2>setup<a class="headerlink" href="#setup" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="vee-init">
+<span id="cli-vee-init"></span><h3><code class="docutils literal notranslate"><span class="pre">vee</span> <span class="pre">init</span></code><a class="headerlink" href="#vee-init" title="Permalink to this headline">¶</a></h3>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">usage</span><span class="p">:</span> <span class="n">vee</span> <span class="n">init</span> <span class="n">URL</span>
+
+<span class="n">Initialize</span> <span class="n">the</span> <span class="n">structures</span> <span class="n">on</span> <span class="n">disk</span> <span class="n">before</span> <span class="nb">any</span> <span class="n">other</span> <span class="n">commands</span><span class="p">,</span> <span class="ow">and</span>
+<span class="n">optionally</span> <span class="n">setup</span> <span class="n">the</span> <span class="n">first</span> <span class="n">environment</span> <span class="n">repository</span><span class="o">.</span>
+
+<span class="n">E</span><span class="o">.</span><span class="n">g</span><span class="o">.</span><span class="p">:</span>
+
+    <span class="n">vee</span> <span class="n">init</span> <span class="n">git</span><span class="nd">@github</span><span class="o">.</span><span class="n">com</span><span class="p">:</span><span class="n">vfxetc</span><span class="o">/</span><span class="n">vee</span><span class="o">-</span><span class="n">repo</span> <span class="n">primary</span>
+
+<span class="n">This</span> <span class="ow">is</span> <span class="n">the</span> <span class="n">same</span> <span class="k">as</span><span class="p">:</span>
+
+    <span class="n">vee</span> <span class="n">init</span>
+    <span class="n">vee</span> <span class="n">repo</span> <span class="n">clone</span> <span class="n">git</span><span class="nd">@github</span><span class="o">.</span><span class="n">com</span><span class="p">:</span><span class="n">vfxetc</span><span class="o">/</span><span class="n">vee</span><span class="o">-</span><span class="n">repo</span> <span class="n">primary</span>
+
+<span class="n">positional</span> <span class="n">arguments</span><span class="p">:</span>
+  <span class="n">url</span>            <span class="n">URL</span> <span class="n">of</span> <span class="n">new</span> <span class="n">repository</span> <span class="n">to</span> <span class="n">clone</span>
+  <span class="n">name</span>           <span class="n">name</span> <span class="k">for</span> <span class="n">new</span> <span class="n">repository</span>
+
+<span class="n">optional</span> <span class="n">arguments</span><span class="p">:</span>
+  <span class="o">-</span><span class="n">h</span><span class="p">,</span> <span class="o">--</span><span class="n">help</span>     <span class="n">show</span> <span class="n">this</span> <span class="n">help</span> <span class="n">message</span> <span class="ow">and</span> <span class="n">exit</span>
+  <span class="o">-</span><span class="n">v</span><span class="p">,</span> <span class="o">--</span><span class="n">verbose</span>  <span class="n">increase</span> <span class="n">verbosity</span><span class="p">;</span> <span class="n">may</span> <span class="n">be</span> <span class="n">used</span> <span class="n">multiple</span> <span class="n">times</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="vee-doctor">
+<span id="cli-vee-doctor"></span><h3><code class="docutils literal notranslate"><span class="pre">vee</span> <span class="pre">doctor</span></code><a class="headerlink" href="#vee-doctor" title="Permalink to this headline">¶</a></h3>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">usage</span><span class="p">:</span> <span class="n">vee</span> <span class="n">doctor</span> <span class="p">[</span><span class="o">--</span><span class="n">ping</span><span class="p">,</span><span class="o">--</span><span class="n">version</span><span class="p">,</span><span class="o">--</span><span class="n">revision</span><span class="p">]</span>
+
+<span class="n">Perform</span> <span class="bp">self</span><span class="o">-</span><span class="n">checks</span> <span class="n">to</span> <span class="n">make</span> <span class="n">sure</span> <span class="n">VEE</span> <span class="ow">is</span> <span class="n">OK</span><span class="o">.</span>
+
+<span class="n">optional</span> <span class="n">arguments</span><span class="p">:</span>
+  <span class="o">-</span><span class="n">h</span><span class="p">,</span> <span class="o">--</span><span class="n">help</span>     <span class="n">show</span> <span class="n">this</span> <span class="n">help</span> <span class="n">message</span> <span class="ow">and</span> <span class="n">exit</span>
+  <span class="o">-</span><span class="n">v</span><span class="p">,</span> <span class="o">--</span><span class="n">verbose</span>  <span class="n">increase</span> <span class="n">verbosity</span><span class="p">;</span> <span class="n">may</span> <span class="n">be</span> <span class="n">used</span> <span class="n">multiple</span> <span class="n">times</span>
+  <span class="o">--</span><span class="n">ping</span>         <span class="nb">print</span> <span class="s2">&quot;pong&quot;</span><span class="p">,</span> <span class="ow">and</span> <span class="n">exit</span>
+  <span class="o">--</span><span class="n">version</span>      <span class="nb">print</span> <span class="n">VEE</span><span class="s1">&#39;s version, and exit</span>
+  <span class="o">--</span><span class="n">revision</span>     <span class="nb">print</span> <span class="n">VEE</span><span class="s1">&#39;s revision, and exit</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="vee-self-update">
+<span id="cli-vee-self-update"></span><h3><code class="docutils literal notranslate"><span class="pre">vee</span> <span class="pre">self-update</span></code><a class="headerlink" href="#vee-self-update" title="Permalink to this headline">¶</a></h3>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>usage: vee self-update [-h] [-v]
+
+Update VEE itself. This effectively runs `install_vee.py` with a few
+default arguments, or is the same as `git pull` in the `src` directory.
+
+optional arguments:
+  -h, --help     show this help message and exit
+  -v, --verbose  increase verbosity; may be used multiple times
+</pre></div>
+</div>
+</div>
+<div class="section" id="vee-repo">
+<span id="cli-vee-repo"></span><h3><code class="docutils literal notranslate"><span class="pre">vee</span> <span class="pre">repo</span></code><a class="headerlink" href="#vee-repo" title="Permalink to this headline">¶</a></h3>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>usage: vee repo init NAME
+   or: vee repo add PATH [NAME]
+   or: vee repo clone URL [NAME]
+   or: vee repo set NAME
+   or: vee repo delete NAME
+   or: vee repo list
+
+Manipulate environment repositories,
+e.g.::
+
+    # Start a new repo.
+    $ vee repo init example
+
+    # Add a new repo, and make it the default.
+    $ vee repo clone --default git@github.com:example/myrepo
+
+    # Change a repo&#39;s url and branch
+    $ vee repo set --branch unstable myrepo
+
+    # Delete a repo.
+    $ vee repo delete myrepo
+
+    # List all repos.
+    $ vee repo list
+
+optional arguments:
+  -h, --help     show this help message and exit
+  -v, --verbose  increase verbosity; may be used multiple times
+
+subcommands:
+    add          add an existing repository clone
+    clone        clone a remote repository
+    init         create a blank repository
+    list         list local repositories
+    set          set options on an existing repository
+</pre></div>
+</div>
+</div>
+</div>
+<div class="section" id="workflow">
+<span id="cli-workflow"></span><h2>workflow<a class="headerlink" href="#workflow" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="vee-exec">
+<span id="cli-vee-exec"></span><h3><code class="docutils literal notranslate"><span class="pre">vee</span> <span class="pre">exec</span></code><a class="headerlink" href="#vee-exec" title="Permalink to this headline">¶</a></h3>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>usage: vee exec (-r REQUIREMENTS | ENVIRONMENT) COMMAND [...]
+
+Construct an environment, and either export it or run a command in it.
+e.g.::
+
+    # Run in the default repository.
+    $ vee exec $command
+
+    # Run within a given repository.
+    $ vee exec --repo named_repo $command
+
+    # Run within a named environment.
+    $ vee exec -e named_environ $command
+
+    # Run within a constructed runtime for a set of requirements.
+    $ vee exec -r requirements.txt $command
+
+    # Export the default environment.
+    $ vee exec --export
+    export LD_LIBRARY_PATH=&quot;/usr/local/vee/environments/primary/master/lib:$LD_LIBRARY_PATH&quot;
+    export PATH=&quot;/usr/local/vee/environments/primary/master/bin:$PATH&quot;
+    export PYTHONPATH=&quot;/usr/local/vee/environments/primary/master/lib/python2.7/site-packages&quot;
+
+positional arguments:
+  command               the command to run
+
+optional arguments:
+  -h, --help            show this help message and exit
+  -v, --verbose         increase verbosity; may be used multiple times
+  --export              export the environment instead of executing in it
+  --prefix              print the prefixes that would be linked together
+  -R REQUIREMENTS, --requirements REQUIREMENTS
+                        requirements or requirements files to include; may be
+                        comma separated
+  -r REPOS, --repo REPOS
+                        a repo whose HEAD to include; defaults to the default
+                        repo
+  -e ENVIRONMENT, --environment ENVIRONMENT
+                        an environment to include
+  -d, --dev             include the development environment
+  --bootstrap           restore a previous dev environment (in $VEE_EXEC_ARGS)
+</pre></div>
+</div>
+</div>
+<div class="section" id="vee-update">
+<span id="cli-vee-update"></span><h3><code class="docutils literal notranslate"><span class="pre">vee</span> <span class="pre">update</span></code><a class="headerlink" href="#vee-update" title="Permalink to this headline">¶</a></h3>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>usage: vee update [-h] [-v] [--all] [--force] [-r REPOS]
+
+Update the environment repository (via `git pull`). This will fail if
+your repositories are dirty, or have forked from their remotes.
+
+optional arguments:
+  -h, --help            show this help message and exit
+  -v, --verbose         increase verbosity; may be used multiple times
+  --all                 update all repos
+  --force               force checkout, even if not fast-forward
+  -r REPOS, --repo REPOS
+</pre></div>
+</div>
+</div>
+<div class="section" id="vee-upgrade">
+<span id="cli-vee-upgrade"></span><h3><code class="docutils literal notranslate"><span class="pre">vee</span> <span class="pre">upgrade</span></code><a class="headerlink" href="#vee-upgrade" title="Permalink to this headline">¶</a></h3>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">usage</span><span class="p">:</span> <span class="n">vee</span> <span class="n">upgrade</span> <span class="p">[</span><span class="o">-</span><span class="n">h</span><span class="p">]</span> <span class="p">[</span><span class="o">-</span><span class="n">v</span><span class="p">]</span> <span class="p">[</span><span class="o">--</span><span class="nb">all</span><span class="p">]</span> <span class="p">[</span><span class="o">-</span><span class="n">u</span><span class="p">]</span> <span class="p">[</span><span class="o">--</span><span class="n">dirty</span><span class="p">]</span> <span class="p">[</span><span class="o">--</span><span class="n">relink</span><span class="p">]</span> <span class="p">[</span><span class="o">--</span><span class="n">reinstall</span><span class="p">]</span>
+                   <span class="p">[</span><span class="o">--</span><span class="n">no</span><span class="o">-</span><span class="n">deps</span><span class="p">]</span> <span class="p">[</span><span class="o">-</span><span class="n">f</span><span class="p">]</span> <span class="p">[</span><span class="o">-</span><span class="n">r</span> <span class="n">REPOS</span><span class="p">]</span>
+                   <span class="p">[</span><span class="n">subset</span> <span class="p">[</span><span class="n">subset</span> <span class="o">...</span><span class="p">]]</span>
+
+<span class="n">Install</span> <span class="n">packages</span> <span class="ow">and</span> <span class="n">link</span> <span class="n">into</span> <span class="n">environments</span><span class="p">,</span> <span class="k">as</span> <span class="n">specified</span> <span class="n">by</span> <span class="n">repositories</span><span class="o">.</span>
+
+<span class="n">positional</span> <span class="n">arguments</span><span class="p">:</span>
+  <span class="n">subset</span>
+
+<span class="n">optional</span> <span class="n">arguments</span><span class="p">:</span>
+  <span class="o">-</span><span class="n">h</span><span class="p">,</span> <span class="o">--</span><span class="n">help</span>            <span class="n">show</span> <span class="n">this</span> <span class="n">help</span> <span class="n">message</span> <span class="ow">and</span> <span class="n">exit</span>
+  <span class="o">-</span><span class="n">v</span><span class="p">,</span> <span class="o">--</span><span class="n">verbose</span>         <span class="n">increase</span> <span class="n">verbosity</span><span class="p">;</span> <span class="n">may</span> <span class="n">be</span> <span class="n">used</span> <span class="n">multiple</span> <span class="n">times</span>
+  <span class="o">--</span><span class="nb">all</span>                 <span class="n">upgrade</span> <span class="nb">all</span> <span class="n">repositories</span>
+  <span class="o">-</span><span class="n">u</span><span class="p">,</span> <span class="o">--</span><span class="n">update</span>          <span class="n">update</span> <span class="n">before</span> <span class="n">upgrading</span>
+  <span class="o">--</span><span class="n">dirty</span>               <span class="n">build</span> <span class="n">even</span> <span class="n">when</span> <span class="n">work</span> <span class="n">tree</span> <span class="ow">is</span> <span class="n">dirty</span>
+  <span class="o">--</span><span class="n">relink</span>              <span class="n">relink</span> <span class="n">packages</span>
+  <span class="o">--</span><span class="n">reinstall</span>           <span class="n">reinstall</span> <span class="n">packages</span>
+  <span class="o">--</span><span class="n">no</span><span class="o">-</span><span class="n">deps</span>             <span class="n">dont</span> <span class="n">touch</span> <span class="n">dependencies</span>
+  <span class="o">-</span><span class="n">f</span><span class="p">,</span> <span class="o">--</span><span class="n">force</span><span class="o">-</span><span class="n">branch</span><span class="o">-</span><span class="n">link</span>
+  <span class="o">-</span><span class="n">r</span> <span class="n">REPOS</span><span class="p">,</span> <span class="o">--</span><span class="n">repo</span> <span class="n">REPOS</span>
+</pre></div>
+</div>
+</div>
+</div>
+<div class="section" id="development">
+<span id="cli-development"></span><h2>development<a class="headerlink" href="#development" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="vee-add">
+<span id="cli-vee-add"></span><h3><code class="docutils literal notranslate"><span class="pre">vee</span> <span class="pre">add</span></code><a class="headerlink" href="#vee-add" title="Permalink to this headline">¶</a></h3>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">usage</span><span class="p">:</span> <span class="n">vee</span> <span class="n">add</span> <span class="p">[</span><span class="o">-</span><span class="n">h</span><span class="p">]</span> <span class="p">[</span><span class="o">-</span><span class="n">v</span><span class="p">]</span> <span class="p">[</span><span class="o">--</span><span class="n">update</span><span class="p">]</span> <span class="p">[</span><span class="o">--</span><span class="n">bake</span><span class="o">-</span><span class="n">installed</span><span class="p">]</span> <span class="p">[</span><span class="o">--</span><span class="n">checksum</span><span class="p">]</span> <span class="p">[</span><span class="o">--</span><span class="n">init</span><span class="p">]</span>
+               <span class="p">[</span><span class="o">--</span><span class="n">repo</span> <span class="n">REPO</span><span class="p">]</span>
+               <span class="p">[</span><span class="n">package</span><span class="p">]</span>
+
+<span class="n">positional</span> <span class="n">arguments</span><span class="p">:</span>
+  <span class="n">package</span>
+
+<span class="n">optional</span> <span class="n">arguments</span><span class="p">:</span>
+  <span class="o">-</span><span class="n">h</span><span class="p">,</span> <span class="o">--</span><span class="n">help</span>        <span class="n">show</span> <span class="n">this</span> <span class="n">help</span> <span class="n">message</span> <span class="ow">and</span> <span class="n">exit</span>
+  <span class="o">-</span><span class="n">v</span><span class="p">,</span> <span class="o">--</span><span class="n">verbose</span>     <span class="n">increase</span> <span class="n">verbosity</span><span class="p">;</span> <span class="n">may</span> <span class="n">be</span> <span class="n">used</span> <span class="n">multiple</span> <span class="n">times</span>
+  <span class="o">--</span><span class="n">update</span>          <span class="n">update</span> <span class="nb">all</span> <span class="n">repos</span> <span class="n">themselves</span>
+  <span class="o">--</span><span class="n">bake</span><span class="o">-</span><span class="n">installed</span>  <span class="n">bake</span> <span class="nb">all</span> <span class="n">installed</span> <span class="n">revisions</span>
+  <span class="o">--</span><span class="n">checksum</span>        <span class="n">checksum</span> <span class="n">existing</span> <span class="n">packages</span>
+  <span class="o">--</span><span class="n">init</span>            <span class="n">create</span> <span class="k">if</span> <span class="ow">not</span> <span class="n">found</span> <span class="ow">in</span> <span class="n">requirements</span>
+  <span class="o">--</span><span class="n">repo</span> <span class="n">REPO</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="vee-commit">
+<span id="cli-vee-commit"></span><h3><code class="docutils literal notranslate"><span class="pre">vee</span> <span class="pre">commit</span></code><a class="headerlink" href="#vee-commit" title="Permalink to this headline">¶</a></h3>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">usage</span><span class="p">:</span> <span class="n">vee</span> <span class="n">commit</span> <span class="p">[</span><span class="o">-</span><span class="n">h</span><span class="p">]</span> <span class="p">[</span><span class="o">-</span><span class="n">v</span><span class="p">]</span> <span class="p">[</span><span class="o">--</span><span class="n">major</span><span class="p">]</span> <span class="p">[</span><span class="o">--</span><span class="n">minor</span><span class="p">]</span> <span class="p">[</span><span class="o">--</span><span class="n">patch</span><span class="p">]</span> <span class="p">[</span><span class="o">--</span><span class="n">micro</span><span class="p">]</span> <span class="p">[</span><span class="o">-</span><span class="n">r</span> <span class="n">REPO</span><span class="p">]</span>
+                  <span class="p">[</span><span class="o">-</span><span class="n">m</span> <span class="n">MESSAGE</span><span class="p">]</span>
+
+<span class="n">optional</span> <span class="n">arguments</span><span class="p">:</span>
+  <span class="o">-</span><span class="n">h</span><span class="p">,</span> <span class="o">--</span><span class="n">help</span>            <span class="n">show</span> <span class="n">this</span> <span class="n">help</span> <span class="n">message</span> <span class="ow">and</span> <span class="n">exit</span>
+  <span class="o">-</span><span class="n">v</span><span class="p">,</span> <span class="o">--</span><span class="n">verbose</span>         <span class="n">increase</span> <span class="n">verbosity</span><span class="p">;</span> <span class="n">may</span> <span class="n">be</span> <span class="n">used</span> <span class="n">multiple</span> <span class="n">times</span>
+  <span class="o">--</span><span class="n">major</span>
+  <span class="o">--</span><span class="n">minor</span>
+  <span class="o">--</span><span class="n">patch</span>
+  <span class="o">--</span><span class="n">micro</span>
+  <span class="o">-</span><span class="n">r</span> <span class="n">REPO</span><span class="p">,</span> <span class="o">--</span><span class="n">repo</span> <span class="n">REPO</span>
+  <span class="o">-</span><span class="n">m</span> <span class="n">MESSAGE</span><span class="p">,</span> <span class="o">--</span><span class="n">message</span> <span class="n">MESSAGE</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="vee-develop">
+<span id="cli-vee-develop"></span><h3><code class="docutils literal notranslate"><span class="pre">vee</span> <span class="pre">develop</span></code><a class="headerlink" href="#vee-develop" title="Permalink to this headline">¶</a></h3>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">usage</span><span class="p">:</span> <span class="n">vee</span> <span class="n">develop</span> <span class="n">init</span> <span class="p">[</span><span class="n">NAME</span><span class="p">]</span>
+   <span class="ow">or</span><span class="p">:</span> <span class="n">vee</span> <span class="n">develop</span> <span class="n">clone</span> <span class="n">URL</span> <span class="p">[</span><span class="n">NAME</span><span class="p">]</span>
+   <span class="ow">or</span><span class="p">:</span> <span class="n">vee</span> <span class="n">develop</span> <span class="n">add</span> <span class="n">PATH</span> <span class="p">[</span><span class="n">NAME</span><span class="p">]</span>
+   <span class="ow">or</span><span class="p">:</span> <span class="n">vee</span> <span class="n">develop</span> <span class="n">rm</span> <span class="n">PATTERN</span>
+   <span class="ow">or</span><span class="p">:</span> <span class="n">vee</span> <span class="n">develop</span> <span class="n">find</span> <span class="n">PATH</span>
+   <span class="ow">or</span><span class="p">:</span> <span class="n">vee</span> <span class="n">develop</span> <span class="n">install</span> <span class="n">NAME</span>
+   <span class="ow">or</span><span class="p">:</span> <span class="n">vee</span> <span class="n">develop</span> <span class="n">rescan</span> <span class="p">[</span><span class="n">NAME</span> <span class="o">...</span><span class="p">]</span>
+   <span class="ow">or</span><span class="p">:</span> <span class="n">vee</span> <span class="n">develop</span> <span class="n">setenv</span> <span class="n">NAME</span> <span class="n">KEY</span><span class="o">=</span><span class="n">value</span> <span class="p">[</span><span class="o">...</span><span class="p">]</span>
+   <span class="ow">or</span><span class="p">:</span> <span class="n">vee</span> <span class="n">develop</span> <span class="nb">list</span> <span class="p">[</span><span class="o">--</span><span class="n">availible</span><span class="p">]</span> <span class="p">[</span><span class="o">--</span><span class="n">environ</span><span class="p">]</span>
+
+<span class="n">optional</span> <span class="n">arguments</span><span class="p">:</span>
+  <span class="o">-</span><span class="n">h</span><span class="p">,</span> <span class="o">--</span><span class="n">help</span>     <span class="n">show</span> <span class="n">this</span> <span class="n">help</span> <span class="n">message</span> <span class="ow">and</span> <span class="n">exit</span>
+  <span class="o">-</span><span class="n">v</span><span class="p">,</span> <span class="o">--</span><span class="n">verbose</span>  <span class="n">increase</span> <span class="n">verbosity</span><span class="p">;</span> <span class="n">may</span> <span class="n">be</span> <span class="n">used</span> <span class="n">multiple</span> <span class="n">times</span>
+
+<span class="n">subcommands</span><span class="p">:</span>
+    <span class="n">add</span>          <span class="n">track</span> <span class="n">an</span> <span class="n">existing</span> <span class="n">checkout</span>
+    <span class="n">clone</span>        <span class="n">clone</span> <span class="n">a</span> <span class="n">remote</span> <span class="n">git</span> <span class="n">repository</span> <span class="n">to</span> <span class="n">develop</span>
+    <span class="n">find</span>         <span class="n">recursively</span> <span class="n">find</span> <span class="n">existing</span> <span class="n">checkouts</span>
+    <span class="n">git</span>          <span class="n">run</span> <span class="n">a</span> <span class="n">git</span> <span class="n">command</span> <span class="n">on</span> <span class="nb">all</span> <span class="n">dev</span> <span class="n">packages</span>
+    <span class="n">init</span>         <span class="n">init</span> <span class="n">a</span> <span class="n">new</span> <span class="n">git</span> <span class="n">repository</span>
+    <span class="n">install</span>      <span class="n">install</span> <span class="n">a</span> <span class="n">tool</span> <span class="n">that</span> <span class="ow">is</span> <span class="n">managed</span> <span class="n">by</span> <span class="n">the</span> <span class="n">default</span> <span class="n">repository</span>
+    <span class="nb">list</span>         <span class="nb">list</span> <span class="nb">all</span> <span class="n">installed</span> <span class="ow">or</span> <span class="n">availible</span> <span class="n">tools</span>
+    <span class="n">rescan</span>       <span class="n">rescan</span> <span class="n">packages</span> <span class="k">for</span> <span class="n">changes</span> <span class="n">to</span> <span class="n">build</span> <span class="n">environment</span>
+    <span class="n">setenv</span>       <span class="nb">set</span> <span class="n">envvars</span> <span class="n">within</span> <span class="n">the</span> <span class="n">dev</span> <span class="n">execution</span> <span class="n">environment</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="vee-edit">
+<span id="cli-vee-edit"></span><h3><code class="docutils literal notranslate"><span class="pre">vee</span> <span class="pre">edit</span></code><a class="headerlink" href="#vee-edit" title="Permalink to this headline">¶</a></h3>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">usage</span><span class="p">:</span> <span class="n">vee</span> <span class="n">edit</span> <span class="p">[</span><span class="o">-</span><span class="n">h</span><span class="p">]</span> <span class="p">[</span><span class="o">-</span><span class="n">v</span><span class="p">]</span> <span class="p">[</span><span class="o">-</span><span class="n">r</span> <span class="p">[</span><span class="n">REPO</span><span class="p">]]</span>
+
+<span class="n">optional</span> <span class="n">arguments</span><span class="p">:</span>
+  <span class="o">-</span><span class="n">h</span><span class="p">,</span> <span class="o">--</span><span class="n">help</span>            <span class="n">show</span> <span class="n">this</span> <span class="n">help</span> <span class="n">message</span> <span class="ow">and</span> <span class="n">exit</span>
+  <span class="o">-</span><span class="n">v</span><span class="p">,</span> <span class="o">--</span><span class="n">verbose</span>         <span class="n">increase</span> <span class="n">verbosity</span><span class="p">;</span> <span class="n">may</span> <span class="n">be</span> <span class="n">used</span> <span class="n">multiple</span> <span class="n">times</span>
+  <span class="o">-</span><span class="n">r</span> <span class="p">[</span><span class="n">REPO</span><span class="p">],</span> <span class="o">--</span><span class="n">repo</span> <span class="p">[</span><span class="n">REPO</span><span class="p">]</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="vee-push">
+<span id="cli-vee-push"></span><h3><code class="docutils literal notranslate"><span class="pre">vee</span> <span class="pre">push</span></code><a class="headerlink" href="#vee-push" title="Permalink to this headline">¶</a></h3>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">usage</span><span class="p">:</span> <span class="n">vee</span> <span class="n">push</span> <span class="p">[</span><span class="o">-</span><span class="n">h</span><span class="p">]</span> <span class="p">[</span><span class="o">-</span><span class="n">v</span><span class="p">]</span> <span class="p">[</span><span class="o">-</span><span class="n">r</span> <span class="n">REPO</span><span class="p">]</span>
+
+<span class="n">optional</span> <span class="n">arguments</span><span class="p">:</span>
+  <span class="o">-</span><span class="n">h</span><span class="p">,</span> <span class="o">--</span><span class="n">help</span>            <span class="n">show</span> <span class="n">this</span> <span class="n">help</span> <span class="n">message</span> <span class="ow">and</span> <span class="n">exit</span>
+  <span class="o">-</span><span class="n">v</span><span class="p">,</span> <span class="o">--</span><span class="n">verbose</span>         <span class="n">increase</span> <span class="n">verbosity</span><span class="p">;</span> <span class="n">may</span> <span class="n">be</span> <span class="n">used</span> <span class="n">multiple</span> <span class="n">times</span>
+  <span class="o">-</span><span class="n">r</span> <span class="n">REPO</span><span class="p">,</span> <span class="o">--</span><span class="n">repo</span> <span class="n">REPO</span>
+</pre></div>
+</div>
+</div>
+</div>
+<div class="section" id="plumbing">
+<span id="cli-plumbing"></span><h2>plumbing<a class="headerlink" href="#plumbing" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="vee-gc">
+<span id="cli-vee-gc"></span><h3><code class="docutils literal notranslate"><span class="pre">vee</span> <span class="pre">gc</span></code><a class="headerlink" href="#vee-gc" title="Permalink to this headline">¶</a></h3>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">usage</span><span class="p">:</span> <span class="n">vee</span> <span class="n">gc</span> <span class="p">[</span><span class="o">-</span><span class="n">h</span><span class="p">]</span> <span class="p">[</span><span class="o">-</span><span class="n">v</span><span class="p">]</span> <span class="p">[</span><span class="o">--</span><span class="n">keep</span><span class="o">-</span><span class="n">latest</span> <span class="n">KEEP_LATEST</span><span class="p">]</span> <span class="p">[</span><span class="o">-</span><span class="n">e</span><span class="p">]</span> <span class="p">[</span><span class="o">-</span><span class="n">p</span><span class="p">]</span> <span class="p">[</span><span class="o">-</span><span class="n">n</span><span class="p">]</span>
+
+<span class="n">optional</span> <span class="n">arguments</span><span class="p">:</span>
+  <span class="o">-</span><span class="n">h</span><span class="p">,</span> <span class="o">--</span><span class="n">help</span>            <span class="n">show</span> <span class="n">this</span> <span class="n">help</span> <span class="n">message</span> <span class="ow">and</span> <span class="n">exit</span>
+  <span class="o">-</span><span class="n">v</span><span class="p">,</span> <span class="o">--</span><span class="n">verbose</span>         <span class="n">increase</span> <span class="n">verbosity</span><span class="p">;</span> <span class="n">may</span> <span class="n">be</span> <span class="n">used</span> <span class="n">multiple</span> <span class="n">times</span>
+  <span class="o">--</span><span class="n">keep</span><span class="o">-</span><span class="n">latest</span> <span class="n">KEEP_LATEST</span>
+  <span class="o">-</span><span class="n">e</span><span class="p">,</span> <span class="o">--</span><span class="n">prune</span><span class="o">-</span><span class="n">environments</span>
+  <span class="o">-</span><span class="n">p</span><span class="p">,</span> <span class="o">--</span><span class="n">prune</span><span class="o">-</span><span class="n">packages</span>
+  <span class="o">-</span><span class="n">n</span><span class="p">,</span> <span class="o">--</span><span class="n">dry</span><span class="o">-</span><span class="n">run</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="vee-install">
+<span id="cli-vee-install"></span><h3><code class="docutils literal notranslate"><span class="pre">vee</span> <span class="pre">install</span></code><a class="headerlink" href="#vee-install" title="Permalink to this headline">¶</a></h3>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">usage</span><span class="p">:</span> <span class="n">vee</span> <span class="n">install</span> <span class="p">[</span><span class="o">--</span><span class="n">force</span><span class="p">]</span> <span class="p">{</span><span class="n">PACKAGE</span> <span class="p">[</span><span class="n">OPTIONS</span><span class="p">],</span> <span class="n">REQUIREMENTS_FILE</span><span class="p">}</span><span class="o">+</span>
+
+<span class="n">Install</span> <span class="n">the</span> <span class="n">given</span> <span class="n">requirements</span> <span class="n">without</span> <span class="n">linking</span> <span class="n">them</span> <span class="n">into</span> <span class="n">an</span> <span class="n">environment</span><span class="o">.</span>
+<span class="n">This</span> <span class="ow">is</span> <span class="n">a</span> <span class="n">low</span><span class="o">-</span><span class="n">level</span> <span class="n">command</span><span class="p">,</span> <span class="ow">and</span> <span class="ow">is</span> <span class="n">generally</span> <span class="n">unused</span><span class="o">.</span>
+
+<span class="n">Examples</span><span class="p">:</span>
+
+    <span class="c1"># Install a single package.</span>
+    <span class="n">vee</span> <span class="n">install</span> <span class="n">git</span><span class="o">+</span><span class="n">git</span><span class="nd">@github</span><span class="o">.</span><span class="n">com</span><span class="p">:</span><span class="n">vfxetc</span><span class="o">/</span><span class="n">sgmock</span>
+
+    <span class="c1"># Install multiple packages.</span>
+    <span class="n">vee</span> <span class="n">install</span> <span class="n">git</span><span class="o">+</span><span class="n">git</span><span class="nd">@github</span><span class="o">.</span><span class="n">com</span><span class="p">:</span><span class="n">vfxetc</span><span class="o">/</span><span class="n">sgmock</span> <span class="n">git</span><span class="o">+</span><span class="n">git</span><span class="nd">@github</span><span class="o">.</span><span class="n">com</span><span class="p">:</span><span class="n">vfxetc</span><span class="o">/</span><span class="n">sgsession</span> \
+        <span class="n">http</span><span class="p">:</span><span class="o">/</span><span class="n">example</span><span class="o">.</span><span class="n">org</span><span class="o">/</span><span class="n">path</span><span class="o">/</span><span class="n">to</span><span class="o">/</span><span class="n">tarball</span><span class="o">.</span><span class="n">tgz</span> <span class="o">--</span><span class="n">make</span><span class="o">-</span><span class="n">install</span>
+
+    <span class="c1"># Install from a requirement set.</span>
+    <span class="n">vee</span> <span class="n">install</span> <span class="n">path</span><span class="o">/</span><span class="n">to</span><span class="o">/</span><span class="n">requirements</span><span class="o">.</span><span class="n">txt</span>
+
+<span class="n">optional</span> <span class="n">arguments</span><span class="p">:</span>
+  <span class="o">-</span><span class="n">h</span><span class="p">,</span> <span class="o">--</span><span class="n">help</span>     <span class="n">show</span> <span class="n">this</span> <span class="n">help</span> <span class="n">message</span> <span class="ow">and</span> <span class="n">exit</span>
+  <span class="o">-</span><span class="n">v</span><span class="p">,</span> <span class="o">--</span><span class="n">verbose</span>  <span class="n">increase</span> <span class="n">verbosity</span><span class="p">;</span> <span class="n">may</span> <span class="n">be</span> <span class="n">used</span> <span class="n">multiple</span> <span class="n">times</span>
+  <span class="o">--</span><span class="n">force</span>        <span class="n">force</span> <span class="n">install</span> <span class="n">over</span> <span class="n">old</span> <span class="n">package</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="vee-link">
+<span id="cli-vee-link"></span><h3><code class="docutils literal notranslate"><span class="pre">vee</span> <span class="pre">link</span></code><a class="headerlink" href="#vee-link" title="Permalink to this headline">¶</a></h3>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>usage: vee link ENVIRON (REQUIREMENT [OPTIONS])+
+
+Link the given requirement or requirements into the given environment,
+e.g.::
+
+    # Install and link a single package.
+    $ vee link git+git@github.com:vfxetc/sgmock
+
+    # Install and link multiple packages.
+    $ vee link git+git@github.com:vfxetc/sgmock git+git@github.com:vfxetc/sgsession \
+        http:/example.org/path/to/tarball.tgz --make-install
+
+    # Install and link from a requirement set.
+    $ vee link path/to/requirements.txt
+
+positional arguments:
+  requirements
+
+optional arguments:
+  -h, --help            show this help message and exit
+  -v, --verbose         increase verbosity; may be used multiple times
+  --reinstall
+  --no-install
+  --force
+  --raw                 arguments are raw directories
+  -r REPO, --repo REPO
+  -e ENVIRONMENT, --environment ENVIRONMENT
+  -d DIRECTORY, --directory DIRECTORY
+</pre></div>
+</div>
+</div>
+<div class="section" id="vee-relocate">
+<span id="cli-vee-relocate"></span><h3><code class="docutils literal notranslate"><span class="pre">vee</span> <span class="pre">relocate</span></code><a class="headerlink" href="#vee-relocate" title="Permalink to this headline">¶</a></h3>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">usage</span><span class="p">:</span> <span class="n">vee</span> <span class="n">relocate</span> <span class="p">[</span><span class="o">-</span><span class="n">h</span><span class="p">]</span> <span class="p">[</span><span class="o">-</span><span class="n">v</span><span class="p">]</span> <span class="p">[</span><span class="o">-</span><span class="n">n</span><span class="p">]</span> <span class="p">[</span><span class="o">--</span><span class="n">scan</span><span class="p">]</span> <span class="p">[</span><span class="o">--</span><span class="n">rescan</span><span class="p">]</span> <span class="p">[</span><span class="o">--</span><span class="n">spec</span> <span class="n">SPEC</span><span class="p">]</span> <span class="p">[</span><span class="n">path</span><span class="p">]</span>
+
+<span class="n">positional</span> <span class="n">arguments</span><span class="p">:</span>
+  <span class="n">path</span>
+
+<span class="n">optional</span> <span class="n">arguments</span><span class="p">:</span>
+  <span class="o">-</span><span class="n">h</span><span class="p">,</span> <span class="o">--</span><span class="n">help</span>     <span class="n">show</span> <span class="n">this</span> <span class="n">help</span> <span class="n">message</span> <span class="ow">and</span> <span class="n">exit</span>
+  <span class="o">-</span><span class="n">v</span><span class="p">,</span> <span class="o">--</span><span class="n">verbose</span>  <span class="n">increase</span> <span class="n">verbosity</span><span class="p">;</span> <span class="n">may</span> <span class="n">be</span> <span class="n">used</span> <span class="n">multiple</span> <span class="n">times</span>
+  <span class="o">-</span><span class="n">n</span><span class="p">,</span> <span class="o">--</span><span class="n">dry</span><span class="o">-</span><span class="n">run</span>
+  <span class="o">--</span><span class="n">scan</span>         <span class="n">look</span> <span class="k">for</span> <span class="n">installed</span> <span class="n">libraires</span>
+  <span class="o">--</span><span class="n">rescan</span>       <span class="n">redo</span> <span class="n">previous</span> <span class="n">scans</span>
+  <span class="o">--</span><span class="n">spec</span> <span class="n">SPEC</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="vee-brew">
+<span id="cli-vee-brew"></span><h3><code class="docutils literal notranslate"><span class="pre">vee</span> <span class="pre">brew</span></code><a class="headerlink" href="#vee-brew" title="Permalink to this headline">¶</a></h3>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>usage: vee brew COMMAND+
+
+Run a command on VEE&#39;s Homebrew. This is sometimes nessesary to manage Homebrew
+dependencies, as they are generally outside of the standard build pipeline.
+
+E.g.::
+
+    $ vee brew install sqlite
+    ==&gt; Installing sqlite dependency: readline
+    ==&gt; Installing sqlite
+
+    $ vee brew list
+    readline sqlite
+
+optional arguments:
+  -h, --help     show this help message and exit
+  -v, --verbose  increase verbosity; may be used multiple times
+</pre></div>
+</div>
+</div>
+<div class="section" id="vee-git">
+<span id="cli-vee-git"></span><h3><code class="docutils literal notranslate"><span class="pre">vee</span> <span class="pre">git</span></code><a class="headerlink" href="#vee-git" title="Permalink to this headline">¶</a></h3>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>usage: vee git [-r REPO] COMMAND+
+
+Run a ``git`` command on a environment repository&#39;s git repository.
+(Sorry for the name collision.)
+
+e.g.::
+
+    $ vee git -r primary status
+    On branch master
+    Your branch is behind &#39;origin/master&#39; by 1 commit, and can be fast-forwarded.
+      (use &quot;git pull&quot; to update your local branch)
+    nothing to commit, working directory clean
+
+optional arguments:
+  -h, --help            show this help message and exit
+  -v, --verbose         increase verbosity; may be used multiple times
+  -r REPO, --repo REPO  which repo to use
+  --stree               launch SourceTree
+</pre></div>
+</div>
+</div>
+<div class="section" id="vee-sqlite3">
+<span id="cli-vee-sqlite3"></span><h3><code class="docutils literal notranslate"><span class="pre">vee</span> <span class="pre">sqlite3</span></code><a class="headerlink" href="#vee-sqlite3" title="Permalink to this headline">¶</a></h3>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">usage</span><span class="p">:</span> <span class="n">vee</span> <span class="n">sqlite3</span> <span class="p">[</span><span class="o">-</span><span class="n">h</span><span class="p">]</span> <span class="p">[</span><span class="o">-</span><span class="n">v</span><span class="p">]</span>
+
+<span class="n">optional</span> <span class="n">arguments</span><span class="p">:</span>
+  <span class="o">-</span><span class="n">h</span><span class="p">,</span> <span class="o">--</span><span class="n">help</span>     <span class="n">show</span> <span class="n">this</span> <span class="n">help</span> <span class="n">message</span> <span class="ow">and</span> <span class="n">exit</span>
+  <span class="o">-</span><span class="n">v</span><span class="p">,</span> <span class="o">--</span><span class="n">verbose</span>  <span class="n">increase</span> <span class="n">verbosity</span><span class="p">;</span> <span class="n">may</span> <span class="n">be</span> <span class="n">used</span> <span class="n">multiple</span> <span class="n">times</span>
+</pre></div>
+</div>
+</div>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="index.html">Table of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">Command-Line Interface</a><ul>
+<li><a class="reference internal" href="#top-level">top-level</a><ul>
+<li><a class="reference internal" href="#vee"><code class="docutils literal notranslate"><span class="pre">vee</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#setup">setup</a><ul>
+<li><a class="reference internal" href="#vee-init"><code class="docutils literal notranslate"><span class="pre">vee</span> <span class="pre">init</span></code></a></li>
+<li><a class="reference internal" href="#vee-doctor"><code class="docutils literal notranslate"><span class="pre">vee</span> <span class="pre">doctor</span></code></a></li>
+<li><a class="reference internal" href="#vee-self-update"><code class="docutils literal notranslate"><span class="pre">vee</span> <span class="pre">self-update</span></code></a></li>
+<li><a class="reference internal" href="#vee-repo"><code class="docutils literal notranslate"><span class="pre">vee</span> <span class="pre">repo</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#workflow">workflow</a><ul>
+<li><a class="reference internal" href="#vee-exec"><code class="docutils literal notranslate"><span class="pre">vee</span> <span class="pre">exec</span></code></a></li>
+<li><a class="reference internal" href="#vee-update"><code class="docutils literal notranslate"><span class="pre">vee</span> <span class="pre">update</span></code></a></li>
+<li><a class="reference internal" href="#vee-upgrade"><code class="docutils literal notranslate"><span class="pre">vee</span> <span class="pre">upgrade</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#development">development</a><ul>
+<li><a class="reference internal" href="#vee-add"><code class="docutils literal notranslate"><span class="pre">vee</span> <span class="pre">add</span></code></a></li>
+<li><a class="reference internal" href="#vee-commit"><code class="docutils literal notranslate"><span class="pre">vee</span> <span class="pre">commit</span></code></a></li>
+<li><a class="reference internal" href="#vee-develop"><code class="docutils literal notranslate"><span class="pre">vee</span> <span class="pre">develop</span></code></a></li>
+<li><a class="reference internal" href="#vee-edit"><code class="docutils literal notranslate"><span class="pre">vee</span> <span class="pre">edit</span></code></a></li>
+<li><a class="reference internal" href="#vee-push"><code class="docutils literal notranslate"><span class="pre">vee</span> <span class="pre">push</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#plumbing">plumbing</a><ul>
+<li><a class="reference internal" href="#vee-gc"><code class="docutils literal notranslate"><span class="pre">vee</span> <span class="pre">gc</span></code></a></li>
+<li><a class="reference internal" href="#vee-install"><code class="docutils literal notranslate"><span class="pre">vee</span> <span class="pre">install</span></code></a></li>
+<li><a class="reference internal" href="#vee-link"><code class="docutils literal notranslate"><span class="pre">vee</span> <span class="pre">link</span></code></a></li>
+<li><a class="reference internal" href="#vee-relocate"><code class="docutils literal notranslate"><span class="pre">vee</span> <span class="pre">relocate</span></code></a></li>
+<li><a class="reference internal" href="#vee-brew"><code class="docutils literal notranslate"><span class="pre">vee</span> <span class="pre">brew</span></code></a></li>
+<li><a class="reference internal" href="#vee-git"><code class="docutils literal notranslate"><span class="pre">vee</span> <span class="pre">git</span></code></a></li>
+<li><a class="reference internal" href="#vee-sqlite3"><code class="docutils literal notranslate"><span class="pre">vee</span> <span class="pre">sqlite3</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="pipeline.html"
+                        title="previous chapter">Pipelines</a></p>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="_sources/commands.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="pipeline.html" title="Pipelines"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="index.html">VEE 0.1 documentation</a> &#187;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2015-2020, Mike Boers.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 2.2.1.
+    </div>
+  </body>
+</html>

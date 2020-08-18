@@ -1,0 +1,315 @@
+
+<!DOCTYPE html>
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta charset="utf-8" />
+    <title>Core Concepts &#8212; VEE 0.1 documentation</title>
+    <link rel="stylesheet" href="_static/nature.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" type="text/css" href="_static/graphviz.css" />
+    <link rel="stylesheet" type="text/css" href="_static/custom.css" />
+    <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <script type="text/javascript" src="_static/language_data.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Pipelines" href="pipeline.html" />
+    <link rel="prev" title="Workflows" href="workflow.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="pipeline.html" title="Pipelines"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="workflow.html" title="Workflows"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="index.html">VEE 0.1 documentation</a> &#187;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="core-concepts">
+<h1>Core Concepts<a class="headerlink" href="#core-concepts" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="home">
+<h2>Home<a class="headerlink" href="#home" title="Permalink to this headline">¶</a></h2>
+<p>VEE’s home is where it installs and links environments. It is structured like:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">builds</span><span class="o">/</span>        <span class="c1"># Where packages are built; largely temporary.</span>
+<span class="n">dev</span><span class="o">/</span>           <span class="c1"># Where you work as a developer.</span>
+<span class="n">environments</span><span class="o">/</span>  <span class="c1"># The final linked environments you execute in.</span>
+<span class="n">installs</span><span class="o">/</span>      <span class="c1"># The installed (post-build) packages.</span>
+<span class="n">opt</span><span class="o">/</span>           <span class="c1"># Sym-links to last-installed version of every package.</span>
+<span class="n">packages</span><span class="o">/</span>      <span class="c1"># The packages themselves (e.g. tarballs, git repos, etc.).</span>
+<span class="n">repos</span><span class="o">/</span>         <span class="c1"># The requirement repositories which drive your environments.</span>
+<span class="n">src</span><span class="o">/</span>           <span class="c1"># VEE itself.</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="environment">
+<span id="id1"></span><h2>Environment<a class="headerlink" href="#environment" title="Permalink to this headline">¶</a></h2>
+<p>An environment is a single “prefix”, linked from installed packages. Contains
+standard top-level directories such as <code class="docutils literal notranslate"><span class="pre">bin</span></code>, <code class="docutils literal notranslate"><span class="pre">etc</span></code>, <code class="docutils literal notranslate"><span class="pre">lib</span></code>, <code class="docutils literal notranslate"><span class="pre">include</span></code>,
+<code class="docutils literal notranslate"><span class="pre">share</span></code>, <code class="docutils literal notranslate"><span class="pre">var</span></code>, etc..</p>
+<p>These are symlinked together using the least number of links possible; a directory
+tree that only exists within a single package will be composed of a single
+symlink at the root of that tree.</p>
+<p>Since their link structure is then unknown, it is highly advised to not write
+into an environment.</p>
+</div>
+<div class="section" id="packages">
+<span id="package"></span><h2>Packages<a class="headerlink" href="#packages" title="Permalink to this headline">¶</a></h2>
+<p>Outside of VEE, packages are bundles provided by a remote source which contains
+source code, or prepared build artifacts. E.g. a tarball, zipfile, or git repository.</p>
+<p>Within VEE, the <code class="xref py py-class docutils literal notranslate"><span class="pre">Package</span></code> class is more abstract, representing both
+abstract requirements and a concrete instance of them. It provides all state
+required for the various pipelines.</p>
+</div>
+<div class="section" id="requirement">
+<span id="id2"></span><h2>Requirement<a class="headerlink" href="#requirement" title="Permalink to this headline">¶</a></h2>
+<p>A requirement is specification of a package that we would like to have installed
+in an environment. These are still represented via the <code class="xref py py-class docutils literal notranslate"><span class="pre">Package</span></code> class.</p>
+</div>
+<div class="section" id="requirement-specification">
+<span id="requirements"></span><h2>Requirement Specification<a class="headerlink" href="#requirement-specification" title="Permalink to this headline">¶</a></h2>
+<p>Requirements are specified via a series of command-line-like arguments.
+The first is a URL, which may be HTTP, common git formats, or VEE-specific, e.g.:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">http://cython.org/release/Cython-0.22.tar.gz</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">git+git&#64;github.com:vfxetc/sitetools</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">pypi:pyyaml</span></code></p></li>
+</ul>
+<p>The requirements are further refined by the following arguments:</p>
+<p id="requirement-arg-name"><code class="docutils literal notranslate"><span class="pre">-n</span> <span class="pre">NAME,</span> <span class="pre">--name</span> <span class="pre">NAME</span></code></p>
+<p id="requirement-arg-revision"><code class="docutils literal notranslate"><span class="pre">-r</span> <span class="pre">REVISION,</span> <span class="pre">--revision</span> <span class="pre">REVISION</span></code></p>
+<p id="requirement-arg-etag"><code class="docutils literal notranslate"><span class="pre">--etag</span> <span class="pre">ETAG</span></code></p>
+<blockquote>
+<div><p>identifier for busting caches</p>
+</div></blockquote>
+<p id="requirement-arg-checksum"><code class="docutils literal notranslate"><span class="pre">--checksum</span> <span class="pre">CHECKSUM</span></code></p>
+<blockquote>
+<div><p>to verify that package archives haven’t changed</p>
+</div></blockquote>
+<p id="requirement-arg-environ"><code class="docutils literal notranslate"><span class="pre">-e</span> <span class="pre">[ENVIRON</span> <span class="pre">[ENVIRON</span> <span class="pre">...]],</span> <span class="pre">--environ</span> <span class="pre">[ENVIRON</span> <span class="pre">[ENVIRON</span> <span class="pre">...]]</span></code></p>
+<p id="requirement-arg-config"><code class="docutils literal notranslate"><span class="pre">-c</span> <span class="pre">[CONFIG</span> <span class="pre">[CONFIG</span> <span class="pre">...]],</span> <span class="pre">--config</span> <span class="pre">[CONFIG</span> <span class="pre">[CONFIG</span> <span class="pre">...]]</span></code></p>
+<blockquote>
+<div><p>args to pass to <cite>./configure</cite>, <cite>python setup.py</cite>, <cite>brew install</cite>, etc..</p>
+</div></blockquote>
+<p id="requirement-arg-autoconf"><code class="docutils literal notranslate"><span class="pre">--autoconf</span></code></p>
+<blockquote>
+<div><p>the package uses autoconf; may ./bootstrap</p>
+</div></blockquote>
+<p id="requirement-arg-make-install"><code class="docutils literal notranslate"><span class="pre">--make-install</span></code></p>
+<blockquote>
+<div><p>do <cite>make install</cite></p>
+</div></blockquote>
+<p id="requirement-arg-install-name"><code class="docutils literal notranslate"><span class="pre">--install-name</span> <span class="pre">INSTALL_NAME</span></code></p>
+<p id="requirement-arg-build-subdir"><code class="docutils literal notranslate"><span class="pre">--build-subdir</span> <span class="pre">BUILD_SUBDIR</span></code></p>
+<p id="requirement-arg-install-prefix"><code class="docutils literal notranslate"><span class="pre">--install-prefix</span> <span class="pre">INSTALL_PREFIX</span></code></p>
+<p id="requirement-arg-defer-setup-build"><code class="docutils literal notranslate"><span class="pre">--defer-setup-build</span></code></p>
+<blockquote>
+<div><p>For Python packages, dont <cite>python setup.py build</cite> first</p>
+</div></blockquote>
+<p id="requirement-arg-hard-link"><code class="docutils literal notranslate"><span class="pre">--hard-link</span></code></p>
+<blockquote>
+<div><p>use hard links instead of copies</p>
+</div></blockquote>
+<p id="requirement-arg-pseudo-homebrew"><code class="docutils literal notranslate"><span class="pre">--pseudo-homebrew</span></code></p>
+<blockquote>
+<div><p>assume is repackage of Homebrew</p>
+</div></blockquote>
+<p id="requirement-arg-relocate"><code class="docutils literal notranslate"><span class="pre">--relocate</span> <span class="pre">RELOCATE</span></code></p>
+<blockquote>
+<div><p>how to relocate shared libs on OS X, or RPATHS to set on Linux</p>
+</div></blockquote>
+<p id="requirement-arg-set-rpath"><code class="docutils literal notranslate"><span class="pre">--set-rpath</span> <span class="pre">SET_RPATH</span></code></p>
+<blockquote>
+<div><p>what rpaths to set on Linux</p>
+</div></blockquote>
+<p id="requirement-arg-virtual"><code class="docutils literal notranslate"><span class="pre">--virtual</span></code></p>
+<blockquote>
+<div><p>package is runtime only; does not persist</p>
+</div></blockquote>
+<p id="requirement-arg-develop-sh"><code class="docutils literal notranslate"><span class="pre">--develop-sh</span> <span class="pre">DEVELOP_SH</span></code></p>
+<blockquote>
+<div><p>shell script in repository to source to develop the package</p>
+</div></blockquote>
+<p id="requirement-arg-build-sh"><code class="docutils literal notranslate"><span class="pre">--build-sh</span> <span class="pre">BUILD_SH</span></code></p>
+<blockquote>
+<div><p>shell script in repository to source to build the package</p>
+</div></blockquote>
+<p id="requirement-arg-install-sh"><code class="docutils literal notranslate"><span class="pre">--install-sh</span> <span class="pre">INSTALL_SH</span></code></p>
+<blockquote>
+<div><p>shell script in repository to source to install the package</p>
+</div></blockquote>
+<p id="requirement-arg-requirements-txt"><code class="docutils literal notranslate"><span class="pre">--requirements-txt</span> <span class="pre">REQUIREMENTS_TXT</span></code></p>
+<blockquote>
+<div><p>shell script in repository to source to build the package</p>
+</div></blockquote>
+<p>These may be passed to individual commands, e.g.:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">vee</span> <span class="n">link</span> <span class="n">pypi</span><span class="p">:</span><span class="n">pyyaml</span> <span class="o">--</span><span class="n">revision</span><span class="o">=</span><span class="mf">3.11</span>
+</pre></div>
+</div>
+<p>or via a <code class="docutils literal notranslate"><span class="pre">requirements.txt</span></code> file, which contains a list of requirements.</p>
+</div>
+<div class="section" id="requirements-txt">
+<span id="id3"></span><h2><code class="docutils literal notranslate"><span class="pre">requirements.txt</span></code><a class="headerlink" href="#requirements-txt" title="Permalink to this headline">¶</a></h2>
+<p>The requirements file may also include:</p>
+<blockquote>
+<div><ul>
+<li><p>Headers, which are lines formatted like <code class="docutils literal notranslate"><span class="pre">Header:</span> <span class="pre">Value</span></code>, e.g.:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">Name</span><span class="p">:</span> <span class="n">example</span>
+<span class="n">Version</span><span class="p">:</span> <span class="mf">0.43</span><span class="o">.</span><span class="mi">23</span>
+<span class="n">Vee</span><span class="o">-</span><span class="n">Revision</span><span class="p">:</span> <span class="mf">0.1</span><span class="o">-</span><span class="n">dev</span><span class="o">+</span><span class="mi">4254</span><span class="n">bc1</span>
+</pre></div>
+</div>
+</li>
+<li><p>Comments beginning with <code class="docutils literal notranslate"><span class="pre">#</span></code>;</p></li>
+<li><p>Basic control flow, starting with <code class="docutils literal notranslate"><span class="pre">%</span></code>, e.g.:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="c1"># For the Shotgun cache:</span>
+<span class="o">%</span> <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;VEEINCLUDE_SGCACHE&#39;</span><span class="p">):</span>
+    <span class="n">git</span><span class="o">+</span><span class="n">git</span><span class="nd">@github</span><span class="o">.</span><span class="n">com</span><span class="p">:</span><span class="n">vfxetc</span><span class="o">/</span><span class="n">sgapi</span> <span class="o">--</span><span class="n">revision</span><span class="o">=</span><span class="mi">6</span><span class="n">da9d1c5</span>
+    <span class="n">git</span><span class="o">+</span><span class="n">git</span><span class="nd">@github</span><span class="o">.</span><span class="n">com</span><span class="p">:</span><span class="n">vfxetc</span><span class="o">/</span><span class="n">sgcache</span> <span class="o">--</span><span class="n">revision</span><span class="o">=</span><span class="n">cd673656</span>
+    <span class="n">git</span><span class="o">+</span><span class="n">git</span><span class="nd">@github</span><span class="o">.</span><span class="n">com</span><span class="p">:</span><span class="n">vfxetc</span><span class="o">/</span><span class="n">sgevents</span> <span class="o">--</span><span class="n">revision</span><span class="o">=</span><span class="n">a58e61c5</span>
+<span class="o">%</span> <span class="n">endif</span>
+</pre></div>
+</div>
+</li>
+</ul>
+</div></blockquote>
+</div>
+<div class="section" id="name-conflicts">
+<span id="name"></span><h2>Name Conflicts<a class="headerlink" href="#name-conflicts" title="Permalink to this headline">¶</a></h2>
+<p>Package names are currently assumed to existing within a single
+namespace, regardless of what type of package they represent. This means that
+there are potentially severe collisions between a similarly named package in
+Homebrew and on the PyPI, for instance.</p>
+<p>The <code class="docutils literal notranslate"><span class="pre">--name</span></code> argument is provided to allow for manual disambiguation.</p>
+</div>
+<div class="section" id="environment-repository">
+<span id="env-repo"></span><h2>Environment Repository<a class="headerlink" href="#environment-repository" title="Permalink to this headline">¶</a></h2>
+<p>An environment repository is a git repository which contains (at a minimum)
+a <a class="reference internal" href="#requirements-txt"><span class="std std-ref">requirements.txt</span></a> file.</p>
+<p>They are managed by the <a class="reference internal" href="commands.html#cli-vee-repo"><span class="std std-ref">vee repo</span></a> command.</p>
+</div>
+<div class="section" id="execution-environment">
+<span id="exec-env"></span><h2>Execution Environment<a class="headerlink" href="#execution-environment" title="Permalink to this headline">¶</a></h2>
+<dl class="envvar">
+<dt id="envvar-VEE_EXEC_ENV">
+<code class="sig-name descname">VEE_EXEC_ENV</code><a class="headerlink" href="#envvar-VEE_EXEC_ENV" title="Permalink to this definition">¶</a></dt>
+<dd><p>A comma-delimited list of environment names that were linked into the
+current environment. If you actually use an environment repository, this
+will likely contain <code class="docutils literal notranslate"><span class="pre">&quot;NAME/BRANCH&quot;</span></code> of that repo. Each entry here will
+have a corresponding entry in <span class="target" id="index-0"></span><a class="reference internal" href="#envvar-VEE_EXEC_PATH"><code class="xref std std-envvar docutils literal notranslate"><span class="pre">VEE_EXEC_PATH</span></code></a> as well.</p>
+</dd></dl>
+
+<dl class="envvar">
+<dt id="envvar-VEE_EXEC_REPO">
+<code class="sig-name descname">VEE_EXEC_REPO</code><a class="headerlink" href="#envvar-VEE_EXEC_REPO" title="Permalink to this definition">¶</a></dt>
+<dd><p>A comma-delimited list of environment repository names that were linked
+into the current environment.</p>
+</dd></dl>
+
+<dl class="envvar">
+<dt id="envvar-VEE_EXEC_PATH">
+<code class="sig-name descname">VEE_EXEC_PATH</code><a class="headerlink" href="#envvar-VEE_EXEC_PATH" title="Permalink to this definition">¶</a></dt>
+<dd><p>A colon-delimited list of paths that are scanned to assemble the current
+environment.</p>
+</dd></dl>
+
+<dl class="envvar">
+<dt id="envvar-VEE_EXEC_PREFIX">
+<code class="sig-name descname">VEE_EXEC_PREFIX</code><a class="headerlink" href="#envvar-VEE_EXEC_PREFIX" title="Permalink to this definition">¶</a></dt>
+<dd><p>The first path scanned to assemble the current environment. This is
+mainly for convenience.</p>
+</dd></dl>
+
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="index.html">Table of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">Core Concepts</a><ul>
+<li><a class="reference internal" href="#home">Home</a></li>
+<li><a class="reference internal" href="#environment">Environment</a></li>
+<li><a class="reference internal" href="#packages">Packages</a></li>
+<li><a class="reference internal" href="#requirement">Requirement</a></li>
+<li><a class="reference internal" href="#requirement-specification">Requirement Specification</a></li>
+<li><a class="reference internal" href="#requirements-txt"><code class="docutils literal notranslate"><span class="pre">requirements.txt</span></code></a></li>
+<li><a class="reference internal" href="#name-conflicts">Name Conflicts</a></li>
+<li><a class="reference internal" href="#environment-repository">Environment Repository</a></li>
+<li><a class="reference internal" href="#execution-environment">Execution Environment</a></li>
+</ul>
+</li>
+</ul>
+
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="workflow.html"
+                        title="previous chapter">Workflows</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="pipeline.html"
+                        title="next chapter">Pipelines</a></p>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="_sources/concepts.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="pipeline.html" title="Pipelines"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="workflow.html" title="Workflows"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="index.html">VEE 0.1 documentation</a> &#187;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2015-2020, Mike Boers.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 2.2.1.
+    </div>
+  </body>
+</html>

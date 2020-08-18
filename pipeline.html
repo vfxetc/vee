@@ -1,0 +1,409 @@
+
+<!DOCTYPE html>
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta charset="utf-8" />
+    <title>Pipelines &#8212; VEE 0.1 documentation</title>
+    <link rel="stylesheet" href="_static/nature.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" type="text/css" href="_static/graphviz.css" />
+    <link rel="stylesheet" type="text/css" href="_static/custom.css" />
+    <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <script type="text/javascript" src="_static/language_data.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Command-Line Interface" href="commands.html" />
+    <link rel="prev" title="Core Concepts" href="concepts.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="commands.html" title="Command-Line Interface"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="concepts.html" title="Core Concepts"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="index.html">VEE 0.1 documentation</a> &#187;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="pipelines">
+<h1>Pipelines<a class="headerlink" href="#pipelines" title="Permalink to this headline">¶</a></h1>
+<p>The package processing pipelines consist of a series of steps, the handlers of
+which are determined as the pipeline is processed. This enables us to defer
+the build type of a package (e.g. a Python distribution) until after it has
+been downloaded and extracted.</p>
+<p>There are two main pipelines currently in VEE: the <a class="reference internal" href="#install-pipeline"><span class="std std-ref">Install Pipeline</span></a> and
+<a class="reference internal" href="#develop-pipeline"><span class="std std-ref">Develop Pipeline</span></a>.</p>
+<p>All pipelines must start with an “init” step, which must be indempodent, and
+may normalize user-specified data on the package (e.g. normalize the URL).</p>
+<div class="section" id="install-pipeline">
+<span id="id1"></span><h2>Install Pipeline<a class="headerlink" href="#install-pipeline" title="Permalink to this headline">¶</a></h2>
+<p>The install pipeline is the primary pipeline of VEE, and is reponsible for
+installing the packages that are used in the default runtime. It’s steps are:</p>
+<div class="section" id="init">
+<h3>“init”<a class="headerlink" href="#init" title="Permalink to this headline">¶</a></h3>
+<p>Normalizes user-specified data. This step <strong>MUST</strong> be indempodent, as it may run
+more than once in common usage. It may also set the package name/path.</p>
+</div>
+<div class="section" id="fetch">
+<h3>“fetch”<a class="headerlink" href="#fetch" title="Permalink to this headline">¶</a></h3>
+<p>The package is retrieved and placed at <a class="reference internal" href="#Package.package_path" title="Package.package_path"><code class="xref py py-attr docutils literal notranslate"><span class="pre">Package.package_path</span></code></a>.
+This step <strong>SHOULD</strong> be idempotent (and so is assumed to cache its results and
+may freely be called multiple times).</p>
+</div>
+<div class="section" id="extract">
+<h3>“extract”<a class="headerlink" href="#extract" title="Permalink to this headline">¶</a></h3>
+<p>The package’s contents (“source”) are placed into <a class="reference internal" href="#Package.build_path" title="Package.build_path"><code class="xref py py-attr docutils literal notranslate"><span class="pre">Package.build_path</span></code></a>
+(which defaults to a temporary directory).</p>
+</div>
+<div class="section" id="inspect">
+<h3>“inspect”<a class="headerlink" href="#inspect" title="Permalink to this headline">¶</a></h3>
+<p>An opportunity to check meta-data and determine self-described dependencies.
+This step may also set build and install names/paths.</p>
+</div>
+<div class="section" id="build">
+<h3>“build”<a class="headerlink" href="#build" title="Permalink to this headline">¶</a></h3>
+<p>The source is built into a build “artifact”.</p>
+</div>
+<div class="section" id="install">
+<h3>“install”<a class="headerlink" href="#install" title="Permalink to this headline">¶</a></h3>
+<p>The build artifact is installed into <a class="reference internal" href="#Package.install_path" title="Package.install_path"><code class="xref py py-attr docutils literal notranslate"><span class="pre">Package.install_path</span></code></a>.</p>
+</div>
+<div class="section" id="post-install">
+<h3>“post_install”<a class="headerlink" href="#post-install" title="Permalink to this headline">¶</a></h3>
+<p>Permission/ownership modification of the install.</p>
+</div>
+<div class="section" id="relocate">
+<h3>“relocate”<a class="headerlink" href="#relocate" title="Permalink to this headline">¶</a></h3>
+<p>Shared libraries are relocated to link against existant libraries (in case
+they are not already relocatable, and their dependencies are not in the same
+location in all environments).</p>
+</div>
+<div class="section" id="optlink">
+<h3>“optlink”<a class="headerlink" href="#optlink" title="Permalink to this headline">¶</a></h3>
+<p>The <a class="reference internal" href="#Package.install_path" title="Package.install_path"><code class="xref py py-attr docutils literal notranslate"><span class="pre">Package.install_path</span></code></a> is linked into <code class="docutils literal notranslate"><span class="pre">$VEE/opt</span></code>, for user
+convenience.</p>
+<p>The built-in pipeline looks like:</p>
+<div class="graphviz"><img src="_images/graphviz-5b80386391a92e938c832a9d3e0665be65eb43b4.png" alt="digraph install_pipeline {
+
+   &quot;git:init&quot; -&gt; &quot;git:fetch&quot;;
+   &quot;git:fetch&quot; -&gt; &quot;file:extract&quot;;
+
+   &quot;generic:init&quot; -&gt; &quot;file:fetch&quot;;
+
+   &quot;file:fetch&quot; -&gt; &quot;file:extract&quot;;
+   &quot;file:fetch&quot; -&gt; &quot;archive:extract&quot;;
+
+   &quot;http:init&quot; -&gt; &quot;http:fetch&quot;;
+   &quot;http:fetch&quot; -&gt; &quot;archive:extract&quot;;
+
+   &quot;file:extract&quot; -&gt; &quot;generic:inspect&quot;
+   &quot;file:extract&quot; -&gt; &quot;python:inspect&quot;
+   &quot;archive:extract&quot; -&gt; &quot;generic:inspect&quot;
+   &quot;archive:extract&quot; -&gt; &quot;python:inspect&quot;
+
+   &quot;python:inspect&quot; -&gt; &quot;python:build&quot; -&gt; &quot;python:install&quot;
+   &quot;generic:inspect&quot; -&gt; &quot;generic:build&quot; -&gt; &quot;generic:install&quot;
+   &quot;generic:inspect&quot; -&gt; &quot;self:build&quot; -&gt; &quot;generic:install&quot;
+   &quot;generic:build&quot; -&gt; &quot;self:install&quot;
+   &quot;self:build&quot; -&gt; &quot;self:install&quot;
+
+   &quot;generic:inspect&quot; -&gt; &quot;make:build&quot; -&gt; &quot;generic:install&quot;
+   &quot;make:build&quot; -&gt; &quot;make:install&quot;
+
+   &quot;python:install&quot; -&gt; &quot;generic:relocate&quot;
+   &quot;generic:install&quot; -&gt; &quot;generic:relocate&quot;
+   &quot;self:install&quot; -&gt; &quot;generic:relocate&quot;
+   &quot;make:install&quot; -&gt; &quot;generic:relocate&quot;
+
+   &quot;homebrew:init&quot; -&gt; &quot;homebrew:fetch&quot; -&gt; &quot;homebrew:extract&quot; -&gt; &quot;homebrew:inspect&quot; -&gt; &quot;homebrew:build&quot; -&gt; &quot;homebrew:install&quot; -&gt; &quot;generic:relocate&quot;
+
+   &quot;generic:inspect&quot; [style=dashed]
+   &quot;generic:build&quot; [style=dashed]
+   &quot;homebrew:extract&quot; [style=dashed]
+   &quot;homebrew:install&quot; [style=dashed]
+
+   &quot;generic:relocate&quot; -&gt; &quot;generic:optlink&quot;
+
+
+
+
+
+}" class="graphviz" /></div>
+</div>
+</div>
+<div class="section" id="develop-pipeline">
+<span id="id2"></span><h2>Develop Pipeline<a class="headerlink" href="#develop-pipeline" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="id3">
+<h3>“init”<a class="headerlink" href="#id3" title="Permalink to this headline">¶</a></h3>
+<p>Same as above.</p>
+</div>
+<div class="section" id="develop">
+<h3>“develop”<a class="headerlink" href="#develop" title="Permalink to this headline">¶</a></h3>
+<p>Prepare the package for running in the development environment. Prepare any
+generated scripts, perhaps perform a build, and identify any environment
+variables to set in order to include this package in the runtime environment.</p>
+</div>
+</div>
+<div class="section" id="names-and-paths">
+<h2>Names and Paths<a class="headerlink" href="#names-and-paths" title="Permalink to this headline">¶</a></h2>
+<p>There are a series of <code class="docutils literal notranslate"><span class="pre">*_name</span></code> attribute of a <code class="xref py py-class docutils literal notranslate"><span class="pre">Package</span></code>. They are
+set from <code class="xref py py-class docutils literal notranslate"><span class="pre">Requirement</span></code> attributes, or self-determined on request via
+<code class="docutils literal notranslate"><span class="pre">Package._assert_names(build=True,</span> <span class="pre">...)</span></code>.</p>
+<p>There are a series of <code class="docutils literal notranslate"><span class="pre">*_path</span></code> properties on a <code class="xref py py-class docutils literal notranslate"><span class="pre">Package</span></code>. They usually
+incorporate the corresponding name, but aren’t required to. They are set from
+<code class="docutils literal notranslate"><span class="pre">Package._assert_paths(build=True,</span> <span class="pre">...)</span></code>.</p>
+<div class="admonition warning">
+<p class="admonition-title">Warning</p>
+<p>It is very important that an API consumer only every assert the existence of
+names or paths that they are about to use. This allows for the determination
+of some of the names (especially <code class="docutils literal notranslate"><span class="pre">install_name</span></code> and <code class="docutils literal notranslate"><span class="pre">install_path</span></code>) to be
+deferred as long as possible so that they may use information revealed during
+the earlier of the build pipeline.</p>
+</div>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>The <code class="docutils literal notranslate"><span class="pre">*_name</span></code> attributes exist only for the construction of paths; API consumers
+should only ever use the <code class="docutils literal notranslate"><span class="pre">*_path</span></code> properties</p>
+</div>
+<dl class="attribute">
+<dt id="Package.package_path">
+<code class="sig-prename descclassname">Package.</code><code class="sig-name descname">package_path</code><a class="headerlink" href="#Package.package_path" title="Permalink to this definition">¶</a></dt>
+<dd><p>The location of the package (e.g. tarball or git work tree) on disk. This
+must always be correct and never change. Therefore it can only derive from
+the requirement’s specification.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="Package.build_path">
+<code class="sig-prename descclassname">Package.</code><code class="sig-name descname">build_path</code><a class="headerlink" href="#Package.build_path" title="Permalink to this definition">¶</a></dt>
+<dd><p>A (usually temporary) directory for building. This must not change once the package
+has been extracted.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="Package.install_path">
+<code class="sig-prename descclassname">Package.</code><code class="sig-name descname">install_path</code><a class="headerlink" href="#Package.install_path" title="Permalink to this definition">¶</a></dt>
+<dd><p>The final location of a built artifact. May be <code class="docutils literal notranslate"><span class="pre">None</span></code> if it cannot be
+determined. This must not change once installed.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="Package.build_subdir">
+<code class="sig-prename descclassname">Package.</code><code class="sig-name descname">build_subdir</code><a class="headerlink" href="#Package.build_subdir" title="Permalink to this definition">¶</a></dt>
+<dd><p>Where within the build_path to install from. Good for selecting a sub directory
+that the package built itself into.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="Package.install_prefix">
+<code class="sig-prename descclassname">Package.</code><code class="sig-name descname">install_prefix</code><a class="headerlink" href="#Package.install_prefix" title="Permalink to this definition">¶</a></dt>
+<dd><p>Where within the install_path to install into. Good for installing packages
+into the correct place within the standard tree.</p>
+</dd></dl>
+
+</div>
+<div class="section" id="automatic-building">
+<h2>Automatic Building<a class="headerlink" href="#automatic-building" title="Permalink to this headline">¶</a></h2>
+<p>Most packages are inspected to determine which style of build to use. Unless
+otherwise stated, they will also use an automatic install process as well. The
+base styles (in order of inspection) are:</p>
+<div class="section" id="vee-build-sh">
+<h3><code class="docutils literal notranslate"><span class="pre">.</span> <span class="pre">vee-build.sh</span></code><a class="headerlink" href="#vee-build-sh" title="Permalink to this headline">¶</a></h3>
+<p>If a <code class="docutils literal notranslate"><span class="pre">vee-build.sh</span></code> file exists, it will be sourced and is expected to build
+the package. A few environment variables are passed to assist it:</p>
+<blockquote>
+<div><ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">VEE</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">VEE_BUILD_PATH</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">VEE_INSTALL_NAME</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">VEE_INSTALL_PATH</span></code></p></li>
+</ul>
+</div></blockquote>
+<p>The script may export a few environment variables to modify the install
+process:</p>
+<blockquote>
+<div><ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">VEE_build_subdir</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">VEE_install_prefix</span></code></p></li>
+</ul>
+</div></blockquote>
+</div>
+<div class="section" id="python-setup-py-build">
+<h3><code class="docutils literal notranslate"><span class="pre">python</span> <span class="pre">setup.py</span> <span class="pre">build</span></code><a class="headerlink" href="#python-setup-py-build" title="Permalink to this headline">¶</a></h3>
+<p>If a <code class="docutils literal notranslate"><span class="pre">setup.py</span></code> file exists, the package is assumed to be a standard
+distutils-style Python package. The build process is to call:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>python setup.py build
+</pre></div>
+</div>
+<p>and the install process will be (essentially) to call:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>python setup.py install --skip-build
+</pre></div>
+</div>
+</div>
+<div class="section" id="egg-info-or-dist-info">
+<h3><code class="docutils literal notranslate"><span class="pre">EGG-INFO</span></code> or <code class="docutils literal notranslate"><span class="pre">*.dist-info</span></code><a class="headerlink" href="#egg-info-or-dist-info" title="Permalink to this headline">¶</a></h3>
+<p>If an <code class="docutils literal notranslate"><span class="pre">EGG-INFO</span></code> or <code class="docutils literal notranslate"><span class="pre">*.dist-info</span></code> directory exists, the package is
+assumed to be a prepared Python package (an Egg or Wheel, respectively), and no
+further build steps are taken. The install process will be modified to install
+the package contents into <code class="docutils literal notranslate"><span class="pre">lib/python2.7/site-packages</span></code>.</p>
+</div>
+<div class="section" id="configure">
+<h3><code class="docutils literal notranslate"><span class="pre">./configure</span></code><a class="headerlink" href="#configure" title="Permalink to this headline">¶</a></h3>
+<p>If a <code class="docutils literal notranslate"><span class="pre">configure</span></code> file exists, it will be executed and passed the install path:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>./configure --prefix<span class="o">={</span>package.install_path<span class="o">}</span>
+</pre></div>
+</div>
+<p>This continues onto the next step…</p>
+</div>
+<div class="section" id="make">
+<h3><code class="docutils literal notranslate"><span class="pre">make</span></code><a class="headerlink" href="#make" title="Permalink to this headline">¶</a></h3>
+<p>If a <code class="docutils literal notranslate"><span class="pre">Makefile</span></code> file exists (which may have been constructed by running
+<code class="docutils literal notranslate"><span class="pre">./configure</span></code>), <code class="docutils literal notranslate"><span class="pre">make</span></code> will be called.</p>
+</div>
+</div>
+<div class="section" id="automatic-installation">
+<h2>Automatic Installation<a class="headerlink" href="#automatic-installation" title="Permalink to this headline">¶</a></h2>
+<p>Unless overridden (either by the package type, or the discovered build type
+(e.g. Python packages have their own install process)), the contents of
+the build path are copied to the install path, like:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">shutils</span><span class="o">.</span><span class="n">copytree</span><span class="p">(</span>
+    <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">pkg</span><span class="o">.</span><span class="n">build_path</span><span class="p">,</span> <span class="n">pkg</span><span class="o">.</span><span class="n">build_subdir</span><span class="p">)),</span>
+    <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">pkg</span><span class="o">.</span><span class="n">install_path</span><span class="p">,</span> <span class="n">pkg</span><span class="o">.</span><span class="n">install_prefix</span><span class="p">))</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+<p>An optional <code class="docutils literal notranslate"><span class="pre">--hard-link</span></code> flag indicates that the build and install should
+be hard-linked, instead of copied. This results in massive time and space
+savings, but requires the packages to be well behaved.</p>
+</div>
+<div class="section" id="caveats">
+<h2>Caveats<a class="headerlink" href="#caveats" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="make-install">
+<h3><code class="docutils literal notranslate"><span class="pre">make</span> <span class="pre">install</span></code><a class="headerlink" href="#make-install" title="Permalink to this headline">¶</a></h3>
+<p>Since we cannot trust that the standard <code class="docutils literal notranslate"><span class="pre">make;</span> <span class="pre">make</span> <span class="pre">install</span></code> pattern will
+actually install into a prefix provided to
+<code class="docutils literal notranslate"><span class="pre">./configure</span></code>, we do not run <code class="docutils literal notranslate"><span class="pre">make</span> <span class="pre">install</span></code>.</p>
+<p>An optional <code class="docutils literal notranslate"><span class="pre">--make-install</span></code> flag signals that it is safe to do so.</p>
+</div>
+<div class="section" id="python-setup-py-install">
+<h3><code class="docutils literal notranslate"><span class="pre">python</span> <span class="pre">setup.py</span> <span class="pre">install</span></code><a class="headerlink" href="#python-setup-py-install" title="Permalink to this headline">¶</a></h3>
+<p>Instead of running <code class="docutils literal notranslate"><span class="pre">python</span> <span class="pre">setup.py</span> <span class="pre">install</span></code>, we break it into
+<code class="docutils literal notranslate"><span class="pre">python</span> <span class="pre">setup.py</span> <span class="pre">build</span></code> and <code class="docutils literal notranslate"><span class="pre">python</span> <span class="pre">setup.py</span> <span class="pre">install</span> <span class="pre">--skip-build</span></code>.</p>
+</div>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="index.html">Table of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">Pipelines</a><ul>
+<li><a class="reference internal" href="#install-pipeline">Install Pipeline</a><ul>
+<li><a class="reference internal" href="#init">“init”</a></li>
+<li><a class="reference internal" href="#fetch">“fetch”</a></li>
+<li><a class="reference internal" href="#extract">“extract”</a></li>
+<li><a class="reference internal" href="#inspect">“inspect”</a></li>
+<li><a class="reference internal" href="#build">“build”</a></li>
+<li><a class="reference internal" href="#install">“install”</a></li>
+<li><a class="reference internal" href="#post-install">“post_install”</a></li>
+<li><a class="reference internal" href="#relocate">“relocate”</a></li>
+<li><a class="reference internal" href="#optlink">“optlink”</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#develop-pipeline">Develop Pipeline</a><ul>
+<li><a class="reference internal" href="#id3">“init”</a></li>
+<li><a class="reference internal" href="#develop">“develop”</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#names-and-paths">Names and Paths</a></li>
+<li><a class="reference internal" href="#automatic-building">Automatic Building</a><ul>
+<li><a class="reference internal" href="#vee-build-sh"><code class="docutils literal notranslate"><span class="pre">.</span> <span class="pre">vee-build.sh</span></code></a></li>
+<li><a class="reference internal" href="#python-setup-py-build"><code class="docutils literal notranslate"><span class="pre">python</span> <span class="pre">setup.py</span> <span class="pre">build</span></code></a></li>
+<li><a class="reference internal" href="#egg-info-or-dist-info"><code class="docutils literal notranslate"><span class="pre">EGG-INFO</span></code> or <code class="docutils literal notranslate"><span class="pre">*.dist-info</span></code></a></li>
+<li><a class="reference internal" href="#configure"><code class="docutils literal notranslate"><span class="pre">./configure</span></code></a></li>
+<li><a class="reference internal" href="#make"><code class="docutils literal notranslate"><span class="pre">make</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#automatic-installation">Automatic Installation</a></li>
+<li><a class="reference internal" href="#caveats">Caveats</a><ul>
+<li><a class="reference internal" href="#make-install"><code class="docutils literal notranslate"><span class="pre">make</span> <span class="pre">install</span></code></a></li>
+<li><a class="reference internal" href="#python-setup-py-install"><code class="docutils literal notranslate"><span class="pre">python</span> <span class="pre">setup.py</span> <span class="pre">install</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="concepts.html"
+                        title="previous chapter">Core Concepts</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="commands.html"
+                        title="next chapter">Command-Line Interface</a></p>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="_sources/pipeline.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="commands.html" title="Command-Line Interface"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="concepts.html" title="Core Concepts"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="index.html">VEE 0.1 documentation</a> &#187;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2015-2020, Mike Boers.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 2.2.1.
+    </div>
+  </body>
+</html>

@@ -1,0 +1,9 @@
+
+code.std-envvar:before {
+    content: "$";
+}
+
+
+dl.envvar dt code:before {
+    content: "$";
+}
