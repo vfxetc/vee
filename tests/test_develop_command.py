@@ -31,7 +31,7 @@ class TestDevelopCommand(TestCase):
         self.assertExists(os.path.join(VEE, 'dev/tdc_install/tdc_install/__init__.py'))
 
 
-        cmd = ['python', '-c', 'import tdc_install; print tdc_install.__file__.replace("/lib64/", "/lib/")']
+        cmd = ['python', '-c', 'import tdc_install; print(tdc_install.__file__.replace("/lib64/", "/lib/"))']
         
         default_out = subprocess.check_output(['vee', 'exec', '-r', req_repo.name] + cmd).strip()
         if default_out.endswith('.pyc'):

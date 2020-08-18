@@ -23,7 +23,7 @@ class DevPackage(GitRepo):
 
     def save_tag(self):
         tag_path = os.path.abspath(os.path.join(self.work_tree, '..', '.%s.vee-dev.json' % self.name))
-        with open(tag_path, 'wb') as fh:
+        with open(tag_path, 'w') as fh:
             fh.write(json.dumps({
                 'id': self.id,
                 'name': self.name,

@@ -67,7 +67,7 @@ class MockRepo(object):
                 else:
                     new.insert(0, element)
 
-        with open(path, 'wb') as fh:
+        with open(path, 'w') as fh:
             for line in new.iter_dump():
                 fh.write(line)
 

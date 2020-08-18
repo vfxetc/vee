@@ -123,7 +123,7 @@ class GitRepo(object):
         except CalledProcessError as e:
             res = e.returncode
 
-        stderr = ''.join(stderr).rstrip()
+        stderr = b''.join(stderr).rstrip().decode()
         fatal = []
         nonfatal = False
         for line in stderr.splitlines():

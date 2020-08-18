@@ -65,7 +65,7 @@ class PackageSet(collections.OrderedDict):
 
         if isinstance(names, str):
             names = [names]
-        names = list(names) if names else self.keys()
+        names = list(names if names else self.keys())
 
         for name in names:
             if name not in self:
