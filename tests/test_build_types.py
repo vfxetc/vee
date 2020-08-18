@@ -1,3 +1,5 @@
+import zipfile
+
 from . import *
 
 
@@ -72,9 +74,23 @@ class TestBuildTypes(TestCase):
         # self.assertExists(sandbox('vee/installs/scheme_python_bdist_wheel/1.0.0/bin/scheme_python_bdist_wheel-ep'))
 
     def test_python_bdist_wheel(self):
+        
         pkg = MockPackage('scheme_python_bdist_wheel', 'python_bdist_wheel')
         pkg.render_commit()
-        vee(['install', sandbox('packages/scheme_python_bdist_wheel'), '--install-name', 'scheme_python_bdist_wheel/1.0.0'])
+
+        # We need to assemble a whl, because pip can no longer deal with
+        # a bare directory.
+        dir_path = sandbox('packages/scheme_python_bdist_wheel')
+        whl_path = dir_path + '.whl'
+        with zipfile.ZipFile(whl_path, 'w') as fh:
+            for base, _, file_names in os.walk(dir_path):
+                for name in file_names:
+                    path = os.path.join(base, name)
+                    rel_path = os.path.relpath(path, dir_path)
+                    print(rel_path, path)
+                    fh.write(path, rel_path)
+
+        vee(['install', whl_path, '--install-name', 'scheme_python_bdist_wheel/1.0.0'])
         self.assertExists(sandbox('vee/installs/scheme_python_bdist_wheel/1.0.0/lib/python2.7/site-packages/scheme_python_bdist_wheel/__init__.py'))
         # TODO: arbitrary data.
         # TODO: scripts and console_scripts entrypoints:

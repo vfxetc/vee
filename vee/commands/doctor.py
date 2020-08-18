@@ -59,6 +59,7 @@ def doctor(args):
     print(style_note('==> dependencies'))
     for name, expected_version, in [
         ('setuptools', '36.0.0'),
+        ('pip', '20.0.0'),
         ('virtualenv', '15.0.0'),
         ('packaging', '16.0'),
         ('wheel', '0.29.0'),
