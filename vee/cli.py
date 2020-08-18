@@ -131,7 +131,7 @@ def style_warning(msg, detail=''):
 if __name__ == '__main__':
 
     print('ANSI Styles')
-    for i in xrange(1, 108):
+    for i in range(1, 108):
         print(CSI + '0m' + CSI + str(i) + 'm' + ('%03d' % i) + CSI + '0m', end=' ')
         if i % 10 == 0:
             print()
@@ -156,18 +156,18 @@ if __name__ == '__main__':
     print()
 
     print('216 Colours')
-    for r in xrange(0, 6):
-        for g in xrange(0, 6):
-            for b in xrange(0, 6):
+    for r in range(0, 6):
+        for g in range(0, 6):
+            for b in range(0, 6):
                 print(colour(u'◉ R%dG%dB%d' % (r, g, b), fg=(r, g, b), reset=True), end=' ')
             print(' ')
     print()
 
     print('Grays')
-    for g in xrange(0, 24):
+    for g in range(0, 24):
         print(colour('%02d' % g, fg=(g, ), reset=True), end=' ')
     print()
-    for g in xrange(0, 24):
+    for g in range(0, 24):
         print(colour('%02d' % g, bg=(g, ), reset=True), end=' ')
     print()
     print()
@@ -175,9 +175,9 @@ if __name__ == '__main__':
     exit()
 
     print('24-bit Colours')
-    for r in xrange(0, 256, 256/8):
-        for g in xrange(0, 256, 256/8):
-            for b in xrange(0, 256, 256/8):
+    for r in range(0, 256, 256/8):
+        for g in range(0, 256, 256/8):
+            for b in range(0, 256, 256/8):
                 print(colour('%02X%02X%02X' % (r, g, b), fg=(r, g, b), reset=True), end=' ')
             print()
     print()

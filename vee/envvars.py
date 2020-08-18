@@ -25,7 +25,7 @@ def render_envvars(diff, work_dir=None, environ=None):
 
 def guess_envvars(paths, sources=None, use_current=True):
 
-    if isinstance(paths, basestring):
+    if isinstance(paths, str):
         paths = [paths]
 
     if sources is None:

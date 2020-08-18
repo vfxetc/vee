@@ -63,7 +63,7 @@ class PackageSet(collections.OrderedDict):
         # then we'd need to reimplement the dependency resolution. That would
         # be a good idea to do anyways, but... meh.
 
-        if isinstance(names, basestring):
+        if isinstance(names, str):
             names = [names]
         names = list(names) if names else self.keys()
 

@@ -60,7 +60,7 @@ class _EnvironmentAction(argparse.Action):
         res = getattr(namespace, self.dest)
         for value in values:
             parts = re.split(r'(?:^|,)(\w+)=', value)
-            for i in xrange(1, len(parts), 2):
+            for i in range(1, len(parts), 2):
                 res[parts[i]] = parts[i + 1]
 
 
@@ -144,7 +144,7 @@ class Package(DBObject):
             args = None
 
         if args:
-            if isinstance(args, basestring):
+            if isinstance(args, str):
                 args = shlex.split(args)
             if isinstance(args, (list, tuple)):
                 try:

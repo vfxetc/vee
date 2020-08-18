@@ -50,7 +50,7 @@ class MyLib(object):
 
         self.dyn_commands = []
 
-        for i in xrange(0, dynamic.section_size, format.size):
+        for i in range(0, dynamic.section_size, format.size):
             raw = dynamic.content[i:i+format.size]
             self.dyn_commands.append(list(format.unpack(raw)))
 

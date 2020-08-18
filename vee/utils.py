@@ -46,7 +46,7 @@ def makedirs(*args):
 
 def chmod(path, specs, recurse=False):
 
-    if isinstance(specs, basestring):
+    if isinstance(specs, str):
         specs = specs.split(',')
 
     ops = []

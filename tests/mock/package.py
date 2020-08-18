@@ -77,8 +77,8 @@ class MockPackage(object):
                 dst_path = os.path.join(self.path, render_contents(rel_path))
                 makedirs(os.path.dirname(dst_path))
 
-                contents = render_contents(open(src_path, 'rb').read())
-                with open(dst_path, 'wb') as fh:
+                contents = render_contents(open(src_path, 'r').read())
+                with open(dst_path, 'w') as fh:
                     fh.write(contents)
                 shutil.copystat(src_path, dst_path)
 

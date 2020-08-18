@@ -32,7 +32,7 @@ def normalize_git_url(url, prefix=False, prefer=None, keep_ext=False):
     if prefer not in (None, 'https', 'scp'):
         raise ValueError('invalid prefer: %r' % prefer)
 
-    if not isinstance(prefix, basestring):
+    if not isinstance(prefix, str):
         prefix = 'git+' if prefix else ''
 
     # Strip fragments.

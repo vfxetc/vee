@@ -35,7 +35,7 @@ def name_variants(name, version_only=False):
             libs  = m_lib  or '', '', 'lib'
 
         versions = []
-        for version_i in xrange(-1, len(version_parts) + 1, 2):
+        for version_i in range(-1, len(version_parts) + 1, 2):
             version = ''.join(version_parts[:version_i]) if version_i > 0 else ''
             versions.insert(0, version)
 

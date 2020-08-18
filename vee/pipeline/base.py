@@ -38,7 +38,7 @@ class Pipeline(object):
 
         # See if any previous steps provide it.
         step_i = self._step_index[step_name]
-        for i in xrange(step_i - 1, -1, -1):
+        for i in range(step_i - 1, -1, -1):
             prev_name = self._step_names[i]
             prev_step = self.steps[prev_name]
             step = prev_step.get_next(step_name)

@@ -68,7 +68,7 @@ class EnvironmentRepo(GitRepo):
                 version.append(0)
             
             version[semver_level] = version[semver_level] + 1
-            for i in xrange(semver_level + 1, len(version)):
+            for i in range(semver_level + 1, len(version)):
                 version[i] = 0
 
             version_header.value = '.'.join(str(x) for x in version)

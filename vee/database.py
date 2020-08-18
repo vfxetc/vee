@@ -207,7 +207,7 @@ class _Row(sqlite3.Row):
         try:
             return super(_Row, self).__getitem__(key)
         except IndexError:
-            if isinstance(key, basestring):
+            if isinstance(key, str):
                 raise KeyError(key)
             else:
                 raise

@@ -33,7 +33,7 @@ def config(args):
     if args.set:
         if len(args.values) % 2:
             raise CliException('--set requires even number of arguments')
-        for i in xrange(0, len(args.values), 2):
+        for i in range(0, len(args.values), 2):
             config[args.values[i]] = args.values[i + 1]
         return
 

@@ -3,7 +3,7 @@ import fnmatch
 import os
 import re
 import tarfile
-import urllib2
+import urllib.request
 import json
 
 from vee.pipeline import pypi
@@ -19,7 +19,7 @@ def setup_mock_http(root):
     if _root:
         raise RuntimeError('mock http already setup')
     _root = root
-    urllib2.install_opener(urllib2.build_opener(MockHTTPHandler))
+    urllib.request.install_opener(urllib.request.build_opener(MockHTTPHandler))
     pypi.PYPI_URL_PATTERN = 'http://%s/pypi/%%s/json' % _host
 
 
@@ -30,18 +30,18 @@ def mock_url(path):
     return 'http://%s/%s' % (_host, rel_path.strip('/'))
 
 
-class MockHTTPHandler(urllib2.HTTPHandler):
+class MockHTTPHandler(urllib.request.HTTPHandler):
 
     def http_open(self, req):
 
         if req.get_host() != _host:
-            return urllib2.HTTPHandler.http_open(self, req)
+            return urllib.request.HTTPHandler.http_open(self, req)
         url_path = req.get_selector()
 
         # PyPI
         m = re.match(r'/pypi/(.+)/json', url_path)
         if m:
-            res = urllib2.addinfourl(StringIO(json.dumps({
+            res = urllib.request.addinfourl(StringIO(json.dumps({
                 'releases': {
                     '1.0.0': [{
                         'packagetype': 'sdist',
@@ -56,7 +56,7 @@ class MockHTTPHandler(urllib2.HTTPHandler):
         # Files which exist.
         path = os.path.join(_root, url_path.strip('/'))
         if os.path.exists(path):
-            res = urllib2.addinfourl(open(path), 'HEADERS', req.get_full_url())
+            res = urllib.request.addinfourl(open(path), 'HEADERS', req.get_full_url())
             res.code = 200
             res.msg = 'OK'
             return res
@@ -85,12 +85,12 @@ class MockHTTPHandler(urllib2.HTTPHandler):
             tgz.close()
             fh.seek(0)
 
-            res = urllib2.addinfourl(fh, 'HEADERS', req.get_full_url())
+            res = urllib.request.addinfourl(fh, 'HEADERS', req.get_full_url())
             res.code = 200
             res.msg = 'OK'
             return res
 
-        res = urllib2.addinfourl(StringIO('404 NOT FOUND'), 'HEADERS', req.get_full_url())
+        res = urllib.request.addinfourl(StringIO('404 NOT FOUND'), 'HEADERS', req.get_full_url())
         res.code = 404
         res.msg = 'NOT FOUND'
         return res

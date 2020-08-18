@@ -1,6 +1,6 @@
 import datetime
 import os
-import urllib2
+import urllib.request
 import urllib.parse
 import re
 import shutil

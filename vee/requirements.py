@@ -121,7 +121,7 @@ class Requirements(collections.MutableSequence):
         self._cumulative_environ = {}
         self.headers = {}
 
-        if isinstance(args, basestring):
+        if isinstance(args, str):
             args = [args]
         if args:
             self.parse_args(args)
@@ -183,7 +183,7 @@ class Requirements(collections.MutableSequence):
         if source == '-':
             filename = filename or '<stdin>'
             source = sys.stdin
-        elif isinstance(source, basestring):
+        elif isinstance(source, str):
             filename = filename or source
             source = open_(source)
 

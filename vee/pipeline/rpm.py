@@ -31,11 +31,11 @@ class RPMChecker(PipelineStep):
             packages.add(line)
 
             chunks = line.split('-')
-            for i in xrange(1, len(chunks)):
+            for i in range(1, len(chunks)):
                 packages.add('-'.join(chunks[:i]))
 
             chunks = line.split('.')
-            for i in xrange(1, len(chunks)):
+            for i in range(1, len(chunks)):
                 packages.add('.'.join(chunks[:i]))
 
         return packages

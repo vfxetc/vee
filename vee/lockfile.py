@@ -13,7 +13,7 @@ class Lockfile(object):
         self._fd = None
         self._locked = False
         self._blocking = blocking
-        self._content = content
+        self._content = content.encode() if isinstance(content, str) else content
 
     def __repr__(self):
         return '%s(%r)' % (self.__class__.__name__, self._path)

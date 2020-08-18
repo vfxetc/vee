@@ -62,9 +62,14 @@ class _CallOutput(object):
             self.slave_fd = None
 
     def log_chunk(self, chunk):
+
         logger = self.logger
         if logger is None:
             logger = self.logger = logging.getLogger('vee.subproc.[%d].%s' % (self.proc.pid, self.name))
+
+        if isinstance(chunk, bytes):
+            chunk = chunk.decode(errors='backslashreplace')
+
         if self.return_buffer:
             logger.debug(chunk, extra={'verbosity': self.verbosity, 'from_subproc': True})
         else:
@@ -155,11 +160,11 @@ def call(cmd, **kwargs):
         raise subprocess.CalledProcessError(proc.returncode, cmd)
 
     if stdout.return_buffer and stderr.return_buffer:
-        return ''.join(stdout.buffer), ''.join(stderr.buffer)
+        return b''.join(stdout.buffer), b''.join(stderr.buffer)
     if stdout.return_buffer:
-        return ''.join(stdout.buffer)
+        return b''.join(stdout.buffer)
     if stderr.return_buffer:
-        return ''.join(stderr.buffer)
+        return b''.join(stderr.buffer)
 
     return proc.returncode
 
@@ -188,7 +193,7 @@ def bash_source(shell_script, callbacks=None, prologue='', epilogue='', **kwargs
                     break
                 arg_count = int(arg_count)
                 args = []
-                for arg_i in xrange(arg_count):
+                for arg_i in range(arg_count):
                     arg_len = int(fh.readline())
                     args.append(fh.read(arg_len))
                 name = args[0]
