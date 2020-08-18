@@ -1,0 +1,9 @@
+
+
+/* I like my envvars to have a $ prefix. */
+code.std-envvar:before {
+    content: "$";
+}
+dl.envvar dt code:before {
+    content: "$";
+}

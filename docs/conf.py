@@ -23,7 +23,7 @@ master_doc = 'index'
 exclude_patterns = ['_build']
 # pygments_style = 'sphinx'
 html_theme = 'nature'
-# html_static_path = ['_static']
+html_static_path = ['_static']
 
 
 extensions = [
@@ -37,3 +37,8 @@ extensions = [
 todo_include_todos = True
 
 intersphinx_mapping = {'http://docs.python.org/': None}
+
+
+def setup(app):
+    app.add_stylesheet('custom.css')
+

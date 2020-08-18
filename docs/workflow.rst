@@ -1,23 +1,5 @@
-Installation and Workflows
-==========================
-
-
-Basic Installation
-------------------
-
-.. code-block:: bash
-
-    # Install VEE from GitHub; it will prompt you for install location.
-    python <(curl -fsSL https://raw.githubusercontent.com/vfxetc/vee/master/install_vee.py)
-    
-    # Either add VEE to your environment, or to your .bashrc; the installer
-    # above defaults to:
-    export VEE=/usr/local/vee
-    export PATH=$VEE/src/bin:$PATH
-
-    # If working in a group, set permissions:
-    sudo chown $(whoami) $groupname $VEE
-    sudo chmod -R g=rwXs,o=rwX $VEE
+Workflows
+=========
 
 
 User Workflow
