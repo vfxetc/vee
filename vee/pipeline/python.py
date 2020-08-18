@@ -218,16 +218,24 @@ class PythonBuilder(GenericBuilder):
         #     --disable-pip-version-check
 
         # We delay the import just in case the bootstrap is borked.
-        try:
-            from pip._internal.wheel import move_wheel_files
-        except ImportError:
-            from pip.wheel import move_wheel_files
+        from pip._internal.wheel import move_wheel_files
+        from pip._internal.locations import distutils_scheme
+
+        # HACK: We want to install this for Python2.7 for now. This should
+        # be based on the version of Python that is a dependency.
+        scheme = distutils_scheme(self.name, prefix=pkg.install_path)
+        src_python = f'/python{sys.version_info[0]}.{sys.version_info[1]}/'
+        dst_python = '/python2.7/'
+        if src_python != dst_python:
+            for k, v in scheme.items():
+                scheme[k] = v.replace(src_python, dst_python)
 
         req = DummyPipRequirement()
         req.name = wheel_name
         move_wheel_files(self.name, req,
             wheeldir=wheel_dir,
             prefix=pkg.install_path,
+            scheme=scheme,
         )
 
     def develop(self):
