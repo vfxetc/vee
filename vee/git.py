@@ -111,6 +111,7 @@ class GitRepo(object):
         stderr = []
         kw['stderr'] = [kw.get('stderr'), stderr.append]
         kw['check'] = False # We will do it ourselves.
+        kw.setdefault('decode', True)
 
         e = None
         try:

@@ -122,7 +122,8 @@ def call(cmd, **kwargs):
     )
 
     check = kwargs.pop('check', True)
-    
+    decode = kwargs.pop('decode', False)
+
     verbosity = kwargs.pop('verbosity', 0)
     indent = kwargs.pop('indent', False)
     if indent:
@@ -159,12 +160,22 @@ def call(cmd, **kwargs):
     if (check or stdout.return_buffer or stderr.return_buffer) and proc.returncode:
         raise subprocess.CalledProcessError(proc.returncode, cmd)
 
-    if stdout.return_buffer and stderr.return_buffer:
-        return b''.join(stdout.buffer), b''.join(stderr.buffer)
+    # Decode if requested.
     if stdout.return_buffer:
-        return b''.join(stdout.buffer)
+        stdout_res = b''.join(stdout.buffer)
+        if decode:
+            stdout_res = stdout_res.decode()
     if stderr.return_buffer:
-        return b''.join(stderr.buffer)
+        stderr_res = b''.join(stderr.buffer)
+        if decode:
+            stderr_res = stderr_res.decode()
+
+    if stdout.return_buffer and stderr.return_buffer:
+        return stdout_res, stderr_res
+    if stdout.return_buffer:
+        return stdout_res
+    if stderr.return_buffer:
+        return stderr_res
 
     return proc.returncode
 
