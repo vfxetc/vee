@@ -8,10 +8,22 @@ class _Return(Exception):
 
 def _gt(a, b, presence_is_greater=None):
     if a is not None and b is not None:
+
+        # If coresponding pairs aren't the same type, then compare them
+        # as strings.
+        if isinstance(a, (tuple, list)) and isinstance(b, (tuple, list)):
+            a = list(a)
+            b = list(b)
+            for i, (x, y) in enumerate(zip(a, b)):
+                if type(x) != type(y):
+                    a[i] = str(x)
+                    b[i] = str(y)
+
         if a > b:
             raise _Return(True)
         if a < b:
             raise _Return(False)
+
     elif presence_is_greater is not None:
         if a is not None:
             raise _Return(presence_is_greater)
