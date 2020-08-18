@@ -52,7 +52,7 @@ class PyPiTransport(PipelineStep):
         pkg = self.package
         meta = self._meta()
 
-        all_releases = [(Version(v), rs) for v, rs in meta['releases'].iteritems()]
+        all_releases = [(Version(v), rs) for v, rs in meta['releases'].items()]
         all_releases.sort(reverse=True)
 
         if not all_releases:

@@ -26,7 +26,7 @@ def config(args):
     config = args.home.config
 
     if args.list:
-        for k, v in sorted(config.iteritems()):
+        for k, v in sorted(config.items()):
             print('%s=%s' % (k, v))
         return
 

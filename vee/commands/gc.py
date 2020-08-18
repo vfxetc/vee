@@ -82,7 +82,7 @@ def gc(args):
 
         if args.prune_environments:
             log.info(style_note('Pruning old environments'))
-            for repo_id, envs in sorted(envs_by_id.iteritems()):
+            for repo_id, envs in sorted(envs_by_id.items()):
                 for id_, name, path in envs[:-args.keep_latest]:
                     log.info('Deleting %s (%d)' % (name, id_))
                     if not args.dry_run:

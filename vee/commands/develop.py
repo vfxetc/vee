@@ -72,7 +72,7 @@ def list_(args):
         path = dev_pkg.work_tree.replace(home.dev_root, '$VEE_DEV').replace(home.root, '$VEE')
         print(style_note(dev_pkg.name, path))
         if args.show_environ:
-            for k, v in sorted(render_envvars(dev_pkg.environ, dev_pkg.work_tree).iteritems()):
+            for k, v in sorted(render_envvars(dev_pkg.environ, dev_pkg.work_tree).items()):
                 if os.environ.get(k):
                     v = v.replace(os.environ[k], '$' + k)
                 v = v.replace(home.dev_root, '$VEE_DEV')

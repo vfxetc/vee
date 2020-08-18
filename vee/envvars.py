@@ -14,7 +14,7 @@ def join_env_path(*values):
 def render_envvars(diff, work_dir=None, environ=None):
     environ = environ or os.environ
     res = {}
-    for k, value in diff.iteritems():
+    for k, value in diff.items():
         if work_dir:
             value = value.split(':')
             value = [os.path.normpath(os.path.join(work_dir, x)) if re.match(r'^\.\.?(/|$)', x) else x for x in value]

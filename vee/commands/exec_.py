@@ -156,7 +156,7 @@ def exec_(args):
 
     # Print it out instead of running it.
     if args.export:
-        for k, v in sorted(environ_diff.iteritems()):
+        for k, v in sorted(environ_diff.items()):
             existing = os.environ.get(k)
 
             if existing is not None and not k.startswith('VEE_EXEC'):

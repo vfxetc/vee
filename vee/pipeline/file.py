@@ -2,8 +2,6 @@ import datetime
 import os
 import re
 import shutil
-import urllib2
-import urllib.parse
 
 from vee.cli import style, style_note
 from vee.pipeline.base import PipelineStep

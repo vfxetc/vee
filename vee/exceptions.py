@@ -35,8 +35,9 @@ def cli_errno(e):
 
 def format_cli_exc(e, verbose=False):
     res = ''
-    if verbose and sys.exc_traceback:
-        stack = traceback.format_list(traceback.extract_tb(sys.exc_traceback))
+    tb = sys.exc_info()[2]
+    if verbose and tb:
+        stack = traceback.format_list(traceback.extract_tb(tb))
         res = style(''.join(stack).rstrip(), faint=True) + '\n'
     return res + cli_exc_str(e)
 

@@ -1,7 +1,8 @@
+import base64
+import itertools
 import os
 import re
 import stat
-import itertools
 import sys
 
 from vee.subproc import call
@@ -104,13 +105,13 @@ def get_symbols(path):
 
 MACHO_TAGS = set((
 
-    'feedface',
-    'cefaefde',
-    'feedfacf',
-    'cffaedfe',
+    b'feedface',
+    b'cefaefde',
+    b'feedfacf',
+    b'cffaedfe',
 
-    'cafebabe', # For FAT files?
-    'bebafeca',
+    b'cafebabe', # For FAT files?
+    b'bebafeca',
 
 ))
 
@@ -140,7 +141,7 @@ def find_shared_libraries(path):
                     continue
 
                 try:
-                    tag = open(path, 'rb').read(4).encode('hex')
+                    tag = base64.b16encode(open(path, 'rb').read(4))
                 except IOError:
                     continue
                 if tag in MACHO_TAGS:

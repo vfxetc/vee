@@ -306,7 +306,7 @@ def escape_identifier(x):
 class _Cursor(sqlite3.Cursor):
     
     def insert(self, table, data, on_conflict=None):
-        pairs = sorted(data.iteritems())
+        pairs = sorted(data.items())
         query = 'INSERT %s INTO %s (%s) VALUES (%s)' % (
             'OR ' + on_conflict if on_conflict else '',
             escape_identifier(table),
@@ -320,9 +320,9 @@ class _Cursor(sqlite3.Cursor):
         return self.lastrowid
 
     def update(self, table, data, where=None):
-        columns, params = zip(*sorted(data.iteritems()))
+        columns, params = zip(*sorted(data.items()))
         if where:
-            where = sorted(where.iteritems())
+            where = sorted(where.items())
             params = list(params)
             params.extend(v for k, v in where)
             where = 'WHERE %s' % ' AND '.join('%s = ?' % escape_identifier(k) for k, v in where)
@@ -470,7 +470,7 @@ class DBMetaclass(type):
                 columns[col.name] = col.copy()
 
         # Collect new columns.
-        for k, v in attrs.iteritems():
+        for k, v in attrs.items():
 
             # If this is now a property, but it was once a column, upgrade it
             # to a column.
@@ -487,14 +487,12 @@ class DBMetaclass(type):
                 v.name = v.name or k
                 columns[v.name] = v
 
-        attrs['__columns__'] = [v for _, v in sorted(columns.iteritems())]
+        attrs['__columns__'] = [v for _, v in sorted(columns.items())]
 
         return super(DBMetaclass, cls).__new__(cls, name, bases, attrs)
 
 
-class DBObject(object):
-
-    __metaclass__ = DBMetaclass
+class DBObject(metaclass=DBMetaclass):
 
     def __init__(self, *args, **kwargs):
         self.id = None

@@ -39,7 +39,7 @@ class Config(collections.MutableMapping):
         for row in self._con.execute('SELECT name FROM config'):
             yield row[0]
 
-    def iteritems(self, glob=None):
+    def items(self, glob=None):
         if glob:
             cur = self._con.execute('SELECT name, value FROM config WHERE name GLOB ?', [glob])
         else:

@@ -448,7 +448,7 @@ class GitRepo(object):
 
         # Updates!
         if kwargs:
-            for k, v in kwargs.iteritems():
+            for k, v in kwargs.items():
                 if v is None:
                     if k not in remotes:
                         raise KeyError(k)

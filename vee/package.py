@@ -1,4 +1,5 @@
 import argparse
+import base64
 import datetime
 import fnmatch
 import glob
@@ -96,7 +97,6 @@ requirement_parser.add_argument('--build-sh', help='shell script in repository t
 requirement_parser.add_argument('--install-sh', help='shell script in repository to source to install the package')
 requirement_parser.add_argument('--requirements-txt', help='shell script in repository to source to build the package')
 
-
 requirement_parser.add_argument('url')
 
 
@@ -144,8 +144,10 @@ class Package(DBObject):
             args = None
 
         if args:
+
             if isinstance(args, str):
                 args = shlex.split(args)
+
             if isinstance(args, (list, tuple)):
                 try:
                     requirement_parser.parse_args(args, namespace=self)
@@ -231,7 +233,7 @@ class Package(DBObject):
                 continue
 
             if isinstance(value, dict):
-                value = ','.join('%s=%s' % (k, v) for k, v in sorted(value.iteritems()))
+                value = ','.join('%s=%s' % (k, v) for k, v in sorted(value.items()))
             if isinstance(value, (list, tuple)):
                 value = ','.join(value)
 
@@ -317,11 +319,11 @@ class Package(DBObject):
 
             self._environ_diff = {}
             for e in (self.base_environ, self.environ):
-                for k, v in e.iteritems():
+                for k, v in e.items():
                     self._environ_diff[k] = self.render_template(v, name=k)
 
             # Just for debugging...
-            for k, v in sorted(self._environ_diff.iteritems()):
+            for k, v in sorted(self._environ_diff.items()):
                 old_v = os.environ.get(k)
                 if old_v is not None:
                     v = v.replace(old_v, '@')
@@ -354,12 +356,12 @@ class Package(DBObject):
             self.build_name = self.install_name and ('%s/%s-%s' % (
                 self.install_name,
                 datetime.datetime.utcnow().strftime('%y%m%d%H%M%S'),
-                os.urandom(4).encode('hex'),
+                base64.b16encode(os.urandom(4)).decode(),
             ))
 
     def _assert_names(self, **kwargs):
         self._set_names(**kwargs)
-        for attr, value in kwargs.iteritems():
+        for attr, value in kwargs.items():
             if value and not getattr(self, '_%s_name' % attr):
                 raise RuntimeError('%s name required' % attr)
 
@@ -374,7 +376,7 @@ class Package(DBObject):
 
     def _assert_paths(self, **kwargs):
         self._set_paths(**kwargs)
-        for attr, value in kwargs.iteritems():
+        for attr, value in kwargs.items():
             if value and not getattr(self, '%s_path' % attr):
                 raise RuntimeError('%s path required' % attr)
 

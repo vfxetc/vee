@@ -24,7 +24,7 @@ class TestBuildTypes(TestCase):
             except:
                 print(''.join(out))
                 raise
-            self.assertEqual(''.join(out).strip(), '%s:1' % name)
+            self.assertEqual(b''.join(out).strip().decode(), '%s:1' % name)
 
     def test_make(self):
         self.assert_echo('c_make')

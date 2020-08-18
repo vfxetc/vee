@@ -254,7 +254,7 @@ class Requirements(collections.MutableSequence):
                 self.append(('', '', '# RequirementParseError: %s' % e.args))
                 self.append(('', '', '# ' + line.strip()))
                 continue
-            for k, v in self._cumulative_environ.iteritems():
+            for k, v in self._cumulative_environ.items():
                 pkg.base_environ.setdefault(k, v)
             append(pkg)
 
@@ -398,7 +398,7 @@ class Requirements(collections.MutableSequence):
                     req.name = None
 
                 # Strip out anything in the base environment which matches.
-                for k, v in environ.iteritems():
+                for k, v in environ.items():
                     if req.base_environ.get(k) == v:
                         del req.base_environ[k]
 
