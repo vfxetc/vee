@@ -12,14 +12,16 @@ from vee.subproc import call
 from vee.utils import find_in_tree
 
 
-python_version = '%d.%d' % (sys.version_info[:2])
+# TODO: This should be the requested version.
+python_version = '2.7' # '%d.%d' % (sys.version_info[:2])
 site_packages = os.path.join('lib', 'python' + python_version, 'site-packages')
 
 
 def call_setup_py(setup_py, args, **kwargs):
     kwargs['cwd'] = os.path.dirname(setup_py)
     kwargs.setdefault('vee_in_env', True)
-    cmd = ['python', '-c', 'import sys, setuptools; sys.argv[0]=__file__=%r; execfile(__file__)' % os.path.basename(setup_py)]
+    # TODO: This should be the requested version.
+    cmd = ['python2.7', '-c', 'import sys, setuptools; sys.argv[0]=__file__=%r; execfile(__file__)' % os.path.basename(setup_py)]
     cmd.extend(('--command-packages', 'vee.distutils'))
     cmd.extend(args)
     return call(cmd, **kwargs)

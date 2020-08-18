@@ -1,71 +1,91 @@
-from io import StringIO
+from io import BytesIO, StringIO
 import fnmatch
+import http.server
+import json
 import os
 import re
 import tarfile
+import threading
 import urllib.request
-import json
+import socketserver
+import random
 
 from vee.pipeline import pypi
 
 
 # Global state is gross.
-_host = 'vee.localhost.mock'
+_host = '127.0.0.1'
+_port = random.randrange(1025, 65535)
+_netloc = f'{_host}:{_port}'
 _root = None
-
-
-def setup_mock_http(root):
-    global _root
-    if _root:
-        raise RuntimeError('mock http already setup')
-    _root = root
-    urllib.request.install_opener(urllib.request.build_opener(MockHTTPHandler))
-    pypi.PYPI_URL_PATTERN = 'http://%s/pypi/%%s/json' % _host
+_thread = None
 
 
 def mock_url(path):
     rel_path = os.path.relpath(os.path.join(_root, path), _root)
     if rel_path.startswith('.'):
         raise ValueError('not a mock http path: %r' % path)
-    return 'http://%s/%s' % (_host, rel_path.strip('/'))
+    return 'http://%s/%s' % (_netloc, rel_path.strip('/'))
 
 
-class MockHTTPHandler(urllib.request.HTTPHandler):
+def setup_mock_http(root):
 
-    def http_open(self, req):
+    global _root, _thread
+    if _root:
+        raise RuntimeError('mock http already setup')
 
-        if req.get_host() != _host:
-            return urllib.request.HTTPHandler.http_open(self, req)
-        url_path = req.get_selector()
+    _thread = threading.Thread(target=serve)
+    _thread.daemon = True
+    _thread.start()
 
-        # PyPI
+    pypi.PYPI_URL_PATTERN = f'http://{_netloc}/pypi/%s/json'
+
+    _root = root
+
+
+def serve():
+    with socketserver.TCPServer((_host, _port), MockHTTPHandler) as httpd:
+        httpd.serve_forever()
+
+
+class MockHTTPHandler(http.server.BaseHTTPRequestHandler):
+
+    def do_GET(self):
+
+        # self.close_connection = True
+        
+        url_path = self.path
+
+        # Mock PyPI.
         m = re.match(r'/pypi/(.+)/json', url_path)
         if m:
-            res = urllib.request.addinfourl(StringIO(json.dumps({
+            self.send_response(200)
+            self.end_headers()
+            self.wfile.write(json.dumps({
                 'releases': {
                     '1.0.0': [{
                         'packagetype': 'sdist',
-                        'url': 'http://%s/packages/%s.tgz' % (_host, m.group(1))
+                        'url': 'http://%s/packages/%s.tgz' % (_netloc, m.group(1))
                     }],
                 },  
-            })), 'HEADERS', req.get_full_url())
-            res.code = 200
-            res.msg = 'OK'
-            return res
+            }).encode())
+            return
 
         # Files which exist.
         path = os.path.join(_root, url_path.strip('/'))
         if os.path.exists(path):
-            res = urllib.request.addinfourl(open(path), 'HEADERS', req.get_full_url())
-            res.code = 200
-            res.msg = 'OK'
-            return res
+            content = open(path, 'rb').read()
+            self.send_response(200)
+            self.send_header('Content-Length', str(len(content)))
+            self.end_headers()
+            self.wfile.write(content)
+            return
 
         # Create tarballs on the fly.
         basename, ext = os.path.splitext(path)
         if os.path.exists(basename) and ext == '.tgz':
 
-            fh = StringIO()
+            fh = BytesIO()
             tgz = tarfile.open(fileobj=fh, mode='w:gz')
 
             ignore_path = os.path.join(basename, 'mockignore')
@@ -84,14 +104,15 @@ class MockHTTPHandler(urllib.request.HTTPHandler):
 
             tgz.close()
             fh.seek(0)
+            content = fh.getvalue()
 
-            res = urllib.request.addinfourl(fh, 'HEADERS', req.get_full_url())
-            res.code = 200
-            res.msg = 'OK'
-            return res
+            self.send_response(200)
+            self.send_header('Content-Length', str(len(content)))
+            self.end_headers()
+            self.wfile.write(content)
+            return
 
-        res = urllib.request.addinfourl(StringIO('404 NOT FOUND'), 'HEADERS', req.get_full_url())
-        res.code = 404
-        res.msg = 'NOT FOUND'
-        return res
+        self.send_response(404)
+        self.end_headers()
+
 
