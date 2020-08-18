@@ -2,21 +2,19 @@
 
 .. _index:
 
-VEE: Versioned Execution Environment
-====================================
+VEE: Versioned Execution Environments
+=====================================
 
-This project aims to encapsulate various package in order to allow for
-consistent, versioned assembly of an execution environment across a fleet of
-OS X and Linux hosts.
+This project wraps existing package managers and software build mechanisms in order to allow for consistent, versioned assembly of execution environments across a fleet of cross-platform hosts.
 
-The initial goal is to source packages from:
+VEE sources packages from:
 
 - Homebrew_
 - `The Python Package Index <PyPI_>`_
 - RubyGems_
 - ad-hoc ``git``, ``http``, and local packages
 
-and to build packages using:
+and will build packages using:
 
 - ``python setup.py build``
 - ``make``
@@ -25,20 +23,20 @@ and to build packages using:
 
 
 Contents
-========
+--------
 
 .. toctree::
     :maxdepth: 2
 
+    install
     workflow
     concepts
     pipeline
     commands
-    python_api
 
 
 Indices and tables
-==================
+------------------
 
 * :ref:`genindex`
 * :ref:`modindex`
