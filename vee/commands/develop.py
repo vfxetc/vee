@@ -11,7 +11,7 @@ from vee.devpackage import DevPackage
 from vee.envvars import render_envvars
 from vee.exceptions import AlreadyInstalled, print_cli_exc
 from vee.git import GitRepo, normalize_git_url
-from vee.manifest import Requirements
+from vee.manifest import Manifest
 from vee.package import Package
 from vee.packageset import PackageSet
 from vee.utils import makedirs
@@ -198,11 +198,11 @@ def init(args, do_clone=False, do_install=False, do_add=False, is_find=False):
 
     elif do_install:
         # Find an existing tool.
-        # TODO: put more of this into EnvironmentRepo or Requirements
+        # TODO: put more of this into EnvironmentRepo or Manifest
         env_repo = home.get_env_repo(args.repo)
         req_path = os.path.join(env_repo.work_tree, 'requirements.txt')
-        reqs = Requirements(req_path, home=home)
-        for req in reqs.iter_packages():
+        manifest = Manifest(req_path, home=home)
+        for req in manifest.iter_packages():
             if req.name.lower() == name.lower():
                 # Make sure it is a Git package.
                 url = normalize_git_url(req.url, prefix=False)

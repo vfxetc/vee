@@ -1,12 +1,12 @@
 from . import *
 
-from vee.manifest import Requirements
+from vee.manifest import Manifest
 
 
 class TestRequirements(TestCase):
 
     def test_global_envvars(self):
-        req_set = Requirements()
+        req_set = Manifest()
         req_set.parse_file('''
             first
             KEY=VALUE1
@@ -20,7 +20,7 @@ class TestRequirements(TestCase):
         self.assertEqual(reqs[2].base_environ, {'KEY': 'VALUE2'})
 
     def test_local_envvars(self):
-        reqs = Requirements()
+        reqs = Manifest()
         reqs.parse_file('''
             url -e KEY=VALUE
         '''.strip().splitlines())
@@ -29,7 +29,7 @@ class TestRequirements(TestCase):
         self.assertEqual(flat, 'file:url --environ=KEY=VALUE')
 
     def test_elif(self):
-        reqs = Requirements()
+        reqs = Manifest()
         reqs.parse_file('''
             % if 0:
                 zero
@@ -44,7 +44,7 @@ class TestRequirements(TestCase):
         self.assertEqual(pkgs[0].name, 'one')
 
     def test_else(self):
-        reqs = Requirements()
+        reqs = Manifest()
         reqs.parse_file('''
             % if 0:
                 zero
@@ -59,7 +59,7 @@ class TestRequirements(TestCase):
         self.assertEqual(pkgs[0].name, 'two')
 
     def test_platforms(self):
-        req_set = Requirements()
+        req_set = Manifest()
         req_set.parse_file('''
 
             before
@@ -83,7 +83,7 @@ class TestRequirements(TestCase):
         self.assertEqual(reqs[2].name, 'after')
 
     def test_includes_read(self):
-        req_set = Requirements(file=os.path.abspath(os.path.join(__file__, '..', 'requirements', 'includes', 'main.txt')))
+        req_set = Manifest(file=os.path.abspath(os.path.join(__file__, '..', 'requirements', 'includes', 'main.txt')))
         names = [pkg.name for pkg in req_set.iter_packages()]
         self.assertEqual(names, ['main', 'always', 'true'])
 
@@ -104,7 +104,7 @@ class TestRequirements(TestCase):
                 include.tgz
             '''.lstrip()))
 
-        req_set = Requirements(file=main_path)
+        req_set = Manifest(file=main_path)
         main, incl = req_set.iter_packages()
         self.assertEqual(main.name, 'main')
 
@@ -113,7 +113,7 @@ class TestRequirements(TestCase):
 
         req_set.dump(main_path)
 
-        req_set = Requirements(file=main_path)
+        req_set = Manifest(file=main_path)
         main, incl = req_set.iter_packages()
         self.assertEqual(main.name, 'main')
         self.assertEqual(main.revision, '1')

@@ -7,7 +7,7 @@ from vee.cli import style_note, style_warning, style_error, style
 from vee.environment import Environment
 from vee.exceptions import CliMixin
 from vee.git import GitRepo
-from vee.manifest import Requirements, Header
+from vee.manifest import Manifest, Header
 from vee.packageset import PackageSet
 from vee.utils import cached_property, makedirs
 
@@ -39,12 +39,12 @@ class EnvironmentRepo(GitRepo):
         return Environment(repo=self, home=self.home)
     
     def load_requirements(self, revision=None):
-        reqs = Requirements(env_repo=self, home=self.home)
+        manifest = Manifest(env_repo=self, home=self.home)
         if revision:
-            reqs.parse_file(os.path.basename(self._req_path), alt_open=lambda x: self.show(revision, x).splitlines())
+            manifest.parse_file(os.path.basename(self._req_path), alt_open=lambda x: self.show(revision, x).splitlines())
         elif os.path.exists(self._req_path):
-            reqs.parse_file(self._req_path)
-        return reqs
+            manifest.parse_file(self._req_path)
+        return manifest
 
     def dump_requirements(self, req_set):
         return req_set.dump(self._req_path)

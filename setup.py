@@ -62,7 +62,7 @@ setup(
         list = vee.commands.list:list_
         repackage = vee.commands.repackage:repackage
 
-        # Requirements.
+        # Manifest.
         install = vee.commands.install:install
 
         # Environments.

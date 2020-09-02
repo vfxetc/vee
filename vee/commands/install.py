@@ -3,7 +3,7 @@ import argparse
 from vee.cli import style
 from vee.commands.main import command, argument
 from vee.exceptions import AlreadyInstalled
-from vee.manifest import Requirements
+from vee.manifest import Manifest
 from vee.packageset import PackageSet
 
 
@@ -38,11 +38,11 @@ def install(args):
     if not args.requirements:
         raise ValueError('please provide requirements to install')
 
-    reqs = Requirements(args.requirements, home=home)
+    manifest = Manifest(args.requirements, home=home)
     pkgs = PackageSet(home=home)
 
     # TODO: Resolve everything at once like upgrade does.
-    for req in reqs.iter_packages():
+    for req in manifest.iter_packages():
         pkg = pkgs.resolve(req, check_existing=not args.force)
         try:
             pkgs.install(pkg.name, reinstall=args.force)

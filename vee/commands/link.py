@@ -6,7 +6,7 @@ from vee.cli import style, style_note
 from vee.commands.main import command, argument
 from vee.environment import Environment
 from vee.exceptions import AlreadyInstalled, AlreadyLinked, print_cli_exc
-from vee.manifest import Requirements
+from vee.manifest import Manifest
 from vee.package import Package
 from vee.packageset import PackageSet
 
@@ -69,14 +69,14 @@ def link(args):
             env.link_directory(dir_)
         return
 
-    req_set = Requirements(args.requirements, home=home)
+    manifest = Manifest(args.requirements, home=home)
     pkg_set = PackageSet(env=env, home=home)
     
     # Register the whole set, so that dependencies are pulled from here instead
     # of weakly resolved from installed packages.
-    pkg_set.resolve_set(req_set)
+    pkg_set.resolve_set(manifest)
 
-    for req in req_set.iter_packages():
+    for req in manifest.iter_packages():
 
         # Skip if it wasn't requested.
         if args.subset and req.name not in args.subset:

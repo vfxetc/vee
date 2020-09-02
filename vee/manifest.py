@@ -110,7 +110,7 @@ class RequirementItem(object):
         return isinstance(self.value, Include)
 
 
-class Requirements(collections.MutableSequence):
+class Manifest(collections.MutableSequence):
 
     def __init__(self, args=None, file=None, home=None, env_repo=None):
 
@@ -230,9 +230,9 @@ class Requirements(collections.MutableSequence):
                     raise ValueError("Malformed include path.", raw_path)
                 if self.filename:
                     path = os.path.join(os.path.dirname(self.filename), path)
-                reqs = Requirements(env_repo=self.env_repo, home=self.home)
-                reqs.parse_file(path, alt_open=alt_open, _depth=_depth + 1)
-                append(Include(raw_path, reqs))
+                other = Manifest(env_repo=self.env_repo, home=self.home)
+                other.parse_file(path, alt_open=alt_open, _depth=_depth + 1)
+                append(Include(raw_path, other))
                 continue
 
             m = re.match(r'^(\w+)=(\S.*)$', spec)
@@ -436,10 +436,10 @@ if __name__ == '__main__':
 
     from vee.home import Home
 
-    reqs = Requirements(Home())
-    reqs.parse_args(sys.argv[1:])
+    manifest = Manifest(Home())
+    manifest.parse_args(sys.argv[1:])
 
-    print(''.join(reqs.iter_dump()))
+    print(''.join(manifest.iter_dump()))
 
 
 

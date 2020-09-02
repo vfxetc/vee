@@ -182,8 +182,8 @@ Dev
 - `vee dev build` runs the build command in the pipeline
 - translate https to scp git URLs for dev purposes
   - a DevPackage could expose a bunch of this stuff
-- Requirements.iter_scm_packages()
-- Requirements.iter_dev_packages()
+- Manifest.iter_scm_packages()
+- Manifest.iter_dev_packages()
 
 
 Server

@@ -9,7 +9,7 @@ from vee.commands.main import command, argument, group
 from vee.environment import Environment
 from vee.envvars import guess_envvars, render_envvars
 from vee.exceptions import NotInstalled
-from vee.manifest import Requirements
+from vee.manifest import Manifest
 from vee.packageset import PackageSet
 
 
@@ -105,11 +105,11 @@ def exec_(args):
         args.environment.append('%s/%s' % (repo.name, repo.branch_name))
         repo_names.append(repo.name)
 
-    # Requirements and requirement sets.
+    # Manifest and requirement sets.
     req_args = []
     for arg in args.requirements or ():
         req_args.extend(arg.split(','))
-    req_set = Requirements(home=home)
+    req_set = Manifest(home=home)
     req_set.parse_args(req_args)
     pkg_set = PackageSet(home=home)
     for req in req_set.iter_packages():

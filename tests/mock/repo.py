@@ -8,7 +8,7 @@ import shutil
 import six
 
 from vee.git import GitRepo
-from vee.manifest import Requirements
+from vee.manifest import Manifest
 from vee.package import Package
 from vee.utils import makedirs, guess_name
 
@@ -45,13 +45,13 @@ class MockRepo(object):
 
     def add_requirements(self, raw, insert=False, commit=True):
 
-        old = Requirements(home=self.home)
+        old = Manifest(home=self.home)
         path = os.path.join(self.path, 'requirements.txt')
         if os.path.exists(path):
             old.parse_file(path)
 
         raw = raw.decode() if six.PY2 else raw
-        new = Requirements(home=self.home, file=StringIO(raw))
+        new = Manifest(home=self.home, file=StringIO(raw))
 
         new_urls = set()
         new_names = set()
