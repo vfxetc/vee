@@ -1,6 +1,6 @@
 from . import *
 
-from vee.requirements import Requirements
+from vee.manifest import Requirements
 
 
 class TestRequirements(TestCase):

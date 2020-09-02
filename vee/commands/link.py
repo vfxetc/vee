@@ -6,9 +6,9 @@ from vee.cli import style, style_note
 from vee.commands.main import command, argument
 from vee.environment import Environment
 from vee.exceptions import AlreadyInstalled, AlreadyLinked, print_cli_exc
+from vee.manifest import Requirements
 from vee.package import Package
 from vee.packageset import PackageSet
-from vee.requirements import Requirements
 
 
 @command(

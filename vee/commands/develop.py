@@ -11,9 +11,9 @@ from vee.devpackage import DevPackage
 from vee.envvars import render_envvars
 from vee.exceptions import AlreadyInstalled, print_cli_exc
 from vee.git import GitRepo, normalize_git_url
+from vee.manifest import Requirements
 from vee.package import Package
 from vee.packageset import PackageSet
-from vee.requirements import Requirements
 from vee.utils import makedirs
 
 

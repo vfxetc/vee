@@ -7,8 +7,8 @@ from vee.cli import style_note, style_warning, style_error, style
 from vee.environment import Environment
 from vee.exceptions import CliMixin
 from vee.git import GitRepo
+from vee.manifest import Requirements, Header
 from vee.packageset import PackageSet
-from vee.requirements import Requirements, Header
 from vee.utils import cached_property, makedirs
 
 

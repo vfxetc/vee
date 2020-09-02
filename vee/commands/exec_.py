@@ -9,8 +9,8 @@ from vee.commands.main import command, argument, group
 from vee.environment import Environment
 from vee.envvars import guess_envvars, render_envvars
 from vee.exceptions import NotInstalled
+from vee.manifest import Requirements
 from vee.packageset import PackageSet
-from vee.requirements import Requirements
 
 
 @command(

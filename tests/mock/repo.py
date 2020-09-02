@@ -8,8 +8,8 @@ import shutil
 import six
 
 from vee.git import GitRepo
+from vee.manifest import Requirements
 from vee.package import Package
-from vee.requirements import Requirements
 from vee.utils import makedirs, guess_name
 
 

@@ -3,8 +3,8 @@ import argparse
 from vee.cli import style
 from vee.commands.main import command, argument
 from vee.exceptions import AlreadyInstalled
+from vee.manifest import Requirements
 from vee.packageset import PackageSet
-from vee.requirements import Requirements
 
 
 @command(
