@@ -1,3 +1,4 @@
+from copy import deepcopy
 import argparse
 import base64
 import datetime
@@ -21,7 +22,7 @@ from vee.database import DBObject, Column
 from vee.exceptions import AlreadyInstalled, AlreadyLinked, CliMixin
 from vee.pipeline.base import Pipeline
 from vee.subproc import call
-from vee.utils import cached_property, makedirs, linktree
+from vee.utils import cached_property, makedirs, linktree, guess_name
 from vee.semver import Version, VersionExpr
 
 class RequirementParseError(CliMixin, ValueError):
@@ -168,9 +169,11 @@ class Package(DBObject):
     build_path = Column()
     install_path = Column()
 
-    def __init__(self, args=None, home=None, set=None, dev=False, **kwargs):
+    def __init__(self, args=None, *, home=None, set=None, dev=False, parent=None, **kwargs):
 
         super(Package, self).__init__()
+
+        self.home = home # Must be early due to some properties using this.
 
         if args and kwargs:
             raise ValueError('specify either args OR kwargs')
@@ -197,17 +200,27 @@ class Package(DBObject):
                     name = action.dest
                     setattr(self, name, getattr(args, name))
             else:
-                raise TypeError('args must be in (str, list, tuple); got %s' % args.__class__)
+                raise TypeError("args must be one of (str, list, tuple, dict); got {}".format(args.__class__))
 
         else:
             for action in requirement_parser._actions:
                 name = action.dest
-                setattr(self, name, kwargs.get(name, action.default))
+                setattr(self, name, kwargs.pop(name, action.default))
+            if kwargs:
+                raise ValueError("too many kwargs: {}".format(list(kwargs)))
+
+        # Assert we have a name.
+        if self.name:
+            if self.name.lower() != self.name:
+                log.warning("package name {!r} was not lowercase".format(self.name))
+                self.name = self.name.lower()
+        else:
+            self.name = guess_name(self.url)
 
         # Manual args.
-        self.home = home # Must be first.
         self.abstract_requirement = self.to_json()
         self.dependencies = []
+        self.parent = parent
         self.set = set
 
         # Make sure to make copies of anything that is mutable.
@@ -223,7 +236,6 @@ class Package(DBObject):
 
         self._init_pipeline(dev=dev)
 
-
     def _init_pipeline(self, dev=False):
 
         # Create the pipeline object.
@@ -237,20 +249,20 @@ class Package(DBObject):
                 'post_install', 'relocate', 'optlink',
             ])
 
-        # Give the fetch pipeline step a chance to normalize the URL.
+        # Give the fetch pipeline step a chance to normalize the name/URL.
         self.pipeline.run_to('init')
 
-    def to_kwargs(self):
+    def to_kwargs(self, copy=True):
         kwargs = {}
         for action in requirement_parser._actions:
             name = action.dest
             value = getattr(self, name)
             if value != action.default: # This is easily wrong.
-                kwargs[name] = value
+                kwargs[name] = deepcopy(value) if copy else value
         return kwargs
 
     def to_json(self):
-        return json.dumps(self.to_kwargs(), sort_keys=True)
+        return json.dumps(self.to_kwargs(copy=False), sort_keys=True)
 
     def to_args(self, exclude=set()):
 
@@ -295,7 +307,7 @@ class Package(DBObject):
         return '%s(%r)' % (self.__class__.__name__, str(self))
 
     def copy(self):
-        return self.__class__(self.to_kwargs(), home=self.home)
+        return self.__class__(self.to_kwargs(copy=True), home=self.home, parent=self)
 
     def freeze(self, environ=True):
         kwargs = self.to_kwargs()
@@ -304,6 +316,7 @@ class Package(DBObject):
         return self.__class__(kwargs, home=self.home)
 
     def add_dependency(self, **kwargs):
+        # TODO: Remove these once the solver is used.
         kwargs.setdefault('base_environ', self.base_environ)
         kwargs.setdefault('environ', self.environ)
         kwargs.setdefault('home', self.home)

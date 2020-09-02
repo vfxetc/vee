@@ -105,15 +105,20 @@ class RequirementItem(object):
         return getattr(self.value, name)
 
     @property
+    def is_package(self):
+        return isinstance(self.value, Package)
+
+    @property
     def is_include(self):
         return isinstance(self.value, Include)
 
 
-class Manifest(collections.MutableSequence):
+class Manifest:
 
     def __init__(self, args=None, file=None, home=None, repo=None):
 
         self._items = []
+        self._packages = {}
 
         self.filename = None
         self.home = home
@@ -130,42 +135,44 @@ class Manifest(collections.MutableSequence):
             self.parse_file(file)
 
     def _coerce(self, value, args=()):
-        
-        # This is the older format, and might still be used in some places.
-        if isinstance(value, tuple) and len(value) == 3:
-            if args:
-                raise ValueError("RequirementItem 3-tuple cannot have extra args.", value, args)
-            args = (value[0], value[2])
-            value = value[1]
 
         if isinstance(value, RequirementItem):
             if args:
-                raise ValueError("Cannot pass RequirementItem with extra args.", value, args)
+                raise ValueError("cannot pass RequirementItem with extra args.", value, args)
             return value
 
         if isinstance(value, (Envvar, Header, Control, Package, Include)):
             return RequirementItem(value, *args)
 
         if value:
-            raise ValueError('Non-false value not of Envvar, Header, Control, Package, or Include.', value)
+            raise ValueError("unexpected type: got {} {!r}".format(type(value), value))
 
         return RequirementItem(None, *args)
 
-    # Sequence ABC methods.
-    def __getitem__(self, index):
-        return self._items[index]
-    def __setitem__(self, index, value):
-        self._items[index] = self._coerce(value)
-    def __delitem__(self, index):
-        del self._items[index]
-    def __len__(self):
-        return len(self._items)
-    def append(self, value, *args):
-        self._items.append(self._coerce(value, args))
-    def insert(self, index, value, *args):
-        self._items.insert(index, self._coerce(value, args))
+    def _append(self, value, *args):
+        item = self._coerce(value, args)
+        if isinstance(item.value, Package):
+            self._register_package(item.value)
+        self._items.append(item)
+
+    def _insert(self, index, value, *args):
+        item = self._coerce(value, args)
+        if isinstance(item.value, Package):
+            self._register_package(item.value)
+        self._items.insert(index, item)
+
+    def _register_package(self, pkg):
+        if pkg.name in self._packages:
+            raise ValueError("name collision; please rename one of {!r}".format(pkg.name))
+        self._packages[pkg.name] = pkg
+
+    def get(self, name):
+        return self._packages.get(name)
 
     def parse_args(self, args):
+
+        if isinstance(args, str):
+            args = shlex.split(args)
 
         remaining = args
         while remaining:
@@ -173,9 +180,8 @@ class Manifest(collections.MutableSequence):
             if args.url.endswith('.txt'):
                 self.parse_file(args.url)
             else:
-                self.append(('', Package(args, home=self.home), ''))
-
-        self._guess_names()
+                pkg = Package(args, home=self.home)
+                self._append(pkg)
 
     def parse_file(self, source, filename=None, alt_open=None, _depth=0):
         
@@ -191,7 +197,7 @@ class Manifest(collections.MutableSequence):
         self.filename = self.filename or filename
 
         def append(x):
-            self.append(RequirementItem(x, prefix, suffix, filename, line_i + 1))
+            self._append(RequirementItem(x, prefix, suffix, filename, line_i + 1))
 
         line_iter = iter(source)
         for line_i, line in enumerate(line_iter):
@@ -252,48 +258,15 @@ class Manifest(collections.MutableSequence):
                 pkg = Package(spec, home=self.home)
             except RequirementParseError as e:
                 log.warning('parse error: %s' % e)
-                self.append(('', '', '# RequirementParseError: %s' % e.args))
-                self.append(('', '', '# ' + line.strip()))
+                self._append('', '', '# RequirementParseError: %s' % e.args)
+                self._append('', '', '# ' + line.strip())
                 continue
             for k, v in self._cumulative_environ.items():
                 pkg.base_environ.setdefault(k, v)
             append(pkg)
 
         if not _depth:
-            self._guess_names()
             self._load_metas()
-
-    def _guess_names(self, strict=True):
-        """Guess names for every requirement which does not already have one.
-
-        This mutates the requirements as it goes; if it fails then some
-        requirements will have already had their name set.
-
-        """
-
-        names = set()
-        to_guess = []
-
-        # First pass: the explicitly named.
-        for req in self.iter_packages():
-
-            if not req.name:
-                to_guess.append(req)
-                continue
-
-            if req.name.lower() in names:
-                raise ValueError('name collision; please rename one of the %rs' % req.name)
-            names.add(req.name.lower())
-
-        # Second pass; the rest.
-        for req in to_guess:
-            name = guess_name(req.url)
-            if name.lower() in names:
-                if strict:
-                    raise ValueError('name collision; please set name for one of the %rs' % name)
-            else:
-                names.add(name.lower())
-                req.name = name
 
     def _load_metas(self):
         """Find PackageMeta mixin in `packages/{name}.py` file for each package.
@@ -303,6 +276,7 @@ class Manifest(collections.MutableSequence):
 
         """
 
+        # We're fully in memory.
         if not self.filename:
             return
 
@@ -311,6 +285,10 @@ class Manifest(collections.MutableSequence):
             return
 
         for pkg in self.iter_packages():
+
+            # Already done.
+            if pkg.meta is not None:
+                continue
 
             path = os.path.join(base, pkg.name + '.py')
             if not os.path.exists(path):
@@ -347,7 +325,7 @@ class Manifest(collections.MutableSequence):
         if locals_:
             control_namespace.update(locals_)
 
-        for item in self:
+        for item in self._items:
 
             el = item.value # TODO: Refactor.
 
@@ -419,7 +397,7 @@ class Manifest(collections.MutableSequence):
         # in the current state.
         environ = {}
 
-        for item in self:
+        for item in self._items:
 
             # TODO: Refactor.
             element = item.value
@@ -455,7 +433,7 @@ class Manifest(collections.MutableSequence):
         if not recurse:
             return
 
-        for item in self:
+        for item in self._items:
             if not item.is_include:
                 continue
             include = item.value
