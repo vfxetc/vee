@@ -25,6 +25,10 @@ from vee.subproc import call
 from vee.utils import cached_property, makedirs, linktree, guess_name
 from vee.semver import Version, VersionExpr
 
+from vee.package.provides import Provision
+from vee.package.requires import RequirementSet
+
+
 class RequirementParseError(CliMixin, ValueError):
     pass
 
@@ -72,7 +76,7 @@ class _ProvidesAction(argparse.Action):
 
     @property
     def default(self):
-        return {}
+        return Provision()
 
     @default.setter
     def default(self, v):
@@ -81,23 +85,23 @@ class _ProvidesAction(argparse.Action):
     def __call__(self, requirement_parser, namespace, values, option_string=None):
         res = getattr(namespace, self.dest)
         for value in values:
+            res.parse(value)
 
-            m = re.match(r'^\s*([a-zA-Z_]\w*)\s*=\s*(.*?)\s*$', value)
-            if m:
-                k, v = m.groups()
-                res[k] = v
-                continue
 
-            try:
-                x = json.loads(value)
-                if isinstance(x, dict):
-                    res.update(x)
-                    continue
-            except ValueError:
-                pass
+class _RequiresAction(argparse.Action):
 
-            raise ValueError("Provision must be `key=value` or a JSON dict; got {!r}".format(value))
+    @property
+    def default(self):
+        return RequirementSet()
 
+    @default.setter
+    def default(self, v):
+        pass
+
+    def __call__(self, requirement_parser, namespace, values, option_string=None):
+        res = getattr(namespace, self.dest)
+        for value in values:
+            res.parse(value)
 
     
 
@@ -107,9 +111,9 @@ requirement_parser = _RequirementParser(add_help=False)
 requirement_parser.add_argument('-n', '--name')
 requirement_parser.add_argument('-r', '--revision')
 
-requirement_parser.add_argument('-P', '--provides', action=_ProvidesAction)
-requirement_parser.add_argument('-R', '--requires')
-requirement_parser.add_argument('-V', '--variant')
+requirement_parser.add_argument('-P', '--provides', nargs='*', action=_ProvidesAction)
+requirement_parser.add_argument('-R', '--requires', nargs='*', action=_RequiresAction)
+requirement_parser.add_argument('-V', '--variant',  nargs='*', dest='variants', action='append', default=[]) # TODO: Parse.
 
 requirement_parser.add_argument('--etag', help='identifier for busting caches')
 requirement_parser.add_argument('--checksum', help='to verify that package archives haven\'t changed')
@@ -138,6 +142,13 @@ requirement_parser.add_argument('--install-sh', help='shell script in repository
 requirement_parser.add_argument('--manifest-txt', help='manifest to require for this package')
 
 requirement_parser.add_argument('url')
+
+
+def _json_default(x):
+    func = getattr(x, '__json__', None)
+    if func:
+        return func()
+    raise TypeError('Object of type {} is not JSON serializable'.format(type(x).__name__))
 
 
 class Package(DBObject):
@@ -225,6 +236,10 @@ class Package(DBObject):
         self.parent = parent
         self.set = set
 
+        # Coercions. TODO in the parser
+        self.provides = Provision.coerce(self.provides)
+        self.requires = RequirementSet.coerce(self.requires)
+
         # Make sure to make copies of anything that is mutable.
         self.base_environ = self.base_environ.copy() if self.base_environ else {}
         self.environ = self.environ.copy() if self.environ else {}
@@ -264,7 +279,7 @@ class Package(DBObject):
         return kwargs
 
     def to_json(self):
-        return json.dumps(self.to_kwargs(copy=False), sort_keys=True)
+        return json.dumps(self.to_kwargs(copy=False), sort_keys=True, default=_json_default)
 
     def to_args(self, exclude=set()):
 
@@ -288,8 +303,10 @@ class Package(DBObject):
 
             if isinstance(value, dict):
                 value = ','.join('%s=%s' % (k, v) for k, v in sorted(value.items()))
-            if isinstance(value, (list, tuple)):
+            elif isinstance(value, (list, tuple)):
                 value = ','.join(value)
+            else:
+                value = str(value)
 
             # Shell escape!
             if re.search(r'\s', value):
@@ -316,6 +333,22 @@ class Package(DBObject):
         if environ:
             kwargs['environ'] = self.environ_diff
         return self.__class__(kwargs, home=self.home)
+
+    def flat_variants(self):
+
+        if not self.variants:
+            return [self.copy()]
+
+        out = []
+        for raw in self.variants:
+            var = self.copy()
+            for key, value in raw:
+                if key in ('provides', 'requires'):
+                    getattr(var, key).update(value)
+                else:
+                    setattr(var, key, value)
+            out.append(var)
+        return out
 
     def add_dependency(self, **kwargs):
         # TODO: Remove these once the solver is used.

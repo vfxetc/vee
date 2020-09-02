@@ -1,72 +1,85 @@
 from . import *
 
 from vee.manifest import Manifest
-from vee.package.provides import Provides
-from vee.package.requires import Requires
+from vee.package.provides import Provision
+from vee.package.requires import RequirementSet, Requirement
 from vee.solve import *
 
 
 class TestSolve(TestCase):
 
-    def test_loads_provides(self):
+    def test_provides(self):
 
         self.assertEqual(
-            Provides('foo'),
+            Provision('foo'),
             {'foo': None}
         )
 
         self.assertEqual(
-            Provides('foo,bar'),
+            Provision('foo,bar'),
             {'foo': None, 'bar': None}
         )
 
         self.assertEqual(
-            Provides('foo=1'),
+            Provision('foo=1'),
             {'foo': Version('1')}
         )
 
         self.assertEqual(
-            Provides('foo=bar'),
+            Provision('foo=bar'),
             {'foo': Version('bar')}
         )
 
         self.assertEqual(
-            Provides('foo=1,bar=2'),
+            Provision('foo=1,bar=2'),
             {'foo': Version('1'), 'bar': Version('2')}
         )
 
 
-    def test_Requires(self):
+    def test_requires(self):
 
         self.assertEqual(
-            Requires('foo'),
+            RequirementSet('foo'),
             {'foo': {}}
         )
 
         self.assertEqual(
-            Requires('foo==1'),
+            RequirementSet('foo==1'),
             {'foo': {'version': VersionExpr('==1')}}
         )
 
         self.assertEqual(
-            Requires('foo:version~=2'),
+            RequirementSet('foo:version~=2'),
             {'foo': {'version': VersionExpr('~=2')}}
         )
 
         self.assertEqual(
-            Requires('foo:bar'),
+            RequirementSet('foo:bar'),
             {'foo': {'bar': None}}
         )
 
         self.assertEqual(
-            Requires('foo;bar'),
+            RequirementSet('foo;bar'),
             {'foo': {}, 'bar': {}}
         )
 
         self.assertEqual(
-            Requires('foo:version>1,bar>=2;baz<=3'),
+            RequirementSet('foo:version>1,bar>=2;baz<=3'),
             {'foo': {'version': VersionExpr('>1'), 'bar': VersionExpr('>=2')}, 'baz': {'version': VersionExpr('<=3')}}
         )
+
+    def test_satisfies(self):
+
+        self.assertTrue(Provision('foo').satisfies(Requirement()))
+        self.assertTrue(Provision('version=1').satisfies(Requirement('version=1')))
+        self.assertFalse(Provision('version=1').satisfies(Requirement('version=2')))
+
+        self.assertTrue(Provision('a=1,b=2').satisfies(Requirement('a=1')))
+        self.assertTrue(Provision('a=1,b=2').satisfies(Requirement('a<2,b>1')))
+        self.assertFalse(Provision('a=1,b=2').satisfies(Requirement('a<1,b>1')))
+
+        self.assertTrue(Provision('version=2.7.3').satisfies(Requirement('version~=2.7')))
+        self.assertFalse(Provision('version=2.7.3').satisfies(Requirement('version~=3.7')))
 
 
     def test_basics(self):
@@ -76,9 +89,7 @@ class TestSolve(TestCase):
         manifest.parse_args('bar')
 
         foo = manifest.get('foo')
-        print(foo)
-        foo = manifest.get('bar')
-        print(foo)
+        print("HERE", repr(foo.requires))
 
-        solve = solve_dependencies({'foo': {}}, manifest)
+        solve = solve_dependencies('foo', manifest)
 

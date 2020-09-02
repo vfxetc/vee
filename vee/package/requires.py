@@ -4,22 +4,26 @@ import re
 from vee.semver import VersionExpr
 
 
-class Requires(collections.MutableMapping):
+class RequirementSet(collections.MutableMapping):
 
-    def __init__(self, input_):
+    @classmethod
+    def coerce(cls, input_):
+        return input_ if isinstance(input_, cls) else cls(input_)
+    
+    def __init__(self, input_=None):
 
         self._data = {}
 
         if isinstance(input_, str):
-            self._parse_outer(input_)
+            self.parse(input_)
 
         elif isinstance(input_, dict):
             self.update(input_)
 
-        else:
+        elif input_ is not None:
             raise TypeError("requirements must be str or dict; got {}".format(type(input_)))
 
-    def _parse_outer(self, raw):
+    def parse(self, raw):
 
         for chunk in raw.split(';'):
             chunk = chunk.strip()
@@ -50,7 +54,7 @@ class Requires(collections.MutableMapping):
         return self._data[key]
 
     def __setitem__(self, key, value):
-        self._data[key] = PackageRequires(value)
+        self._data[key] = Requirement(value)
 
     def __delitem__(self, key):
         del self._data[key]
@@ -74,26 +78,29 @@ class Requires(collections.MutableMapping):
         return ';'.join(out)
 
     def __repr__(self):
-        return 'Requires({!r})'.format(str(self))
+        return '{}({})'.format(self.__class__.__name__, repr(str(self)) if self else '')
+
+    def __json__(self):
+        return self._data
 
 
 
-class PackageRequires(collections.MutableMapping):
+class Requirement(collections.MutableMapping):
 
-    def __init__(self, input_):
+    def __init__(self, input_=None):
 
         self._data = {}
 
         if isinstance(input_, str):
-            self._parse(input_)
+            self.parse(input_)
 
         elif isinstance(input_, dict):
             self.update(input_)
 
-        else:
+        elif input_ is not None:
             raise TypeError("requirements must be str or dict; got {}".format(type(input_)))
 
-    def _parse(self, raw):
+    def parse(self, raw):
 
         for chunk in raw.split(','):
             chunk = chunk.strip()
@@ -110,7 +117,7 @@ class PackageRequires(collections.MutableMapping):
                 self[key.strip()] = raw_expr.strip()
                 continue
 
-            raise ValueError("could not parse requirement {!r}; bad hunk {!r}".format(chunk, hunk))
+            raise ValueError("could not parse requirement {!r}".format(chunk))
 
     def __getitem__(self, key):
         return self._data[key]
@@ -134,5 +141,8 @@ class PackageRequires(collections.MutableMapping):
         return ','.join(out)
 
     def __repr__(self):
-        return 'Requires({!r})'.format(str(self))
+        return '{}({})'.format(self.__class__.__name__, repr(str(self)) if self else '')
+
+    def __json__(self):
+        return self._data
 

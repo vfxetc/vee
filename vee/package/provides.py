@@ -4,22 +4,26 @@ import re
 from vee.semver import Version
 
 
-class Provides(collections.MutableMapping):
+class Provision(collections.MutableMapping):
 
-    def __init__(self, input_):
+    @classmethod
+    def coerce(cls, input_):
+        return input_ if isinstance(input_, cls) else cls(input_)
+    
+    def __init__(self, input_=None):
 
         self._data = {}
 
         if isinstance(input_, str):
-            self._parse(input_)
+            self.parse(input_)
 
         elif isinstance(input_, dict):
             self.update(input_)
 
-        else:
+        elif input_ is not None:
             raise TypeError("provisions must be str or dict; got {}".format(type(input_)))
 
-    def _parse(self, raw):
+    def parse(self, raw):
 
         for chunk in raw.split(','):
             chunk = chunk.strip()
@@ -52,4 +56,19 @@ class Provides(collections.MutableMapping):
 
     def __iter__(self):
         return iter(self._data)
+
+    def satisfies(self, reqs):
+
+        for key, expr in reqs.items():
+
+            try:
+                value = self._data[key]
+            except KeyError:
+                return False
+
+            if not expr.eval(value):
+                return False
+
+        return True
+
 
