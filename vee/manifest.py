@@ -15,9 +15,8 @@ import sys
 from vee import log
 from vee.cli import style
 from vee.exceptions import AlreadyInstalled, CliMixin
-from vee.package import Package, requirement_parser, RequirementParseError
+from vee.package import Package, PackageMeta, requirement_parser, RequirementParseError
 from vee.utils import cached_property, guess_name, makedirs
-
 
 class Envvar(tuple):
 
@@ -112,13 +111,13 @@ class RequirementItem(object):
 
 class Manifest(collections.MutableSequence):
 
-    def __init__(self, args=None, file=None, home=None, env_repo=None):
+    def __init__(self, args=None, file=None, home=None, repo=None):
 
         self._items = []
 
         self.filename = None
         self.home = home
-        self.env_repo = env_repo
+        self.repo = repo
 
         self._cumulative_environ = {}
         self.headers = {}
@@ -230,7 +229,7 @@ class Manifest(collections.MutableSequence):
                     raise ValueError("Malformed include path.", raw_path)
                 if self.filename:
                     path = os.path.join(os.path.dirname(self.filename), path)
-                other = Manifest(env_repo=self.env_repo, home=self.home)
+                other = Manifest(repo=self.repo, home=self.home)
                 other.parse_file(path, alt_open=alt_open, _depth=_depth + 1)
                 append(Include(raw_path, other))
                 continue
@@ -262,6 +261,7 @@ class Manifest(collections.MutableSequence):
 
         if not _depth:
             self._guess_names()
+            self._load_metas()
 
     def _guess_names(self, strict=True):
         """Guess names for every requirement which does not already have one.
@@ -294,6 +294,42 @@ class Manifest(collections.MutableSequence):
             else:
                 names.add(name.lower())
                 req.name = name
+
+    def _load_metas(self):
+        """Find PackageMeta mixin in `packages/{name}.py` file for each package.
+
+        Any found class will be mixed into :class:`PackageMeta` and set to
+        :attr:`Package.meta`.
+
+        """
+
+        if not self.filename:
+            return
+
+        base = os.path.join(os.path.dirname(self.filename), 'packages')
+        if not os.path.exists(base):
+            return
+
+        for pkg in self.iter_packages():
+
+            path = os.path.join(base, pkg.name + '.py')
+            if not os.path.exists(path):
+                continue
+
+            namespace = {'__file__': path}
+            with open(path, 'rb') as fh:
+                source = fh.read()
+            try:
+                exec(compile(source, path, 'exec'), namespace, namespace)
+            except Exception as e:
+                raise ValueError("error while loading package meta in {}".format(path)) from e
+
+            mixin = namespace.get('Package')
+            if not isinstance(mixin, type):
+                raise ValueError("no Package class defined in {}".format(path))
+
+            cls = type('PackageMeta_' + pkg.name, (mixin, PackageMeta), {})
+            pkg.meta = cls()
 
     def iter_packages(self, eval_control=True, locals_=None):
 

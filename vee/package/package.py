@@ -67,17 +67,54 @@ class _EnvironmentAction(argparse.Action):
                 res[parts[i]] = parts[i + 1]
 
 
+class _ProvidesAction(argparse.Action):
+
+    @property
+    def default(self):
+        return {}
+
+    @default.setter
+    def default(self, v):
+        pass
+
+    def __call__(self, requirement_parser, namespace, values, option_string=None):
+        res = getattr(namespace, self.dest)
+        for value in values:
+
+            m = re.match(r'^\s*([a-zA-Z_]\w*)\s*=\s*(.*?)\s*$', value)
+            if m:
+                k, v = m.groups()
+                res[k] = v
+                continue
+
+            try:
+                x = json.loads(value)
+                if isinstance(x, dict):
+                    res.update(x)
+                    continue
+            except ValueError:
+                pass
+
+            raise ValueError("Provision must be `key=value` or a JSON dict; got {!r}".format(value))
+
+
+    
+
 
 requirement_parser = _RequirementParser(add_help=False)
 
 requirement_parser.add_argument('-n', '--name')
 requirement_parser.add_argument('-r', '--revision')
 
+requirement_parser.add_argument('-P', '--provides', action=_ProvidesAction)
+requirement_parser.add_argument('-R', '--requires')
+requirement_parser.add_argument('-V', '--variant')
+
 requirement_parser.add_argument('--etag', help='identifier for busting caches')
 requirement_parser.add_argument('--checksum', help='to verify that package archives haven\'t changed')
 
 requirement_parser.add_argument('--base-environ', nargs='*', action=_EnvironmentAction, help=argparse.SUPPRESS)
-requirement_parser.add_argument('-e', '--environ', nargs='*', action=_EnvironmentAction)
+requirement_parser.add_argument('-e', '--environ', nargs='*', action=_EnvironmentAction, help='envvars for building')
 requirement_parser.add_argument('-c', '--config', nargs='*', action=_ConfigAction, help='args to pass to `./configure`, `python setup.py`, `brew install`, etc..')
 
 requirement_parser.add_argument('--autoconf', action='store_true', help='the package uses autoconf; may ./bootstrap')
@@ -97,7 +134,7 @@ requirement_parser.add_argument('--virtual', action='store_true', help='package 
 requirement_parser.add_argument('--develop-sh', help='shell script in repository to source to develop the package')
 requirement_parser.add_argument('--build-sh', help='shell script in repository to source to build the package')
 requirement_parser.add_argument('--install-sh', help='shell script in repository to source to install the package')
-requirement_parser.add_argument('--manifest-txt', help='shell script in repository to source to build the package')
+requirement_parser.add_argument('--manifest-txt', help='manifest to require for this package')
 
 requirement_parser.add_argument('url')
 
@@ -182,6 +219,7 @@ class Package(DBObject):
         self.link_id = None
         self.package_name = self.build_name = None
         self.package_path = self.build_path = self.install_path = None
+        self.meta = None
 
         self._init_pipeline(dev=dev)
 
