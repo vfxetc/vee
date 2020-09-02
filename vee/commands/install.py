@@ -29,7 +29,7 @@ def install(args):
             http:/example.org/path/to/tarball.tgz --make-install
 
         # Install from a requirement set.
-        vee install path/to/requirements.txt
+        vee install path/to/manifest.txt
 
     """
 
@@ -39,12 +39,12 @@ def install(args):
         raise ValueError('please provide requirements to install')
 
     manifest = Manifest(args.requirements, home=home)
-    pkgs = PackageSet(home=home)
+    packages = PackageSet(home=home)
 
     # TODO: Resolve everything at once like upgrade does.
     for req in manifest.iter_packages():
-        pkg = pkgs.resolve(req, check_existing=not args.force)
+        pkg = packages.resolve(req, check_existing=not args.force)
         try:
-            pkgs.install(pkg.name, reinstall=args.force)
+            packages.install(pkg.name, reinstall=args.force)
         except AlreadyInstalled:
             log.info(style_note('Already installed', str(pkg.freeze())))

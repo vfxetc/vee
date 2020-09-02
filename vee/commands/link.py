@@ -25,7 +25,7 @@ from vee.packageset import PackageSet
     argument('--subset', action='append', help=argparse.SUPPRESS),
 
     argument('requirements', nargs='...'),
-    help='link a package, or requirements.txt, into an environment',
+    help='link a package, or manifest.txt, into an environment',
     acquire_lock=True,
     group='plumbing',
     usage='vee link ENVIRON (REQUIREMENT [OPTIONS])+',
@@ -42,7 +42,7 @@ def link(args):
             http:/example.org/path/to/tarball.tgz --make-install
 
         # Install and link from a requirement set.
-        $ vee link path/to/requirements.txt
+        $ vee link path/to/manifest.txt
 
     """
 

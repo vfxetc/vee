@@ -46,7 +46,7 @@ class MockRepo(object):
     def add_requirements(self, raw, insert=False, commit=True):
 
         old = Manifest(home=self.home)
-        path = os.path.join(self.path, 'requirements.txt')
+        path = os.path.join(self.path, 'manifest.txt')
         if os.path.exists(path):
             old.parse_file(path)
 
@@ -78,8 +78,8 @@ class MockRepo(object):
             self.commit('add requirements')
 
     def commit(self, message):
-        self.repo.git('add', 'requirements.txt', silent=True, stdout=True)
-        self.repo.git('commit', '-m', message or 'do something', silent=True, stdout=True)
+        self.repo.git('add', 'manifest.txt', silent=True, stdout=True)
+        self.repo.git('commit', '-m', message or 'No message', silent=True, stdout=True)
         self._rev_count = (self._rev_count or 0) + 1
 
 

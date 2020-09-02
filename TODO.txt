@@ -234,17 +234,6 @@ Server
     by_time -> links timestamped by commit time
     $branch -> links
 
-  
-- dependencies
-
-    - vee-inspect.sh or vee-requirements.txt to specify requirements, we can
-      then immediately create our own "bottles" from Homebrew
-
-        - `vee package-installed name`
-            - if there are dependencies, then package those too
-            - this requires there to be dependency links for homebrew
-              packages
-
 - `--link-prefix` so that it doesn't have to install it elsewhere, just link
   it elsewhere.
 
@@ -285,7 +274,7 @@ Server
 - `vee server` and `vee client`
     - make a super simple socket protocol. just send JSON back and forth
 
-- setting envvars in requirements.txt should allow for @ or $KEY to take
+- setting envvars in manifest.txt should allow for @ or $KEY to take
   in previous values that were set within that file. So, we need some syntax for:
     1. Immediately resolution of variables.
     2. Deferred resolution of variables.

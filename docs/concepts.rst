@@ -75,12 +75,12 @@ These may be passed to individual commands, e.g.::
 
     vee link pypi:pyyaml --revision=3.11
 
-or via a ``requirements.txt`` file, which contains a list of requirements.
+or via a ``manifest.txt`` file, which contains a list of requirements.
 
 
-.. _requirements_txt:
+.. _manifest_txt:
 
-``requirements.txt``
+``manifest.txt``
 --------------------
 
 The requirements file may also include:
@@ -123,7 +123,7 @@ Environment Repository
 ----------------------
 
 An environment repository is a git repository which contains (at a minimum)
-a :ref:`requirements_txt` file.
+a :ref:`manifest_txt` file.
 
 They are managed by the :ref:`cli_vee_repo` command.
 

@@ -200,8 +200,8 @@ def init(args, do_clone=False, do_install=False, do_add=False, is_find=False):
         # Find an existing tool.
         # TODO: put more of this into EnvironmentRepo or Manifest
         env_repo = home.get_env_repo(args.repo)
-        req_path = os.path.join(env_repo.work_tree, 'requirements.txt')
-        manifest = Manifest(req_path, home=home)
+        manifest_path = os.path.join(env_repo.work_tree, 'manifest.txt')
+        manifest = Manifest(manifest_path, home=home)
         for req in manifest.iter_packages():
             if req.name.lower() == name.lower():
                 # Make sure it is a Git package.

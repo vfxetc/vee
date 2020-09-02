@@ -10,7 +10,7 @@ from vee import log
 
 @command(
     argument('-r', '--repo', nargs='?'),
-    help='open requirements.txt in $EDITOR',
+    help='open manifest.txt in $EDITOR',
     group='development',
 )
 def edit(args):
@@ -20,7 +20,7 @@ def edit(args):
 
     cmd = []
     cmd.extend(shlex.split(os.environ.get('EDITOR', 'vim')))
-    cmd.append(os.path.join(env_repo.work_tree, 'requirements.txt'))
+    cmd.append(os.path.join(env_repo.work_tree, 'manifest.txt'))
 
     log.debug(cmd, verbosity=1)
 

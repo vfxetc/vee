@@ -24,7 +24,7 @@ def add(args):
 
     home = args.assert_home()
     env_repo = home.get_env_repo(args.repo)
-    req_set = env_repo.load_requirements()
+    req_set = env_repo.load_manifest()
     pkg_set = PackageSet(home=home)
 
     baked_any = None
@@ -80,7 +80,7 @@ def add(args):
 
     if baked_any is not None:
         if baked_any:
-            env_repo.dump_requirements(req_set)
+            env_repo.dump_manifest(req_set)
         else:
             log.info(style_note('No changes.'))
         return
@@ -135,4 +135,4 @@ def add(args):
         )
         req_set.append(('', req, ''))
 
-    env_repo.dump_requirements(req_set)
+    env_repo.dump_manifest(req_set)

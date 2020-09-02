@@ -44,7 +44,7 @@ def exec_(args):
         $ vee exec -e named_environ $command
 
         # Run within a constructed runtime for a set of requirements.
-        $ vee exec -r requirements.txt $command
+        $ vee exec -r manifest.txt $command
 
         # Export the default environment.
         $ vee exec --export

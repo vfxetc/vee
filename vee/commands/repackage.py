@@ -24,7 +24,7 @@ PLATFORM_TAG = sys.platform.strip('2')
     argument('--no-deps', action='store_true', help='skip dependencies'),
     argument('-f', '--force', action='store_true', help='overwrite existing?'),
     argument('-v', '--verbose', action='store_true'),
-    argument('-u', '--url', help='base of URL to output for requirements.txt'),
+    argument('-u', '--url', help='base of URL to output for manifest.txt'),
     argument('-d', '--dir', required=True, help='output directory'),
     argument('-e', '--extra', action='append', help='Extra arguments'),
     argument('packages', nargs='+', help='names or URLs'),
@@ -119,7 +119,7 @@ def repackage(args):
                 dep.resolve_existing()
                 requirements.append(str(dep))
             buf = StringIO('\n'.join(requirements))
-            info = tarfile.TarInfo('vee-requirements.txt')
+            info = tarfile.TarInfo('vee-manifest.txt')
             info.size = len(buf.getvalue())
             archive.addfile(info, buf)
 
