@@ -203,6 +203,7 @@ def _op(name):
 
 
 @_op('')
+@_op('=')
 @_op('==')
 def _op_eq(a, b):
     return a == b
@@ -270,6 +271,11 @@ class VersionExpr(object):
     def __str__(self):
         return ','.join('%s%s' % x for x in self.clauses)
     
+    def __eq__(self, other):
+        if not isinstance(other, VersionExpr):
+            raise TypeError("cannot compare {} to {}".format(self.__class__, other.__class__))
+        return str(self) == str(other)
+
     def eval(self, v):
         if not isinstance(v, Version):
             v = Version(v)

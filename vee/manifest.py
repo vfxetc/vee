@@ -18,6 +18,7 @@ from vee.exceptions import AlreadyInstalled, CliMixin
 from vee.package import Package, PackageMeta, requirement_parser, RequirementParseError
 from vee.utils import cached_property, guess_name, makedirs
 
+
 class Envvar(tuple):
 
     def __new__(cls, name, value):
@@ -167,6 +168,7 @@ class Manifest:
         self._packages[pkg.name] = pkg
 
     def get(self, name):
+        """Get the named :class:`Package`, or ``None``."""
         return self._packages.get(name)
 
     def parse_args(self, args):

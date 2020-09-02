@@ -209,6 +209,8 @@ class Package(DBObject):
             if kwargs:
                 raise ValueError("too many kwargs: {}".format(list(kwargs)))
 
+        assert self.url
+        
         # Assert we have a name.
         if self.name:
             if self.name.lower() != self.name:
