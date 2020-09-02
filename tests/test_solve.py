@@ -1,6 +1,8 @@
 from . import *
 
 from vee.manifest import Manifest
+from vee.package.provides import Provides
+from vee.package.requires import Requires
 from vee.solve import *
 
 
@@ -9,60 +11,60 @@ class TestSolve(TestCase):
     def test_loads_provides(self):
 
         self.assertEqual(
-            loads_provides('foo'),
+            Provides('foo'),
             {'foo': None}
         )
 
         self.assertEqual(
-            loads_provides('foo,bar'),
+            Provides('foo,bar'),
             {'foo': None, 'bar': None}
         )
 
         self.assertEqual(
-            loads_provides('foo=1'),
+            Provides('foo=1'),
             {'foo': Version('1')}
         )
 
         self.assertEqual(
-            loads_provides('foo=bar'),
+            Provides('foo=bar'),
             {'foo': Version('bar')}
         )
 
         self.assertEqual(
-            loads_provides('foo=1,bar=2'),
+            Provides('foo=1,bar=2'),
             {'foo': Version('1'), 'bar': Version('2')}
         )
 
 
-    def test_loads_requires(self):
+    def test_Requires(self):
 
         self.assertEqual(
-            loads_requires('foo'),
+            Requires('foo'),
             {'foo': {}}
         )
 
         self.assertEqual(
-            loads_requires('foo==1'),
+            Requires('foo==1'),
             {'foo': {'version': VersionExpr('==1')}}
         )
 
         self.assertEqual(
-            loads_requires('foo:version~=2'),
+            Requires('foo:version~=2'),
             {'foo': {'version': VersionExpr('~=2')}}
         )
 
         self.assertEqual(
-            loads_requires('foo:bar'),
+            Requires('foo:bar'),
             {'foo': {'bar': None}}
         )
 
         self.assertEqual(
-            loads_requires('foo;bar'),
+            Requires('foo;bar'),
             {'foo': {}, 'bar': {}}
         )
 
         self.assertEqual(
-            loads_requires('foo:version>1,bar>=2;baz<=3'),
+            Requires('foo:version>1,bar>=2;baz<=3'),
             {'foo': {'version': VersionExpr('>1'), 'bar': VersionExpr('>=2')}, 'baz': {'version': VersionExpr('<=3')}}
         )
 

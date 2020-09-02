@@ -40,6 +40,10 @@ class Version(object):
 
     """
 
+    @classmethod
+    def coerce(cls, input_):
+        return input_ if isinstance(input_, cls) else cls(input_)
+
     def __init__(self, raw):
 
         # Git revisions.
@@ -255,6 +259,10 @@ def _op_compatible_release(a, b):
 
 class VersionExpr(object):
 
+    @classmethod
+    def coerce(cls, input_):
+        return input_ if isinstance(input_, cls) else cls(input_)
+        
     def __init__(self, raw):
         self.clauses = []
         for chunk in re.split(r'\s*,\s*', raw.strip()):
