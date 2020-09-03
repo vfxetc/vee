@@ -72,7 +72,7 @@ class SelfBuilder(GenericBuilder):
             line = line.strip()
             if not line or line[0] == '#':
                 continue
-            pkg.dependencies.append(Package(line, home=pkg.home))
+            pkg.dependencies.append(Package(line, source=pkg, home=pkg.home))
 
     def build(self, pkg):
 

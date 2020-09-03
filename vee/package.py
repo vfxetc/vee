@@ -230,9 +230,9 @@ class Package(DBObject):
         if not home:
             raise ValueError("Package requires home")
 
-        self.context = context or (source.context if source else None)
-        # if not context:
-            # raise ValueError("Package requires context (Manifest)")
+        self.context = context = context or (source.context if source else None)
+        if not context and not dev:
+            raise ValueError("Package requires context (Manifest) when not dev")
         
         if args and kwargs:
             raise ValueError('specify either args OR kwargs')
@@ -303,7 +303,7 @@ class Package(DBObject):
             self.meta = parent.meta # Directly shared.
             self.pipeline = parent.pipeline.copy(self)
         else:
-            self.meta = None
+            self.meta = context.load_meta(self.name) if context else None
             self._init_pipeline(dev=dev)
 
     def _init_pipeline(self, dev=False):
@@ -441,6 +441,7 @@ class Package(DBObject):
         # TODO: Remove these once the solver is used.
         kwargs.setdefault('base_environ', self.base_environ)
         kwargs.setdefault('environ', self.environ)
+        kwargs.setdefault('source', self)
         kwargs.setdefault('home', self.home)
         dep = Package(**kwargs)
         self.dependencies.append(dep)
@@ -738,6 +739,7 @@ class Package(DBObject):
         for row in cur:
             self.dependencies.append(Package(
                 url='deferred:%d' % row['dependee_id'],
+                source=self,
                 home=self.home,
             ))
 
