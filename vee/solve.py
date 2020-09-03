@@ -47,7 +47,7 @@ def _solve(done, todo, manifest, log, depth=0):
 
     log(depth, 'start', name, pkg)
 
-    variants = pkg.flat_variants()
+    variants = pkg.flattened()
     for vi, var in enumerate(variants):
 
         log(depth, 'variant', vi, len(variants), var)

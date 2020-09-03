@@ -122,6 +122,8 @@ class _VariantAction(argparse.Action):
 requirement_parser = _RequirementParser(add_help=False)
 
 requirement_parser.add_argument('-n', '--name')
+
+# TODO: Be a shortcun into provides['version'].
 requirement_parser.add_argument('-r', '--revision')
 
 requirement_parser.add_argument('-P', '--provides', nargs='*', action=_ProvidesAction)
@@ -131,8 +133,10 @@ requirement_parser.add_argument('-V', '--variant',  nargs='*', action=_VariantAc
 requirement_parser.add_argument('--etag', help='identifier for busting caches')
 requirement_parser.add_argument('--checksum', help='to verify that package archives haven\'t changed')
 
+# TODO: -e for runtime, and -E for build. --base-environ for either??
 requirement_parser.add_argument('--base-environ', nargs='*', action=_EnvironmentAction, help=argparse.SUPPRESS)
-requirement_parser.add_argument('-e', '--environ', nargs='*', action=_EnvironmentAction, help='envvars for building')
+# requirement_parser.add_argument('-E', '--build-environ', nargs='*', action=_EnvironmentAction, help='envvars for building')
+requirement_parser.add_argument('-e', '--environ', nargs='*', action=_EnvironmentAction, help='envvars for runtime')
 requirement_parser.add_argument('-c', '--config', nargs='*', action=_ConfigAction, help='args to pass to `./configure`, `python setup.py`, `brew install`, etc..')
 
 requirement_parser.add_argument('--autoconf', action='store_true', help='the package uses autoconf; may ./bootstrap')
@@ -329,13 +333,14 @@ class Package(DBObject):
     def copy(self):
         return self.__class__(self.to_kwargs(copy=True), home=self.home, parent=self)
 
+    # TODO: I think all this freezing is no longer a good idea.
     def freeze(self, environ=True):
         kwargs = self.to_kwargs()
         if environ:
             kwargs['environ'] = self.environ_diff
         return self.__class__(kwargs, home=self.home)
 
-    def flat_variants(self):
+    def flattened(self):
 
         if not self.variants:
             return [self.copy()]
@@ -355,7 +360,13 @@ class Package(DBObject):
 
         return out
 
+    def assert_flat(self):
+        """Assert that this does not have any variants."""
+        if self.variants:
+            raise ValueError("package is not flat (it has variants)")
+
     def get_meta(self, key):
+        """Get a value from the packages meta object, if it exists."""
         if self.meta:
             return getattr(self.meta, key, None)
 
@@ -437,6 +448,9 @@ class Package(DBObject):
         return environ
 
     def _set_names(self, package=False, build=False, install=False):
+
+        self.assert_flat()
+
         if (package or build or install) and self.package_name is None:
             if self.url:
                 # Strip out the scheme.
@@ -444,11 +458,13 @@ class Package(DBObject):
                 name = re.sub(r':?/+:?', '/', name)
                 name = name.strip('/')
                 self.package_name = name
+
         if (install or build) and self.install_name is None:
             if self.name and self.revision:
                 self.install_name = '%s/%s' % (self.name, self.revision)
             else:
                 self.install_name = self.package_name and re.sub(r'(\.(tar|gz|tgz|zip))+$', '', self.package_name)
+
         if build and self.build_name is None:
             self.build_name = self.install_name and ('%s/%s-%s' % (
                 self.install_name,
@@ -561,8 +577,6 @@ class Package(DBObject):
                     self.id, dep_id
                 ])
             return res
-
-
 
     def resolve_existing(self, env=None, weak=False):
         """Check against the database to see if this was already installed."""
