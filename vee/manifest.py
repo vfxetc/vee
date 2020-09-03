@@ -185,7 +185,7 @@ class Manifest:
             if args.url.endswith('.txt'):
                 self.parse_file(args.url)
             else:
-                pkg = Package(args, home=self.home)
+                pkg = Package(args, home=self.home, context=self)
                 self._append(pkg)
 
     def parse_file(self, source, filename=None, alt_open=None, _depth=0):

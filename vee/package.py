@@ -205,12 +205,16 @@ class Package(DBObject):
         super(Package, self).__init__()
 
         source = source or parent
-        home = home or (source.home if source else None)
 
-        self.home = home # Must be early due to some properties using this.
+        # Must be early due to some properties using this.
+        self.home = home = home or (source.home if source else None)
         if not home:
             raise ValueError("Package requires home")
 
+        self.context = context or (source.context if source else None)
+        # if not context:
+            # raise ValueError("Package requires context (Manifest)")
+        
         if args and kwargs:
             raise ValueError('specify either args OR kwargs')
 
