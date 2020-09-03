@@ -18,20 +18,18 @@ class GenericBuilder(PipelineStep):
 
     @classmethod
     def factory(cls, step, pkg):
-        return cls(pkg)
+        return cls()
 
-    def init(self):
+    def init(self, pkg):
         pass
     
-    def inspect(self):
+    def inspect(self, pkg):
         pass
 
-    def build(self):
+    def build(self, pkg):
         log.info(style_note('Generic package; nothing to build.'), verbosity=1)
 
-    def install(self):
-
-        pkg = self.package
+    def install(self, pkg):
 
         if pkg.pseudo_homebrew:
             homebrew = Homebrew(home=pkg.home)
@@ -56,15 +54,14 @@ class GenericBuilder(PipelineStep):
             log.info(style_note('Installing via copy', 'to ' + pkg.install_path))
             shutil.copytree(pkg.build_path_to_install, pkg.install_path_from_build, symlinks=True)
 
-    def post_install(self):
+    def post_install(self, pkg):
         # TODO: Pull this from repository config (when that exists).
-        chmod(self.package.install_path, 'o-w', recurse=True)
+        chmod(pkg.install_path, 'o-w', recurse=True)
 
-    def relocate(self):
-        relocate_package(self.package)
+    def relocate(self, pkg):
+        relocate_package(pkg)
 
-    def optlink(self):
-        pkg = self.package
+    def optlink(self, pkg):
         if pkg.name:
             opt_link = pkg.home._abs_path('opt', pkg.name)
             log.info(style_note('Linking to opt/%s' % pkg.name))
@@ -73,14 +70,12 @@ class GenericBuilder(PipelineStep):
             makedirs(os.path.dirname(opt_link))
             os.symlink(pkg.install_path, opt_link)
 
-    def develop(self):
-        pkg = self.package
+    def develop(self, pkg):
         for name in ('bin', 'scripts'):
             path = os.path.join(pkg.build_path, name)
             if os.path.exists(path):
                 log.info(style_note("Adding ./%s to $PATH" % name))
                 pkg.environ['PATH'] = join_env_path('./' + name, pkg.environ.get('PATH', '@'))
-
 
 
 def relocate_package(pkg):

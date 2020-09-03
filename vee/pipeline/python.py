@@ -43,20 +43,17 @@ class PythonBuilder(GenericBuilder):
         dist_path  = find_in_tree(pkg.build_path, '*.dist-info', 'dir')
 
         if setup_path or dist_path:
-            return cls(pkg, (setup_path, dist_path))
+            return cls((setup_path, dist_path))
 
-    def get_next(self, name):
+    def get_next(self, name, pkg):
         if name in ('build', 'install', 'develop'):
             return self
     
-    def __init__(self, pkg, paths):
-        super(PythonBuilder, self).__init__(pkg)
+    def __init__(self, paths):
+        super().__init__()
         self.setup_path, self.dist_info_dir = paths
-
     
-    def inspect(self):
-
-        pkg = self.package
+    def inspect(self, pkg):
 
         if self.setup_path:
 
@@ -125,9 +122,7 @@ class PythonBuilder(GenericBuilder):
                         revision=version_expr,
                     )
 
-    def build(self):
-
-        pkg = self.package
+    def build(self, pkg):
 
         if self.setup_path:
 
@@ -146,17 +141,16 @@ class PythonBuilder(GenericBuilder):
             if res:
                 raise RuntimeError('Could not build Python package')
 
-    def install(self):
+    def install(self, pkg):
         if self.setup_path:
-            self._install_setup()
+            self._install_setup(pkg)
         elif self.dist_info_dir:
-            self._install_wheel()
+            self._install_wheel(pkg)
         else:
-            return super(PythonBuilder, self).install()
+            return super(PythonBuilder, self).install(pkg)
 
-    def _install_setup(self):
+    def _install_setup(self, pkg):
 
-        pkg = self.package
         pkg._assert_paths(install=True)
 
         site_packages = get_default_python().rel_site_packages
@@ -195,9 +189,8 @@ class PythonBuilder(GenericBuilder):
         if res:
             raise RuntimeError('Could not install Python package')
 
-    def _install_wheel(self):
+    def _install_wheel(self, pkg):
 
-        pkg = self.package
         pkg._assert_paths(install=True)
 
         if pkg.package_path.endswith('.whl'):
@@ -236,9 +229,8 @@ class PythonBuilder(GenericBuilder):
         req.name = wheel_name
         install_wheel(pkg.name, pkg.package_path, scheme, '<VEE dummy request>')
 
-    def develop(self):
-        pkg = self.package
-
+    def develop(self, pkg):
+        
         log.info(style_note('Building scripts'))
         cmd = ['vee_develop']
         if call_setup_py(self.setup_path, cmd):

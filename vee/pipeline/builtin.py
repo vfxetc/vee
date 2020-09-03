@@ -10,11 +10,10 @@ class BuiltinLoader(PipelineStep):
     @classmethod
     def factory(cls, step, pkg):
         if step == 'init' and pkg.url.startswith('builtin:'):
-            return cls(pkg)
+            return cls()
 
-    def init(self):
+    def init(self, pkg):
         
-        pkg = self.package
         name = pkg.url.split(':')[1]
         meta_cls = load_builtin(name, 'Package')
 

@@ -10,23 +10,23 @@ class MetaStep(PipelineStep):
     @classmethod
     def factory(cls, step, pkg):
         if pkg.get_meta(step):
-            return cls(pkg)
+            return cls()
 
-    def fetch(self):
-        self.package.get_meta('fetch')(self.package)
+    def fetch(self, pkg):
+        pkg.get_meta('fetch')(pkg)
 
-    def extract(self):
-        self.package.get_meta('extract')(self.package)
+    def extract(self, pkg):
+        pkg.get_meta('extract')(pkg)
 
-    def inspect(self):
-        self.package.get_meta('inspect')(self.package)
+    def inspect(self, pkg):
+        pkg.get_meta('inspect')(pkg)
 
-    def build(self):
-        self.package.get_meta('build')(self.package)
+    def build(self, pkg):
+        pkg.get_meta('build')(pkg)
 
-    def install(self):
-        self.package.get_meta('install')(self.package)
+    def install(self, pkg):
+        pkg.get_meta('install')(pkg)
 
     def link(self):
-        self.package.get_meta('link')(self.package)
+        pkg.get_meta('link')(pkg)
 

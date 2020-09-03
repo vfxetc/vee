@@ -21,14 +21,12 @@ class HomebrewManager(PipelineStep):
     @classmethod
     def factory(cls, step, pkg):
         if step == 'init' and re.match(r'^(home)?brew[:+]', pkg.url):
-            return cls(pkg)
+            return cls()
         if step == 'relocate' and pkg.pseudo_homebrew:
-            return cls(pkg)
+            return cls()
 
     def __init__(self, *args):
-        super(HomebrewManager, self).__init__(*args)
-
-        pkg = self.package
+        super().__init__(*args)
 
         self.brew = Homebrew(home=pkg.home)
 
@@ -58,13 +56,13 @@ class HomebrewManager(PipelineStep):
         if len(parts) == 2:
             return parts[0]
 
-    def get_next(self, step):
+    def get_next(self, step, pkg):
         if step != 'optlink':
             return self
 
-    def init(self):
+    def init(self, pkg):
 
-        pkg = self.package
+        
         pkg.package_name = re.sub(r'^(git\+)?(home)?brew[:+]', '', pkg.url)
         pkg.url = 'brew:' + pkg.package_name
 
@@ -77,9 +75,9 @@ class HomebrewManager(PipelineStep):
         # TODO: immediately check info to see if we can satisfy the revision
         # with what is installed, and set install_path accordingly.
 
-    def fetch(self):
+    def fetch(self, pkg):
 
-        pkg = self.package
+        
 
         self.repo.clone_if_not_exists()
 
@@ -89,7 +87,7 @@ class HomebrewManager(PipelineStep):
         self.repo.checkout(self.revision or 'HEAD', fetch=True)
         self.revision = self.repo.head[:8]
 
-    def inspect(self):
+    def inspect(self, pkg):
 
         # At this point we accept that if there is already something installed
         # in homebrew, we take it. So, we will set our names to that which
@@ -110,7 +108,7 @@ class HomebrewManager(PipelineStep):
             self._update_dependencies(optional=False, must_exist=False)
 
     def _update_dependencies(self, optional, must_exist):
-        pkg = self.package
+        
         existing = {}
         for dep in pkg.dependencies:
             existing[dep.name] = dep
@@ -142,7 +140,7 @@ class HomebrewManager(PipelineStep):
 
     def _set_names(self):
 
-        pkg = self.package
+        
 
         info = self.brew.info(pkg.package_name)
         self.version = info['linked_keg'] or (
@@ -167,12 +165,12 @@ class HomebrewManager(PipelineStep):
             self.revision
         )
 
-    def extract(self):
+    def extract(self, pkg):
         pass
 
-    def build(self):
+    def build(self, pkg):
 
-        pkg = self.package
+        
 
         if not pkg.installed:
             self.brew('install', pkg.package_name, *pkg.config)
@@ -180,15 +178,15 @@ class HomebrewManager(PipelineStep):
 
         self._update_dependencies(optional=True, must_exist=True)
 
-    def install(self):
+    def install(self, pkg):
         pass
 
-    def post_install(self):
+    def post_install(self, pkg):
         pass
     
-    def relocate(self):
+    def relocate(self, pkg):
 
-        pkg = self.package
+        
 
         # Standard --relocate and --set-rpath
         relocate_package(pkg)

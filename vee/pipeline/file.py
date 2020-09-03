@@ -16,23 +16,22 @@ class FileTransport(PipelineStep):
     @classmethod
     def factory(cls, step, pkg):
         if step == 'init':
-            return cls(pkg)
+            return cls()
         if step == 'extract' and pkg.package_path and os.path.isdir(pkg.package_path):
-            return cls(pkg)
+            return cls()
 
-    def get_next(self, step):
+    def get_next(self, step, pkg):
         if step in ('fetch', ):
             return self
 
-    def init(self):
-        pkg = self.package
+    def init(self, pkg):
+        
         self._path = re.sub(r'^file:|#.*$', '', pkg.url)
         pkg.url = 'file:' + self._path
         pkg.package_name = os.path.expanduser(self._path).strip('/')
 
-    def fetch(self):
+    def fetch(self, pkg):
 
-        pkg = self.package
         pkg._assert_paths(package=True)
 
         if os.path.exists(pkg.package_path):
@@ -51,9 +50,8 @@ class FileTransport(PipelineStep):
         else:
             shutil.copyfile(source, pkg.package_path)
 
-    def extract(self):
+    def extract(self, pkg):
 
-        pkg = self.package
         pkg._assert_paths(package=True, build=True)
         pkg._clean_build_path(makedirs=False)
 

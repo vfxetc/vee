@@ -13,7 +13,6 @@ class GemManager(PipelineStep):
 
     factory_priority = 1000
 
-
     @cached_property
     def system_gems(self):
         gems = {}
@@ -27,34 +26,34 @@ class GemManager(PipelineStep):
     @classmethod
     def factory(cls, step, pkg):
         if step == 'init' and re.match(r'^gem:', pkg.url):
-            return cls(pkg)
+            return cls()
 
-    def get_next(self, step):
+    def get_next(self, step, pkg):
         if step != 'optlink':
             return self
 
-    def init(self):
+    def init(self, pkg):
         return
         # Normalize the name.
-        pkg = self.package
+        
         pkg.package_name = re.sub(r'^gem:', '', pkg.url)
 
-    def fetch(self):
+    def fetch(self, pkg):
         pass
 
-    def inspect(self):
+    def inspect(self, pkg):
         # TODO: Figure out what the dependencies are, and list them here.
         #       Otherwise, each package will install a copy of shared dependencies.
         return
 
-    def extract(self):
+    def extract(self, pkg):
         pass
 
-    def build(self):
+    def build(self, pkg):
         pass
 
-    def install(self):
-        pkg = self.package
+    def install(self, pkg):
+        
         pkg._assert_paths(install=True)
         # TODO: Find the Ruby version.
         root = os.path.join(pkg.install_path, 'lib/ruby/2.0.0')
@@ -65,5 +64,5 @@ class GemManager(PipelineStep):
             cmd.extend(pkg.render_template(x) for x in pkg.config)
         call(cmd, env={'GEM_HOME': root})
 
-    def relocate(self):
+    def relocate(self, pkg):
         pass

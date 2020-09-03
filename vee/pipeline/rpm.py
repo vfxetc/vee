@@ -43,36 +43,34 @@ class RPMChecker(PipelineStep):
     @classmethod
     def factory(cls, step, pkg):
         if step == 'init' and re.match(r'^rpm:', pkg.url):
-            return cls(pkg)
+            return cls()
 
-    def get_next(self, step):
+    def get_next(self, step, pkg):
         return self
 
-    def init(self):
-        pkg = self.package
+    def init(self, pkg):
         # Signal that we should not be persisted to the database.
         pkg.virtual = True
 
-    def fetch(self):
-        pkg = self.package
+    def fetch(self, pkg):
         if pkg.name.lower() not in self.installed_packages:
             raise PipelineError('rpm package "%s" is not installed.' % pkg.name)
         raise AlreadyInstalled()
 
-    def inspect(self):
+    def inspect(self, pkg):
         pass
         
-    def extract(self):
+    def extract(self, pkg):
         pass
 
-    def build(self):
+    def build(self, pkg):
         pass
 
-    def install(self):
+    def install(self, pkg):
         pass
 
-    def optlink(self):
+    def optlink(self, pkg):
         pass
 
-    def relocate(self):
+    def relocate(self, pkg):
         pass

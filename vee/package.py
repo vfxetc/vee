@@ -278,6 +278,7 @@ class Package(DBObject):
         else:
             self.name = guess_name(self.url)
 
+        # TODO: Deprecate these.
         self.dependencies = []
         self.set = set
 
@@ -292,10 +293,12 @@ class Package(DBObject):
         self.config = self.config[:] if self.config else []
 
         # Initialize other state not covered by the argument parser.
+        # TODO: Should this come from the parent?
         self.link_id = None
         self.package_name = self.build_name = None
         self.package_path = self.build_path = self.install_path = None
 
+        # Share some state with the parent.
         if parent:
             self.meta = parent.meta # Directly shared.
             self.pipeline = parent.pipeline.copy(self)
