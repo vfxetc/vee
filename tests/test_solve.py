@@ -165,3 +165,23 @@ class TestSolve(TestCase):
         self.assertEqual(sol['b'].provides['version'], '2')
 
 
+    def test_multi_version_backtrack(self):
+
+        manifest = Manifest()
+        manifest.parse_args('a')
+        manifest.parse_args('b')
+        manifest.parse_args('c --requires a>1')
+
+        a = manifest.get('a')
+        a.variants.append({'provides': 'version=1', 'requires': 'b=1'})
+        a.variants.append({'provides': 'version=2', 'requires': 'b=2'})
+
+        b = manifest.get('b')
+        b.variants.append({'provides': 'version=1', 'requires': 'c'})
+        b.variants.append({'provides': 'version=2'})
+
+        sol = solve('a', manifest)
+        self.assertEqual(list(sol), ['a', 'b'])
+        self.assertEqual(sol['a'].provides['version'], '2')
+
+

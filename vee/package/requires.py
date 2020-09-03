@@ -49,6 +49,14 @@ class RequirementSet(collections.MutableMapping):
 
             raise ValueError("could not parse requirement {!r}".format(chunk))
 
+    def update(self, *args, **kwargs):
+        for arg in args:
+            if isinstance(arg, str):
+                self.parse(arg)
+            else:
+                super().update(arg)
+        if kwargs:
+            super().update(kwargs)
 
     def __getitem__(self, key):
         return self._data[key]

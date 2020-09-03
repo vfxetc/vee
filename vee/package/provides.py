@@ -42,6 +42,15 @@ class Provision(collections.MutableMapping):
 
             raise ValueError("could not parse provision {!r}".format(chunk))
 
+    def update(self, *args, **kwargs):
+        for arg in args:
+            if isinstance(arg, str):
+                self.parse(arg)
+            else:
+                super().update(arg)
+        if kwargs:
+            super().update(kwargs)
+    
     def __getitem__(self, key):
         return self._data[key]
 
@@ -65,7 +74,7 @@ class Provision(collections.MutableMapping):
 
     def __repr__(self):
         return '{}({})'.format(self.__class__.__name__, repr(str(self)) if self._data else '')
-    
+
     def satisfies(self, reqs):
 
         for key, expr in reqs.items():
