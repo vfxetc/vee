@@ -57,6 +57,15 @@ class Provision(collections.MutableMapping):
     def __iter__(self):
         return iter(self._data)
 
+    def __str__(self):
+        out = []
+        for key, version in self._data.items():
+            out.append('{}={}'.format(key, version))
+        return ','.join(out)
+
+    def __repr__(self):
+        return '{}({})'.format(self.__class__.__name__, repr(str(self)) if self._data else '')
+    
     def satisfies(self, reqs):
 
         for key, expr in reqs.items():

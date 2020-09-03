@@ -1,6 +1,5 @@
 import re
 
-from vee.semver import Version, VersionExpr
 from vee.package.requires import RequirementSet
 from vee.package.provides import Provision
 
@@ -10,7 +9,11 @@ class SolveError(ValueError):
 
 
 
-def solve_dependencies(requires, manifest):
+def verbose(depth, step, *args):
+    print('    ' * depth, step, *args)
+
+
+def solve(requires, manifest, log=None):
     """Solve abstract requirements into concrete provisions.
 
     :param dict requires: The abstract requirements to solve.
@@ -23,27 +26,67 @@ def solve_dependencies(requires, manifest):
     solved = {}
     to_solve = list(RequirementSet.coerce(requires).items())
 
-    _solve(solved, to_solve, manifest)
+    log = log or (lambda *args: None)
+    return _solve(solved, to_solve, manifest, log)
 
 
-def _solve(solved, to_solve, manifest):
+def _solve(solved, to_solve, manifest, log, depth=0):
 
-    for name, reqs in to_solve:
+    if not to_solve:
+        return solved
 
-        pkg = manifest.get(name)
-        if pkg is None:
-            raise SolveError("package {} does not exist".format(name))
+    name, reqs = to_solve[0]
 
-        print("HERE 1", name, pkg)
+    pkg = manifest.get(name)
+    if pkg is None:
+        raise SolveError("package {!r} does not exist".format(name))
 
-        # For each variant, we test if it works with the current solution.
-        # If it does, then we go onto the next step.
-        # If none result in a solution, we bail.
-        for var in pkg.flat_variants():
-            print("HERE 2", name, var)
-        else:
-            return # failure
+    log(depth, 'start', name, pkg)
 
+    # Make sure it satisfies all solved requirements.
+    for prev in solved.values():
+        req = prev.requires.get(name)
+        if req and not pkg.provides.satisfies(req):
+            log(depth, 'fail existing', name, pkg)
+            return
+
+    for var in pkg.flat_variants():
+
+        log(depth, 'variant', var)
+
+        # See if it works with the current solution.
+        failed = False
+        to_solve2 = []
+
+        for name2, req in var.requires.items():
+
+            pkg2 = solved.get(name2)
+
+            log(depth, 'requires', name2, req, pkg2)
+
+            if pkg2 is None:
+                # We need to solve this.
+                to_solve2.append((name2, req))
+                log(depth, 'to solve')
+
+            elif not pkg2.provides.satisfies(req):
+                # It doesn't work. Move onto the next one
+                failed = True
+                log(depth, 'fail')
+                break
+
+
+        if failed:
+            continue
+
+        # Go onto the next step.
+        solved2 = solved.copy()
+        solved2[name] = var
+        to_solve2 = to_solve[1:] + to_solve2
+
+        solution = _solve(solved2, to_solve2, manifest, log, depth + 1)
+        if solution:
+            return solution
 
 
 

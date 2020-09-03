@@ -231,7 +231,7 @@ class Package(DBObject):
             self.name = guess_name(self.url)
 
         # Manual args.
-        self.abstract_requirement = self.to_json()
+        self.abstract_requirement = None #self.to_json()
         self.dependencies = []
         self.parent = parent
         self.set = set

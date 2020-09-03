@@ -3,7 +3,8 @@ from . import *
 from vee.manifest import Manifest
 from vee.package.provides import Provision
 from vee.package.requires import RequirementSet, Requirement
-from vee.solve import *
+from vee.semver import Version, VersionExpr
+from vee.solve import solve
 
 
 class TestSolve(TestCase):
@@ -85,11 +86,64 @@ class TestSolve(TestCase):
     def test_basics(self):
 
         manifest = Manifest()
-        manifest.parse_args('foo --name foo --requires bar')
-        manifest.parse_args('bar')
+        manifest.parse_args('a --requires b')
+        manifest.parse_args('b')
 
-        foo = manifest.get('foo')
-        print("HERE", repr(foo.requires))
+        sol = solve('a', manifest)
+        self.assertEqual(list(sol), ['a', 'b'])
 
-        solve = solve_dependencies('foo', manifest)
+        sol = solve('b', manifest)
+        self.assertEqual(list(sol), ['b'])
 
+        sol = solve('b;a', manifest)
+        self.assertEqual(list(sol), ['b', 'a'])
+
+    def test_simple_requirement(self):
+
+        manifest = Manifest()
+        manifest.parse_args('a --requires b>1')
+        manifest.parse_args('b')
+
+        b = manifest.get('b')
+        b.provides['version'] = '2'
+
+        sol = solve('a', manifest)
+        self.assertEqual(list(sol), ['a', 'b'])
+
+    def test_simple_bad_requirement(self):
+
+        manifest = Manifest()
+        manifest.parse_args('a --requires b>1')
+        manifest.parse_args('b')
+
+        b = manifest.get('b')
+        b.provides['version'] = '1'
+
+        sol = solve('a', manifest)
+        self.assertIs(sol, None)
+
+    def test_looped_requirement(self):
+
+        manifest = Manifest()
+        manifest.parse_args('a --requires b')
+        manifest.parse_args('b --requires a')
+
+        sol = solve('a', manifest)
+        self.assertEqual(list(sol), ['a', 'b'])
+
+        sol = solve('b', manifest)
+        self.assertEqual(list(sol), ['b', 'a'])
+
+    def test_diamond_requirement(self):
+
+        manifest = Manifest()
+        manifest.parse_args('a --requires b;c')
+        manifest.parse_args('b --requires d')
+        manifest.parse_args('c --requires d')
+        manifest.parse_args('d')
+
+        sol = solve('a', manifest)
+        self.assertEqual(list(sol), ['a', 'b', 'c', 'd'])
+
+        sol = solve('b', manifest)
+        self.assertEqual(list(sol), ['b', 'd'])
