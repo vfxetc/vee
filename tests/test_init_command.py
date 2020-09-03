@@ -24,7 +24,7 @@ class TestInitCommand(TestCase):
         mock_package  = self.package('foo', 'c_configure_make_install')
         mock_package.render_commit()
 
-        mock_repo = self.repo()
+        mock_repo = self.repo(home=home)
         mock_repo.add_requirements('%s --make-install' % mock_package.url)
 
         home.main(['init', mock_repo.path])

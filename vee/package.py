@@ -190,11 +190,26 @@ class Package(DBObject):
     build_path = Column()
     install_path = Column()
 
-    def __init__(self, args=None, *, home=None, set=None, dev=False, parent=None, **kwargs):
+    def __init__(self,
+        args=None,
+        *,
+        home=None,
+        set=None,
+        dev=False,
+        context=None,
+        parent=None,
+        source=None,
+        **kwargs
+    ):
 
         super(Package, self).__init__()
 
+        source = source or parent
+        home = home or (source.home if source else None)
+
         self.home = home # Must be early due to some properties using this.
+        if not home:
+            raise ValueError("Package requires home")
 
         if args and kwargs:
             raise ValueError('specify either args OR kwargs')

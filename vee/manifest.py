@@ -118,6 +118,9 @@ class Manifest:
 
     def __init__(self, args=None, file=None, home=None, repo=None):
 
+        if not home:
+            raise ValueError("Manifest requires home")
+
         self._items = []
         self._packages = {}
 
@@ -450,7 +453,7 @@ if __name__ == '__main__':
 
     from vee.home import Home
 
-    manifest = Manifest(Home())
+    manifest = Manifest(home=Home())
     manifest.parse_args(sys.argv[1:])
 
     print(''.join(manifest.iter_dump()))

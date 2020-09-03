@@ -131,8 +131,11 @@ class TestCase(_TestCase):
             home.init(create_parents=True)
         return home
 
-    def repo(self):
-        return MockRepo('%s/%s' % (self.__class__.__name__, self._testMethodName))
+    def repo(self, home=None):
+        return MockRepo(
+            '%s/%s' % (self.__class__.__name__, self._testMethodName),
+            home=home or self.home()
+        )
 
     def package(self, name='foo', type=None, defaults=None):
         return MockPackage(name, type or 'c_configure_make_install', defaults, os.path.join(self.__class__.__name__, self._testMethodName, name))
