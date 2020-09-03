@@ -55,7 +55,7 @@ def status(args):
 
     home = args.assert_home()
 
-    env_repo = home.get_env_repo(args.repo)
+    repo = home.get_repo(args.repo)
     pkg_set = PackageSet(home=home)
 
     by_name = {}
@@ -69,7 +69,7 @@ def status(args):
         (None, 'work'),
         ('HEAD', 'head'),
     ]:
-        for req in env_repo.load_manifest(revision=revision).iter_packages():
+        for req in repo.load_manifest(revision=revision).iter_packages():
             pkg = pkg_set.resolve(req, check_existing=False)
             if pkg.fetch_type != 'git':
                 continue
@@ -171,9 +171,9 @@ def status(args):
                 summarize_rev_distance(pkg_local, pkg_remote,
                     local_name=name,
                     local_verb='is',
-                    remote_name='%s repo' % env_repo.name,
+                    remote_name='%s repo' % repo.name,
                     ahead_action='you may `vee add %s`' % name,
-                    behind_action='please `vee dev checkout --repo %s %s`' % (env_repo.name, name),
+                    behind_action='please `vee dev checkout --repo %s %s`' % (repo.name, name),
                 )
 
             except Exception as e:

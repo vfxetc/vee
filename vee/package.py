@@ -359,6 +359,10 @@ class Package(DBObject):
 
         return out
 
+    def get_meta(self, key):
+        if self.meta:
+            return getattr(self.meta, key, None)
+
     def add_dependency(self, **kwargs):
         # TODO: Remove these once the solver is used.
         kwargs.setdefault('base_environ', self.base_environ)

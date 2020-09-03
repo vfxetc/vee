@@ -98,7 +98,7 @@ def doctor(args):
     home = args.assert_home()
     print(style_note('home:', repr(home.root)))
     try:
-        repo = home.get_env_repo()
+        repo = home.get_repo()
         print(style_note('repo:', repr(repo.name), repr(repo.remote_url)))
     except ValueError:
         print(style("repo:", 'yellow'), None)

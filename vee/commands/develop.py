@@ -18,8 +18,8 @@ from vee.utils import makedirs
 
 
 def iter_availible_requirements(home):
-    env_repo = home.get_env_repo()
-    req_set = env_repo.requirement_set()
+    repo = home.get_repo()
+    req_set = repo.requirement_set()
     pkg_set = PackageSet(home=home)
     for req in req_set.iter_packages():
         pkg = pkg_set.resolve(req, check_existing=False)
@@ -199,8 +199,8 @@ def init(args, do_clone=False, do_install=False, do_add=False, is_find=False):
     elif do_install:
         # Find an existing tool.
         # TODO: put more of this into EnvironmentRepo or Manifest
-        env_repo = home.get_env_repo(args.repo)
-        manifest_path = os.path.join(env_repo.work_tree, 'manifest.txt')
+        repo = home.get_repo(args.repo)
+        manifest_path = os.path.join(repo.work_tree, 'manifest.txt')
         manifest = Manifest(manifest_path, home=home)
         for req in manifest.iter_packages():
             if req.name.lower() == name.lower():
@@ -209,9 +209,9 @@ def init(args, do_clone=False, do_install=False, do_add=False, is_find=False):
                 if url:
                     break
         else:
-            log.error('Could not find git-based "%s" in "%s" repo.' % (name, env_repo.name))
+            log.error('Could not find git-based "%s" in "%s" repo.' % (name, repo.name))
             return 2
-        log.info(style_note('Found %s in %s' % (name, env_repo.name), str(req)))
+        log.info(style_note('Found %s in %s' % (name, repo.name), str(req)))
         makedirs(dev_repo.work_tree)
         dev_repo.clone_if_not_exists(url, shallow=False)
 

@@ -24,22 +24,27 @@ def upgrade(args):
     if args.all:
         repos = list(home.iter_repos())
     else:
-        repos = [home.get_env_repo(x) for x in args.repos] if args.repos else [home.get_env_repo()]
+        repos = [home.get_repo(x) for x in args.repos] if args.repos else [home.get_repo()]
 
     success = True
 
-    for env_repo in repos:
+    for repo in repos:
 
         if args.update:
             # We don't pass through force here. If you need to force it;
             # run via the `update` command.
-            if not env_repo.update():
+            if not repo.update():
                 success = False
                 continue
 
-        success = env_repo.upgrade(dirty=args.dirty, subset=args.subset,
-            reinstall=args.reinstall, relink=args.relink, no_deps=args.no_deps,
-            force_branch_link=args.force_branch_link) and success
+        success = repo.upgrade(
+            dirty=args.dirty,
+            force_branch_link=args.force_branch_link,
+            no_deps=args.no_deps,
+            reinstall=args.reinstall,
+            relink=args.relink,
+            subset=args.subset,
+        ) and success
 
     return int(not success)
     

@@ -127,13 +127,13 @@ class Home(object):
             if os.path.exists(subcar_path):
                 return DevPackage.from_tag(sidecar_path, home=self)
 
-    def iter_env_repos(self):
+    def iter_repos(self):
         for row in self.db.execute('SELECT * FROM repositories'):
-            env_repo = EnvironmentRepo(row, home=self)
-            if env_repo.exists:
-                yield env_repo
+            repo = EnvironmentRepo(row, home=self)
+            if repo.exists:
+                yield repo
 
-    def get_env_repo(self, name=None):
+    def get_repo(self, name=None):
         
         name = name or self.default_repo_name
         
@@ -155,14 +155,14 @@ class Home(object):
             else:
                 raise ValueError('multiple repositories with no default')
         
-        env_repo = EnvironmentRepo(row, home=self)
-        if not env_repo.exists:
-            log.debug('Looking for env_repo: %s' % env_repo.work_tree)
-            raise ValueError('%r repo does not exist' % env_repo.name)
+        repo = EnvironmentRepo(row, home=self)
+        if not repo.exists:
+            log.debug('Looking for repo: %s' % repo.work_tree)
+            raise ValueError('%r repo does not exist' % repo.name)
         
-        return env_repo
+        return repo
 
-    def create_env_repo(self, path=None, url=None, name=None, remote=None, branch=None, is_default=None):
+    def create_repo(self, path=None, url=None, name=None, remote=None, branch=None, is_default=None):
 
         if path:
             path = os.path.abspath(path)
@@ -176,7 +176,7 @@ class Home(object):
 
         # Make sure it doesn't exist.
         try:
-            env_repo = self.get_env_repo(name)
+            repo = self.get_repo(name)
         except ValueError:
             pass
         else:
@@ -189,36 +189,36 @@ class Home(object):
                           name, path, remote or 'origin', branch, bool(is_default)])
         row = con.execute('SELECT * FROM repositories WHERE id = ?', [cur.lastrowid]).fetchone()
 
-        env_repo = EnvironmentRepo(row, home=self)
+        repo = EnvironmentRepo(row, home=self)
         if url:
-            env_repo.clone_if_not_exists(url)
-        elif not env_repo.exists:
-            makedirs(env_repo.work_tree)
-            env_repo.git('init')
+            repo.clone_if_not_exists(url)
+        elif not repo.exists:
+            makedirs(repo.work_tree)
+            repo.git('init')
 
         if branch != env_repo.get_current_branch():
             con.execute('UPDATE repositories SET branch = ? WHERE id = ?', [env_repo.get_current_branch(), env_repo.id])
 
-        return env_repo
+        return repo
 
-    def update_env_repo(self, name, url=None, remote=None, branch=None, is_default=None):
+    def update_repo(self, name, url=None, remote=None, branch=None, is_default=None):
 
         if not (url or remote or branch or is_default):
             raise ValueError('provide something to update')
 
-        env_repo = self.get_env_repo(name)
+        repo = self.get_repo(name)
 
         if remote or branch or is_default:
-            env_repo.remote_name = remote or env_repo.remote_name
-            env_repo.branch_name = branch or env_repo.branch_name
+            repo.remote_name = remote or repo.remote_name
+            repo.branch_name = branch or repo.branch_name
             self.db.execute('UPDATE repositories SET remote = ?, branch = ?, is_default = ? WHERE id = ?', [
-                env_repo.remote_name,
-                env_repo.branch_name,
+                repo.remote_name,
+                repo.branch_name,
                 int(bool(is_default or row['is_default'])),
-                env_repo.id,
+                repo.id,
             ])
         if url:
-            env_repo.remotes(**{env_repo.remote_name: url})
+            repo.remotes(**{repo.remote_name: url})
 
     def main(self, args, environ=None, **kwargs):
 

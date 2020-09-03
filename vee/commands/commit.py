@@ -29,9 +29,9 @@ default_messages = {
 def commit(args):
 
     home = args.assert_home()
-    env_repo = home.get_env_repo(args.repo)
+    repo = home.get_repo(args.repo)
 
-    if not env_repo.status():
+    if not repo.status():
         log.error('Nothing to commit.')
         return 1
 
@@ -47,7 +47,7 @@ def commit(args):
             (None, 'work'),
             ('HEAD', 'head'),
         ]:
-            for req in env_repo.load_manifest(revision=revision).iter_packages():
+            for req in repo.load_manifest(revision=revision).iter_packages():
                 pkg = pkg_set.resolve(req, check_existing=False)
                 if pkg.fetch_type != 'git':
                     continue
@@ -115,4 +115,4 @@ def commit(args):
 
         args.message = message
 
-    env_repo.commit(args.message, args.semver_level)
+    repo.commit(args.message, args.semver_level)

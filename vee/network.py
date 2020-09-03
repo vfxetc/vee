@@ -178,6 +178,6 @@ class Client(Agent):
             repos=dict((repo.name, {
                 'head': repo.head,
                 'remotes': repo.remotes(),
-            }) for repo in self.home.iter_env_repos()),
+            }) for repo in self.home.iter_repos()),
         )
 

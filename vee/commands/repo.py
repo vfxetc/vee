@@ -54,7 +54,7 @@ def repo(args):
 )
 def init(args, is_set=False):
     home = args.assert_home()
-    home.create_env_repo(
+    home.create_repo(
         name=args.name,
         url=None,
         remote=args.remote,
@@ -73,7 +73,7 @@ def init(args, is_set=False):
 )
 def add(args, is_set=False):
     home = args.assert_home()
-    home.create_env_repo(
+    home.create_repo(
         name=args.name,
         path=args.path,
         remote=args.remote,
@@ -92,7 +92,7 @@ def add(args, is_set=False):
 )
 def clone(args, is_set=False):
     home = args.assert_home()
-    home.create_env_repo(
+    home.create_repo(
         name=args.name,
         url=args.url,
         remote=args.remote,
@@ -123,7 +123,7 @@ def set(args):
     home = args.assert_home()
     if not (args.default or args.remote or args.branch or args.url):
         raise ValueError('please specify something to set')
-    home.update_env_repo(
+    home.update_repo(
         name=args.name,
         url=args.url,
         remote=args.remote,
@@ -144,12 +144,12 @@ def list_(args):
         return
     max_len = max(len(row['name']) for row in rows)
     for row in rows:
-        env_repo = EnvironmentRepo(row, home=home)
-        if env_repo.exists:
+        repo = EnvironmentRepo(row, home=home)
+        if repo.exists:
             log.info(style_note(
-                env_repo.name,
-                '%s/%s' % (env_repo.remote_name, env_repo.branch_name),
-                env_repo.remotes().get(env_repo.remote_name, '') + 
+                repo.name,
+                '%s/%s' % (repo.remote_name, repo.branch_name),
+                repo.remotes().get(repo.remote_name, '') + 
                 ' --default' if row['is_default'] else '',
             ))
 
