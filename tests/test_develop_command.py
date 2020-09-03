@@ -30,7 +30,6 @@ class TestDevelopCommand(TestCase):
 
         self.assertExists(os.path.join(VEE, 'dev/tdc_install/tdc_install/__init__.py'))
 
-
         cmd = ['python', '-c', 'import tdc_install; print(tdc_install.__file__.replace("/lib64/", "/lib/"))']
         
         default_out = subprocess.check_output(['vee', 'exec', '-r', req_repo.name] + cmd).decode().strip()
@@ -38,6 +37,6 @@ class TestDevelopCommand(TestCase):
             default_out = default_out[:-1]
         self.assertEqual(default_out, os.path.join(VEE, 'environments/tdc_simple', default_branch, default_python.rel_site_packages, 'tdc_install/__init__.py'))
         
-        # dev_out = subprocess.check_output(['vee', 'exec', '--dev', '-r', req_repo.name] + cmd).strip()
-        # self.assertEqual(default_out, os.path.join(VEE, 'dev/tdc_install/tdc_install/__init__.py'))
+        dev_out = subprocess.check_output(['vee', 'exec', '--dev', '-r', req_repo.name] + cmd).strip().decode()
+        self.assertEqual(dev_out, os.path.join(VEE, 'dev/tdc_install/tdc_install/__init__.py'))
 

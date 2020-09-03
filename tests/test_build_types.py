@@ -45,7 +45,10 @@ class TestBuildTypes(TestCase):
         self.assert_echo('self')
 
     def test_python_source(self):
-        self.assert_echo('python_source')
+        pkg = MockPackage('scheme_python_source', 'python_source')
+        pkg.render_commit()
+        vee(['install', sandbox('packages/scheme_python_source'), '--install-name', 'scheme_python_source/1.0.0'])
+        self.assertExists(sandbox('vee/installs/scheme_python_source/1.0.0/lib/python2.7/site-packages/scheme_python_source/__init__.py'))
         # TODO: arbitrary data.
         # TODO: both scripts and console_scripts entrypoints.
 
@@ -73,7 +76,7 @@ class TestBuildTypes(TestCase):
         # self.assertExists(sandbox('vee/installs/scheme_py_egg/1.0.0/bin/scheme_py_egg-ep')
 
     def test_python_bdist_egg(self):
-        return # This one doesn't work.
+        return skip() # This one is currently broken.
         pkg = MockPackage('scheme_python_bdist_egg', 'python_bdist_egg')
         pkg.render_commit()
         vee(['install', sandbox('packages/scheme_python_bdist_egg'), '--install-name', 'scheme_python_bdist_egg/1.0.0'])
