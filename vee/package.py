@@ -241,10 +241,6 @@ class Package(DBObject):
         self.parent = parent
         self.set = set
 
-        # Coercions. TODO in the parser
-        self.provides = Provision.coerce(self.provides)
-        self.requires = RequirementSet.coerce(self.requires)
-
         # Make sure to make copies of anything that is mutable.
         self.base_environ = self.base_environ.copy() if self.base_environ else {}
         self.environ = self.environ.copy() if self.environ else {}
