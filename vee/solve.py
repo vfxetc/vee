@@ -10,7 +10,7 @@ class SolveError(ValueError):
 
 
 def verbose(depth, step, *args):
-    print('    ' * depth, step, *args)
+    print('{}{}'.format('    ' * depth, step), *args)
 
 
 def solve(*args, **kwargs):
@@ -25,7 +25,7 @@ def solve(*args, **kwargs):
     return next(iter_solve(*args, **kwargs), None)
 
 
-def iter_solve(requires, manifest, log=verbose):
+def iter_solve(requires, manifest, log=None):
 
     done = {}
     todo = list(RequirementSet.coerce(requires).items())
@@ -48,18 +48,24 @@ def _solve(done, todo, manifest, log, depth=0):
 
     log(depth, 'start', name, pkg)
 
-    # Make sure it satisfies all solved requirements.
-    for prev in done.values():
-        req = prev.requires.get(name)
-        if req and not pkg.provides.satisfies(req):
-            log(depth, 'fail existing', name, pkg)
-            return
+    variants = pkg.flat_variants()
+    for vi, var in enumerate(variants):
 
-    for var in pkg.flat_variants():
-
-        log(depth, 'variant', var)
+        log(depth, 'variant', vi, len(variants), var)
 
         failed = False
+
+        # Make sure it satisfies all solved requirements.
+        for prev in done.values():
+            req = prev.requires.get(name)
+            if req and not var.provides.satisfies(req):
+                log(depth, 'fail on existing', prev.name, req)
+                failed = True
+                break
+
+        if failed:
+            continue
+
         next_todo = []
 
         for name2, req in var.requires.items():

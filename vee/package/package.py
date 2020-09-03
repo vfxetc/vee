@@ -103,7 +103,21 @@ class _RequiresAction(argparse.Action):
         for value in values:
             res.parse(value)
 
-    
+class _VariantAction(argparse.Action):
+
+    @property
+    def default(self):
+        return []
+
+    @default.setter
+    def default(self, v):
+        pass
+
+    def __call__(self, requirement_parser, namespace, values, option_string=None):
+        res = getattr(namespace, self.dest)
+        for value in values:
+            res.append(json.loads(value))
+
 
 
 requirement_parser = _RequirementParser(add_help=False)
@@ -113,7 +127,7 @@ requirement_parser.add_argument('-r', '--revision')
 
 requirement_parser.add_argument('-P', '--provides', nargs='*', action=_ProvidesAction)
 requirement_parser.add_argument('-R', '--requires', nargs='*', action=_RequiresAction)
-requirement_parser.add_argument('-V', '--variant',  nargs='*', dest='variants', action='append', default=[]) # TODO: Parse.
+requirement_parser.add_argument('-V', '--variant',  nargs='*', action=_VariantAction, dest='variants')
 
 requirement_parser.add_argument('--etag', help='identifier for busting caches')
 requirement_parser.add_argument('--checksum', help='to verify that package archives haven\'t changed')
@@ -304,7 +318,7 @@ class Package(DBObject):
             if isinstance(value, dict):
                 value = ','.join('%s=%s' % (k, v) for k, v in sorted(value.items()))
             elif isinstance(value, (list, tuple)):
-                value = ','.join(value)
+                value = ','.join(map(str, value))
             else:
                 value = str(value)
 
@@ -341,13 +355,17 @@ class Package(DBObject):
 
         out = []
         for raw in self.variants:
+            
             var = self.copy()
-            for key, value in raw:
+            var.variants = []
+
+            for key, value in raw.items():
                 if key in ('provides', 'requires'):
                     getattr(var, key).update(value)
                 else:
                     setattr(var, key, value)
             out.append(var)
+
         return out
 
     def add_dependency(self, **kwargs):

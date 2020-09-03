@@ -148,4 +148,20 @@ class TestSolve(TestCase):
         sol = solve('b', manifest)
         self.assertEqual(list(sol), ['b', 'd'])
 
+    def test_multi_version_variants(self):
+
+        manifest = Manifest()
+        manifest.parse_args('a --requires b>1')
+        manifest.parse_args('b')
+        manifest.parse_args('c')
+
+        b = manifest.get('b')
+
+        b.variants.append({'provides': {'version': '1'}})
+        b.variants.append({'provides': {'version': '2'}, 'requires': {'c': {}}})
+
+        sol = solve('a', manifest)
+        self.assertEqual(list(sol), ['a', 'b', 'c'])
+        self.assertEqual(sol['b'].provides['version'], '2')
+
 
