@@ -175,13 +175,6 @@ class Package(DBObject):
 
     __tablename__ = 'packages'
 
-    abstract_requirement = Column()
-
-    concrete_requirement = Column()
-    @concrete_requirement.persist
-    def concrete_requirement(self):
-        return self.freeze().to_json()
-
     url = Column()
     name = Column()
     revision = Column()
@@ -244,7 +237,6 @@ class Package(DBObject):
             self.name = guess_name(self.url)
 
         # Manual args.
-        self.abstract_requirement = None #self.to_json()
         self.dependencies = []
         self.parent = parent
         self.set = set
@@ -644,7 +636,7 @@ class Package(DBObject):
             row['install_path'],
         ))
 
-        self.restore_from_row(row, ignore=set(('abstract_requirements', 'concrete_requirement')))
+        self.restore_from_row(row)
         self.link_id = row.get('link_id')
 
         if deferred:
@@ -671,10 +663,9 @@ class Package(DBObject):
 
     def _record_link(self, env):
         cur = self.home.db.cursor()
-        cur.execute('''INSERT INTO links (package_id, environment_id, abstract_requirement) VALUES (?, ?, ?)''', [
+        cur.execute('''INSERT INTO links (package_id, environment_id) VALUES (?, ?)''', [
             self.id_or_persist(),
             env.id_or_persist(),
-            self.abstract_requirement,
         ])
         self.link_id = cur.lastrowid
 
