@@ -1,8 +1,8 @@
 from . import *
 
 from vee.manifest import Manifest
-from vee.package.provides import Provision
-from vee.package.requires import RequirementSet, Requirement
+from vee.provision import Provision
+from vee.requirement import RequirementSet, Requirement
 from vee.semver import Version, VersionExpr
 from vee.solve import solve
 

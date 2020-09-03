@@ -1,7 +1,6 @@
 import re
 
-from vee.package.requires import RequirementSet
-from vee.package.provides import Provision
+from vee.requirement import RequirementSet
 
 
 class SolveError(ValueError):

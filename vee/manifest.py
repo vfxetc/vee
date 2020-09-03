@@ -15,7 +15,7 @@ import sys
 from vee import log
 from vee.cli import style
 from vee.exceptions import AlreadyInstalled, CliMixin
-from vee.package import Package, PackageMeta, requirement_parser, RequirementParseError
+from vee.package import Package, requirement_parser, RequirementParseError
 from vee.utils import cached_property, guess_name, makedirs
 
 
@@ -271,10 +271,9 @@ class Manifest:
             self._load_metas()
 
     def _load_metas(self):
-        """Find PackageMeta mixin in `packages/{name}.py` file for each package.
+        """Find ``Package`` class in `packages/{name}.py` file for each package.
 
-        Any found class will be mixed into :class:`PackageMeta` and set to
-        :attr:`Package.meta`.
+        Any found class will be instatiated and set to :attr:`Package.meta`.
 
         """
 
@@ -304,12 +303,11 @@ class Manifest:
             except Exception as e:
                 raise ValueError("error while loading package meta in {}".format(path)) from e
 
-            mixin = namespace.get('Package')
-            if not isinstance(mixin, type):
+            cls = namespace.get('Package')
+            if not isinstance(cls, type):
                 raise ValueError("no Package class defined in {}".format(path))
 
-            cls = type('PackageMeta_' + pkg.name, (mixin, PackageMeta), {})
-            pkg.meta = cls()
+            pkg.meta = cls
 
     def iter_packages(self, eval_control=True, locals_=None):
 

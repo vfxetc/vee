@@ -21,12 +21,11 @@ from vee.cli import style, style_note
 from vee.database import DBObject, Column
 from vee.exceptions import AlreadyInstalled, AlreadyLinked, CliMixin
 from vee.pipeline.base import Pipeline
+from vee.provision import Provision
+from vee.requirement import RequirementSet
+from vee.semver import Version, VersionExpr
 from vee.subproc import call
 from vee.utils import cached_property, makedirs, linktree, guess_name
-from vee.semver import Version, VersionExpr
-
-from vee.package.provides import Provision
-from vee.package.requires import RequirementSet
 
 
 class RequirementParseError(CliMixin, ValueError):
