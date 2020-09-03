@@ -12,7 +12,7 @@ from vee.utils import find_in_tree
 
 class SelfBuilder(GenericBuilder):
 
-    factory_priority = 9999
+    factory_priority = 9000
 
     @classmethod
     def factory(cls, step, pkg):

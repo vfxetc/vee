@@ -256,4 +256,20 @@ def http_request(*args, **kwargs):
     return http_pool().request(*args, **kwargs)
 
 
+_which_cache = {}
+
+def which(name, cached=True):
+
+    if cached:
+        try:
+            return _which_cache[name]
+        except KeyError:
+            pass
+
+    for base in os.environ['PATH'].split(os.path.pathsep):
+        path = os.path.join(base, name)
+        if os.path.exists(path):
+            _which_cache[name] = path
+            return path
+    
 
