@@ -69,11 +69,21 @@ class RequirementSet(collections.MutableMapping):
 
         out = []
 
-        for key, value in self._data.items():
-            if value:
-                out.append('{}:{}'.format(key, value))
+        for name, reqs in self._data.items():
+
+            if reqs:
+
+                # Shortcut for version.
+                if len(reqs) == 1 and 'version' in reqs:
+                    out.append('{}{}'.format(name, reqs['version']))
+
+                # Long format.
+                else:
+                    out.append('{}:{}'.format(name, reqs))
+
+            # Only presense.
             else:
-                out.append(key)
+                out.append(name)
 
         return ';'.join(out)
 

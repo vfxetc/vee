@@ -147,3 +147,5 @@ class TestSolve(TestCase):
 
         sol = solve('b', manifest)
         self.assertEqual(list(sol), ['b', 'd'])
+
+

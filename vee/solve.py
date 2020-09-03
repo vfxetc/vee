@@ -13,29 +13,34 @@ def verbose(depth, step, *args):
     print('    ' * depth, step, *args)
 
 
-def solve(requires, manifest, log=None):
+def solve(*args, **kwargs):
     """Solve abstract requirements into concrete provisions.
 
-    :param dict requires: The abstract requirements to solve.
+    :param RequirementSet requires: The abstract requirements to solve.
     :param Manifest manifest: Where to pull packages from.
     :return dict: Concrete provisions that satisfy the abstract requirements.
     :raises SolveError: if unable to satisfy the requirements.
-
+    
     """
+    return next(iter_solve(*args, **kwargs), None)
 
-    solved = {}
-    to_solve = list(RequirementSet.coerce(requires).items())
+
+def iter_solve(requires, manifest, log=verbose):
+
+    done = {}
+    todo = list(RequirementSet.coerce(requires).items())
 
     log = log or (lambda *args: None)
-    return _solve(solved, to_solve, manifest, log)
+    return _solve(done, todo, manifest, log)
 
 
-def _solve(solved, to_solve, manifest, log, depth=0):
+def _solve(done, todo, manifest, log, depth=0):
 
-    if not to_solve:
-        return solved
+    if not todo:
+        yield done
+        return
 
-    name, reqs = to_solve[0]
+    name, reqs = todo[0]
 
     pkg = manifest.get(name)
     if pkg is None:
@@ -44,7 +49,7 @@ def _solve(solved, to_solve, manifest, log, depth=0):
     log(depth, 'start', name, pkg)
 
     # Make sure it satisfies all solved requirements.
-    for prev in solved.values():
+    for prev in done.values():
         req = prev.requires.get(name)
         if req and not pkg.provides.satisfies(req):
             log(depth, 'fail existing', name, pkg)
@@ -54,39 +59,40 @@ def _solve(solved, to_solve, manifest, log, depth=0):
 
         log(depth, 'variant', var)
 
-        # See if it works with the current solution.
         failed = False
-        to_solve2 = []
+        next_todo = []
 
         for name2, req in var.requires.items():
 
-            pkg2 = solved.get(name2)
+            pkg2 = done.get(name2)
 
             log(depth, 'requires', name2, req, pkg2)
 
             if pkg2 is None:
                 # We need to solve this.
-                to_solve2.append((name2, req))
+                # We don't grab it immediately, because we want to do a
+                # breadth-first search.
                 log(depth, 'to solve')
+                next_todo.append((name2, req))
 
             elif not pkg2.provides.satisfies(req):
-                # It doesn't work. Move onto the next one
+                # This variant doesn't work with the already done packages;
+                # move onto the next one.
+                log(depth, 'fail variant')
                 failed = True
-                log(depth, 'fail')
                 break
-
 
         if failed:
             continue
 
-        # Go onto the next step.
-        solved2 = solved.copy()
-        solved2[name] = var
-        to_solve2 = to_solve[1:] + to_solve2
+        # Go a step deeper.
+        # We clone everything so that the call stack maintains the state we
+        # need to keep going from here.
+        next_done = done.copy()
+        next_done[name] = var
+        next_todo = todo[1:] + next_todo
 
-        solution = _solve(solved2, to_solve2, manifest, log, depth + 1)
-        if solution:
-            return solution
+        yield from _solve(next_done, next_todo, manifest, log, depth + 1)
 
 
 
