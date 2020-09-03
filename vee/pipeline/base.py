@@ -66,7 +66,7 @@ class Pipeline(object):
                 self.steps[step_name] = step
                 return step
 
-        raise ValueError('Cannot load %s step for %s' % (step_name, self._package.freeze()))
+        raise ValueError('Cannot load %s step for %s' % (step_name, self._package))
 
 
 class PipelineStep(object):

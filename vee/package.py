@@ -333,13 +333,6 @@ class Package(DBObject):
     def copy(self):
         return self.__class__(self.to_kwargs(copy=True), home=self.home, parent=self)
 
-    # TODO: I think all this freezing is no longer a good idea.
-    def freeze(self, environ=True):
-        kwargs = self.to_kwargs()
-        if environ:
-            kwargs['environ'] = self.environ_diff
-        return self.__class__(kwargs, home=self.home)
-
     def flattened(self):
 
         if not self.variants:
@@ -539,9 +532,8 @@ class Package(DBObject):
 
     def link(self, env, force=False):
         self._assert_paths(install=True)
-        frozen = self.freeze()
         if not force:
-            self._assert_unlinked(env, frozen)
+            self._assert_unlinked(env)
         log.info(style_note('Linking into %s' % env.name))
         env.link_directory(self.install_path)
         self._record_link(env)
@@ -553,7 +545,7 @@ class Package(DBObject):
                 [self.id_or_persist(), env.id_or_persist()]
             ).fetchone()
         if self.link_id or row:
-            raise AlreadyLinked(str(frozen or self.freeze()), self.link_id or row[0])
+            raise AlreadyLinked(str(self), self.link_id or row[0])
 
     def persist_in_db(self, con=None):
         if self.virtual:
@@ -689,6 +681,6 @@ class Package(DBObject):
             if uninstall:
                 self.uninstall()
             else:
-                raise AlreadyInstalled(str(self.freeze()))
+                raise AlreadyInstalled(str(self))
 
 
