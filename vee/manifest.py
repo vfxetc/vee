@@ -393,7 +393,7 @@ class Manifest:
         self._items.insert(i, RequirementItem(header))
         return header
 
-    def iter_dump(self, freeze=False):
+    def iter_dump(self):
 
         # We track the state of the environment as we progress, and don't
         # include envvars in each requirement if they exactly match those
@@ -410,7 +410,8 @@ class Manifest:
 
             if isinstance(element, Package):
 
-                req = element = (element.freeze() if freeze else element.copy())
+                # Get a copy to mutate.
+                req = element = element.copy()
 
                 # We don't need a name if it matches the guessed version.
                 if req.name and req.name == guess_name(req.url):

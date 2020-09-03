@@ -175,6 +175,25 @@ class Package(DBObject):
     Packages are instances for each :class:`Requirement`, such that they are
     able to maintain state about that specific requirement.
 
+    :param args: Something to pull arguments from. May be ``dict`` (and is treated
+        same as ``**kwargs``), ``str`` (in which case it is split and parsed),
+        ``tuple`` or ``list`` of ``str`` (and is parsed), or an ``argparse.Namespace``
+        (assumed to be from our parser).
+
+    :param Home home: The :class:`Home` to use. One of ``home``, ``source`` or ``parent``
+        must be set.
+
+    :param PackageSet set: The :class:`PackageSet` this belongs to. (n.b. this is
+        likely going away.)
+
+    :param bool dev: Is this a dev package? The :attr:`pipeline` is created with
+        different steps.
+
+    :param Manifest context: The :class:`Manifest` this belongs to.
+    :param Package parent: The package that this is a variant of.
+    :param Package source: The package that triggered this to exist; not
+        nessesarily the parent.
+
     """
 
     __tablename__ = 'packages'
@@ -259,10 +278,13 @@ class Package(DBObject):
         else:
             self.name = guess_name(self.url)
 
-        # Manual args.
         self.dependencies = []
-        self.parent = parent
         self.set = set
+
+        # Variant relationships.
+        self.parent = parent
+        self._children = None
+        self._child_is_self = None
 
         # Make sure to make copies of anything that is mutable.
         self.base_environ = self.base_environ.copy() if self.base_environ else {}
@@ -273,9 +295,13 @@ class Package(DBObject):
         self.link_id = None
         self.package_name = self.build_name = None
         self.package_path = self.build_path = self.install_path = None
-        self.meta = None
 
-        self._init_pipeline(dev=dev)
+        if parent:
+            self.meta = parent.meta # Directly shared.
+            self.pipeline = parent.pipeline.copy(self)
+        else:
+            self.meta = None
+            self._init_pipeline(dev=dev)
 
     def _init_pipeline(self, dev=False):
 
@@ -349,28 +375,54 @@ class Package(DBObject):
     def __repr__(self):
         return '%s(%r)' % (self.__class__.__name__, str(self))
 
-    def copy(self):
-        return self.__class__(self.to_kwargs(copy=True), home=self.home, parent=self)
+    def copy(self, **kwargs):
+        """Get a copy of this package that can be mutated.
+
+        :param **kwargs: Overrides for the copy.
+
+        """
+        full_kwargs = self.to_kwargs(copy=True)
+        full_kwargs.update(kwargs)
+        return self.__class__(
+            source=self,
+            **full_kwargs
+        )
 
     def flattened(self):
 
-        if not self.variants:
-            return [self.copy()]
+        if self.parent:
+            raise ValueError("Child variants cannot have children of their own")
 
-        out = []
+        # We're allowed to regen when previously we returned ourself.
+        if self._children and not (self.variants and self._child_is_self):
+            return self._children
+
+        # If there are no variants, don't copy or anything, just return ourself.
+        # This allows for variants to be added in a future (inspect) step and
+        # result in actual children.
+        if not self.variants:
+            self._child_is_self = True
+            self._children = [self]
+            return self._children
+
+        self._child_is_self = False
+
+        children = []
         for raw in self.variants:
             
-            var = self.copy()
-            var.variants = []
+            var = self.copy(parent=self)
+            var.variants = [] # The child has no variants.
 
             for key, value in raw.items():
                 if key in ('provides', 'requires'):
                     getattr(var, key).update(value)
                 else:
                     setattr(var, key, value)
-            out.append(var)
 
-        return out
+            children.append(var)
+
+        self._children = children
+        return children
 
     def assert_flat(self):
         """Assert that this does not have any variants."""

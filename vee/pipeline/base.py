@@ -16,6 +16,12 @@ class Pipeline(object):
         self._have_run = set()
         self.steps = {}
 
+    def copy(self, package):
+        copy = self.__class__(package, self._step_names)
+        copy._have_run = self._have_run.copy()
+        copy.steps = self.steps.copy()
+        return copy
+        
     def run_to(self, name, *args, **kwargs):
 
         if name in self._have_run:
