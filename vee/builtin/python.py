@@ -1,6 +1,11 @@
+import copy
+import os
+import re
 import subprocess
 import sys
 import venv
+
+import virtualenv
 
 from vee.utils import which
 
@@ -30,31 +35,44 @@ class Package:
 
         for version in versions:
 
-            config = which('python-config{}'.format(version))
+            config = which('python{}-config'.format(version))
             if not config:
                 continue
 
-            prefix = subprocess.check_output([config, '--prefix'])
-            bin_dir = os.path.join(path, 'bin')
-            exec_path = os.path.join(bin_dir, 'python')
+            prefix = subprocess.check_output([config, '--prefix']).decode().strip()
+            bin_dir = os.path.join(prefix, 'bin')
+            base_exec_path = os.path.join(bin_dir, 'python')
 
-            raw_version = subprocess.check_output([exec_path, '--version'])
-            m = re.match(r'Python ([\d\.+])')
+            for postfix in (version, ''):
+                exec_path = base_exec_path + postfix
+                if not os.path.exists(exec_path):
+                    continue
+                proc = subprocess.Popen([exec_path, '--version'], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+                out, err = proc.communicate()
+                raw_version = (out.strip() + err.strip()).decode().strip()
+                break
+            else:
+                raise ValueError("could not find python binary in {}".format(bin_dir))
+
+            m = re.match(r'^Python ([\d\.]+)$', raw_version)
             if not m:
-                raise ValueError("could not parse python version {!r} from {}".format(raw_version, exec_path))
+                raise ValueError("could not parse python version {!r} from {}".format(raw_version, path))
 
             version = m.group(1)
 
-            variants.append({
+            self.variants.append({
                 'provides': {'version': version},
-                'environ': {
-                    "PATH": "{}:@".format(bin_dir)
-                }
+                # 'environ': {
+                #     "PATH": "{}:@".format(bin_dir)
+                # }
             })
 
             self._exec_paths[version] = exec_path
 
             return True
+
+    def init(self, pkg):
+        pkg.variants = copy.deepcopy(self.variants)
 
     def fetch(self, pkg):
         pass
@@ -63,14 +81,15 @@ class Package:
         pass
 
     def inspect(self, pkg):
-        pass
+        pkg._assert_paths(install=True)
 
     def build(self, pkg):
         pass
 
     def install(self, pkg):
 
-        version = pkg.provides['version']
+        version = str(pkg.provides['version'])
         exec_path = self._exec_paths[version]
 
-        venv.main(['--python', exec_path, pkg.install_path])
+        # print("creating virtualenv {}".format(pkg.install_path))
+        virtualenv.cli_run(['--python', exec_path, '--no-pip', '--no-wheel', '--no-setuptools', pkg.install_path])

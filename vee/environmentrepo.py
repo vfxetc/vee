@@ -5,10 +5,12 @@ import re
 from vee import log
 from vee.cli import style_note, style_warning, style_error, style
 from vee.environment import Environment
+from vee.exceptions import AlreadyInstalled, AlreadyLinked, PipelineError, print_cli_exc
 from vee.exceptions import CliMixin
 from vee.git import GitRepo
 from vee.manifest import Manifest, Header
 from vee.packageset import PackageSet
+from vee.solve import solve
 from vee.utils import cached_property, makedirs
 
 
@@ -137,37 +139,72 @@ class EnvironmentRepo(GitRepo):
             log.error('%s repo is dirty; force with --dirty' % self.name)
             return False
 
-        env = self.get_environment()
-
+        # '''
         manifest = self.load_manifest()
-        packages = PackageSet(env=env, home=self.home)
-        
-        # Register the whole set, so that dependencies are pulled from here instead
-        # of weakly resolved from installed packages.
-        # TODO: This blanket reinstalls things, even if no_deps is set.
-        packages.resolve_set(manifest, check_existing=not reinstall)
+        to_install = []
 
-        # Install and/or link.
-        packages.install(subset or None, link_env=env, reinstall=reinstall, relink=relink, no_deps=no_deps)
+        for pkg in manifest.iter_packages():
 
-        if packages._errored and not force_branch_link:
-            log.warning("Not creating branch or version links; force with --force-branch-link")
-            return False
+            if not reinstall:
+                pkg.resolve_existing()
 
-        # Create a symlink by branch.
-        path_by_branch = self.home._abs_path('environments', self.name, self.branch_name)
-        if os.path.lexists(path_by_branch):
-            os.unlink(path_by_branch)
-        makedirs(os.path.dirname(path_by_branch))
-        os.symlink(env.path, path_by_branch)
+            for var in pkg.flattened():
 
-        # Create a symlink by version.
-        version = manifest.headers.get('Version')
-        if version:
-            path_by_version = self.home._abs_path('environments', self.name, 'versions', version.value + ('-dirty' if dirty else ''))
-            if os.path.lexists(path_by_version):
-                os.unlink(path_by_version)
-            makedirs(os.path.dirname(path_by_version))
-            os.symlink(env.path, path_by_version)
+                # Use this as a signal for it being installed instead of pkg.installed
+                # because we don't need to reinstall old false variants.
+                if var.id and not reinstall:
+                    continue
 
-        return True
+                to_install.append(var)
+
+        installed = set()
+        extracted = set()
+
+        while to_install:
+
+            var = to_install.pop(0)
+
+            if var in installed:
+                continue
+            if var.installed:
+                installed.add(var)
+                continue
+
+            sol = solve(var.requires, manifest)
+
+            ok = True
+            for dep in sol.values():
+                
+                if var is dep:
+                    continue
+                if dep in installed:
+                    continue
+                if dep.installed:
+                    installed.add(dep)
+                    continue
+
+                ok = False
+                break
+
+            if not ok:
+                to_install.extend(sol.values())
+                to_install.append(var)
+                continue
+
+            print("INSTALLING", var)
+            try:
+                reinstall_this = False
+                # Between every step, take a look to see if we now have
+                # enough information to tell that it is already installed.
+                var.assert_uninstalled(uninstall=reinstall_this)
+                var.pipeline.run_to('fetch')
+                var.assert_uninstalled(uninstall=reinstall_this)
+                var.pipeline.run_to('extract')
+                var.assert_uninstalled(uninstall=reinstall_this)
+                var.pipeline.run_to('inspect')
+                var.assert_uninstalled(uninstall=reinstall_this)
+            except AlreadyInstalled:
+                installed.add(var)
+            finally:
+                extracted.add(var)
+

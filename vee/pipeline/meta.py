@@ -13,20 +13,26 @@ class MetaStep(PipelineStep):
             return cls()
 
     def fetch(self, pkg):
+        pkg._assert_paths(package=True)
         pkg.get_meta('fetch')(pkg)
 
     def extract(self, pkg):
+        pkg._assert_paths(build=True)
         pkg.get_meta('extract')(pkg)
 
     def inspect(self, pkg):
+        pkg._assert_paths(build=True)
         pkg.get_meta('inspect')(pkg)
 
     def build(self, pkg):
+        pkg._assert_paths(install=True)
         pkg.get_meta('build')(pkg)
 
     def install(self, pkg):
+        pkg._assert_paths(install=True)
         pkg.get_meta('install')(pkg)
 
     def link(self):
+        pkg._assert_paths(install=True)
         pkg.get_meta('link')(pkg)
 

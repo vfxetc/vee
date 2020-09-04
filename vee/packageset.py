@@ -44,11 +44,9 @@ class PackageSet(collections.OrderedDict):
         pkg.name = pkg.name or name
 
         if check_existing:
-            (
-                pkg.resolve_existing(env=env or self.env) or
-                pkg.resolve_existing() or
-                (weak and pkg.resolve_existing(weak=True))
-            )
+            if not pkg.resolve_existing():
+                if weak:
+                    pkg.resolve_existing(weak=True)
 
         # Store it under the package name since deferred dependencies will not
         # have a name set (in order to load the specific package they were before).

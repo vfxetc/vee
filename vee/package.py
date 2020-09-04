@@ -694,11 +694,79 @@ class Package(DBObject):
                 ])
             return res
 
-    def resolve_existing(self, env=None, weak=False):
+    def resolve_existing(self, weak=False, limit=None):
         """Check against the database to see if this was already installed."""
+
+        # If we have (or would have) children, then resolve them directly.
+        if self.variants or self._children:
+            count = 0
+            for pkg in self.flattened():
+                count += pkg._resolve_existing(False, weak, 1)
+            return count
+
+        # Otherwise, fetch everything as our own children.
+        return self._resolve_existing(True, weak, limit)
+
+    def _resolve_existing(self, create_children, weak, limit):
 
         if self.id is not None:
             raise ValueError('requirement already in database')
+
+        rows = []
+        seen = set()
+
+        for i, row in enumerate(self._iter_existing(weak)):
+
+            # If you delete packages, they can get reinstalled in the same place.
+            # We only care about the latest one.
+            if row['install_path'] in seen:
+                continue
+            seen.add(row['install_path'])
+
+            rows.append(row)
+
+            # Just take the first one
+            if not create_children:
+                break
+
+            # Don't bother going further.
+            if limit and i + 1 == limit:
+                break
+
+        if not rows:
+            return 0
+
+        if not create_children:
+            self._resolve_existing(rows[0])
+
+        children = []
+        for row in rows:
+            pkg = self.copy(parent=self)
+            pkg._restore_existing(row)
+            children.append(pkg)
+        self._children = children
+
+        return len(children)
+
+        # log.debug('Found %s (%d%s) at %s' % (
+        #     self.name or row['name'],
+        #     row['id'],
+        #     ' weakly' if weak else '',
+        #     row['install_path'],
+        # ))
+
+    def _restore_existing(self, row):
+
+        deferred = self.url.startswith('deferred:')
+
+        self.restore_from_row(row)
+        self.link_id = row.get('link_id') # TODO: Remove
+        self._load_dependencies()
+
+        if deferred:
+            self._init_pipeline()
+
+    def _iter_existing(self, weak):
 
         cur = self.home.db.cursor()
 
@@ -737,7 +805,8 @@ class Package(DBObject):
                     WHERE %s
                     ORDER BY packages.created_at DESC
                 ''' % clause, values)
-        
+
+        count = 0
         for row in cur:
             
             # Make sure it has enough provisions.
@@ -774,30 +843,12 @@ class Package(DBObject):
             if not os.path.exists(row['install_path']):
                 log.warning('Found %s (%d) does not exist at %s' % (self.name or row['name'], row['id'], row['install_path']))
                 continue
-            break
-        else:
 
-            if deferred:
-                raise ValueError('deferred package %d no longer exists; consider `vee gc`' % deferred_id)
-            return
+            yield row
+            count += 1
 
-        log.debug('Found %s (%d%s%s) at %s' % (
-            self.name or row['name'],
-            row['id'],
-            ' weakly' if weak else '',
-            ' in env %d' % env.id if env else '',
-            row['install_path'],
-        ))
-
-        self.restore_from_row(row)
-        self.link_id = row.get('link_id')
-
-        if deferred:
-            self._init_pipeline()
-
-        self._load_dependencies(cur)
-
-        return True
+        if deferred and not count:
+            raise ValueError('deferred package %d no longer exists; consider `vee gc`' % deferred_id)
 
     def _load_dependencies(self, cursor=None):
 
