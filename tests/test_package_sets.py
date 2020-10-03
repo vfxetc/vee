@@ -1,6 +1,6 @@
 from . import *
 
-from vee.requirements import Requirements
+from vee.manifest import Manifest
 from vee.packageset import PackageSet
 
 class TestPackageSets(TestCase):
@@ -9,7 +9,7 @@ class TestPackageSets(TestCase):
 
         home = self.home()
 
-        reqs = Requirements()
+        reqs = Manifest()
         reqs.parse_file('''
 
             first --revision 1.0

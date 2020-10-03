@@ -3,8 +3,8 @@ import argparse
 from vee.cli import style
 from vee.commands.main import command, argument
 from vee.exceptions import AlreadyInstalled
+from vee.manifest import Manifest
 from vee.packageset import PackageSet
-from vee.requirements import Requirements
 
 
 @command(
@@ -29,7 +29,7 @@ def install(args):
             http:/example.org/path/to/tarball.tgz --make-install
 
         # Install from a requirement set.
-        vee install path/to/requirements.txt
+        vee install path/to/manifest.txt
 
     """
 
@@ -38,13 +38,13 @@ def install(args):
     if not args.requirements:
         raise ValueError('please provide requirements to install')
 
-    reqs = Requirements(args.requirements, home=home)
-    pkgs = PackageSet(home=home)
+    manifest = Manifest(args.requirements, home=home)
+    packages = PackageSet(home=home)
 
     # TODO: Resolve everything at once like upgrade does.
-    for req in reqs.iter_packages():
-        pkg = pkgs.resolve(req, check_existing=not args.force)
+    for req in manifest.iter_packages():
+        pkg = packages.resolve(req, check_existing=not args.force)
         try:
-            pkgs.install(pkg.name, reinstall=args.force)
+            packages.install(pkg.name, reinstall=args.force)
         except AlreadyInstalled:
             log.info(style_note('Already installed', str(pkg.freeze())))

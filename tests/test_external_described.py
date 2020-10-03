@@ -15,7 +15,7 @@ class TestExternal(TestCase):
         vee(['install', b.path, '--install-name', '%s/1.0.0' % b.name,
             '--build-sh', 'build.sh',
             '--install-sh', 'install.sh',
-            '--requirements-txt', 'requirements.txt',
+            '--manifest-txt', 'manifest.txt',
         ])
 
         self.assertExists(sandbox('vee/installs/%s/1.0.0/bin/%s' % (a.name, a.name)))

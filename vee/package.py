@@ -97,7 +97,7 @@ requirement_parser.add_argument('--virtual', action='store_true', help='package 
 requirement_parser.add_argument('--develop-sh', help='shell script in repository to source to develop the package')
 requirement_parser.add_argument('--build-sh', help='shell script in repository to source to build the package')
 requirement_parser.add_argument('--install-sh', help='shell script in repository to source to install the package')
-requirement_parser.add_argument('--requirements-txt', help='shell script in repository to source to build the package')
+requirement_parser.add_argument('--manifest-txt', help='shell script in repository to source to build the package')
 
 requirement_parser.add_argument('url')
 

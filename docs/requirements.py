@@ -8,7 +8,7 @@ sys.path.append(os.path.abspath(os.path.join(__file__, '..', '..')))
 
 from vee.package import requirement_parser as parser
 
-formatter = RawDescriptionHelpFormatter('requirements.txt')
+formatter = RawDescriptionHelpFormatter('manifest.txt')
 
 
 for action in parser._actions:

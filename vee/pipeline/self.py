@@ -18,10 +18,10 @@ class SelfBuilder(GenericBuilder):
     def factory(cls, step, pkg):
 
         for file_step, file_name, attr_name in [
-            ('inspect', 'vee-requirements.txt', 'requirements_txt'),
-            ('build'  , 'vee-build.sh'        , 'build_sh'),
-            ('install', 'vee-install.sh'      , 'install_sh'),
-            ('develop', 'vee-develop.sh'      , 'develop_sh'),
+            ('inspect', 'vee-manifest.txt' , 'manifest_txt'),
+            ('build'  , 'vee-build.sh'     , 'build_sh'),
+            ('install', 'vee-install.sh'   , 'install_sh'),
+            ('develop', 'vee-develop.sh'   , 'develop_sh'),
         ]:
             if step == file_step:
 
@@ -63,12 +63,12 @@ class SelfBuilder(GenericBuilder):
 
     def __init__(self, pkg):
         super(SelfBuilder, self).__init__(pkg)
-        self.requirements_txt = self.build_sh = self.develop_sh = None
+        self.manifest_txt = self.build_sh = self.develop_sh = None
 
     def inspect(self):
-        log.info(style_note('Inspecting %s' % os.path.basename(self.requirements_txt)))
+        log.info(style_note('Inspecting %s' % os.path.basename(self.manifest_txt)))
         pkg = self.package
-        for line in open(self.requirements_txt):
+        for line in open(self.manifest_txt):
             line = line.strip()
             if not line or line[0] == '#':
                 continue

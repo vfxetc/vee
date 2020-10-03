@@ -47,7 +47,7 @@ def commit(args):
             (None, 'work'),
             ('HEAD', 'head'),
         ]:
-            for req in env_repo.load_requirements(revision=revision).iter_packages():
+            for req in env_repo.load_manifest(revision=revision).iter_packages():
                 pkg = pkg_set.resolve(req, check_existing=False)
                 if pkg.fetch_type != 'git':
                     continue
