@@ -1,3 +1,5 @@
+from __future__ import print_function
+
 from io import StringIO
 import hashlib
 import os

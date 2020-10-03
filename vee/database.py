@@ -4,6 +4,8 @@ import sqlite3
 import shutil
 import re
 
+import six
+
 from vee.utils import makedirs
 from vee import log
 
@@ -492,7 +494,8 @@ class DBMetaclass(type):
         return super(DBMetaclass, cls).__new__(cls, name, bases, attrs)
 
 
-class DBObject(metaclass=DBMetaclass):
+@six.add_metaclass(DBMetaclass)
+class DBObject(object):
 
     def __init__(self, *args, **kwargs):
         self.id = None

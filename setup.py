@@ -23,11 +23,12 @@ setup(
     license='BSD-3',
     
     install_requires=[
-        'setuptools',
         'packaging',
-        'wheel',
-        'virtualenv', # TODO: Use stdlib venv.
+        'setuptools',
+        'six',
         'urllib3',
+        'virtualenv', # TODO: Use stdlib venv.
+        'wheel',
     ],
 
     classifiers=[

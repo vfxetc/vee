@@ -61,7 +61,7 @@ def list_(args):
 
     if args.availible:
         for req, url in iter_availible_requirements(home):
-            print(style_note(req.name, str(req)))
+            log.info(style_note(req.name, str(req)))
         return
 
     for dev_pkg in sorted(home.iter_development_packages(), key=lambda p: p.name.lower()):
@@ -70,14 +70,14 @@ def list_(args):
             continue
 
         path = dev_pkg.work_tree.replace(home.dev_root, '$VEE_DEV').replace(home.root, '$VEE')
-        print(style_note(dev_pkg.name, path))
+        log.info(style_note(dev_pkg.name, path))
         if args.show_environ:
             for k, v in sorted(render_envvars(dev_pkg.environ, dev_pkg.work_tree).items()):
                 if os.environ.get(k):
                     v = v.replace(os.environ[k], '$' + k)
                 v = v.replace(home.dev_root, '$VEE_DEV')
                 v = v.replace(home.root, '$VEE')
-                print(style('    %s=' % k) + v)
+                log.info(style('    %s=' % k) + v)
 
 
 @develop.subcommand(
@@ -187,12 +187,12 @@ def init(args, do_clone=False, do_install=False, do_add=False, is_find=False):
     dev_repo = GitRepo(path)
 
     if do_init:
-        print(style_note('Initing %s' % dev_repo.work_tree))
+        log.info(style_note('Initing %s' % dev_repo.work_tree))
         makedirs(dev_repo.work_tree)
         dev_repo.git('init')
 
     elif do_clone:
-        print(style_note('Cloning %s' % args.url))
+        log.info(style_note('Cloning %s' % args.url))
         makedirs(dev_repo.work_tree)
         dev_repo.clone_if_not_exists(args.url)
 
@@ -209,14 +209,14 @@ def init(args, do_clone=False, do_install=False, do_add=False, is_find=False):
                 if url:
                     break
         else:
-            print(style_error('Could not find git-based "%s" in "%s" repo.' % (name, env_repo.name)))
+            log.error('Could not find git-based "%s" in "%s" repo.' % (name, env_repo.name))
             return 2
-        print(style_note('Found %s in %s' % (name, env_repo.name), str(req)))
+        log.info(style_note('Found %s in %s' % (name, env_repo.name), str(req)))
         makedirs(dev_repo.work_tree)
         dev_repo.clone_if_not_exists(url, shallow=False)
 
     elif do_add:
-        print(style_note('Adding %s from %s' % (name, path)))
+        log.info(style_note('Adding %s from %s' % (name, path)))
 
     if not os.path.exists(path):
         log.error('%s does not exist'%  path)
@@ -229,7 +229,7 @@ def init(args, do_clone=False, do_install=False, do_add=False, is_find=False):
         print_cli_exc(e)
         return 1
 
-    print(style_note('Linking dev package', name, path))
+    log.info(style_note('Linking dev package', name, path))
 
     dev_pkg = DevPackage({'name': name, 'path': path, 'environ': package.environ}, home=home)
     dev_pkg.save_tag()
@@ -268,11 +268,11 @@ def setenv(args):
 def git(args, *command):
 
     if not (args.all or args.name):
-        print(style_error("Please provide -n NAME or --all."))
+        log.error("Please provide -n NAME or --all.")
         return 1
 
     if not command:
-        print(style_error('Please provide a git command.'))
+        log.error('Please provide a git command.')
         return 1
     
     home = args.assert_home()
@@ -286,7 +286,7 @@ def git(args, *command):
         for name in args.names:
             dev_pkg = home.find_development_package(name)
             if not dev_pkg:
-                print(style_error("Could not find dev package: {!r}.".format(name)))
+                log.error("Could not find dev package: {!r}.".format(name))
                 return 2
             dev_pkgs.append(dev_pkg)
 

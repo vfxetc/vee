@@ -4,13 +4,14 @@ import re
 import shutil
 import sys
 
+import six
 import virtualenv
 
-from vee.cli import style
-from vee.utils import makedirs
 from vee import log
+from vee.cli import style, style_note
+from vee.compat import fsencode
 from vee.database import DBObject, Column
-
+from vee.utils import makedirs
 
 IGNORE_DIRS = frozenset(('.git', '.svn'))
 IGNORE_FILES = frozenset(('.DS_Store', ))
@@ -70,7 +71,7 @@ class Environment(DBObject):
         python = os.path.join(self.path, 'bin', 'python')
         if not os.path.exists(python):
             makedirs(self.path)
-            print(style('Creating Python virtualenv', 'blue', bold=True), style(self.path, bold=True))
+            log.info(style_note('Creating Python virtualenv', self.path))
 
             if hasattr(virtualenv, 'cli_run'):
                 # New API (in which there isn't really any API)
@@ -130,11 +131,11 @@ class Environment(DBObject):
         # If it starts with a Python shebang, rewrite it.
         with open(old_path, 'rb') as old_fh:
             old_shebang = old_fh.readline()
-            m = re.match(rb'#!(|\S+/)([^\s/]+)', old_shebang)
+            m = re.match(six.b(r'#!(|\S+/)([^\s/]+)'), old_shebang)
             if not m:
                 return
 
-            new_bin = os.path.join(os.fsencode(self.path), b'bin', m.group(2))
+            new_bin = os.path.join(fsencode(self.path), b'bin', m.group(2))
             if not os.path.exists(new_bin):
                 return
 

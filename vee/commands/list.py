@@ -1,3 +1,5 @@
+from __future__ import print_function
+
 import os
 
 from vee.commands.main import command, argument, group

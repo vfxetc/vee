@@ -1,14 +1,14 @@
 from io import BytesIO, StringIO
 import fnmatch
-import http.server
 import json
 import os
 import re
 import tarfile
 import threading
-import urllib.request
-import socketserver
 import random
+
+from six.moves.socketserver import TCPServer
+from six.moves.BaseHTTPServer import BaseHTTPRequestHandler
 
 from vee.pipeline import pypi
 
@@ -16,7 +16,7 @@ from vee.pipeline import pypi
 # Global state is gross.
 _host = '127.0.0.1'
 _port = random.randrange(1025, 65535)
-_netloc = f'{_host}:{_port}'
+_netloc = '{}:{}'.format(_host, _port)
 _root = None
 _thread = None
 
@@ -38,17 +38,17 @@ def setup_mock_http(root):
     _thread.daemon = True
     _thread.start()
 
-    pypi.PYPI_URL_PATTERN = f'http://{_netloc}/pypi/%s/json'
+    pypi.PYPI_URL_PATTERN = 'http://{}/pypi/%s/json'.format(_netloc)
 
     _root = root
 
 
 def serve():
-    with socketserver.TCPServer((_host, _port), MockHTTPHandler) as httpd:
-        httpd.serve_forever()
+    httpd = TCPServer((_host, _port), MockHTTPHandler)
+    httpd.serve_forever()
 
 
-class MockHTTPHandler(http.server.BaseHTTPRequestHandler):
+class MockHTTPHandler(BaseHTTPRequestHandler):
 
     def do_GET(self):
 

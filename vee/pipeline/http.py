@@ -1,9 +1,9 @@
 import datetime
 import os
-import urllib.request
-import urllib.parse
 import re
 import shutil
+
+from six.moves.urllib.parse import urlsplit, urlunsplit
 
 from vee.cli import style_note
 from vee.pipeline.base import PipelineStep
@@ -28,10 +28,10 @@ class HttpTransport(PipelineStep):
 
         pkg = self.package
 
-        split = urllib.parse.urlsplit(pkg.url)
+        split = urlsplit(pkg.url)
 
         # Remove the fragment from the URL.
-        pkg.url = urllib.parse.urlunsplit((split.scheme, split.netloc, split.path, split.query, ''))
+        pkg.url = urlunsplit((split.scheme, split.netloc, split.path, split.query, ''))
 
         pkg.package_name = os.path.join(split.netloc, split.path.strip('/'))
 

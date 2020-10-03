@@ -10,6 +10,8 @@ import shlex
 import shutil
 import sys
 
+import six
+
 import pkg_resources
 
 from vee import libs
@@ -145,7 +147,7 @@ class Package(DBObject):
 
         if args:
 
-            if isinstance(args, str):
+            if isinstance(args, six.string_types):
                 args = shlex.split(args)
 
             if isinstance(args, (list, tuple)):

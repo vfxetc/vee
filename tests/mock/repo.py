@@ -5,6 +5,8 @@ import os
 import re
 import shutil
 
+import six
+
 from vee.git import GitRepo
 from vee.package import Package
 from vee.requirements import Requirements
@@ -48,6 +50,7 @@ class MockRepo(object):
         if os.path.exists(path):
             old.parse_file(path)
 
+        raw = raw.decode() if six.PY2 else raw
         new = Requirements(home=self.home, file=StringIO(raw))
 
         new_urls = set()

@@ -3,11 +3,11 @@ import os
 import subprocess
 import tempfile
 
+from vee import log
 from vee.cli import style, style_error, style_note
 from vee.commands.main import command, argument
 from vee.git import GitRepo, normalize_git_url
 from vee.packageset import PackageSet
-
 
 default_messages = {
     0: 'major changes  (e.g. backwards incompatible)',
@@ -32,7 +32,7 @@ def commit(args):
     env_repo = home.get_env_repo(args.repo)
 
     if not env_repo.status():
-        print(style_error('Nothing to commit.'))
+        log.error('Nothing to commit.')
         return 1
 
     if args.semver_level is None:
@@ -105,7 +105,7 @@ def commit(args):
         os.unlink(path)
 
         if code:
-            print(style_error("Editor ({}) failed".format(editor), "and returned code {}".format(code)))
+            log.error("Editor ({}) failed".format(editor), "and returned code {}".format(code))
             return
 
         message = [line.rstrip() for line in message if not line.lstrip().startswith('#')]

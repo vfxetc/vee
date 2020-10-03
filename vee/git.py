@@ -1,16 +1,14 @@
 from subprocess import CalledProcessError
 import glob
+import logging
 import os
 import re
 import subprocess
-import logging
 
-from vee.cli import style
-from vee.subproc import call
+from vee import log
+from vee.cli import style_note
 from vee.exceptions import CliMixin
-
-
-log = logging.getLogger(__name__)
+from vee.subproc import call
 
 
 class GitError(CliMixin, RuntimeError):
@@ -162,10 +160,10 @@ class GitRepo(object):
                 self.git('pull', 'origin', 'master')
 
         elif shallow:
-            print(style('Cloning shallow', 'blue', bold=True), style(self.remote_url, bold=True))
+            log.info(style_note('Cloning shallow', self.remote_url))
             call(['git', 'clone', '--depth=1', self.remote_url, self.work_tree])
         else:
-            print(style('Cloning', 'blue', bold=True), style(self.remote_url, bold=True))
+            log.info(style_note('Cloning', self.remote_url))
             call(['git', 'clone', self.remote_url, self.work_tree])
 
         return True
@@ -347,7 +345,7 @@ class GitRepo(object):
 
             # Fetch the new history on top of the shallow history.
             if shallow:
-                print(style('Fetching shallow', 'blue', bold=True), style(remote or 'defaults', bold=True))
+                log.info(style_node('Fetching shallow', remote or 'defaults'))
                 try:
                     self._fetch('--update-shallow', *fetch_args)
                 except GitError as e:
@@ -363,7 +361,7 @@ class GitRepo(object):
 
             # Lets get the whole history.
             if not shallow or not commit:
-                print(style('Fetching unshallow', 'blue', bold=True), style(remote or 'defaults', bold=True))
+                log.info(style_note('Fetching unshallow', remote or 'defaults'))
                 self._fetch('--unshallow', *fetch_args)
                 if not rev_to_parse:
                     return
@@ -371,7 +369,7 @@ class GitRepo(object):
 
         else:
             # Normal fetch here.
-            print(style('Fetching', 'blue', bold=True), style(remote or 'defaults', bold=True))
+            log.info(style_note('Fetching', remote or 'defaults'))
             self._fetch(*fetch_args)
             if not rev_to_parse:
                 return
@@ -395,7 +393,7 @@ class GitRepo(object):
         if self.head == commit:
             return
 
-        print(style('Checking out', 'blue', bold=True), style('%s [%s]' % (revision, commit), bold=True))
+        log.info(style_note('Checking out', '%s [%s]' % (revision, commit)))
 
         cmd = []
         if ignore_permissions:
@@ -416,7 +414,7 @@ class GitRepo(object):
         status_ok = True
         for idx, tree, name in self.status(ignore_permissions=ignore_permissions):
             if idx or tree:
-                print(style('Error:', 'red', bold=True), style('uncomitted changes:', bold=True))
+                log.error(style('Error:', 'red', bold=True), style('uncomitted changes:', bold=True))
                 self.git('status')
                 status_ok = False
                 break
@@ -424,13 +422,13 @@ class GitRepo(object):
         # Make sure we haven't forked.
         ahead, behind = self.distance(self.head, rev)
         if ahead and behind:
-            print(style('Error:', 'red', bold=True), style('your and the repo have forked', bold=True))
+            log.error('your and the repo have forked')
             status_ok = False
         elif ahead:
-            print(style('Warning:', 'yellow', bold=True), style('you are %s commits ahead of the remote repo; please `vee push`' % ahead, bold=True))
+            log.warning('you are %s commits ahead of the remote repo; please `vee push`' % ahead)
             status_ok = False
         elif behind:
-            print(style('You are %d commits behind.' % behind, bold=True))
+            log.info('You are %d commits behind.' % behind)
 
         return status_ok
 

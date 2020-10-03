@@ -226,7 +226,7 @@ class PythonBuilder(GenericBuilder):
         # HACK: We want to install this for Python2.7 for now. This should
         # be based on the version of Python that is a dependency.
         scheme = get_scheme(self.name, prefix=pkg.install_path)
-        src_python = f'/python{sys.version_info[0]}.{sys.version_info[1]}/'
+        src_python = '/python{}.{}/'.format(*sys.version_info)
         dst_python = '/python2.7/'
         if src_python != dst_python:
             for k in 'platlib', 'purelib', 'headers', 'scripts', 'data':

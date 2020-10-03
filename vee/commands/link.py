@@ -2,7 +2,7 @@ import argparse
 import os
 
 from vee import log
-from vee.cli import style
+from vee.cli import style, style_note
 from vee.commands.main import command, argument
 from vee.environment import Environment
 from vee.exceptions import AlreadyInstalled, AlreadyLinked, print_cli_exc
@@ -65,7 +65,7 @@ def link(args):
 
     if args.raw:
         for dir_ in args.requirements:
-            print(style('Linking', 'blue', bold=True), style(dir_, bold=True))
+            log.info(style_note('Linking', dir_))
             env.link_directory(dir_)
         return
 

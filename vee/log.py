@@ -120,6 +120,12 @@ def log(level, message, verbosity=None, name=None, exc_info=None, _frame=1):
     code = frame.f_code
     name = name or frame.f_globals['__name__']
 
+    if isinstance(message, (tuple, list)):
+        if len(message) == 1:
+            message = message[0]
+        else:
+            message = ' '.join(message)
+
     logger = logging.getLogger(name)
     record = logger.makeRecord(name, level, code.co_filename, frame.f_lineno, message, (), exc_info, code.co_name, {'verbosity': verbosity})
     logger.handle(record)
@@ -127,23 +133,23 @@ def log(level, message, verbosity=None, name=None, exc_info=None, _frame=1):
 
 def debug(*args, **kwargs):
     kwargs.setdefault('_frame', 2)
-    log(logging.DEBUG, *args, **kwargs)
+    log(logging.DEBUG, args, **kwargs)
 def info(*args, **kwargs):
     kwargs.setdefault('_frame', 2)
-    log(logging.INFO, *args, **kwargs)
+    log(logging.INFO, args, **kwargs)
 def warning(*args, **kwargs):
     kwargs.setdefault('_frame', 2)
-    log(logging.WARNING, *args, **kwargs)
+    log(logging.WARNING, args, **kwargs)
 def error(*args, **kwargs):
     kwargs.setdefault('_frame', 2)
-    log(logging.ERROR, *args, **kwargs)
+    log(logging.ERROR, args, **kwargs)
 def critical(*args, **kwargs):
     kwargs.setdefault('_frame', 2)
-    log(logging.CRITICAL, *args, **kwargs)
+    log(logging.CRITICAL, args, **kwargs)
 def exception(*args, **kwargs):
     kwargs.setdefault('_frame', 2)
     kwargs['exc_info'] = sys.exc_info()
-    log(logging.ERROR, *args, **kwargs)
+    log(logging.ERROR, args, **kwargs)
 
 
 if __name__ == '__main__':

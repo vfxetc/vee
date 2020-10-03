@@ -1,3 +1,5 @@
+from __future__ import print_function
+
 import collections
 
 from vee.package import Package
@@ -118,7 +120,7 @@ class PackageSet(collections.OrderedDict):
         try:
             pkg = self[name]
         except KeyError:
-            print(', '.join(sorted(self.keys())))
+            # print(', '.join(sorted(self.keys())))
             raise
 
         reinstall_this = name in reinstall

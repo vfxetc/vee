@@ -1,9 +1,8 @@
 import datetime
+import json
 import os
-import urllib.parse
 import re
 import shutil
-import json
 import sys
 
 from vee import log

@@ -1,3 +1,5 @@
+from __future__ import print_function
+
 import os
 import sys
 
@@ -50,10 +52,10 @@ def doctor(args):
     def find_command(name):
         path = which(name)
         if path:
-            print(style_note(f"{name}:", repr(path)))
+            print(style_note(repr(path) + ":"))
             return 0
         else:
-            print(style(f"{name}:", 'yellow'), None)
+            print(style(name + ":", 'yellow'), None)
             return 1
 
     print(style_note('==> dependencies'))
@@ -68,15 +70,15 @@ def doctor(args):
         try:
             module = __import__(name)
         except ImportError as e:
-            print(style(f"{name}:", 'yellow'), None)
+            print(style(name + ":", 'yellow'), None)
             res = 2
             continue
 
         actual_version = module.__version__
         if parse_version(expected_version) <= parse_version(actual_version):
-            print(style_note(f"{name}:", f"{actual_version!r} >= {expected_version!r}"))
+            print(style_note(name + ":", "{!r} >= {!r}".format(actual_version, expected_version)))
         else:
-            print(style(f"{name}:", 'yellow'), f"{actual_version!r} < {expected_version!r} (from {module.__file__})")
+            print(style(name + ":", 'yellow'), "{!r} < {!r} (from {})".format(actual_version, expected_version, module.__file__))
             res = 2
 
     print(style_note('==> executables'))
