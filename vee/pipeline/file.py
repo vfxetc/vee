@@ -57,11 +57,14 @@ class FileTransport(PipelineStep):
         pkg._assert_paths(package=True, build=True)
         pkg._clean_build_path(makedirs=False)
 
+        # We make sure we're passing unicode paths, so that it handles everything internally
+        # as unicode. In python2 we have issues with getting it to handle non-ASCII characters
+        # even when we set $LANG or $LC_ALL.
         if pkg.hard_link:
-            linktree(pkg.package_path, pkg.build_path, symlinks=True,
+            linktree(pkg.package_path.decode('utf8'), pkg.build_path.decode('utf8'), symlinks=True,
                 ignore=shutil.ignore_patterns('.git'),
             )
         else:
-            shutil.copytree(pkg.package_path, pkg.build_path, symlinks=True,
+            shutil.copytree(pkg.package_path.decode('utf8'), pkg.build_path.decode('utf8'), symlinks=True,
                 ignore=shutil.ignore_patterns('.git'),
             )
