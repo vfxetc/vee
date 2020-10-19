@@ -68,7 +68,7 @@ class _CallOutput(object):
             logger = self.logger = logging.getLogger('vee.subproc.[%d].%s' % (self.proc.pid, self.name))
 
         if isinstance(chunk, bytes):
-            chunk = chunk.decode(errors='backslashreplace')
+            chunk = chunk.decode(errors='replace')
 
         if self.return_buffer:
             logger.debug(chunk, extra={'verbosity': self.verbosity, 'from_subproc': True})
