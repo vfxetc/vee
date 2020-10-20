@@ -1,5 +1,6 @@
 import sqlite3
 
+from vee import log
 from vee.cli import style_error, style_warning, style_note
 from vee.commands.main import command, argument, group
 from vee.environment import Environment
