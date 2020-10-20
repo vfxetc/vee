@@ -345,7 +345,7 @@ class GitRepo(object):
 
             # Fetch the new history on top of the shallow history.
             if shallow:
-                log.info(style_node('Fetching shallow', remote or 'defaults'))
+                log.info(style_note('Fetching shallow', remote or 'defaults'))
                 try:
                     self._fetch('--update-shallow', *fetch_args)
                 except GitError as e:
