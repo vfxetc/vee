@@ -60,11 +60,14 @@ class FileTransport(PipelineStep):
         # We make sure we're passing unicode paths, so that it handles everything internally
         # as unicode. In python2 we have issues with getting it to handle non-ASCII characters
         # even when we set $LANG or $LC_ALL.
+        package_path = pkg.package_path.decode() if isinstance(pkg.package_path, bytes) else pkg.package_path
+        build_path = pkg.build_path.decode() if isinstance(pkg.build_path, bytes) else pkg.build_path
+
         if pkg.hard_link:
-            linktree(pkg.package_path.decode('utf8'), pkg.build_path.decode('utf8'), symlinks=True,
+            linktree(package_path, build_path, symlinks=True,
                 ignore=shutil.ignore_patterns('.git'),
             )
         else:
-            shutil.copytree(pkg.package_path.decode('utf8'), pkg.build_path.decode('utf8'), symlinks=True,
+            shutil.copytree(package_path, build_path, symlinks=True,
                 ignore=shutil.ignore_patterns('.git'),
             )
