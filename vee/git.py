@@ -414,7 +414,7 @@ class GitRepo(object):
         status_ok = True
         for idx, tree, name in self.status(ignore_permissions=ignore_permissions):
             if idx or tree:
-                log.error(style('Error:', 'red', bold=True), style('uncomitted changes:', bold=True))
+                log.error('uncomitted changes:')
                 self.git('status')
                 status_ok = False
                 break
@@ -422,7 +422,7 @@ class GitRepo(object):
         # Make sure we haven't forked.
         ahead, behind = self.distance(self.head, rev)
         if ahead and behind:
-            log.error('your and the repo have forked')
+            log.error('you and the repo have forked')
             status_ok = False
         elif ahead:
             log.warning('you are %s commits ahead of the remote repo; please `vee push`' % ahead)

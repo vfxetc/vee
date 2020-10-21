@@ -1,5 +1,4 @@
 
-from vee.cli import style_error
 from vee.commands.main import command, argument
 from vee.subproc import call
 from vee.utils import makedirs
