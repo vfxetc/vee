@@ -5,6 +5,7 @@ from subprocess import CalledProcessError
 import shutil
 
 from vee.git import GitRepo, GitError
+from vee.python import get_default_python
 from vee.utils import makedirs
 
 from .http import mock_url
@@ -27,6 +28,7 @@ class MockPackage(object):
         self.defaults = defaults or {}
         self.defaults.setdefault('NAME', self.name)
         self.defaults.setdefault('VERSION', '1.0.0')
+        self.defaults.setdefault('PYTHON', '{}.{}'.format(*get_default_python().version))
 
         self.rev_count = 0
 
