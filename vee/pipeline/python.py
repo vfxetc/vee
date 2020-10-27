@@ -8,22 +8,21 @@ from vee.cli import style, style_note, style_warning
 from vee.envvars import join_env_path
 from vee.package import Package
 from vee.pipeline.generic import GenericBuilder
+from vee.python import get_default_python
 from vee.subproc import call
 from vee.utils import find_in_tree
 
 
-# TODO: This should be the requested version.
-python_version = '2.7' # '%d.%d' % (sys.version_info[:2])
-site_packages = os.path.join('lib', 'python' + python_version, 'site-packages')
-
-
 def call_setup_py(setup_py, args, **kwargs):
+
     kwargs['cwd'] = os.path.dirname(setup_py)
     kwargs.setdefault('vee_in_env', True)
-    # TODO: This should be the requested version.
-    cmd = ['python2.7', '-c', 'import sys, setuptools; sys.argv[0]=__file__=%r; execfile(__file__)' % os.path.basename(setup_py)]
+
+    executable = get_default_python().executable
+    cmd = [executable, '-sSc', 'import sys, setuptools; sys.argv[0]=__file__=%r; execfile(__file__)' % os.path.basename(setup_py)]
     cmd.extend(('--command-packages', 'vee.distutils'))
     cmd.extend(args)
+
     return call(cmd, **kwargs)
 
 
@@ -160,6 +159,7 @@ class PythonBuilder(GenericBuilder):
         pkg = self.package
         pkg._assert_paths(install=True)
 
+        site_packages = get_default_python().rel_site_packages
         install_site_packages = os.path.join(pkg.install_path, site_packages)
 
         # Setup the PYTHONPATH to point to the "install" directory.
@@ -223,11 +223,11 @@ class PythonBuilder(GenericBuilder):
         from pip._internal.operations.install.wheel import install_wheel
         from pip._internal.locations import get_scheme
 
-        # HACK: We want to install this for Python2.7 for now. This should
-        # be based on the version of Python that is a dependency.
+        # We may to trick pip into installing into another version's directories.
         scheme = get_scheme(self.name, prefix=pkg.install_path)
-        src_python = '/python{}.{}/'.format(*sys.version_info)
-        dst_python = '/python2.7/'
+        version = get_default_python().version
+        src_python = '{}python{}.{}{}'.format(os.path.sep, sys.version_info[0], sys.version_info[1], os.path.sep)
+        dst_python = '{}python{}.{}{}'.format(os.path.sep, version[0], version[1], os.path.sep)
         if src_python != dst_python:
             for k in 'platlib', 'purelib', 'headers', 'scripts', 'data':
                 setattr(scheme, k, getattr(scheme, k).replace(src_python, dst_python))

@@ -2,6 +2,8 @@ import os
 import re
 import sys
 
+from vee.python import get_default_python
+
 
 def split_env_path(value):
     return value.split(':') if value else []
@@ -48,6 +50,8 @@ def guess_envvars(paths, sources=None, use_current=True):
             except KeyError:
                 pass
 
+    rel_site_packages = get_default_python().rel_site_packages
+
     for path in reversed(paths):
 
         bin = os.path.join(path, 'bin')
@@ -64,7 +68,7 @@ def guess_envvars(paths, sources=None, use_current=True):
                 # name = 'DYLD_FALLBACK_LIBRARY_PATH' if sys.platform == 'darwin' else 'LD_LIBRARY_PATH'
                 # environ[name] = join_env_path(lib, existing(name))
 
-                site_packages = os.path.join(lib, 'python%d.%d' % sys.version_info[:2], 'site-packages')
+                site_packages = os.path.join(lib, rel_site_packages)
                 if os.path.exists(site_packages):
                     environ['PYTHONPATH'] = join_env_path(site_packages, existing('PYTHONPATH'))
 

@@ -3,6 +3,8 @@ import re
 import subprocess
 import sys
 
+from vee.utils import cached_property
+
 
 class Python(object):
 
@@ -13,13 +15,17 @@ class Python(object):
     def __repr__(self):
         return 'Python({!r}, {!r})'.format(self.executable, self.version)
 
-    @property
+    @cached_property
     def major(self):
         return self.version[0]
 
-    @property
+    @cached_property
     def minor(self):
         return self.version[1]
+
+    @cached_property
+    def rel_site_packages(self):
+        return os.path.join('lib', 'python{}.{}'.format(self.major, self.minor), 'site-packages')
 
 
 def get_python(selector=None):

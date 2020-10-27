@@ -3,16 +3,35 @@ import json
 import os
 import re
 import shutil
+import subprocess
 import sys
 
 from vee import log
 from vee.cli import style, style_note
 from vee.pipeline.base import PipelineStep
 from vee.pipeline.http import download
+from vee.python import get_default_python
 from vee.semver import Version, VersionExpr
 from vee.utils import makedirs, http_request
 
+
 PYPI_URL_PATTERN = 'https://pypi.org/pypi/%s/json'
+
+
+_supported_tags = []
+def get_supported_tags():
+    if not _supported_tags:
+        out = subprocess.check_output([
+            get_default_python().executable,
+            '-sc',
+            '''
+import json
+import packaging.tags
+print(json.dumps([(t.interpreter, t.abi, t.platform) for t in packaging.tags.sys_tags()]))
+''']).decode().strip()
+        _supported_tags.extend(tuple(x) for x in json.loads(out))
+
+    return _supported_tags
 
 
 class PyPiTransport(PipelineStep):
@@ -68,9 +87,7 @@ class PyPiTransport(PipelineStep):
         else:
             matching_releases = all_releases
 
-        # We delay the import just in case the bootstrap is borked.
-        import packaging.tags
-        supported_tags = [(t.interpreter, t.abi, t.platform) for t in packaging.tags.sys_tags()]
+        supported_tags = get_supported_tags()
 
         usable_releases = []
         for version, releases in matching_releases:
@@ -100,7 +117,7 @@ class PyPiTransport(PipelineStep):
 
         if not usable_releases:
             raise ValueError('no usable release of %s %s on the PyPI;' % (self.name, expr if pkg.revision else '(any version)'))
-        usable_releases.sort()
+        usable_releases.sort(key=lambda x: x[:2])
 
         version, _, release = usable_releases[-1]
 

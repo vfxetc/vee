@@ -11,6 +11,7 @@ from vee import log
 from vee.cli import style, style_note
 from vee.compat import fsencode
 from vee.database import DBObject, Column
+from vee.python import get_default_python
 from vee.utils import makedirs
 
 IGNORE_DIRS = frozenset(('.git', '.svn'))
@@ -81,9 +82,10 @@ class Environment(DBObject):
                 virtualenv.create_environment(self.path, no_setuptools=True, no_pip=True)
 
         if not os.path.exists(python + '-config'):
+            version = get_default_python().version
             names = (
-                'python%d.%d-config' % sys.version_info[:2],
-                'python%d-config' % sys.version_info[0],
+                'python{}.{}-config'.format(*version),
+                'python{}-config'.format(*version),
                 'python-config',
             )
             prefix = getattr(sys, 'real_prefix', sys.prefix)

@@ -11,6 +11,7 @@ from vee.envvars import guess_envvars, render_envvars
 from vee.exceptions import NotInstalled
 from vee.manifest import Manifest
 from vee.packageset import PackageSet
+from vee.python import get_default_python
 
 
 @command(
@@ -141,7 +142,7 @@ def exec_(args):
     venv = os.environ.get('VIRTUAL_ENV')
     if venv:
         environ_diff['PYTHONPATH'] = '%s:%s' % (
-            os.path.join(venv, 'lib', 'python%d.%d' % sys.version_info[:2], 'site-packages'),
+            os.path.join(venv, get_default_python().rel_site_packages),
             environ_diff.get('PYTHONPATH', ''), # This is sloppy.
         )
 
