@@ -73,7 +73,7 @@ The requirements are further refined by the following arguments:
 
 These may be passed to individual commands, e.g.::
 
-    vee link pypi:pyyaml --revision=3.11
+    vee link pypi:pyyaml --version=3.11
 
 or via a ``manifest.txt`` file, which contains a list of requirements.
 
@@ -83,7 +83,7 @@ or via a ``manifest.txt`` file, which contains a list of requirements.
 ``manifest.txt``
 --------------------
 
-The requirements file may also include:
+The manifest file may also include:
 
     - Headers, which are lines formatted like ``Header: Value``, e.g.::
 
@@ -98,9 +98,9 @@ The requirements file may also include:
 
         # For the Shotgun cache:
         % if os.environ.get('VEEINCLUDE_SGCACHE'):
-            git+git@github.com:vfxetc/sgapi --revision=6da9d1c5
-            git+git@github.com:vfxetc/sgcache --revision=cd673656
-            git+git@github.com:vfxetc/sgevents --revision=a58e61c5
+            git+git@github.com:vfxetc/sgapi --version=6da9d1c5
+            git+git@github.com:vfxetc/sgcache --version=cd673656
+            git+git@github.com:vfxetc/sgevents --version=a58e61c5
         % endif
 
 

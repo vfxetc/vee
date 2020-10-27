@@ -26,11 +26,20 @@ VEE is installed via ``pip``. We recommend installing in a clean virtualenv insi
     sudo chown -R $(whoami):$groupname $VEE
     sudo chmod -R o=rwX,g=rwXs $VEE
 
+    # Initialize VEE
+    vee init
+
+    # Pick a repo name
+    export VEE_REPO=myrepo
+
+    # Create it
+    vee repo init $VEE_REPO
+
 
 Configuration
 -------------
 
-VEE takes its base configuration from environment variables. At an absolute minumum, :envvar:`VEE` and :envvar:`VEE_REPO` must be set.
+VEE takes its base configuration from environment variables. At an absolute minumum, :envvar:`VEE` should be set.
 
 .. envvar:: VEE
 
