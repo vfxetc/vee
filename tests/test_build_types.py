@@ -16,8 +16,15 @@ class TestBuildTypes(TestCase):
         pkg = MockPackage(name, type)
         pkg.render_commit()
         vee(['install', pkg.path, '--install-name', '%s/1.0.0' % name])
-        exe = sandbox('vee/installs/%s/1.0.0/bin/%s' % (name, name))
-        self.assertExists(exe)
+
+        exe1 = sandbox('vee/installs/%s/1.0.0/bin/%s' % (name, name))
+        exe2 = sandbox('vee/installs/%s/1.0.0/scripts/%s' % (name, name))
+        if os.path.exists(exe1):
+            exe = exe1
+        else:
+            exe = exe2
+            self.assertExists(exe)
+        
         if do_call:
             # Jumping through a bit of a hoop here to see the output.
             out = []

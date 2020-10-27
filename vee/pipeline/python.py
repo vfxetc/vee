@@ -19,7 +19,7 @@ def call_setup_py(setup_py, args, **kwargs):
     kwargs.setdefault('vee_in_env', True)
 
     executable = get_default_python().executable
-    cmd = [executable, '-sSc', 'import sys, setuptools; sys.argv[0]=__file__=%r; execfile(__file__)' % os.path.basename(setup_py)]
+    cmd = [executable, '-sc', '''import sys, setuptools; sys.argv[0]=__file__=%r; exec(compile(open(__file__).read(), __file__, 'exec'))''' % os.path.basename(setup_py)]
     cmd.extend(('--command-packages', 'vee.distutils'))
     cmd.extend(args)
 
