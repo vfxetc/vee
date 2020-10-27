@@ -48,7 +48,7 @@ def repo(args):
 @repo.subcommand(
     argument('--default', action='store_true', help='this repo is the default'),
     argument('--remote', help='git remote to track', default='origin'),
-    argument('--branch', help='git branch to track', default='master'),
+    argument('--branch', help='git branch to track'),
     argument('name', nargs='?'),
     help='create a blank repository'
 )
@@ -66,7 +66,7 @@ def init(args, is_set=False):
 @repo.subcommand(
     argument('--default', action='store_true', help='this repo is the default'),
     argument('--remote', help='git remote to track', default='origin'),
-    argument('--branch', help='git branch to track', default='master'),
+    argument('--branch', help='git branch to track'),
     argument('path'),
     argument('name', nargs='?'),
     help='add an existing repository clone'
@@ -85,7 +85,7 @@ def add(args, is_set=False):
 @repo.subcommand(
     argument('--default', action='store_true', help='this repo is the default'),
     argument('--remote', help='git remote to track', default='origin'),
-    argument('--branch', help='git branch to track', default='master'),
+    argument('--branch', help='git branch to track'),
     argument('url'),
     argument('name', nargs='?'),
     help='clone a remote repository'

@@ -15,7 +15,7 @@ from unittest import TestCase as _TestCase
 from vee import log
 from vee.cli import strip_ansi
 from vee.commands.main import main as _main
-from vee.git import GitRepo
+from vee.git import GitRepo, get_default_branch
 from vee.home import Home
 from vee.python import get_default_python
 from vee.subproc import call
@@ -76,6 +76,7 @@ os.environ.update(_environ_diff)
 
 
 default_python = get_default_python()
+default_branch = get_default_branch()
 
 
 # Setup mock HTTP server.

@@ -11,6 +11,15 @@ from vee.exceptions import CliMixin
 from vee.subproc import call
 
 
+_default_branch = None
+def get_default_branch():
+    global _default_branch
+    if _default_branch is None:
+        proc = subprocess.Popen(['git', 'config', 'init.defaultbranch'], stdout=subprocess.PIPE)
+        _default_branch = proc.stdout.read().decode().strip() or 'master'
+    return _default_branch
+
+
 class GitError(CliMixin, RuntimeError):
     pass
 
@@ -90,7 +99,7 @@ class GitRepo(object):
 
     _head = None
 
-    def __init__(self, work_tree, remote_url=None, remote_name='origin', branch_name='master'):
+    def __init__(self, work_tree, remote_url=None, remote_name='origin', branch_name=get_default_branch()):
         self.work_tree = work_tree
         self.git_dir = os.path.join(work_tree, '.git')
         self.remote_url = remote_url
@@ -155,9 +164,11 @@ class GitRepo(object):
             self.git('remote', 'add', 'origin', self.remote_url)
             self.git('config', '--unset', 'core.bare')
             if shallow:
-                self.git('pull', '--depth=1', 'origin', 'master')
+                # TODO: non-master
+                self.git('pull', '--ff-only', '--depth=1', 'origin', get_default_branch())
             else:
-                self.git('pull', 'origin', 'master')
+                # TODO: non-master
+                self.git('pull', '--ff-only', 'origin', get_default_branch())
 
         elif shallow:
             log.info(style_note('Cloning shallow', self.remote_url))
@@ -269,6 +280,9 @@ class GitRepo(object):
     @property
     def is_shallow(self):
         return os.path.exists(os.path.join(self.git_dir, 'shallow'))
+
+    def get_current_branch(self):
+        return self.git('branch', '--show-current', stdout=True).strip()
 
     def status(self, ignore_permissions=True):
         """Get a series of (index_status, work_tree_status, filename) tuples."""

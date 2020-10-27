@@ -8,7 +8,7 @@ from vee.config import Config
 from vee.database import Database
 from vee.devpackage import DevPackage
 from vee.environmentrepo import EnvironmentRepo
-from vee.git import GitRepo
+from vee.git import GitRepo, get_default_branch
 from vee.utils import makedirs, cached_property, find_home, DB_NAME
 from vee import log
 
@@ -181,9 +181,11 @@ class Home(object):
         else:
             raise ValueError('%r repo already exists' % name)
 
+        branch = branch or get_default_branch()
+
         con = self.db.connect()
         cur = con.execute('INSERT OR REPLACE INTO repositories (name, path, remote, branch, is_default) VALUES (?, ?, ?, ?, ?)', [
-                          name, path, remote or 'origin', branch or 'master', bool(is_default)])
+                          name, path, remote or 'origin', branch, bool(is_default)])
         row = con.execute('SELECT * FROM repositories WHERE id = ?', [cur.lastrowid]).fetchone()
 
         env_repo = EnvironmentRepo(row, home=self)
@@ -192,6 +194,9 @@ class Home(object):
         elif not env_repo.exists:
             makedirs(env_repo.work_tree)
             env_repo.git('init')
+
+        if branch != env_repo.get_current_branch():
+            con.execute('UPDATE repositories SET branch = ? WHERE id = ?', [env_repo.get_current_branch(), env_repo.id])
 
         return env_repo
 

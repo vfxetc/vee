@@ -3,7 +3,7 @@ import re
 
 from vee.cli import style, style_error, style_note, style_warning
 from vee.commands.main import command, argument
-from vee.git import GitRepo, normalize_git_url
+from vee.git import GitRepo, normalize_git_url, get_default_branch
 from vee.packageset import PackageSet
 from vee.package import Package
 from vee.utils import guess_name, checksum_file
@@ -36,9 +36,10 @@ def add(args):
             if pkg.fetch_type != 'git':
                 continue
             log.info(style_note('Fetching', str(req)))
-            pkg.repo.fetch('origin', 'master') # TODO: track these another way?
-            if pkg.repo.check_ff_safety('origin/master'):
-                pkg.repo.checkout('origin/master')
+            branch = get_default_branch()
+            pkg.repo.fetch('origin', branch) # TODO: track these another way?
+            if pkg.repo.check_ff_safety('origin/' + branch):
+                pkg.repo.checkout('origin/' + branch)
                 head = pkg.repo.head[:8]
                 if head != req.revision:
                     req.revision = pkg.repo.head[:8]
