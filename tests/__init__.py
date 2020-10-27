@@ -17,6 +17,7 @@ from vee.cli import strip_ansi
 from vee.commands.main import main as _main
 from vee.git import GitRepo
 from vee.home import Home
+from vee.python import get_default_python
 from vee.subproc import call
 from vee.utils import makedirs
 
@@ -72,6 +73,10 @@ _environ_diff = {
     'PATH': '%s:%s' % (os.path.join(root_dir, 'bin'), os.environ['PATH']),
 }
 os.environ.update(_environ_diff)
+
+
+default_python = get_default_python()
+
 
 # Setup mock HTTP server.
 setup_mock_http(sandbox_dir)

@@ -42,11 +42,14 @@ class TestBuildTypes(TestCase):
         # TODO: arbitrary data.
         # TODO: both scripts and console_scripts entrypoints.
 
+    def installed_package(self, name, *args):
+        return sandbox(os.path.join('vee/installs', name, '1.0.0', default_python.rel_site_packages, name, *args))
+
     def test_python_sdist(self):
         pkg = MockPackage('scheme_python_sdist', 'python_sdist')
         pkg.render_commit()
         vee(['install', sandbox('packages/scheme_python_sdist'), '--install-name', 'scheme_python_sdist/1.0.0'])
-        self.assertExists(sandbox('vee/installs/scheme_python_sdist/1.0.0/lib/python2.7/site-packages/scheme_python_sdist/__init__.py'))
+        self.assertExists(self.installed_package(pkg.name, '__init__.py'))
         # TODO: arbitrary data.
         # TODO: scripts and console_scripts entrypoints.
         # self.assertExists(sandbox('vee/installs/scheme_py_egg/1.0.0/bin/scheme_py_egg'))
@@ -56,7 +59,7 @@ class TestBuildTypes(TestCase):
         pkg = MockPackage('scheme_python_bdist', 'python_bdist')
         pkg.render_commit()
         vee(['install', sandbox('packages/scheme_python_bdist'), '--install-name', 'scheme_python_bdist/1.0.0'])
-        self.assertExists(sandbox('vee/installs/scheme_python_bdist/1.0.0/lib/python2.7/site-packages/scheme_python_bdist/__init__.py'))
+        self.assertExists(self.installed_package(pkg.name, '__init__.py'))
         # TODO: arbitrary data.
         # TODO: scripts and console_scripts entrypoints.
         # self.assertExists(sandbox('vee/installs/scheme_py_egg/1.0.0/bin/scheme_py_egg'))
@@ -67,7 +70,7 @@ class TestBuildTypes(TestCase):
         pkg = MockPackage('scheme_python_bdist_egg', 'python_bdist_egg')
         pkg.render_commit()
         vee(['install', sandbox('packages/scheme_python_bdist_egg'), '--install-name', 'scheme_python_bdist_egg/1.0.0'])
-        self.assertExists(sandbox('vee/installs/scheme_python_bdist_egg/1.0.0/lib/python2.7/site-packages/scheme_python_bdist_egg/__init__.py'))
+        self.assertExists(self.installed_package(pkg.name, '__init__.py'))
         # TODO: arbitrary data.
         # TODO: scripts and console_scripts entrypoints:
         # self.assertExists(sandbox('vee/installs/scheme_python_bdist_wheel/1.0.0/bin/scheme_python_bdist_wheel'))
@@ -91,7 +94,7 @@ class TestBuildTypes(TestCase):
                     fh.write(path, rel_path)
 
         vee(['install', whl_path, '--install-name', 'scheme_python_bdist_wheel/1.0.0'])
-        self.assertExists(sandbox('vee/installs/scheme_python_bdist_wheel/1.0.0/lib/python2.7/site-packages/scheme_python_bdist_wheel/__init__.py'))
+        self.assertExists(self.installed_package(pkg.name, '__init__.py'))
         # TODO: arbitrary data.
         # TODO: scripts and console_scripts entrypoints:
         # self.assertExists(sandbox('vee/installs/scheme_python_bdist_wheel/1.0.0/bin/scheme_python_bdist_wheel'))
