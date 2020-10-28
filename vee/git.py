@@ -422,7 +422,7 @@ class GitRepo(object):
         self.git('submodule', 'update', '--init', '--checkout', '--recursive', silent=False)
         self._head = commit
 
-    def check_ff_safety(self, rev, ignore_permissions=True):
+    def check_ff_safety(self, rev='HEAD', ignore_permissions=True):
 
         # Check the status of the work tree and index.
         status_ok = True
