@@ -50,7 +50,8 @@ def guess_envvars(paths, sources=None, use_current=True):
             except KeyError:
                 pass
 
-    rel_site_packages = get_default_python().rel_site_packages
+    # We want the part after `lib`.
+    rel_site_packages = get_default_python().rel_site_packages.split(os.path.sep, 1)[1]
 
     for path in reversed(paths):
 

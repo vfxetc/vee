@@ -24,14 +24,14 @@ class TestBuildTypes(TestCase):
         else:
             exe = exe2
             self.assertExists(exe)
-        
+
         if do_call:
             # Jumping through a bit of a hoop here to see the output.
             out = []
             try:
                 call(['vee', 'exec', '-R', pkg.path, name], stdout=out.append)
             except:
-                print(''.join(out))
+                print(b''.join(out).strip().decode())
                 raise
             self.assertEqual(b''.join(out).strip().decode(), '%s:1' % name)
 
