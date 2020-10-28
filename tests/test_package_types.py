@@ -20,8 +20,8 @@ class TestPackageTypes(TestCase):
     def test_git(self):
         self.assert_echo_installs('type_git', 'git+' + sandbox('packages/type_git'))
 
-    def installed_package(self, envname, *args):
-        return sandbox('vee/installs', envname, '1.0.0', default_python.rel_site_packages, *args)
+    def installed_package(self, name, *args):
+        return sandbox('vee/installs', name, '1.0.0', default_python.rel_site_packages, name, *args)
 
     def test_pypi(self):
 
@@ -29,7 +29,7 @@ class TestPackageTypes(TestCase):
         pkg.render_commit()
 
         vee(['install', 'pypi:tpt_pypi', '--revision', '1.0.0'])
-        self.assertExists(self.installed_package(pkg.name, pkg.name, '__init__.py'))
+        self.assertExists(self.installed_package(pkg.name, '__init__.py'))
 
     def test_pypi_deps(self):
 
@@ -40,6 +40,6 @@ class TestPackageTypes(TestCase):
         pkg.render_commit()
 
         vee(['link', '-e', 'tpt_pypi_env', 'pypi:tpt_pypi_depb', '--revision', '1.0.0'])
-        self.assertExists(self.installed_package('tpt_pypi_env', 'tpt_pypi_depb', '__init__.py'))
-        self.assertExists(self.installed_package('tpt_pypi_env', 'tpt_pypi_depa', '__init__.py'))
+        self.assertExists(self.installed_package('tpt_pypi_depb', '__init__.py'))
+        self.assertExists(self.installed_package('tpt_pypi_depa', '__init__.py'))
 

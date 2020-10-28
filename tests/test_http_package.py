@@ -20,7 +20,7 @@ class TestHttpManager(TestCase):
         ])
         self.assertExists(sandbox('vee/installs/pyfoo/1.0.0/bin/pyfoo'))
         self.assertExists(sandbox('vee/installs/pyfoo/1.0.0/bin/pyfoo-ep'))
-        self.assertExists(sandbox('vee/installs/pyfoo/1.0.0/lib/python2.7/site-packages/pyfoo/__init__.py'))
+        self.assertExists(sandbox('vee/installs/pyfoo/1.0.0/{}/pyfoo/__init__.py'.format(default_python.rel_site_packages)))
 
     def test_foobar_step1_lib(self):
         pkg = MockPackage('test_foobar_step1_lib', 'clib_configure_make_install', {'NAME': 'bar'})
