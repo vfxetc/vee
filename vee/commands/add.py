@@ -92,7 +92,7 @@ def add(args):
 
     # Get the normalized origin.
     dev_remote_urls = set()
-    for url in dev_repo.remotes().itervalues():
+    for url in dev_repo.remotes().values():
         url = normalize_git_url(url, prefer='scp') or url
         log.debug('adding dev remote url: %s' % url)
         dev_remote_urls.add(url)
