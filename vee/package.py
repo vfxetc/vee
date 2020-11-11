@@ -123,12 +123,11 @@ requirement_parser = _RequirementParser(add_help=False)
 
 requirement_parser.add_argument('-n', '--name')
 
-# TODO: Be a shortcun into provides['version'].
-requirement_parser.add_argument('-r', '--revision')
 
 requirement_parser.add_argument('-P', '--provides', nargs='*', action=_ProvidesAction)
 requirement_parser.add_argument('-R', '--requires', nargs='*', action=_RequiresAction)
 requirement_parser.add_argument('-V', '--variant',  nargs='*', action=_VariantAction, dest='variants')
+requirement_parser.add_argument('-v', '--version', help='shortcut for `--provides version=FOO`')
 
 requirement_parser.add_argument('--etag', help='identifier for busting caches')
 requirement_parser.add_argument('--checksum', help='to verify that package archives haven\'t changed')
@@ -200,7 +199,7 @@ class Package(DBObject):
 
     url = Column()
     name = Column()
-    revision = Column()
+    version = Column()
     etag = Column()
     package_name = Column()
     build_name = Column()
@@ -528,8 +527,8 @@ class Package(DBObject):
                 self.package_name = name
 
         if (install or build) and self.install_name is None:
-            if self.name and self.revision:
-                self.install_name = '%s/%s' % (self.name, self.revision)
+            if self.name and self.version:
+                self.install_name = '%s/%s' % (self.name, self.version)
             else:
                 self.install_name = self.package_name and re.sub(r'(\.(tar|gz|tgz|zip))+$', '', self.package_name)
 
@@ -689,13 +688,13 @@ class Package(DBObject):
                     ORDER BY packages.created_at DESC
                 ''' % clause, values)
 
-        rev_expr = VersionExpr(self.revision) if self.revision else None
+        rev_expr = VersionExpr(self.version) if self.version else None
         for row in cur:
-            if rev_expr and row['revision'] and not rev_expr.eval(Version(row['revision'])):
-                log.debug('Found %s (%d) whose revision %s does not satisfy %s' % (
+            if rev_expr and row['version'] and not rev_expr.eval(Version(row['version'])):
+                log.debug('Found %s (%d) whose version %s does not satisfy %s' % (
                     self.name or row['name'],
                     row['id'],
-                    row['revision'],
+                    row['version'],
                     rev_expr,
                 ), verbosity=2)
                 continue

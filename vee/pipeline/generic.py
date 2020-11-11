@@ -33,7 +33,7 @@ class GenericBuilder(PipelineStep):
 
         if pkg.pseudo_homebrew:
             homebrew = Homebrew(home=pkg.home)
-            version = pkg.revision.split('+')[0]
+            version = pkg.version.split('+')[0]
             untapped_name = pkg.name.split('/')[-1] # Deal with taps.
             pkg.install_path = os.path.join(homebrew.cellar, untapped_name, version)
             log.info(style_note('Re-installing into Homebrew', 'as %s/%s' % (untapped_name, version)))

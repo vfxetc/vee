@@ -40,7 +40,7 @@ class TestWorkflows(TestCase):
 
         status = strip_ansi(vee(['status', '--repo', env_repo.name], stdout=True).decode())
         self.assertNotIn('tdep_pkg is ahead of origin/', status)
-        self.assertIn('--name=tdep_pkg --revision=%s' % pkg_dev.repo.head[:8], status)
+        self.assertIn('--name=tdep_pkg --version=%s' % pkg_dev.repo.head[:8], status)
 
         vee(['commit', '--repo', env_repo.name, '--minor', '-m', 'testing'])
         vee(['push', '--repo', env_repo.name])

@@ -58,7 +58,7 @@ def _create_initial_tables(con):
 
         url TEXT NOT NULL,
         name TEXT,
-        revision TEXT,
+        version TEXT,
         etag TEXT,
 
         -- Names, either from the user or discovered.

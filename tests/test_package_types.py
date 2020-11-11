@@ -28,7 +28,7 @@ class TestPackageTypes(TestCase):
         pkg = MockPackage('tpt_pypi', 'python_sdist')
         pkg.render_commit()
 
-        vee(['install', 'pypi:tpt_pypi', '--revision', '1.0.0'])
+        vee(['install', 'pypi:tpt_pypi', '--version', '1.0.0'])
         self.assertExists(self.installed_package(pkg.name, '__init__.py'))
 
     def test_pypi_deps(self):
@@ -39,7 +39,7 @@ class TestPackageTypes(TestCase):
         pkg = MockPackage('tpt_pypi_depb', 'python_source', {'REQUIRES': 'tpt_pypi_depa'})
         pkg.render_commit()
 
-        vee(['link', '-e', 'tpt_pypi_env', 'pypi:tpt_pypi_depb', '--revision', '1.0.0'])
+        vee(['link', '-e', 'tpt_pypi_env', 'pypi:tpt_pypi_depb', '--version', '1.0.0'])
         self.assertExists(self.installed_package('tpt_pypi_depb', '__init__.py'))
         self.assertExists(self.installed_package('tpt_pypi_depa', '__init__.py'))
 

@@ -29,13 +29,12 @@ class GitTransport(PipelineStep):
         self.repo = GitRepo(work_tree=pkg.package_path, remote_url=re.sub(r'^git[:\+]', '', pkg.url))
     
         # Resolve branches by fetching.
-        if pkg.revision and not re.match(r'^[0-9a-f]{8,}$', pkg.revision):
+        if pkg.version and not re.match(r'^[0-9a-f]{8,}$', pkg.version):
             self.repo.clone_if_not_exists()
-            rev = self.repo.fetch(ref=pkg.revision)
-            pkg.revision = rev[:8]
+            rev = self.repo.fetch(ref=pkg.version)
+            pkg.version = rev[:8]
 
     def fetch(self, pkg):
-        
         self.repo.clone_if_not_exists()
-        self.repo.checkout(pkg.revision or 'HEAD', fetch=True)
-        pkg.revision = self.repo.head[:8]
+        self.repo.checkout(pkg.version or 'HEAD', fetch=True)
+        pkg.version = self.repo.head[:8]

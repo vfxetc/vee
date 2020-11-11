@@ -162,11 +162,11 @@ def status(args):
                 behind_action='please pull or `vee dev ff %s`' % name,
             )
 
-        if dev_repo and work_req and work_req.revision:
+        if dev_repo and work_req and work_req.version:
 
             # Check your local dev vs the required revision
             try:
-                pkg_revision = dev_repo.rev_parse(work_req.revision)
+                pkg_revision = dev_repo.rev_parse(work_req.version)
                 pkg_local, pkg_remote = dev_repo.distance(dev_repo.head, pkg_revision)
                 summarize_rev_distance(pkg_local, pkg_remote,
                     local_name=name,

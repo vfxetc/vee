@@ -110,18 +110,19 @@ class TestRequirements(TestCase):
 
         manifest = Manifest(file=main_path, home=home)
         main, incl = manifest.iter_packages()
+
         self.assertEqual(main.name, 'main')
 
-        main.revision = '1'
-        incl.revision = '2'
+        main.version = '1'
+        incl.version = '2'
 
         manifest.dump(main_path)
 
         manifest = Manifest(file=main_path, home=home)
         main, incl = manifest.iter_packages()
         self.assertEqual(main.name, 'main')
-        self.assertEqual(main.revision, '1')
-        self.assertEqual(incl.revision, '2')
+        self.assertEqual(main.version, '1')
+        self.assertEqual(incl.version, '2')
 
 
 

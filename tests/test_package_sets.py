@@ -12,7 +12,7 @@ class TestPackageSets(TestCase):
         reqs = Manifest(home=home)
         reqs.parse_file('''
 
-            first --revision 1.0
+            first --version 1.0
             second -e "FIRST=$(prefix first)"
 
         '''.strip().splitlines())

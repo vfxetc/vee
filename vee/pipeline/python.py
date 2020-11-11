@@ -119,7 +119,7 @@ class PythonBuilder(GenericBuilder):
                     pkg.add_dependency(
                         name=dep_name,
                         url='pypi:{}'.format(dep_name),
-                        revision=version_expr,
+                        version=version_expr,
                     )
 
     def build(self, pkg):

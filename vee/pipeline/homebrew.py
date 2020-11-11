@@ -35,7 +35,7 @@ class HomebrewManager(PipelineStep):
         self.version = self.revision = None
         if pkg.revision:
 
-            m = re.match(r'^(.+?)(?:\+([0-9a-f]{8,}))?$', pkg.revision)
+            m = re.match(r'^(.+?)(?:\+([0-9a-f]{8,}))?$', pkg.version)
             if m:
                 self.version, self.revision = m.groups()
 
@@ -160,7 +160,7 @@ class HomebrewManager(PipelineStep):
             'HEAD+%s' % self.revision if '--HEAD' in pkg.config else self.version
         )
 
-        pkg.revision = '%s+%s' % (
+        pkg.version = '%s+%s' % (
             self.version,
             self.revision
         )

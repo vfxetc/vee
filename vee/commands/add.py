@@ -12,7 +12,7 @@ from vee import log
 
 @command(
     argument('--update', action='store_true', help='update all repos themselves'),
-    argument('--bake-installed', action='store_true', help='bake all installed revisions'),
+    argument('--bake-installed', action='store_true', help='bake all installed versions'),
     argument('--checksum', action='store_true', help='checksum existing packages'),
     argument('--init', action='store_true', help='create if not found in requirements'),
     argument('--repo'),
@@ -41,8 +41,8 @@ def add(args):
             if pkg.repo.check_ff_safety('origin/' + branch):
                 pkg.repo.checkout('origin/' + branch)
                 head = pkg.repo.head[:8]
-                if head != req.revision:
-                    req.revision = pkg.repo.head[:8]
+                if head != req.version:
+                    req.version = pkg.repo.head[:8]
                     log.info(style_note('Updated', str(req)))
                     baked_any = True
 
@@ -61,10 +61,10 @@ def add(args):
                 baked_any = True
                 log.info(style_note('Unset redundant name', req.name))
 
-            if pkg.installed and req.revision != repo.head[:8]:
-                req.revision = repo.head[:8]
+            if pkg.installed and req.version != repo.head[:8]:
+                req.version = repo.head[:8]
                 baked_any = True
-                log.info(style_note('Pinned', req.name, req.revision))
+                log.info(style_note('Pinned', req.name, req.version))
 
     if args.checksum:
         baked_any = False
@@ -110,10 +110,10 @@ def add(args):
         req_url = normalize_git_url(req.url, prefer='scp')
         log.debug('does match package url?: %s' % req_url)
         if req_url in dev_remote_urls:
-            if req.revision == dev_repo.head[:8]:
+            if req.version == dev_repo.head[:8]:
                 log.info(style_note('No change to', str(req)))
             else:
-                req.revision = dev_repo.head[:8]
+                req.version = dev_repo.head[:8]
                 log.info(style_note('Updated', str(req)))
             break
 
@@ -122,7 +122,7 @@ def add(args):
             log.error('{error}: No required package {name}; would match one of:'.format(error=style('Error', 'red'), name=style(args.package, bold=True)))
             for url in sorted(dev_remote_urls):
                 log.info('    {}'.format(url))
-            log.info('Use {} to setup: git+{} --revision {}'.format(
+            log.info('Use {} to setup: git+{} --version {}'.format(
                 style('vee add --init %s' % args.package, 'green'),
                 dev_repo.remotes()['origin'],
                 dev_repo.head[:8]
@@ -131,7 +131,7 @@ def add(args):
 
         req = Package(
             url=normalize_git_url(dev_repo.remotes()['origin'], prefix=True),
-            revision=dev_repo.head[:8],
+            version=dev_repo.head[:8],
             home=home,
         )
         req_set.append(('', req, ''))

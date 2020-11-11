@@ -73,13 +73,10 @@ class PyPiTransport(PipelineStep):
         if not all_releases:
             raise ValueError('no releases of {} (any version) on the PyPI'.format(self.name))
 
-        if pkg.revision:
-            expr = VersionExpr(pkg.revision)
-            matching_releases = [(v, rs) for v, rs in all_releases if expr.eval(v)]
-            log.debug('%s matched %s' % (expr, ','.join(str(v) for v, _ in matching_releases) or 'none'))
-
+        if pkg.version:
+            matching_releases = [(v, rs) for v, rs in all_releases if pkg.version == v]
             if not matching_releases:
-                raise ValueError('no releases of {} {} on the PyPI'.format(self.name, expr))
+                raise ValueError('no releases of {} {} on the PyPI'.format(self.name, pkg.version))
 
         else:
             matching_releases = all_releases
@@ -113,12 +110,12 @@ class PyPiTransport(PipelineStep):
                     usable_releases.append((version, 1, release))
 
         if not usable_releases:
-            raise ValueError('no usable release of %s %s on the PyPI;' % (self.name, expr if pkg.revision else '(any version)'))
+            raise ValueError('no usable release of %s %s on the PyPI;' % (self.name, expr if pkg.version else '(any version)'))
         usable_releases.sort(key=lambda x: x[:2])
 
         version, _, release = usable_releases[-1]
 
-        pkg.revision = str(version)
+        pkg.version = str(version)
         
         if release.get('md5_digest'):
             pkg.checksum = 'md5:%s' % release['md5_digest']

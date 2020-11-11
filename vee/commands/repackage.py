@@ -75,7 +75,7 @@ def repackage(args):
             if platform_dependent:
                 break
 
-        name = '%s-%s-%s.tgz' % (pkg.name, pkg.revision, PLATFORM_TAG if platform_dependent else 'any')
+        name = '%s-%s-%s.tgz' % (pkg.name, pkg.version, PLATFORM_TAG if platform_dependent else 'any')
         name = name.replace('/', '-') # For taps.
         path = os.path.join(args.dir, name)
 
@@ -137,7 +137,7 @@ def repackage(args):
             else os.path.abspath(path)
         )
 
-        parts = [url, '--name', pkg.name, '--revision', pkg.revision or '""']
+        parts = [url, '--name', pkg.name, '--version', pkg.version or '""']
         
         checksum = checksums.get(pkg.name)
         if not checksum and os.path.exists(path):
