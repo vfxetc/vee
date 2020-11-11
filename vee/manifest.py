@@ -374,7 +374,7 @@ class Manifest:
         raise KeyError(name)
 
     def set_header(self, name, value):
-        for item in self:
+        for item in self._items:
             el = item.value
             if isinstance(el, Header) and el.name.lower() == name.lower():
                 el.value = value
@@ -382,12 +382,12 @@ class Manifest:
         self.add_header(name, value)
 
     def add_header(self, name, value):
-        for i, item in enumerate(self):
+        for i, item in enumerate(self._items):
             el = item.value
             if not isinstance(el, Header):
                 break
         header = Header(name, value)
-        self.insert(i, RequirementItem(header))
+        self._items.insert(i, RequirementItem(header))
         return header
 
     def iter_dump(self, freeze=False):
