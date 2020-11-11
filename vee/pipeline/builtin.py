@@ -22,3 +22,8 @@ class BuiltinLoader(PipelineStep):
 
         pkg.meta = meta_cls()
 
+        # Call it, since the `meta` pipeline step won't have a chance.
+        init = pkg.get_meta('init')
+        if init:
+            init(pkg)
+

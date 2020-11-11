@@ -264,7 +264,13 @@ class VersionExpr(object):
         return input_ if isinstance(input_, cls) else cls(input_)
         
     def __init__(self, raw):
+
         self.clauses = []
+        
+        if isinstance(raw, Version):
+            self.clauses.append(('==', raw))
+            return
+
         for chunk in re.split(r'\s*,\s*', raw.strip()):
             m = re.match(r'^(%s)\s*([\w\.!@+-]+)$' % '|'.join(re.escape(x) for x in _expr_ops), chunk)
             if not m:

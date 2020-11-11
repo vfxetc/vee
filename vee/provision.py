@@ -15,7 +15,8 @@ class Provision(collections.MutableMapping):
         self._data = {}
 
         if isinstance(input_, str):
-            self.parse(input_)
+            if input_:
+                self.parse(input_)
 
         elif isinstance(input_, dict):
             self.update(input_)
@@ -66,10 +67,12 @@ class Provision(collections.MutableMapping):
     def __iter__(self):
         return iter(self._data)
 
-    def __str__(self):
+    def __str__(self, sort=False):
         out = []
         for key, version in self._data.items():
             out.append('{}={}'.format(key, version))
+        if sort:
+            out.sort()
         return ','.join(out)
 
     def __repr__(self):

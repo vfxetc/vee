@@ -161,7 +161,7 @@ class PythonBuilder(GenericBuilder):
         env['PYTHONPATH'] = join_env_path(install_site_packages, env.get('PYTHONPATH'))
         
         if os.path.exists(pkg.install_path):
-            log.warning('Removing existing install', pkg.install_path)
+            log.warning('Removing existing install: ' + pkg.install_path)
             shutil.rmtree(pkg.install_path)
         os.makedirs(install_site_packages)
 

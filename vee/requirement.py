@@ -15,7 +15,8 @@ class RequirementSet(collections.MutableMapping):
         self._data = {}
 
         if isinstance(input_, str):
-            self.parse(input_)
+            if input_:
+                self.parse(input_)
 
         elif isinstance(input_, dict):
             self.update(input_)
