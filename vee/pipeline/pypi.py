@@ -92,7 +92,7 @@ class PyPiTransport(PipelineStep):
                     usable_releases.append((version, 0, release))
                     continue
 
-                if release['packagetype'] == 'bdist_wheel':
+                elif release['packagetype'] == 'bdist_wheel':
                     m = re.match(r'^(.+)-([^-]+)-([^-]+)-([^-]+)-([^-]+)\.whl$', release['filename'])
                     if not m:
                         log.warning("Could not parse wheel filename: {}".format(release['filename']))
