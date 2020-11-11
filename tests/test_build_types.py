@@ -48,7 +48,7 @@ class TestBuildTypes(TestCase):
         pkg = MockPackage('scheme_python_source', 'python_source')
         pkg.render_commit()
         vee(['install', sandbox('packages/scheme_python_source'), '--install-name', 'scheme_python_source/1.0.0'])
-        self.assertExists(sandbox('vee/installs/scheme_python_source/1.0.0/lib/python2.7/site-packages/scheme_python_source/__init__.py'))
+        self.assertExists(self.installed_package(pkg.name, '__init__.py'))
         # TODO: arbitrary data.
         # TODO: both scripts and console_scripts entrypoints.
 
