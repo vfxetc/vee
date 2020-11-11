@@ -7,9 +7,17 @@ from __future__ import print_function
 import os
 import sys
 
-module = __import__(sys.argv[1], fromlist=['.'])
-path = module.__file__
 
+try:
+    module = __import__(sys.argv[1], fromlist=['.'] if '.' in sys.argv[1] else None)
+except ImportError as e:
+    print("Could not import {}:".format(sys.argv[1]), e, file=sys.stderr)
+    print("sys.path:", file=sys.stderr)
+    for x in sys.path:
+        print("   ", x, file=sys.stderr)
+    exit(1)
+
+path = module.__file__
 if path.endswith('.pyc'):
     path = path[:-1]
 

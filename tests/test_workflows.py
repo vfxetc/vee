@@ -23,8 +23,8 @@ class TestWorkflows(TestCase):
         vee(['update', '--repo', env_repo.name])
         vee(['upgrade', '--repo', env_repo.name])
 
-        path = vee(['exec', '--repo', env_repo.name, 'whichpy', pkg_origin.name], stdout=True).strip()
-        self.assertEqual(path, sandbox('vee/environments/tdep_repo/master/lib/python2.7/site-packages/tdep_pkg'))
+        path = vee(['exec', '--repo', env_repo.name, 'whichpy', pkg_origin.name], stdout=True).decode().strip()
+        self.assertEqual(path, sandbox('vee/environments/tdep_repo', default_branch, default_python.rel_site_packages, 'tdep_pkg'))
 
         vee(['dev', 'install', '--repo', env_repo.name, pkg_origin.name])
         self.assertExists(sandbox('vee/dev/tdep_pkg/tdep_pkg/__init__.py'))
@@ -32,14 +32,14 @@ class TestWorkflows(TestCase):
         pkg_dev = pkg_origin.clone(sandbox('vee/dev/tdep_pkg'))
         pkg_dev.render_commit()
 
-        status = strip_ansi(vee(['status', '--repo', env_repo.name], stdout=True))
-        self.assertIn('tdep_pkg is ahead of origin/master', status)
+        status = strip_ansi(vee(['status', '--repo', env_repo.name], stdout=True).decode())
+        self.assertIn('tdep_pkg is ahead of origin/', status)
 
         vee(['add', '--init', '--repo', env_repo.name, pkg_dev.name])
-        pkg_dev.repo.git('push', 'origin', 'master')
+        pkg_dev.repo.git('push', 'origin', default_branch)
 
-        status = strip_ansi(vee(['status', '--repo', env_repo.name], stdout=True))
-        self.assertNotIn('tdep_pkg is ahead of origin/master', status)
+        status = strip_ansi(vee(['status', '--repo', env_repo.name], stdout=True).decode())
+        self.assertNotIn('tdep_pkg is ahead of origin/', status)
         self.assertIn('--name=tdep_pkg --revision=%s' % pkg_dev.repo.head[:8], status)
 
         vee(['commit', '--repo', env_repo.name, '--minor', '-m', 'testing'])

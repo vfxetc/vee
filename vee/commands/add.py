@@ -86,7 +86,7 @@ def add(args):
             log.info(style_note('No changes.'))
         return
 
-    dev_repo = home.find_development_package(os.path.abspath(args.package))
+    dev_repo = home.find_development_package(args.package)
     if not dev_repo:
         raise ValueError('No development package %r' % args.package)
 

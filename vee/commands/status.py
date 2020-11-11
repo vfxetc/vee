@@ -76,7 +76,7 @@ def status(args):
             by_name.setdefault(pkg.name, {})[name] = req
 
 
-    by_name = by_name.items()
+    by_name = list(by_name.items())
     by_name.sort(key=lambda x: x[0].lower())
 
     if args.names:
@@ -146,17 +146,19 @@ def status(args):
             if dev_repo.status():
                 print('    ' + style_warning('Work tree is dirty.'))
 
+            branch = dev_repo.get_current_branch()
+            ref = '{}/{}'.format(dev_repo._st_remote_name, branch)
             if args.fetch:
-                dev_remote_head = dev_repo.fetch(dev_repo._st_remote_name, 'master')
+                dev_remote_head = dev_repo.fetch(dev_repo._st_remote_name, branch)
             else:
-                dev_remote_head = dev_repo.rev_parse(dev_repo._st_remote_name + '/master')
+                dev_remote_head = dev_repo.rev_parse(ref)
 
             # Check your local dev vs. its remote.
             dev_local, dev_remote = dev_repo.distance(dev_repo.head, dev_remote_head)
             summarize_rev_distance(dev_local, dev_remote,
                 local_name=name,
                 local_verb='is',
-                remote_name='%s/master' % dev_repo._st_remote_name,
+                remote_name=ref,
                 behind_action='please pull or `vee dev ff %s`' % name,
             )
 

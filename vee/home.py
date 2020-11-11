@@ -105,18 +105,19 @@ class Home(object):
 
     def find_development_package(self, name):
 
+        paths = [os.path.abspath(name), name]
+    
+        for root in self.dev_search_path:
+            paths.append(os.path.join(root, name))
+
         if '/' in name:
-            paths = [name]
             name = os.path.basename(name)
-        else:
-            paths = []
-            for root in self.dev_search_path:
-                path = os.path.join(root, name)
-                if os.path.exists(path):
-                    paths.append(path)
 
         for path in paths:
 
+            if not os.path.exists(path):
+                continue
+            
             sidecar_path = os.path.join(os.path.dirname(path), '.' + name + '.vee-dev.json')
             if os.path.exists(sidecar_path):
                 return DevPackage.from_tag(sidecar_path, home=self)
