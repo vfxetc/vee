@@ -16,14 +16,14 @@ class GitTransport(PipelineStep):
     @classmethod
     def factory(cls, step, pkg):
         if step == 'init' and re.match(r'^git[:+]', pkg.url):
-            return cls(pkg)
+            return cls()
 
-    def get_next(self, step):
+    def get_next(self, step, pkg):
         if step == 'fetch':
             return self
 
-    def init(self):
-        pkg = self.package
+    def init(self, pkg):
+        
         pkg.url = normalize_git_url(pkg.url, prefix=True) or pkg.url
         pkg._assert_paths(package=True)
         self.repo = GitRepo(work_tree=pkg.package_path, remote_url=re.sub(r'^git[:\+]', '', pkg.url))
@@ -34,8 +34,8 @@ class GitTransport(PipelineStep):
             rev = self.repo.fetch(ref=pkg.revision)
             pkg.revision = rev[:8]
 
-    def fetch(self):
-        pkg = self.package
+    def fetch(self, pkg):
+        
         self.repo.clone_if_not_exists()
         self.repo.checkout(pkg.revision or 'HEAD', fetch=True)
         pkg.revision = self.repo.head[:8]

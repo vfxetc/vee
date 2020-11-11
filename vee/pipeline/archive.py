@@ -20,22 +20,21 @@ class ArchiveExtractor(PipelineStep):
         pkg._assert_paths(package=True)
 
         if re.search(r'(\.tgz|\.tar\.gz)$', pkg.package_path):
-            return cls(pkg, 'tar+gzip')
+            return cls('tar+gzip')
 
         if re.search(r'(\.tbz|\.tar\.bz2)$', pkg.package_path):
-            return cls(pkg, 'tar+bzip')
+            return cls('tar+bzip')
 
         if re.search(r'(\.zip|\.egg|\.whl)$', pkg.package_path):
-            return cls(pkg, 'zip')
+            return cls('zip')
 
-    def __init__(self, pkg, archive_type):
-        super(ArchiveExtractor, self).__init__(pkg)
+    def __init__(self, archive_type):
+        super().__init__()
         self.archive_type = archive_type
     
-    def extract(self):
+    def extract(self, pkg):
         """Extract the package into the (cleaned) build directory."""
 
-        pkg = self.package
         pkg._assert_paths(build=True)
 
         if pkg.checksum:

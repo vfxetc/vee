@@ -118,6 +118,9 @@ class Manifest:
 
     def __init__(self, args=None, file=None, home=None, repo=None):
 
+        if not home:
+            raise ValueError("Manifest requires home")
+
         self._items = []
         self._packages = {}
 
@@ -182,7 +185,7 @@ class Manifest:
             if args.url.endswith('.txt'):
                 self.parse_file(args.url)
             else:
-                pkg = Package(args, home=self.home)
+                pkg = Package(args, home=self.home, context=self)
                 self._append(pkg)
 
     def parse_file(self, source, filename=None, alt_open=None, _depth=0):
@@ -257,7 +260,7 @@ class Manifest:
                 continue
 
             try:
-                pkg = Package(spec, home=self.home)
+                pkg = Package(spec, context=self, home=self.home)
             except RequirementParseError as e:
                 log.warning('parse error: %s' % e)
                 self._append('', '', '# RequirementParseError: %s' % e.args)
@@ -267,10 +270,7 @@ class Manifest:
                 pkg.base_environ.setdefault(k, v)
             append(pkg)
 
-        if not _depth:
-            self._load_metas()
-
-    def _load_metas(self):
+    def load_meta(self, name):
         """Find ``Package`` class in `packages/{name}.py` file for each package.
 
         Any found class will be instatiated and set to :attr:`Package.meta`.
@@ -281,33 +281,23 @@ class Manifest:
         if not self.filename:
             return
 
-        base = os.path.join(os.path.dirname(self.filename), 'packages')
-        if not os.path.exists(base):
+        path = os.path.join(os.path.dirname(self.filename), 'packages', name + '.py')
+        if not os.path.exists(path):
             return
 
-        for pkg in self.iter_packages():
+        namespace = {'__file__': path}
+        with open(path, 'rb') as fh:
+            source = fh.read()
+        try:
+            exec(compile(source, path, 'exec'), namespace, namespace)
+        except Exception as e:
+            raise ValueError("error while loading package meta in {}".format(path)) from e
 
-            # Already done.
-            if pkg.meta is not None:
-                continue
+        cls = namespace.get('Package')
+        if not isinstance(cls, type):
+            raise ValueError("no Package class defined in {}".format(path))
 
-            path = os.path.join(base, pkg.name + '.py')
-            if not os.path.exists(path):
-                continue
-
-            namespace = {'__file__': path}
-            with open(path, 'rb') as fh:
-                source = fh.read()
-            try:
-                exec(compile(source, path, 'exec'), namespace, namespace)
-            except Exception as e:
-                raise ValueError("error while loading package meta in {}".format(path)) from e
-
-            cls = namespace.get('Package')
-            if not isinstance(cls, type):
-                raise ValueError("no Package class defined in {}".format(path))
-
-            pkg.meta = cls
+        return cls()
 
     def iter_packages(self, eval_control=True, locals_=None):
 
@@ -390,7 +380,7 @@ class Manifest:
         self._items.insert(i, RequirementItem(header))
         return header
 
-    def iter_dump(self, freeze=False):
+    def iter_dump(self):
 
         # We track the state of the environment as we progress, and don't
         # include envvars in each requirement if they exactly match those
@@ -407,7 +397,8 @@ class Manifest:
 
             if isinstance(element, Package):
 
-                req = element = (element.freeze() if freeze else element.copy())
+                # Get a copy to mutate.
+                req = element = element.copy()
 
                 # We don't need a name if it matches the guessed version.
                 if req.name and req.name == guess_name(req.url):
@@ -450,7 +441,7 @@ if __name__ == '__main__':
 
     from vee.home import Home
 
-    manifest = Manifest(Home())
+    manifest = Manifest(home=Home())
     manifest.parse_args(sys.argv[1:])
 
     print(''.join(manifest.iter_dump()))

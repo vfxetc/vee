@@ -37,7 +37,7 @@ class PackageSet(collections.OrderedDict):
         # We don't want to mutate the incoming package, even though we could,
         # because we want to allow others to keep the abstract and concrete
         # packages isolated if they want to.
-        pkg = Package(req, set=self, home=self.home)
+        pkg = req.copy(set=self)
 
         # Our guessed name may be wrong after the package is resolved (e.g.
         # deferred packages will definitely be wrong).

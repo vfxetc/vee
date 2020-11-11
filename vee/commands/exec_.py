@@ -101,7 +101,7 @@ def exec_(args):
 
     # Named (or default) repos.
     for name in args.repos or ():
-        repo = home.get_env_repo(name or None) # Allow '' to be the default.
+        repo = home.get_repo(name or None) # Allow '' to be the default.
         args.environment = args.environment or []
         args.environment.append('%s/%s' % (repo.name, repo.branch_name))
         repo_names.append(repo.name)

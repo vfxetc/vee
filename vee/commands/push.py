@@ -15,5 +15,5 @@ def push(args):
 
     # TODO: push all tools, or at least check them.
 
-    env_repo = home.get_env_repo(args.repo)
-    env_repo.git('push')
+    repo = home.get_repo(args.repo)
+    repo.git('push')

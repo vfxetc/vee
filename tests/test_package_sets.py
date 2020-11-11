@@ -9,7 +9,7 @@ class TestPackageSets(TestCase):
 
         home = self.home()
 
-        reqs = Manifest()
+        reqs = Manifest(home=home)
         reqs.parse_file('''
 
             first --revision 1.0

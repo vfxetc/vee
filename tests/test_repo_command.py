@@ -41,13 +41,13 @@ class TestRepos(TestCase):
         home = self.home()
 
         # Make a generic repo.
-        repo = home.create_env_repo(is_default=False)
+        repo = home.create_repo(is_default=False)
 
         # There is only the one.
-        self.assertEqual(len(list(home.iter_env_repos())), 1)
+        self.assertEqual(len(list(home.iter_repos())), 1)
 
         # It is also the default.
-        repo2 = home.get_env_repo()
+        repo2 = home.get_repo()
         self.assertTrue(repo2 is not None)
         self.assertEqual(repo.name, repo2.name)
 

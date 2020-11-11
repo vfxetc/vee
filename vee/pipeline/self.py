@@ -12,7 +12,7 @@ from vee.utils import find_in_tree
 
 class SelfBuilder(GenericBuilder):
 
-    factory_priority = 9999
+    factory_priority = 9000
 
     @classmethod
     def factory(cls, step, pkg):
@@ -57,28 +57,27 @@ class SelfBuilder(GenericBuilder):
 
                 # Build the step.
                 if path:
-                    self = cls(pkg)
+                    self = cls()
                     setattr(self, attr_name, path)
                     return self
 
-    def __init__(self, pkg):
-        super(SelfBuilder, self).__init__(pkg)
+    def __init__(self):
+        super().__init__()
         self.manifest_txt = self.build_sh = self.develop_sh = None
 
-    def inspect(self):
+    def inspect(self, pkg):
         log.info(style_note('Inspecting %s' % os.path.basename(self.manifest_txt)))
-        pkg = self.package
+        
         for line in open(self.manifest_txt):
             line = line.strip()
             if not line or line[0] == '#':
                 continue
-            pkg.dependencies.append(Package(line, home=pkg.home))
+            pkg.dependencies.append(Package(line, source=pkg, home=pkg.home))
 
-    def build(self):
+    def build(self, pkg):
 
         log.info(style_note('source %s' % os.path.basename(self.build_sh)))
 
-        pkg = self.package
         pkg._assert_paths(build=True, install=True)
         
         env = pkg.fresh_environ()
@@ -102,11 +101,10 @@ class SelfBuilder(GenericBuilder):
         pkg.build_subdir = env.get('VEE_BUILD_SUBDIR') or ''
         pkg.install_prefix = env.get('VEE_INSTALL_PREFIX') or ''
 
-    def install(self):
+    def install(self, pkg):
 
         log.info(style_note('source %s' % os.path.basename(self.install_sh)))
 
-        pkg = self.package
         pkg._assert_paths(build=True, install=True)
 
         env = pkg.fresh_environ()
@@ -121,11 +119,9 @@ class SelfBuilder(GenericBuilder):
         with log.indent():
             call(['bash', '-c', 'source "%s" "%s"' % (self.install_sh, pkg.install_path)], env=env, cwd=cwd)
 
-    def develop(self):
+    def develop(self, pkg):
         
         log.info(style_note('source %s' % os.path.basename(self.develop_sh)))
-
-        pkg = self.package
 
         def setenv(name, value):
             log.info('vee develop setenv %s "%s"' % (name, value))

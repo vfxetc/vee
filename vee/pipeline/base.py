@@ -12,9 +12,15 @@ class Pipeline(object):
     def __init__(self, package, step_names):
         self._package = package
         self._step_names = list(step_names)
-        self._step_index = dict((name, i) for i, name in enumerate(self._step_names))
+        self._step_indices = dict((name, i) for i, name in enumerate(self._step_names))
         self._have_run = set()
-        self.steps = {}
+        self._steps = {}
+
+    def copy(self, package):
+        copy = self.__class__(package, self._step_names)
+        copy._have_run = self._have_run.copy()
+        copy._steps = self._steps.copy()
+        return copy
 
     def run_to(self, name, *args, **kwargs):
 
@@ -22,31 +28,31 @@ class Pipeline(object):
             raise RuntimeError('already run %s' % name)
 
         # Run everything up to here.
-        index = self._step_index[name]
+        index = self._step_indices[name]
         for name in self._step_names[:index + 1]:
             if name not in self._have_run:
                 step = self.load(name)
-                step.run(name, *args, **kwargs)
+                step.run(name, self._package, *args, **kwargs)
                 self._have_run.add(name)
 
     def load(self, step_name):
 
         try:
-            return self.steps[step_name]
+            return self._steps[step_name]
         except KeyError:
             pass
 
         # See if any previous steps provide it.
-        step_i = self._step_index[step_name]
+        step_i = self._step_indices[step_name]
         for i in range(step_i - 1, -1, -1):
             prev_name = self._step_names[i]
-            prev_step = self.steps[prev_name]
-            step = prev_step.get_next(step_name)
+            prev_step = self._steps[prev_name]
+            step = prev_step.get_next(step_name, self._package)
             if step:
                 log.debug('%s (%s) provided sucessor %s (%s) for %s' % (
                     prev_step.name, prev_name, step.name, step_name, self._package
                 ), verbosity=2)
-                self.steps[step_name] = step
+                self._steps[step_name] = step
                 return step
 
         # Load the step classes.
@@ -63,10 +69,10 @@ class Pipeline(object):
             step = cls.factory(step_name, self._package)
             if step:
                 log.debug('%s factory built %s for %s' % (step.name, step_name, self._package), verbosity=2)
-                self.steps[step_name] = step
+                self._steps[step_name] = step
                 return step
 
-        raise ValueError('Cannot load %s step for %s' % (step_name, self._package.freeze()))
+        raise ValueError('Cannot load %s step for %s' % (step_name, self._package))
 
 
 class PipelineStep(object):
@@ -75,10 +81,7 @@ class PipelineStep(object):
     def factory(cls, pkg):
         raise NotImplementedError()
 
-    def __init__(self, pkg):
-        self.package = pkg
-
-    def get_next(self, next_step):
+    def get_next(self, next_step, pkg):
         return None
 
     def run(self, name, *args, **kwargs):

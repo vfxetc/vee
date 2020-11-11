@@ -41,20 +41,18 @@ class PyPiTransport(PipelineStep):
     @classmethod
     def factory(cls, step, pkg):
         if step == 'init' and re.match(r'^pypi[:+]', pkg.url):
-            return cls(pkg)
+            return cls()
 
-    def get_next(self, step):
+    def get_next(self, step, pkg):
         if step in ('fetch', ):
             return self
 
-    def init(self):
-        pkg = self.package
+    def init(self, pkg):
         self.name = re.sub(r'^pypi[:+]', '', pkg.url).lower()
         pkg.url = 'pypi:' + self.name
 
-    def _meta(self):
+    def _get_meta(self, pkg):
         
-        pkg = self.package
         path = pkg.home._abs_path('packages', 'pypi', self.name, 'meta.json')
 
         log.info(style_note('Looking up %s on PyPI' % self.name))
@@ -65,10 +63,9 @@ class PyPiTransport(PipelineStep):
 
         return meta
 
-    def fetch(self):
+    def fetch(self, pkg):
 
-        pkg = self.package
-        meta = self._meta()
+        meta = self._get_meta(pkg)
 
         all_releases = [(Version(v), rs) for v, rs in meta['releases'].items()]
         all_releases.sort(reverse=True)

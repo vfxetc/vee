@@ -19,14 +19,14 @@ def update(args):
     home = args.assert_home()
 
     if args.all:
-        env_repos = list(home.iter_env_repos())
+        repos = list(home.iter_repos())
     else:
-        env_repos = [home.get_env_repo(x) for x in args.repos] if args.repos else [home.get_env_repo()]
+        repos = [home.get_repo(x) for x in args.repos] if args.repos else [home.get_repo()]
 
     success = True
 
-    for env_repo in env_repos:
-        did_update = env_repo.update(force=args.force)
+    for repo in repos:
+        did_update = repo.update(force=args.force)
         success = success and did_update
 
     return int(not success)

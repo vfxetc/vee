@@ -27,7 +27,7 @@ def git(args, *command):
     """
 
     home = args.assert_home()
-    repo = home.get_env_repo(args.repo)
+    repo = home.get_repo(args.repo)
 
     if args.stree:
         call(['stree', repo.work_tree])

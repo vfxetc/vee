@@ -85,7 +85,7 @@ class TestSolve(TestCase):
 
     def test_basics(self):
 
-        manifest = Manifest()
+        manifest = Manifest(home=self.home())
         manifest.parse_args('a --requires b')
         manifest.parse_args('b')
 
@@ -100,7 +100,7 @@ class TestSolve(TestCase):
 
     def test_simple_requirement(self):
 
-        manifest = Manifest()
+        manifest = Manifest(home=self.home())
         manifest.parse_args('a --requires b>1')
         manifest.parse_args('b')
 
@@ -112,7 +112,7 @@ class TestSolve(TestCase):
 
     def test_simple_bad_requirement(self):
 
-        manifest = Manifest()
+        manifest = Manifest(home=self.home())
         manifest.parse_args('a --requires b>1')
         manifest.parse_args('b')
 
@@ -124,7 +124,7 @@ class TestSolve(TestCase):
 
     def test_looped_requirement(self):
 
-        manifest = Manifest()
+        manifest = Manifest(home=self.home())
         manifest.parse_args('a --requires b')
         manifest.parse_args('b --requires a')
 
@@ -136,7 +136,7 @@ class TestSolve(TestCase):
 
     def test_diamond_requirement(self):
 
-        manifest = Manifest()
+        manifest = Manifest(home=self.home())
         manifest.parse_args('a --requires b;c')
         manifest.parse_args('b --requires d')
         manifest.parse_args('c --requires d')
@@ -150,7 +150,7 @@ class TestSolve(TestCase):
 
     def test_multi_version_variants(self):
 
-        manifest = Manifest()
+        manifest = Manifest(home=self.home())
         manifest.parse_args('a --requires b>1')
         manifest.parse_args('b')
         manifest.parse_args('c')
@@ -164,10 +164,9 @@ class TestSolve(TestCase):
         self.assertEqual(list(sol), ['a', 'b', 'c'])
         self.assertEqual(sol['b'].provides['version'], '2')
 
-
     def test_multi_version_backtrack(self):
 
-        manifest = Manifest()
+        manifest = Manifest(home=self.home())
         manifest.parse_args('a')
         manifest.parse_args('b')
         manifest.parse_args('c --requires a>1')

@@ -18,15 +18,13 @@ class HttpTransport(PipelineStep):
     @classmethod
     def factory(cls, step, pkg):
         if step == 'init' and re.match(r'^https?://', pkg.url):
-            return cls(pkg)
+            return cls()
 
-    def get_next(self, step):
+    def get_next(self, step, pkg):
         if step in ('fetch', ):
             return self
 
-    def init(self):
-
-        pkg = self.package
+    def init(self, pkg):
 
         split = urlsplit(pkg.url)
 
@@ -40,8 +38,8 @@ class HttpTransport(PipelineStep):
         if m:
             pkg.checksum = '%s:%s' % m.groups()
 
-    def fetch(self):
-        pkg = self.package
+    def fetch(self, pkg):
+        
         pkg._assert_paths(package=True)
         if os.path.exists(pkg.package_path):
             log.info(style_note('Already downloaded', pkg.url))

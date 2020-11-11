@@ -28,7 +28,7 @@ class MakeBuilder(GenericBuilder):
             if makefile:
                 # HACK: I was too lazy too refactor the logic for --make-install,
                 # so I just use this API.
-                return cls(pkg, (None, None, makefile)).get_next(step)
+                return cls((None, None, makefile)).get_next(step, pkg)
             else:
                 return
 
@@ -40,15 +40,30 @@ class MakeBuilder(GenericBuilder):
 
         # Only return with configure.ac iff the user set --autoconf
         if (configure_ac and pkg.autoconf) or configure or makefile:
-            return cls(pkg, (configure_ac, configure, makefile))
+            return cls((configure_ac, configure, makefile))
 
-    def __init__(self, pkg, paths):
-        super(MakeBuilder, self).__init__(pkg)
+    def __init__(self, paths):
+        super().__init__()
         self.configure_ac_path, self.configure_path, self.makefile_path = paths
 
-    def build(self):
+    def get_next(self, step, pkg):
 
-        pkg = self.package
+        if step != 'install':
+            return
+
+        if self.makefile_path:
+            if pkg.make_install:
+                return self
+            else:
+                log.warning('Skipping `make install` and installing full package.\n'
+                    'Usually you will want to specify one of:\n'
+                    '    --make-install\n'
+                    '    --build-subdir PATH\n'
+                    '    --install-subdir PATH'
+                )
+    
+    def build(self, pkg):
+
         env = None
 
         if self.configure_ac_path and not self.configure_path:
@@ -91,23 +106,9 @@ class MakeBuilder(GenericBuilder):
             call(['make', '-j4'], cwd=os.path.dirname(self.makefile_path), env=env)
 
             pkg.build_subdir = os.path.dirname(self.makefile_path)
-
-    def get_next(self, step):
-        if step != 'install':
-            return
-        if self.makefile_path:
-            if self.package.make_install:
-                return self
-            else:
-                log.warning('Skipping `make install` and installing full package.\n'
-                    'Usually you will want to specify one of:\n'
-                    '    --make-install\n'
-                    '    --build-subdir PATH\n'
-                    '    --install-subdir PATH'
-                )
     
-    def install(self):
-        pkg = self.package
+    def install(self, pkg):
+        
         pkg._assert_paths(install=True)
         log.info(style_note('make install'))
         if call(

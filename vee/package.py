@@ -122,6 +122,8 @@ class _VariantAction(argparse.Action):
 requirement_parser = _RequirementParser(add_help=False)
 
 requirement_parser.add_argument('-n', '--name')
+
+# TODO: Be a shortcun into provides['version'].
 requirement_parser.add_argument('-r', '--revision')
 
 requirement_parser.add_argument('-P', '--provides', nargs='*', action=_ProvidesAction)
@@ -131,8 +133,10 @@ requirement_parser.add_argument('-V', '--variant',  nargs='*', action=_VariantAc
 requirement_parser.add_argument('--etag', help='identifier for busting caches')
 requirement_parser.add_argument('--checksum', help='to verify that package archives haven\'t changed')
 
+# TODO: -e for runtime, and -E for build. --base-environ for either??
 requirement_parser.add_argument('--base-environ', nargs='*', action=_EnvironmentAction, help=argparse.SUPPRESS)
-requirement_parser.add_argument('-e', '--environ', nargs='*', action=_EnvironmentAction, help='envvars for building')
+# requirement_parser.add_argument('-E', '--build-environ', nargs='*', action=_EnvironmentAction, help='envvars for building')
+requirement_parser.add_argument('-e', '--environ', nargs='*', action=_EnvironmentAction, help='envvars for runtime')
 requirement_parser.add_argument('-c', '--config', nargs='*', action=_ConfigAction, help='args to pass to `./configure`, `python setup.py`, `brew install`, etc..')
 
 requirement_parser.add_argument('--autoconf', action='store_true', help='the package uses autoconf; may ./bootstrap')
@@ -171,6 +175,25 @@ class Package(DBObject):
     Packages are instances for each :class:`Requirement`, such that they are
     able to maintain state about that specific requirement.
 
+    :param args: Something to pull arguments from. May be ``dict`` (and is treated
+        same as ``**kwargs``), ``str`` (in which case it is split and parsed),
+        ``tuple`` or ``list`` of ``str`` (and is parsed), or an ``argparse.Namespace``
+        (assumed to be from our parser).
+
+    :param Home home: The :class:`Home` to use. One of ``home``, ``source`` or ``parent``
+        must be set.
+
+    :param PackageSet set: The :class:`PackageSet` this belongs to. (n.b. this is
+        likely going away.)
+
+    :param bool dev: Is this a dev package? The :attr:`pipeline` is created with
+        different steps.
+
+    :param Manifest context: The :class:`Manifest` this belongs to.
+    :param Package parent: The package that this is a variant of.
+    :param Package source: The package that triggered this to exist; not
+        nessesarily the parent.
+
     """
 
     __tablename__ = 'packages'
@@ -186,12 +209,31 @@ class Package(DBObject):
     build_path = Column()
     install_path = Column()
 
-    def __init__(self, args=None, *, home=None, set=None, dev=False, parent=None, **kwargs):
+    def __init__(self,
+        args=None,
+        *,
+        home=None,
+        set=None,
+        dev=False,
+        context=None,
+        parent=None,
+        source=None,
+        **kwargs
+    ):
 
         super(Package, self).__init__()
 
-        self.home = home # Must be early due to some properties using this.
+        source = source or parent
 
+        # Must be early due to some properties using this.
+        self.home = home = home or (source.home if source else None)
+        if not home:
+            raise ValueError("Package requires home")
+
+        self.context = context = context or (source.context if source else None)
+        if not context and not dev:
+            raise ValueError("Package requires context (Manifest) when not dev")
+        
         if args and kwargs:
             raise ValueError('specify either args OR kwargs')
 
@@ -236,14 +278,14 @@ class Package(DBObject):
         else:
             self.name = guess_name(self.url)
 
-        # Manual args.
+        # TODO: Deprecate these.
         self.dependencies = []
-        self.parent = parent
         self.set = set
 
-        # Coercions. TODO in the parser
-        self.provides = Provision.coerce(self.provides)
-        self.requires = RequirementSet.coerce(self.requires)
+        # Variant relationships.
+        self.parent = parent
+        self._children = None
+        self._child_is_self = None
 
         # Make sure to make copies of anything that is mutable.
         self.base_environ = self.base_environ.copy() if self.base_environ else {}
@@ -251,12 +293,18 @@ class Package(DBObject):
         self.config = self.config[:] if self.config else []
 
         # Initialize other state not covered by the argument parser.
+        # TODO: Should this come from the parent?
         self.link_id = None
         self.package_name = self.build_name = None
         self.package_path = self.build_path = self.install_path = None
-        self.meta = None
 
-        self._init_pipeline(dev=dev)
+        # Share some state with the parent.
+        if parent:
+            self.meta = parent.meta # Directly shared.
+            self.pipeline = parent.pipeline.copy(self)
+        else:
+            self.meta = context.load_meta(self.name) if context else None
+            self._init_pipeline(dev=dev)
 
     def _init_pipeline(self, dev=False):
 
@@ -330,39 +378,70 @@ class Package(DBObject):
     def __repr__(self):
         return '%s(%r)' % (self.__class__.__name__, str(self))
 
-    def copy(self):
-        return self.__class__(self.to_kwargs(copy=True), home=self.home, parent=self)
+    def copy(self, **kwargs):
+        """Get a copy of this package that can be mutated.
 
-    def freeze(self, environ=True):
-        kwargs = self.to_kwargs()
-        if environ:
-            kwargs['environ'] = self.environ_diff
-        return self.__class__(kwargs, home=self.home)
+        :param **kwargs: Overrides for the copy.
 
-    def flat_variants(self):
+        """
+        full_kwargs = self.to_kwargs(copy=True)
+        full_kwargs.update(kwargs)
+        return self.__class__(
+            source=self,
+            **full_kwargs
+        )
 
+    def flattened(self):
+
+        if self.parent:
+            raise ValueError("Child variants cannot have children of their own")
+
+        # We're allowed to regen when previously we returned ourself.
+        if self._children and not (self.variants and self._child_is_self):
+            return self._children
+
+        # If there are no variants, don't copy or anything, just return ourself.
+        # This allows for variants to be added in a future (inspect) step and
+        # result in actual children.
         if not self.variants:
-            return [self.copy()]
+            self._child_is_self = True
+            self._children = [self]
+            return self._children
 
-        out = []
+        self._child_is_self = False
+
+        children = []
         for raw in self.variants:
             
-            var = self.copy()
-            var.variants = []
+            var = self.copy(parent=self)
+            var.variants = [] # The child has no variants.
 
             for key, value in raw.items():
                 if key in ('provides', 'requires'):
                     getattr(var, key).update(value)
                 else:
                     setattr(var, key, value)
-            out.append(var)
 
-        return out
+            children.append(var)
+
+        self._children = children
+        return children
+
+    def assert_flat(self):
+        """Assert that this does not have any variants."""
+        if self.variants:
+            raise ValueError("package is not flat (it has variants)")
+
+    def get_meta(self, key):
+        """Get a value from the packages meta object, if it exists."""
+        if self.meta:
+            return getattr(self.meta, key, None)
 
     def add_dependency(self, **kwargs):
         # TODO: Remove these once the solver is used.
         kwargs.setdefault('base_environ', self.base_environ)
         kwargs.setdefault('environ', self.environ)
+        kwargs.setdefault('source', self)
         kwargs.setdefault('home', self.home)
         dep = Package(**kwargs)
         self.dependencies.append(dep)
@@ -437,6 +516,9 @@ class Package(DBObject):
         return environ
 
     def _set_names(self, package=False, build=False, install=False):
+
+        self.assert_flat()
+
         if (package or build or install) and self.package_name is None:
             if self.url:
                 # Strip out the scheme.
@@ -444,11 +526,13 @@ class Package(DBObject):
                 name = re.sub(r':?/+:?', '/', name)
                 name = name.strip('/')
                 self.package_name = name
+
         if (install or build) and self.install_name is None:
             if self.name and self.revision:
                 self.install_name = '%s/%s' % (self.name, self.revision)
             else:
                 self.install_name = self.package_name and re.sub(r'(\.(tar|gz|tgz|zip))+$', '', self.package_name)
+
         if build and self.build_name is None:
             self.build_name = self.install_name and ('%s/%s-%s' % (
                 self.install_name,
@@ -523,9 +607,8 @@ class Package(DBObject):
 
     def link(self, env, force=False):
         self._assert_paths(install=True)
-        frozen = self.freeze()
         if not force:
-            self._assert_unlinked(env, frozen)
+            self._assert_unlinked(env)
         log.info(style_note('Linking into %s' % env.name))
         env.link_directory(self.install_path)
         self._record_link(env)
@@ -537,7 +620,7 @@ class Package(DBObject):
                 [self.id_or_persist(), env.id_or_persist()]
             ).fetchone()
         if self.link_id or row:
-            raise AlreadyLinked(str(frozen or self.freeze()), self.link_id or row[0])
+            raise AlreadyLinked(str(self), self.link_id or row[0])
 
     def persist_in_db(self, con=None):
         if self.virtual:
@@ -561,8 +644,6 @@ class Package(DBObject):
                     self.id, dep_id
                 ])
             return res
-
-
 
     def resolve_existing(self, env=None, weak=False):
         """Check against the database to see if this was already installed."""
@@ -658,6 +739,7 @@ class Package(DBObject):
         for row in cur:
             self.dependencies.append(Package(
                 url='deferred:%d' % row['dependee_id'],
+                source=self,
                 home=self.home,
             ))
 
@@ -675,6 +757,6 @@ class Package(DBObject):
             if uninstall:
                 self.uninstall()
             else:
-                raise AlreadyInstalled(str(self.freeze()))
+                raise AlreadyInstalled(str(self))
 
 

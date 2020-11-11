@@ -16,11 +16,11 @@ from vee import log
 def edit(args):
 
     home = args.assert_home()
-    env_repo = home.get_env_repo(args.repo)
+    repo = home.get_repo(args.repo)
 
     cmd = []
     cmd.extend(shlex.split(os.environ.get('EDITOR', 'vim')))
-    cmd.append(os.path.join(env_repo.work_tree, 'manifest.txt'))
+    cmd.append(os.path.join(repo.work_tree, 'manifest.txt'))
 
     log.debug(cmd, verbosity=1)
 

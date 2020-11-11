@@ -90,8 +90,11 @@ setup(
         client = vee.commands.client:client
         server = vee.commands.server:server
 
-
         [vee_pipeline_steps]
+
+        # Generic
+        builtin = vee.pipeline.builtin:BuiltinLoader
+        meta = vee.pipeline.meta:MetaStep
 
         # External package managers.
         homebrew = vee.pipeline.homebrew:HomebrewManager

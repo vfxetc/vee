@@ -8,9 +8,9 @@ class DeferredStep(PipelineStep):
     @classmethod
     def factory(cls, step, pkg):
         if pkg.url.startswith('deferred:'):
-            return cls(pkg)
+            return cls()
 
-    def init(self):
+    def init(self, pkg):
         pass
     
 

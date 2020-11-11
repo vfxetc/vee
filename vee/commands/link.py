@@ -59,8 +59,8 @@ def link(args):
     elif args.directory:
         env = Environment(os.path.abspath(args.directory), home=home)
     else:
-        env_repo = home.get_env_repo(args.repo)
-        env = Environment('%s/%s' % (env_repo.name, env_repo.branch_name), home=home)
+        repo = home.get_repo(args.repo)
+        env = Environment('%s/%s' % (repo.name, repo.branch_name), home=home)
 
 
     if args.raw:

@@ -14,7 +14,7 @@ class TestInitCommand(TestCase):
         self.assertTrue(home.exists)
 
         # Should not have a repo.
-        self.assertRaises(ValueError, home.get_env_repo)
+        self.assertRaises(ValueError, home.get_repo)
 
     def test_init_with_repo(self):
 
@@ -24,14 +24,14 @@ class TestInitCommand(TestCase):
         mock_package  = self.package('foo', 'c_configure_make_install')
         mock_package.render_commit()
 
-        mock_repo = self.repo()
+        mock_repo = self.repo(home=home)
         mock_repo.add_requirements('%s --make-install' % mock_package.url)
 
         home.main(['init', mock_repo.path])
         self.assertTrue(home.exists)
 
         # Should have a repo.
-        repo = home.get_env_repo()
+        repo = home.get_repo()
 
         # Lets install our package.
         home.main(['update'])

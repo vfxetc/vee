@@ -47,4 +47,4 @@ def install(args):
         try:
             packages.install(pkg.name, reinstall=args.force)
         except AlreadyInstalled:
-            log.info(style_note('Already installed', str(pkg.freeze())))
+            log.info(style_note('Already installed', str(pkg)))
