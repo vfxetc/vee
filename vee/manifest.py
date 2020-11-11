@@ -85,15 +85,15 @@ class Expression(object):
 
 class Include(object):
 
-    def __init__(self, path, requirements):
+    def __init__(self, path, manifest):
         self.path = path
-        self.requirements = requirements
+        self.manifest = manifest
 
     def __str__(self):
         return '% include {}'.format(self.path)
 
 
-class RequirementItem(object):
+class ManifestItem(object):
 
     def __init__(self, value, prefix='', suffix='', filename=None, lineno=None):
         self.value    = value
@@ -140,18 +140,18 @@ class Manifest:
 
     def _coerce(self, value, args=()):
 
-        if isinstance(value, RequirementItem):
+        if isinstance(value, ManifestItem):
             if args:
-                raise ValueError("cannot pass RequirementItem with extra args.", value, args)
+                raise ValueError("cannot pass ManifestItem with extra args.", value, args)
             return value
 
         if isinstance(value, (Envvar, Header, Control, Package, Include)):
-            return RequirementItem(value, *args)
+            return ManifestItem(value, *args)
 
         if value:
             raise ValueError("unexpected type: got {} {!r}".format(type(value), value))
 
-        return RequirementItem(None, *args)
+        return ManifestItem(None, *args)
 
     def _append(self, value, *args):
         item = self._coerce(value, args)
@@ -202,7 +202,7 @@ class Manifest:
         self.filename = self.filename or filename
 
         def append(x):
-            self._append(RequirementItem(x, prefix, suffix, filename, line_i + 1))
+            self._append(ManifestItem(x, prefix, suffix, filename, line_i + 1))
 
         line_iter = iter(source)
         for line_i, line in enumerate(line_iter):
@@ -353,7 +353,7 @@ class Manifest:
                 yield el
 
             elif isinstance(el, Include):
-                for x in el.requirements.iter_packages(eval_control, locals_=control_namespace):
+                for x in el.manifest.iter_packages(eval_control, locals_=control_namespace):
                     yield x
 
     def get_header(self, name):
@@ -377,7 +377,7 @@ class Manifest:
             if not isinstance(el, Header):
                 break
         header = Header(name, value)
-        self._items.insert(i, RequirementItem(header))
+        self._items.insert(i, ManifestItem(header))
         return header
 
     def iter_dump(self):
@@ -395,19 +395,19 @@ class Manifest:
             if isinstance(element, Envvar):
                 environ[element.name] = element.value
 
-            if isinstance(element, Package):
-
+            if isinstance(element, Package):     
+                       
                 # Get a copy to mutate.
-                req = element = element.copy()
+                pkg = element = element.copy()
 
                 # We don't need a name if it matches the guessed version.
-                if req.name and req.name == guess_name(req.url):
-                    req.name = None
+                if pkg.name and pkg.name == guess_name(pkg.url):
+                    pkg.name = None
 
                 # Strip out anything in the base environment which matches.
                 for k, v in environ.items():
-                    if req.base_environ.get(k) == v:
-                        del req.base_environ[k]
+                    if pkg.base_environ.get(k) == v:
+                        del pkg.base_environ[k]
 
             yield '%s%s%s\n' % (item.prefix or '', element or '', item.suffix or '')
 
@@ -428,7 +428,7 @@ class Manifest:
             if not item.is_include:
                 continue
             include = item.value
-            req_set = include.requirements
+            req_set = include.manifest
             sub_path = os.path.join(os.path.dirname(path), include.path)
             makedirs(os.path.dirname(sub_path))
             paths.extend(req_set.dump(sub_path))
