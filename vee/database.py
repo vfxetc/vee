@@ -58,8 +58,9 @@ def _create_initial_tables(con):
 
         url TEXT NOT NULL,
         name TEXT,
-        version TEXT,
-        etag TEXT,
+        
+        provides TEXT,
+        requires TEXT,
 
         -- Names, either from the user or discovered.
         package_name TEXT,
