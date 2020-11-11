@@ -39,7 +39,7 @@ class EnvironmentRepo(GitRepo):
         return Environment(repo=self, home=self.home)
     
     def load_manifest(self, revision=None):
-        manifest = Manifest(env_repo=self, home=self.home)
+        manifest = Manifest(repo=self, home=self.home)
         if revision:
             manifest.parse_file(os.path.basename(self._req_path), alt_open=lambda x: self.show(revision, x).splitlines())
         elif os.path.exists(self._req_path):

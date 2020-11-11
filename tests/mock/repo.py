@@ -59,16 +59,16 @@ class MockRepo(object):
             new_names.add(req.name or guess_name(req.url))
             new_urls.add(req.url)
 
-        for item in old:
+        for item in old._items:
             element = item.value
             if (not isinstance(element, Package) or
                 (element.name or guess_name(element.url)) not in new_names or
                 element.url not in new_urls
             ):
                 if insert:
-                    new.append(element)
+                    new._append(element)
                 else:
-                    new.insert(0, element)
+                    new._insert(0, element)
 
         with open(path, 'w') as fh:
             for line in new.iter_dump():

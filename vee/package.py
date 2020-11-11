@@ -1,3 +1,4 @@
+from copy import deepcopy
 import argparse
 import base64
 import datetime
@@ -20,9 +21,12 @@ from vee.cli import style, style_note
 from vee.database import DBObject, Column
 from vee.exceptions import AlreadyInstalled, AlreadyLinked, CliMixin
 from vee.pipeline.base import Pipeline
-from vee.subproc import call
-from vee.utils import cached_property, makedirs, linktree
+from vee.provision import Provision
+from vee.requirement import RequirementSet
 from vee.semver import Version, VersionExpr
+from vee.subproc import call
+from vee.utils import cached_property, makedirs, linktree, guess_name
+
 
 class RequirementParseError(CliMixin, ValueError):
     pass
@@ -67,17 +71,68 @@ class _EnvironmentAction(argparse.Action):
                 res[parts[i]] = parts[i + 1]
 
 
+class _ProvidesAction(argparse.Action):
+
+    @property
+    def default(self):
+        return Provision()
+
+    @default.setter
+    def default(self, v):
+        pass
+
+    def __call__(self, requirement_parser, namespace, values, option_string=None):
+        res = getattr(namespace, self.dest)
+        for value in values:
+            res.parse(value)
+
+
+class _RequiresAction(argparse.Action):
+
+    @property
+    def default(self):
+        return RequirementSet()
+
+    @default.setter
+    def default(self, v):
+        pass
+
+    def __call__(self, requirement_parser, namespace, values, option_string=None):
+        res = getattr(namespace, self.dest)
+        for value in values:
+            res.parse(value)
+
+class _VariantAction(argparse.Action):
+
+    @property
+    def default(self):
+        return []
+
+    @default.setter
+    def default(self, v):
+        pass
+
+    def __call__(self, requirement_parser, namespace, values, option_string=None):
+        res = getattr(namespace, self.dest)
+        for value in values:
+            res.append(json.loads(value))
+
+
 
 requirement_parser = _RequirementParser(add_help=False)
 
 requirement_parser.add_argument('-n', '--name')
 requirement_parser.add_argument('-r', '--revision')
 
+requirement_parser.add_argument('-P', '--provides', nargs='*', action=_ProvidesAction)
+requirement_parser.add_argument('-R', '--requires', nargs='*', action=_RequiresAction)
+requirement_parser.add_argument('-V', '--variant',  nargs='*', action=_VariantAction, dest='variants')
+
 requirement_parser.add_argument('--etag', help='identifier for busting caches')
 requirement_parser.add_argument('--checksum', help='to verify that package archives haven\'t changed')
 
 requirement_parser.add_argument('--base-environ', nargs='*', action=_EnvironmentAction, help=argparse.SUPPRESS)
-requirement_parser.add_argument('-e', '--environ', nargs='*', action=_EnvironmentAction)
+requirement_parser.add_argument('-e', '--environ', nargs='*', action=_EnvironmentAction, help='envvars for building')
 requirement_parser.add_argument('-c', '--config', nargs='*', action=_ConfigAction, help='args to pass to `./configure`, `python setup.py`, `brew install`, etc..')
 
 requirement_parser.add_argument('--autoconf', action='store_true', help='the package uses autoconf; may ./bootstrap')
@@ -97,9 +152,16 @@ requirement_parser.add_argument('--virtual', action='store_true', help='package 
 requirement_parser.add_argument('--develop-sh', help='shell script in repository to source to develop the package')
 requirement_parser.add_argument('--build-sh', help='shell script in repository to source to build the package')
 requirement_parser.add_argument('--install-sh', help='shell script in repository to source to install the package')
-requirement_parser.add_argument('--manifest-txt', help='shell script in repository to source to build the package')
+requirement_parser.add_argument('--manifest-txt', help='manifest to require for this package')
 
 requirement_parser.add_argument('url')
+
+
+def _json_default(x):
+    func = getattr(x, '__json__', None)
+    if func:
+        return func()
+    raise TypeError('Object of type {} is not JSON serializable'.format(type(x).__name__))
 
 
 class Package(DBObject):
@@ -113,13 +175,6 @@ class Package(DBObject):
 
     __tablename__ = 'packages'
 
-    abstract_requirement = Column()
-
-    concrete_requirement = Column()
-    @concrete_requirement.persist
-    def concrete_requirement(self):
-        return self.freeze().to_json()
-
     url = Column()
     name = Column()
     revision = Column()
@@ -131,9 +186,11 @@ class Package(DBObject):
     build_path = Column()
     install_path = Column()
 
-    def __init__(self, args=None, home=None, set=None, dev=False, **kwargs):
+    def __init__(self, args=None, *, home=None, set=None, dev=False, parent=None, **kwargs):
 
         super(Package, self).__init__()
+
+        self.home = home # Must be early due to some properties using this.
 
         if args and kwargs:
             raise ValueError('specify either args OR kwargs')
@@ -160,18 +217,33 @@ class Package(DBObject):
                     name = action.dest
                     setattr(self, name, getattr(args, name))
             else:
-                raise TypeError('args must be in (str, list, tuple); got %s' % args.__class__)
+                raise TypeError("args must be one of (str, list, tuple, dict); got {}".format(args.__class__))
 
         else:
             for action in requirement_parser._actions:
                 name = action.dest
-                setattr(self, name, kwargs.get(name, action.default))
+                setattr(self, name, kwargs.pop(name, action.default))
+            if kwargs:
+                raise ValueError("too many kwargs: {}".format(list(kwargs)))
+
+        assert self.url
+        
+        # Assert we have a name.
+        if self.name:
+            if self.name.lower() != self.name:
+                log.warning("package name {!r} was not lowercase".format(self.name))
+                self.name = self.name.lower()
+        else:
+            self.name = guess_name(self.url)
 
         # Manual args.
-        self.home = home # Must be first.
-        self.abstract_requirement = self.to_json()
         self.dependencies = []
+        self.parent = parent
         self.set = set
+
+        # Coercions. TODO in the parser
+        self.provides = Provision.coerce(self.provides)
+        self.requires = RequirementSet.coerce(self.requires)
 
         # Make sure to make copies of anything that is mutable.
         self.base_environ = self.base_environ.copy() if self.base_environ else {}
@@ -182,9 +254,9 @@ class Package(DBObject):
         self.link_id = None
         self.package_name = self.build_name = None
         self.package_path = self.build_path = self.install_path = None
+        self.meta = None
 
         self._init_pipeline(dev=dev)
-
 
     def _init_pipeline(self, dev=False):
 
@@ -199,20 +271,20 @@ class Package(DBObject):
                 'post_install', 'relocate', 'optlink',
             ])
 
-        # Give the fetch pipeline step a chance to normalize the URL.
+        # Give the fetch pipeline step a chance to normalize the name/URL.
         self.pipeline.run_to('init')
 
-    def to_kwargs(self):
+    def to_kwargs(self, copy=True):
         kwargs = {}
         for action in requirement_parser._actions:
             name = action.dest
             value = getattr(self, name)
             if value != action.default: # This is easily wrong.
-                kwargs[name] = value
+                kwargs[name] = deepcopy(value) if copy else value
         return kwargs
 
     def to_json(self):
-        return json.dumps(self.to_kwargs(), sort_keys=True)
+        return json.dumps(self.to_kwargs(copy=False), sort_keys=True, default=_json_default)
 
     def to_args(self, exclude=set()):
 
@@ -236,8 +308,10 @@ class Package(DBObject):
 
             if isinstance(value, dict):
                 value = ','.join('%s=%s' % (k, v) for k, v in sorted(value.items()))
-            if isinstance(value, (list, tuple)):
-                value = ','.join(value)
+            elif isinstance(value, (list, tuple)):
+                value = ','.join(map(str, value))
+            else:
+                value = str(value)
 
             # Shell escape!
             if re.search(r'\s', value):
@@ -257,7 +331,7 @@ class Package(DBObject):
         return '%s(%r)' % (self.__class__.__name__, str(self))
 
     def copy(self):
-        return self.__class__(self.to_kwargs(), home=self.home)
+        return self.__class__(self.to_kwargs(copy=True), home=self.home, parent=self)
 
     def freeze(self, environ=True):
         kwargs = self.to_kwargs()
@@ -265,7 +339,28 @@ class Package(DBObject):
             kwargs['environ'] = self.environ_diff
         return self.__class__(kwargs, home=self.home)
 
+    def flat_variants(self):
+
+        if not self.variants:
+            return [self.copy()]
+
+        out = []
+        for raw in self.variants:
+            
+            var = self.copy()
+            var.variants = []
+
+            for key, value in raw.items():
+                if key in ('provides', 'requires'):
+                    getattr(var, key).update(value)
+                else:
+                    setattr(var, key, value)
+            out.append(var)
+
+        return out
+
     def add_dependency(self, **kwargs):
+        # TODO: Remove these once the solver is used.
         kwargs.setdefault('base_environ', self.base_environ)
         kwargs.setdefault('environ', self.environ)
         kwargs.setdefault('home', self.home)
@@ -541,7 +636,7 @@ class Package(DBObject):
             row['install_path'],
         ))
 
-        self.restore_from_row(row, ignore=set(('abstract_requirements', 'concrete_requirement')))
+        self.restore_from_row(row)
         self.link_id = row.get('link_id')
 
         if deferred:
@@ -568,10 +663,9 @@ class Package(DBObject):
 
     def _record_link(self, env):
         cur = self.home.db.cursor()
-        cur.execute('''INSERT INTO links (package_id, environment_id, abstract_requirement) VALUES (?, ?, ?)''', [
+        cur.execute('''INSERT INTO links (package_id, environment_id) VALUES (?, ?)''', [
             self.id_or_persist(),
             env.id_or_persist(),
-            self.abstract_requirement,
         ])
         self.link_id = cur.lastrowid
 

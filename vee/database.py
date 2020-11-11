@@ -56,10 +56,6 @@ def _create_initial_tables(con):
         id INTEGER PRIMARY KEY,
         created_at TIMESTAMP NOT NULL DEFAULT (datetime('now')),
 
-        -- Requirement.to_json()
-        abstract_requirement TEXT NOT NULL,
-        concrete_requirement TEXT NOT NULL,
-
         url TEXT NOT NULL,
         name TEXT,
         revision TEXT,
@@ -103,9 +99,7 @@ def _create_initial_tables(con):
         created_at TIMESTAMP NOT NULL DEFAULT (datetime('now')),
 
         environment_id INTEGER REFERENCES environments(id) NOT NULL,
-        package_id INTEGER REFERENCES packages(id) NOT NULL,
-
-        abstract_requirement TEXT NOT NULL
+        package_id INTEGER REFERENCES packages(id) NOT NULL
 
     )''')
 
