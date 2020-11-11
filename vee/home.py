@@ -196,8 +196,8 @@ class Home(object):
             makedirs(repo.work_tree)
             repo.git('init')
 
-        if branch != env_repo.get_current_branch():
-            con.execute('UPDATE repositories SET branch = ? WHERE id = ?', [env_repo.get_current_branch(), env_repo.id])
+        if branch != repo.get_current_branch():
+            con.execute('UPDATE repositories SET branch = ? WHERE id = ?', [repo.get_current_branch(), repo.id])
 
         return repo
 

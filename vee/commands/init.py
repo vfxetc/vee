@@ -38,6 +38,6 @@ def init(args):
         return
 
     if args.url:
-        repo = args.home.create_env_repo(url=args.url, name=args.name)
+        repo = args.home.create_repo(url=args.url, name=args.name)
         log.info('Created repo %s at %s' % (repo.name, repo.work_tree))
 
