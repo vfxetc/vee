@@ -123,11 +123,12 @@ requirement_parser = _RequirementParser(add_help=False)
 
 requirement_parser.add_argument('-n', '--name')
 
+requirement_parser.add_argument('-p', '--provides', nargs='*', action=_ProvidesAction)
+requirement_parser.add_argument('-r', '--requires', nargs='*', action=_RequiresAction)
+requirement_parser.add_argument('-v', '--variant',  nargs='*', action=_VariantAction, dest='variants')
 
-requirement_parser.add_argument('-P', '--provides', nargs='*', action=_ProvidesAction)
-requirement_parser.add_argument('-R', '--requires', nargs='*', action=_RequiresAction)
-requirement_parser.add_argument('-V', '--variant',  nargs='*', action=_VariantAction, dest='variants')
-requirement_parser.add_argument('-v', '--version', help='shortcut for `--provides version=FOO`')
+# Must be after --provides for the property to work.
+requirement_parser.add_argument('-V', '--version', help='shortcut for `--provides version=FOO`')
 
 requirement_parser.add_argument('--etag', help='identifier for busting caches')
 requirement_parser.add_argument('--checksum', help='to verify that package archives haven\'t changed')
@@ -199,8 +200,15 @@ class Package(DBObject):
 
     url = Column()
     name = Column()
-    version = Column()
-    etag = Column()
+
+    provides = Column()
+    provides.persist(lambda self: str(self.provides))
+    provides.restore(lambda self, raw: Provision(raw))
+
+    requires = Column()
+    requires.persist(lambda self: str(self.requires))
+    requires.restore(lambda self, raw: RequirementSet(raw))
+
     package_name = Column()
     build_name = Column()
     install_name = Column()
@@ -263,7 +271,19 @@ class Package(DBObject):
         else:
             for action in requirement_parser._actions:
                 name = action.dest
-                setattr(self, name, kwargs.pop(name, action.default))
+                
+                # Version is a bit special, and should not have a default applied
+                # here, otherwise to_kwargs will clear it out.
+                if name in ('version', ):
+                    try:
+                        value = kwargs.pop(name)
+                    except KeyError:
+                        continue
+                else:
+                    value = kwargs.pop(name, action.default)
+
+                setattr(self, name, value)
+
             if kwargs:
                 raise ValueError("too many kwargs: {}".format(list(kwargs)))
 
@@ -321,13 +341,30 @@ class Package(DBObject):
         # Give the fetch pipeline step a chance to normalize the name/URL.
         self.pipeline.run_to('init')
 
+    @property
+    def version(self):
+        x = self.provides.get('version')
+        return None if x is None else str(x)
+
+    @version.setter
+    def version(self, value):
+        if value is None:
+            self.provides.pop('version', None)
+        else:
+            self.provides['version'] = value
+    
     def to_kwargs(self, copy=True):
         kwargs = {}
         for action in requirement_parser._actions:
+            
             name = action.dest
+            if name in ('version', ):
+                continue
+
             value = getattr(self, name)
             if value != action.default: # This is easily wrong.
                 kwargs[name] = deepcopy(value) if copy else value
+
         return kwargs
 
     def to_json(self):
@@ -342,12 +379,18 @@ class Package(DBObject):
             if name in ('url', ) or name in exclude:
                 continue
 
-            option_str = action.option_strings[-1]
 
             value = getattr(self, name)
             if not value:
                 continue
 
+            # Special case version.
+            if name == 'version' and len(self.provides) > 1:
+                continue
+            if name == 'provides' and len(self.provides) == 1 and self.version:
+                continue
+
+            option_str = action.option_strings[-1]
             if action.__class__.__name__ == '_StoreTrueAction': # Gross.
                 if value:
                     argsets.append([option_str])
@@ -527,8 +570,15 @@ class Package(DBObject):
                 self.package_name = name
 
         if (install or build) and self.install_name is None:
-            if self.name and self.version:
-                self.install_name = '%s/%s' % (self.name, self.version)
+            if self.name and self.provides:
+                # If just the version, keep it simple.
+                # This is here because this is the old behaviour, and changing
+                # it broke some of the tests but not all.
+                if len(self.provides) == 1 and self.version:
+                    provides = str(self.version)
+                else:
+                    provides = self.provides.__str__(sort=True)
+                self.install_name = '{}/{}'.format(self.name, provides)
             else:
                 self.install_name = self.package_name and re.sub(r'(\.(tar|gz|tgz|zip))+$', '', self.package_name)
 
@@ -687,17 +737,40 @@ class Package(DBObject):
                     WHERE %s
                     ORDER BY packages.created_at DESC
                 ''' % clause, values)
-
-        rev_expr = VersionExpr(self.version) if self.version else None
+        
         for row in cur:
-            if rev_expr and row['version'] and not rev_expr.eval(Version(row['version'])):
-                log.debug('Found %s (%d) whose version %s does not satisfy %s' % (
+            
+            # Make sure it has enough provisions.
+            provides = Provision(row['provides'])
+            if any(provides.get(key, None) != value for key, value in self.provides.items()):
+                log.debug('Found %s (%d) whose provisions %s do not satisfy %s' % (
                     self.name or row['name'],
                     row['id'],
-                    row['version'],
-                    rev_expr,
+                    row['provides'],
+                    self.provides,
                 ), verbosity=2)
                 continue
+
+            # Make sure it has enough requirements.
+            requires = RequirementSet(row['requires'])
+            reqs_ok = True
+            for name in self.requires:
+                try:
+                    reqs = requires[name]
+                except KeyError:
+                    reqs_ok = False
+                    continue
+                if any(reqs.get(key, None) != value for key, value in self.requires.items()):
+                    reqs_ok = False
+                    continue
+            if not reqs_ok:
+                log.debug('Found %s (%d) whose requirements %s do not satisfy %s' % (
+                    self.name or row['name'],
+                    row['id'],
+                    row['requires'],
+                    self.requires,
+                ), verbosity=2)
+
             if not os.path.exists(row['install_path']):
                 log.warning('Found %s (%d) does not exist at %s' % (self.name or row['name'], row['id'], row['install_path']))
                 continue

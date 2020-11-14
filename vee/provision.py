@@ -27,7 +27,10 @@ class Provision(collections.MutableMapping):
     def parse(self, raw):
 
         for chunk in raw.split(','):
+            
             chunk = chunk.strip()
+            if not chunk:
+                continue
 
             # Just a name means we only care about presence.
             m = re.match(r'^\w+$', chunk)
