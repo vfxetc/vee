@@ -155,6 +155,9 @@ class Version(object):
 
     def __eq__(a, b):
 
+        if a is None or b is None:
+            return False
+        
         if not isinstance(a, Version):
             a = Version(a)
         if not isinstance(b, Version):
