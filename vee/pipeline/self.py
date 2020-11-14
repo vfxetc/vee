@@ -83,6 +83,7 @@ class SelfBuilder(GenericBuilder):
         env = pkg.fresh_environ()
         env.update(
             VEE=pkg.home.root,
+            VEE_STEP='build',
             VEE_BUILD_PATH=pkg.build_path,
             VEE_INSTALL_NAME=pkg.install_name,
             VEE_INSTALL_PATH=pkg.install_path,
@@ -110,6 +111,7 @@ class SelfBuilder(GenericBuilder):
         env = pkg.fresh_environ()
         env.update(
             VEE=pkg.home.root,
+            VEE_STEP='install',
             VEE_BUILD_PATH=pkg.build_path,
             VEE_INSTALL_NAME=pkg.install_name,
             VEE_INSTALL_PATH=pkg.install_path,
