@@ -82,7 +82,7 @@ class PythonBuilder(GenericBuilder):
                     if m:
                         name = m.group(1).lower()
                         log.debug('%s depends on %s' % (pkg.name, name))
-                        pkg.add_dependency(name=name, url='pypi:%s' % name)
+                        pkg.add_dependency(name=name, url='pypi:%s' % name.lower())
 
         if self.dist_info_dir:
 
