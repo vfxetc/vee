@@ -16,6 +16,7 @@ from vee import log
 from vee.cli import style
 from vee.exceptions import AlreadyInstalled, CliMixin
 from vee.package import Package, requirement_parser, RequirementParseError
+from vee.shellmeta import ShellMeta
 from vee.utils import cached_property, guess_name, makedirs
 
 
@@ -282,22 +283,25 @@ class Manifest:
             return
 
         path = os.path.join(os.path.dirname(self.filename), 'packages', name + '.py')
-        if not os.path.exists(path):
-            return
+        if os.path.exists(path):
 
-        namespace = {'__file__': path}
-        with open(path, 'rb') as fh:
-            source = fh.read()
-        try:
-            exec(compile(source, path, 'exec'), namespace, namespace)
-        except Exception as e:
-            raise ValueError("error while loading package meta in {}".format(path)) from e
+            namespace = {'__file__': path}
+            with open(path, 'rb') as fh:
+                source = fh.read()
+            try:
+                exec(compile(source, path, 'exec'), namespace, namespace)
+            except Exception as e:
+                raise ValueError("error while loading package meta in {}".format(path)) from e
 
-        cls = namespace.get('Package')
-        if not isinstance(cls, type):
-            raise ValueError("no Package class defined in {}".format(path))
+            cls = namespace.get('Package')
+            if not isinstance(cls, type):
+                raise ValueError("no Package class defined in {}".format(path))
 
-        return cls()
+            return cls()
+
+        path = os.path.join(os.path.dirname(self.filename), 'packages', name + '.sh')
+        if os.path.exists(path):
+            return ShellMeta(path)
 
     def iter_packages(self, eval_control=True, locals_=None):
 
