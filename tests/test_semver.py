@@ -92,6 +92,7 @@ class TestVersions(TestCase):
         self.assertEqual(v.release, None)
         self.assertEqual(v.build_metadata, ('abcdef', ))
         self.assertEqual(v.git_rev, 'abcdef')
+        self.assertEqual(str(v), 'abcdef')
 
     def test_comparisons(self):
 

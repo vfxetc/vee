@@ -36,6 +36,12 @@ class TestSolve(TestCase):
             {'foo': Version('1'), 'bar': Version('2')}
         )
 
+        # Git things go weird
+        p = Provision()
+        p['version'] = '01234567'
+        self.assertEqual(str(p), 'version=01234567')
+        self.assertEqual(str(p['version']), '01234567')
+
 
     def test_requires(self):
 

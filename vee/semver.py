@@ -143,7 +143,9 @@ class Version(object):
         if self.sem_pre_release:
             chunks.append('-' + '.'.join(str(x) for x in self.sem_pre_release))
         if self.build_metadata:
-            chunks.append('+' + '.'.join(str(x) for x in self.build_metadata))
+            if chunks:
+                chunks.append('+')
+            chunks.append('.'.join(str(x) for x in self.build_metadata))
         if self.unknown:
             chunks.append('.'.join(str(x) for x in self.unknown))
         return ''.join(chunks)
