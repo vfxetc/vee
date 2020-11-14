@@ -113,11 +113,15 @@ def _chmod(path, ops):
 _FIND_SKIP_DIRS = frozenset(('.git', '.svn'))
 
 def find_in_tree(root, name, type='file'):
+
+    assert type in ('file', 'dir')
+    is_file = type == 'file'
+
     pattern = fnmatch.translate(name)
     for dir_path, dir_names, file_names in os.walk(root):
 
         # Look for the file/directory.
-        candidates = dict(file=file_names, dir=dir_names)[type]
+        candidates = file_names if is_file else dir_names
         found = next((x for x in candidates if re.match(pattern, x)), None)
         if found:
             return os.path.join(dir_path, found)
