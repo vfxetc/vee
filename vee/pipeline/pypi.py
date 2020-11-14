@@ -74,8 +74,11 @@ class PyPiTransport(PipelineStep):
             raise ValueError('no releases of {} (any version) on the PyPI'.format(self.name))
 
         if pkg.version:
-            matching_releases = [(v, rs) for v, rs in all_releases if pkg.version == v]
+            version_expr = VersionExpr(pkg.version)
+            matching_releases = [(v, rs) for v, rs in all_releases if version_expr.eval(v)]
             if not matching_releases:
+                for v, rs in all_releases:
+                    print(v)
                 raise ValueError('no releases of {} {} on the PyPI'.format(self.name, pkg.version))
 
         else:
