@@ -323,6 +323,8 @@ class Package(DBObject):
             self.pipeline = parent.pipeline.copy(self)
         else:
             self.meta = context.load_meta(self.name) if context else None
+            self.url = self.get_meta('url') or self.url
+            self.version = self.get_meta('version') or self.version
             self._init_pipeline(dev=dev)
 
     def _init_pipeline(self, dev=False):

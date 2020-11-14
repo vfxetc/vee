@@ -1,4 +1,5 @@
 import os
+import re
 
 from vee.subproc import bash_source
 
@@ -6,25 +7,42 @@ from vee.subproc import bash_source
 class ShellMeta(object):
 
     def __init__(self, path):
-        self._path = path
-        self._functions = None
 
-    def _has_function(self, name):
-        if self._functions is None:
-            output = bash_source(self._path, epilogue='echo ===; compgen -A function', stdout=True).decode()
-            self._functions = set()
-            for line in output.split('===')[-1].splitlines():
-                self._functions.add(line.strip())
-        return name in self._functions
+        self._path = path
+        self._functions = set()
+        self._variables = {}
+
+        output = bash_source(self._path, epilogue='''
+            for _name in $(compgen -A function); do
+                echo "#vee function $_name"
+            done
+            for _name in $(compgen -A variable); do
+                _value="${!_name}"
+                echo "#vee variable $_name ${#_value} $_value"
+            done
+        ''', stdout=True)
+
+        for m in re.finditer(rb'^#vee function (\S+)$', output, flags=re.MULTILINE):
+            self._functions.add(m.group(1).decode())
+
+        for m in re.finditer(rb'^#vee variable (\S+) (\d+) ', output, flags=re.MULTILINE):
+            name = m.group(1).decode()
+            len_ = int(m.group(2))
+            value = output[m.end():m.end() + len_].decode()
+            self._variables[name] = value
 
     @property
+    def url(self):
+        return self._variables.get('url')
+    
+    @property
     def build(self):
-        if self._has_function('build'):
+        if 'build' in self._functions:
             return self._build
 
     @property
     def install(self):
-        if self._has_function('install'):
+        if 'install' in self._functions:
             return self._install
 
     def _get_env(self, pkg):
