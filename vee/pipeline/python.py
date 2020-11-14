@@ -57,32 +57,24 @@ class PythonBuilder(GenericBuilder):
 
         if self.setup_path:
 
-            self.egg_path = find_in_tree(pkg.build_path, '*.egg-info', 'dir')
-            if not self.egg_path:
+            stdout = call_setup_py(self.setup_path, ['egg_info'], env=pkg.fresh_environ(), stdout=True).decode()
+            m = re.search(r'writing requirements to (.+?)\n', stdout)
+            if not m:
+                log.debug("No requirements")
+                return
 
-                log.info(style_note('Building Python egg-info'))
-                res = call_setup_py(self.setup_path, ['egg_info'], env=pkg.fresh_environ(), indent=True, verbosity=1)
-                if res:
-                    raise RuntimeError('Could not build Python package')
+            requirements_path = os.path.join(os.path.dirname(self.setup_path), m.group(1))
+            for line in open(requirements_path):
 
-                self.egg_path = find_in_tree(pkg.build_path, '*.egg-info', 'dir')
-                if not self.egg_path:
-                    log.warning('Could not find newly created *.egg-info')
-                    return
+                # Stop once we get to the "extras".
+                if line.startswith('['):
+                    break
 
-            requires_path = os.path.join(self.egg_path, 'requires.txt')
-            if os.path.exists(requires_path):
-                for line in open(requires_path, 'r'):
-                    
-                    # Stop once we get to the "extras".
-                    if line.startswith('['):
-                        break
-
-                    m = re.match(r'^([\w\.-]+)', line)
-                    if m:
-                        name = m.group(1).lower()
-                        log.debug('%s depends on %s' % (pkg.name, name))
-                        pkg.add_dependency(name=name, url='pypi:%s' % name.lower())
+                m = re.match(r'^([\w\.-]+)', line)
+                if m:
+                    name = m.group(1).lower()
+                    log.debug('%s depends on %s' % (pkg.name, name))
+                    pkg.add_dependency(name=name, url='pypi:%s' % name.lower())
 
         if self.dist_info_dir:
 
