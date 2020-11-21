@@ -36,6 +36,11 @@ class ShellMeta(object):
         return self._variables.get('url')
     
     @property
+    def extract(self):
+        if 'extract' in self._functions:
+            return self._extract
+
+    @property
     def build(self):
         if 'build' in self._functions:
             return self._build
@@ -47,14 +52,21 @@ class ShellMeta(object):
 
     def _get_env(self, pkg):
         env = os.environ.copy()
+        env['VEE_PACKAGE_PATH'] = pkg.package_path or ''
         env['VEE_BUILD_PATH'] = pkg.build_path or ''
         env['VEE_INSTALL_PATH'] = pkg.install_path or ''
         return env
 
-    def _call(self, pkg, name):
+    def _call(self, pkg, name, **kwargs):
+        kwargs.setdefault('cwd', pkg.build_path or pkg.package_path)
+        kwargs.setdefault('env', self._get_env(pkg))
         bash_source(self._path, epilogue='''
             {} "$VEE_BUILD_PATH" "$VEE_INSTALL_PATH"
-        '''.format(name), cwd=pkg.build_path, env=self._get_env(pkg))
+        '''.format(name), **kwargs)
+
+    def _extract(self, pkg):
+        pkg._assert_paths(build=True)
+        self._call(pkg, 'extract', cwd=pkg.package_path)
 
     def _build(self, pkg):
         pkg._assert_paths(install=True)
