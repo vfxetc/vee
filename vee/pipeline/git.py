@@ -37,4 +37,5 @@ class GitTransport(PipelineStep):
     def fetch(self, pkg):
         self.repo.clone_if_not_exists()
         self.repo.checkout(pkg.version or 'HEAD', fetch=True)
+        self.repo.git('submodule', 'update', '--init')
         pkg.version = self.repo.head[:8]
